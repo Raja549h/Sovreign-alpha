@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decisions - Sovereign Alpha</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1a1a1a;
+            --accent: #00ff88;
+            --danger: #ff4444;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+        
+        th:hover {
+            color: var(--accent);
+        }
+        
+        tr {
+            border-bottom: 1px solid var(--border);
+        }
+        
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .status-badge.approved {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent);
+        }
+        
+        .status-badge.vetoed {
+            background: rgba(255, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        
+        .row-approved { border-left: 3px solid var(--accent); }
+        .row-vetoed { border-left: 3px solid var(--danger); }
+        
+        .hash-cell {
+            font-family: monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 1rem; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/decisions" class="active">Decisions</a>
+            <a href="/proofs">Proofs</a>
+            <a href="/performance">Performance</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Trade Decisions</h1>
+            <button class="btn" onclick="exportCSV()">Export CSV</button>
+        </div>
+        
+        <div class="table-container">
+            <table id="decisionsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Trade ID</th>
+                        <th onclick="sortTable(1)">Ticker</th>
+                        <th onclick="sortTable(2)">Action</th>
+                        <th onclick="sortTable(3)">Status</th>
+                        <th onclick="sortTable(4)">Confidence</th>
+                        <th onclick="sortTable(5)">Return</th>
+                        <th>ZK Proof</th>
+                        <th onclick="sortTable(7)">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in decisions %}
+                    <tr class="row-{{ d.status }}">
+                        <td>{{ d.decision_id }}</td>
+                        <td><strong>{{ d.symbol }}</strong></td>
+                        <td>{{ d.action }}</td>
+                        <td>
+                            <span class="status-badge {{ d.status }}">
+                                {{ d.status }}
+                            </span>
+                        </td>
+                        <td>{{ "%.0f"|format(d.confidence * 100) }}%</td>
+                        <td>${{ "%.0f"|format(d.potential_return or 0) }}</td>
+                        <td class="hash-cell">
+                            {% if d.zk_proof_hash %}
+                            {{ d.zk_proof_hash[:20] }}...
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ d.timestamp[:19] if d.timestamp else '' }}</td>
+                    </tr>
+                    {% endfor %}
+                    
+                    {% if not decisions %}
+                    <tr>
+                        <td colspan="8" class="empty">
+                            No decisions yet. Run analysis.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        let sortDir = 1;
+        
+        function sortTable(col) {
+            const table = document.getElementById('decisionsTable');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            
+            rows.sort((a, b) => {
+                const aVal = a.cells[col].textContent;
+                const bVal = b.cells[col].textContent;
+                return aVal.localeCompare(bVal) * sortDir;
+            });
+            
+            sortDir *= -1;
+            rows.forEach(row => table.querySelector('tbody').appendChild(row));
+        }
+        
+        function exportCSV() {
+            const rows = [['Trade ID', 'Ticker', 'Action', 'Status', 'Confidence', 'Return', 'ZK Hash', 'Timestamp']];
+            
+            document.querySelectorAll('#decisionsTable tbody tr').forEach(tr => {
+                if (tr.cells.length > 1) {
+                    rows.push(Array.from(tr.cells).map(td => td.textContent.trim()));
+                }
+            });
+            
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sovereign_decisions.csv';
+            a.click();
+        }
+        
+        setInterval(() => window.location.reload(), 30000);
+    </script>
+</body>
+</html>

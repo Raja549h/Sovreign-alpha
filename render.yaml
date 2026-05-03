@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sovereign-alpha-dashboard
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT dashboard.app:app
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PORT
+        value: 10000
+      - key: RENDER
+        value: "true"

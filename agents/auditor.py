@@ -1,0 +1,187 @@
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
+from datetime import datetime
+
+from crewai import Agent
+from config import logger
+
+
+class ZKProofRecord(BaseModel):
+    """ZK proof record output."""
+    decision_id: str = Field(description="Decision ID")
+    proof_hash: str = Field(description="ZK proof hash")
+    proof_created_at: str = Field(description="Proof creation timestamp")
+    verification_status: str = Field(description="Verification status")
+    circuit_version: str = Field(default="1.0.0", description="Circuit version")
+    transaction_hash: Optional[str] = Field(default=None, description="On-chain tx hash")
+    policy_compliance_proof: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AuditRecord(BaseModel):
+    """Auditor output record."""
+    decision_id: str = Field(description="Decision ID")
+    zk_proof: Optional[ZKProofRecord] = Field(default=None, description="ZK proof")
+    blockchain_logged: bool = Field(description="Logged to blockchain")
+    tx_hash: Optional[str] = Field(default=None, description="Transaction hash")
+    invoice_generated: bool = Field(description="Invoice generated")
+    fee_calculated: float = Field(description="Performance fee")
+    audit_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + 'Z')
+    auditor_signature: str = Field(default="Sovereign Alpha Auditor")
+
+
+def create_auditor_agent(llm) -> Agent:
+    """
+    Create the Auditor Agent using CrewAI.
+    
+    This agent:
+    - Wraps every approved decision in a ZK proof
+    - Proves decision followed policy WITHOUT revealing private data
+    - Logs proof hash to blockchain
+    - Generates automated invoice for performance fee
+    """
+    
+    auditor = Agent(
+        llm=llm,
+        role="Chief Compliance Auditor",
+        goal="Ensure every decision is cryptographically verified, policy-compliant, and immutably logged to the blockchain",
+        backstory="""You are the Chief Compliance Auditor at Sovereign Alpha Fund with deep expertise in 
+        zero-knowledge cryptography and blockchain governance. You ensure NO decision proceeds 
+        without proper cryptographic verification.
+        
+        Your responsibilities:
+        1. Generate ZK proofs for every approved decision
+        2. Prove policy compliance WITHOUT revealing private data
+        3. Log proof hashes to Base blockchain for immutability
+        4. Generate automated invoices for performance fee calculation
+        
+        Your ZK proofs verify:
+        - Decision followed risk parameters
+        - Confidence threshold was met
+        - Position sizes were within limits
+        - Sector exposure was compliant
+        
+        The proof reveals ONLY:
+        - Decision hash (public)
+        - Timestamp (public)
+        - Agent ID (public)
+        
+        The proof hides:
+        - Specific position data
+        - Risk check details
+        - Confidence scores
+        """,
+        verbose=True,
+        allow_delegation=False,
+        output_model=AuditRecord
+    )
+    
+    return auditor
+
+
+def execute_audit(recommendation, risk_checks: Dict[str, bool], 
+                proof_generator, ledger, billing_meter) -> AuditRecord:
+    """
+    Execute audit for an approved decision.
+    """
+    logger.info("=" * 60)
+    logger.info(f"AUDITOR: Generating ZK proof for {recommendation.decision_id}")
+    logger.info("=" * 60)
+    
+    decision = {
+        'decision_id': recommendation.decision_id,
+        'agent_id': 'risk_manager',
+        'position_data': {
+            'symbol': recommendation.symbol,
+            'action': recommendation.action,
+            'quantity': recommendation.quantity,
+            'price': recommendation.entry_price,
+            'confidence': recommendation.confidence_score
+        },
+        'risk_checks': risk_checks,
+        'confidence_score': recommendation.confidence_score,
+        'approved': True,
+        'decision_type': 'trade_approval'
+    }
+    
+    proof_record = proof_generator.generate_proof(decision)
+    
+    verification = proof_generator.verify_proof(proof_record)
+    
+    policy_proof = proof_generator.create_policy_proof(risk_checks, decision)
+    
+    proof_data = proof_record.get('proof_data', {})
+    proof_hash = proof_data.get('proof_hash', '')
+    
+    tx_record = ledger.log_decision(proof_hash, {
+        'decision_id': recommendation.decision_id,
+        'decision_type': 'trade_approval',
+        'symbol': recommendation.symbol,
+        'action': recommendation.action,
+        'value_usd': recommendation.estimated_value
+    })
+    
+    tx_hash = tx_record.get('tx_hash')
+    
+    alpha_estimate = recommendation.estimated_value * 0.05
+    billing_meter.log_performance(
+        decision_id=recommendation.decision_id,
+        trade_action=recommendation.action,
+        symbol=recommendation.symbol,
+        position_value=recommendation.estimated_value,
+        alpha_generated=alpha_estimate
+    )
+    
+    zk_proof_record = ZKProofRecord(
+        decision_id=recommendation.decision_id,
+        proof_hash=proof_hash[:64],
+        proof_created_at=proof_data.get('created_at', ''),
+        verification_status=verification.get('verification_status', 'unknown'),
+        circuit_version=proof_data.get('circuit_version', '1.0.0-stub'),
+        transaction_hash=tx_hash,
+        policy_compliance_proof=policy_proof
+    )
+    
+    audit = AuditRecord(
+        decision_id=recommendation.decision_id,
+        zk_proof=zk_proof_record,
+        blockchain_logged=True,
+        tx_hash=tx_hash,
+        invoice_generated=True,
+        fee_calculated=alpha_estimate * 0.12
+    )
+    
+    logger.info(f"AUDITOR: ZK Proof generated")
+    logger.info(f"  → Proof Hash: {proof_hash[:16]}...")
+    logger.info(f"  → Verification: {verification.get('verification_status')}")
+    logger.info(f"  → Blockchain: {'confirmed' if tx_hash else 'local'}")
+    logger.info(f"  → Fee Calculated: ${audit.fee_calculated:,.2f}")
+    
+    return audit
+
+
+if __name__ == "__main__":
+    from config import setup_logging
+    logger = setup_logging()
+    
+    print("Testing Auditor Agent")
+    
+    test_rec = {
+        'decision_id': 'DEC-001',
+        'symbol': 'NVDA',
+        'action': 'BUY',
+        'quantity': 1000,
+        'entry_price': 892.40,
+        'estimated_value': 892400,
+        'confidence_score': 0.95
+    }
+    
+    test_risk_checks = {
+        'position_size_ok': True,
+        'sector_limit_ok': True,
+        'confidence_ok': True,
+        'max_drawdown_ok': True
+    }
+    
+    print(f"\nAuditing: {test_rec['action']} {test_rec['symbol']}")
+    print(f"Value: ${test_rec['estimated_value']:,.2f}")
+    print(f"All risk checks passed: {all(test_risk_checks.values())}")

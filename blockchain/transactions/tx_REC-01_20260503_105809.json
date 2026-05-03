@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "37c9251ee827bb129b7b363e4d54b1a44e3ee5ba17348acb9dffee50de3fa624",
+  "timestamp": "2026-05-03T10:58:09.446893Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "XOM",
+    "action": "BUY",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0x6ca18584f1d3ec144b07daba3f07f5db90609294b31ef6438f215fe1a9ac9a83",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
