@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance - Sovereign Alpha</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1a1a1a;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 2rem;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        
+        .stat-card label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .chart-card h3 {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+        
+        .fee-calculator {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .fee-calculator h3 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .fee-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .fee-input input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            flex: 1;
+        }
+        
+        .fee-result {
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        .fee-result .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .fee-result .amount {
+            font-size: 2rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .fee-input { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/decisions">Decisions</a>
+            <a href="/proofs">Proofs</a>
+            <a href="/performance" class="active">Performance</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1>Performance Analytics</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <label>Total Sessions</label>
+                <div class="value">{{ total_sessions }}</div>
+            </div>
+            <div class="stat-card">
+                <label>Avg Confidence</label>
+                <div class="value">{{ "%.0f"|format(avg_confidence * 100) }}%</div>
+            </div>
+            <div class="stat-card">
+                <label>Total Alpha</label>
+                <div class="value">${{ "%.0f"|format(total_alpha) }}</div>
+            </div>
+            <div class="stat-card">
+                <label>Est. Fees (12%)</label>
+                <div class="value">${{ "%.0f"|format(total_alpha * 0.12) }}</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Confidence Over Time</h3>
+                <div class="chart-container">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>Approved vs Vetoed by Sector</h3>
+                <div class="chart-container">
+                    <canvas id="sectorChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-card" style="margin-bottom: 2rem;">
+            <h3>Potential Return Distribution</h3>
+            <div class="chart-container">
+                <canvas id="returnChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="fee-calculator">
+            <h3>Performance Fee Calculator</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                Calculate estimated performance fees at 12% of alpha generated.
+            </p>
+            
+            <div class="fee-input">
+                <input type="number" id="alphaInput" placeholder="Enter alpha amount (USD)" value="{{ "%.0f"|format(total_alpha) }}">
+                <button class="btn" onclick="calculateFee()">Calculate</button>
+            </div>
+            
+            <div class="fee-result">
+                <div class="label">Performance Fee (12%)</div>
+                <div class="amount" id="feeOutput">${{ "%.0f"|format(total_alpha * 0.12) }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const confidenceData = {{ confidence_history | safe }};
+        const sectorData = {{ sector_data | safe }};
+        const returnData = {{ return_distribution | safe }};
+        
+        new Chart(document.getElementById('confidenceChart'), {
+            type: 'line',
+            data: {
+                labels: confidenceData.labels,
+                datasets: [{
+                    label: 'Confidence',
+                    data: confidenceData.values,
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#888' } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1,
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    },
+                    x: {
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    }
+                }
+            }
+        });
+        
+        new Chart(document.getElementById('sectorChart'), {
+            type: 'bar',
+            data: {
+                labels: sectorData.labels,
+                datasets: [
+                    {
+                        label: 'Approved',
+                        data: sectorData.approved,
+                        backgroundColor: '#00ff88'
+                    },
+                    {
+                        label: 'Vetoed',
+                        data: sectorData.vetoed,
+                        backgroundColor: '#ff4444'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#888' } }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    },
+                    x: {
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    }
+                }
+            }
+        });
+        
+        new Chart(document.getElementById('returnChart'), {
+            type: 'bar',
+            data: {
+                labels: returnData.labels,
+                datasets: [{
+                    label: 'Return',
+                    data: returnData.values,
+                    backgroundColor: '#00ff88'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#888' } }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    },
+                    x: {
+                        ticks: { color: '#888' },
+                        grid: { color: '#2a2a2a' }
+                    }
+                }
+            }
+        });
+        
+        function calculateFee() {
+            const alpha = parseFloat(document.getElementById('alphaInput').value) || 0;
+            const fee = alpha * 0.12;
+            document.getElementById('feeOutput').textContent = '$' + Math.round(fee).toLocaleString();
+        }
+        
+        setInterval(() => window.location.reload(), 30000);
+    </script>
+</body>
+</html>

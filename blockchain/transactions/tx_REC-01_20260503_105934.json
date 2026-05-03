@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "c97daadadc37c6506664a3e6bd2d8f4d451144b79304c3756b2bf523a153f9e0",
+  "timestamp": "2026-05-03T10:59:34.009807Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "NVDA",
+    "action": "HOLD",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0x7a1a0fef81194413f418cf3242d41fbcfbf9551b1ed9a9cff6313cb2ca38c445",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

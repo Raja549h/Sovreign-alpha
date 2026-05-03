@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Sensitive files (keep in local, don't push)
+.env
+.env.local
+*.pem
+zkml/keys/private_key.pem
+
+# Database
+*.db
+*.sqlite
+billing/billing.db
+
+# Results cache
+results/*.json
+!results/.gitkeep
+
+# Proofs cache (regeneratable)
+zkml/proofs/*.json
+!zkml/proofs/.gitkeep
+
+# ChromaDB
+data/chroma_db/
+
+# Temp
+tmp/
+temp/
+*.log

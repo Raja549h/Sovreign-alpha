@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "24bfd8900e3f27809a8e2d293f56c92773bbc1c1a6b22a788f623c55ed2c135e",
+  "timestamp": "2026-05-03T10:59:23.460123Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "MSFT",
+    "action": "HOLD",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0xc46eb1e095548074146cdac1b2871fbf661f803602363756f5510d5918dc0cd1",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

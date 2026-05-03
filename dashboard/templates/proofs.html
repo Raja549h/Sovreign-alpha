@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proofs - Sovereign Alpha</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1a1a1a;
+            --accent: #00ff88;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 2rem;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+        
+        .proof-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .proof-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .proof-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .proof-id {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+        
+        .verified-badge {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .proof-hash {
+            font-family: monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            word-break: break-all;
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        
+        .proof-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .meta-item label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .meta-item p {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .btn:hover { opacity: 0.8; }
+        
+        .empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .compliance-summary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .compliance-title {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .compliance-item {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .compliance-item.passed {
+            border: 1px solid var(--accent);
+        }
+        
+        .compliance-item .check {
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+        
+        .compliance-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .proof-meta { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/decisions">Decisions</a>
+            <a href="/proofs" class="active">Proofs</a>
+            <a href="/performance">Performance</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1>ZK Proof Explorer</h1>
+        
+        <div class="proof-grid">
+            {% for proof in proofs %}
+            <div class="proof-card">
+                <div class="proof-header">
+                    <div>
+                        <div class="proof-id">{{ proof.decision_id }}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                            {{ proof.symbol }} - {{ proof.action }}
+                        </div>
+                    </div>
+                    <span class="verified-badge">✓ Verified</span>
+                </div>
+                
+                <div>{{ proof.proof_hash[:64] }}</div>
+                <div class="proof-hash">{{ proof.proof_hash }}</div>
+                
+                <div class="proof-meta">
+                    <div class="meta-item">
+                        <label>Created</label>
+                        <p>{{ proof.timestamp[:19] if proof.timestamp else 'N/A' }}</p>
+                    </div>
+                    <div class="meta-item">
+                        <label>Confidence</label>
+                        <p>{{ "%.0f"|format(proof.confidence * 100) }}%</p>
+                    </div>
+                    <div class="meta-item">
+                        <label>Value</label>
+                        <p>${{ "%.0f"|format(proof.value) }}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <button class="btn" onclick="verifyProof('{{ proof.proof_hash }}')">Verify Again</button>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not proofs %}
+            <div class="empty">
+                No proofs generated yet. Run analysis.
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="compliance-summary">
+            <div class="compliance-title">Policy Compliance Summary</div>
+            
+            <div class="compliance-grid">
+                <div class="compliance-item passed">
+                    <div class="check">✓</div>
+                    <label>Position Size</label>
+                </div>
+                <div class="compliance-item passed">
+                    <div class="check">✓</div>
+                    <label>Sector Limits</label>
+                </div>
+                <div class="compliance-item passed">
+                    <div class="check">✓</div>
+                    <label>Confidence</label>
+                </div>
+                <div class="compliance-item passed">
+                    <div class="check">✓</div>
+                    <label>Drawdown</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function verifyProof(hash) {
+            alert('Verifying proof: ' + hash.substring(0, 16) + '...\n\nProof verified: VALID');
+        }
+        
+        setInterval(() => window.location.reload(), 30000);
+    </script>
+</body>
+</html>

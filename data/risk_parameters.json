@@ -1,0 +1,108 @@
+{
+  "fund_name": "Sovereign Alpha Fund, LP",
+  "fund_id": "SOVEREIGN-ALPHA-001",
+  "inception_date": "2024-01-01",
+  "aum_initial_usd": 59000000,
+  "testing_mode": true,
+  "risk_parameters": {
+    "max_drawdown_pct": 15.0,
+    "max_position_size_pct": 4.5,
+    "max_sector_exposure_pct": 25.0,
+    "max_annual_volatility": 18.0,
+    "min_cash_reserve_pct": 8.0,
+    "max_leverage": 1.5,
+    "stop_loss_default_pct": 12.0,
+    "var_99_daily_pct": 2.5,
+    "var_95_daily_pct": 1.5,
+    "var_confidence_level": 0.99,
+    "target_sharpe_ratio": 1.5,
+    "min_sharpe_ratio": 1.0,
+    "max_position_correlation": 0.65,
+    "min_liquid_positions_pct": 60.0,
+    "min_esc_score": 65.0
+  },
+  "sector_limits": {
+    "Technology": 25.0,
+    "Financial": 20.0,
+    "Healthcare": 18.0,
+    "Consumer": 15.0,
+    "Energy": 12.0,
+    "Industrials": 10.0,
+    "Real Estate": 8.0,
+    "Materials": 8.0,
+    "Utilities": 5.0,
+    "Other": 5.0
+  },
+  "position_limits": {
+    "max_concentrated_positions": 3,
+    "max_small_cap_positions": 5,
+    "min_liquidity_daily_250k": true,
+    "min_market_cap_millions": 500,
+    "max_options_legs": 4
+  },
+  "approved_assets": [
+    "AAPL", "MSFT", "GOOGL", "META", "NVDA", "AMD", "AVGO", "ORCL", "NET", "CRM",
+    "JPM", "BAC", "GS", "MS", "BRK.B", "V", "MA",
+    "JNJ", "UNH", "LLY", "PFE", "MRK", "NVO",
+    "AMZN", "NFLX", "COST", "TGT", "HD", "NKE",
+    "XOM", "CVX", "COP",
+    "BA", "CAT", "GE", "HON"
+  ],
+  "excluded_assets": [
+    "RIVN", "LCID", "PLTR",
+    "BTBT", "TIGR", "ROCK"
+  ],
+  "governance": {
+    "require_risk_approval": true,
+    "require_audit_proof": true,
+    "min_confidence_score": 0.60,
+    "max_single_trade_usd": 500000,
+    "performance_fee_pct": 12.0,
+    "zk_proof_required": true,
+    "max_daily_trades": 15,
+    "trading_window_start": "09:30:00",
+    "trading_window_end": "15:45:00"
+  },
+  "blockchain": {
+    "network": "base-sepolia",
+    "proof_log_enabled": true,
+    "confirmations_required": 2,
+    "fallback_to_local_ledger": true
+  },
+  "zk_proof_settings": {
+    "batch_size": 10,
+    "circuit_version": "1.0.0-stub",
+    "privacy_public_inputs": [
+      "decision_hash",
+      "timestamp",
+      "agent_id"
+    ],
+    "privacy_witness": [
+      "position_data",
+      "risk_checks",
+      "confidence_score"
+    ],
+    "verification_timeout_seconds": 30
+  },
+  "performance_benchmarks": {
+    "benchmark_ticker": "SPY",
+    "target_alpha_bps": 150,
+    "target_total_return_pct": 18.0,
+    "min_information_ratio": 0.75,
+    "max_tracking_error_pct": 8.0
+  },
+  "compliance": {
+    "fatf_blacklist_screening": true,
+    "esg_exclusions": ["controversial_weapons", "thermal_coal", "tar_sands"],
+    "max_co2_tons_per_million_invested": 250,
+    "diversity_min_pct": 25.0
+  },
+  "reporting": {
+    "daily_positions": true,
+    "weekly_performance": true,
+    "monthly_audit": true,
+    "quarterly_board": true,
+    "nav_calculation": "T+1",
+    "currency": "USD"
+  }
+}

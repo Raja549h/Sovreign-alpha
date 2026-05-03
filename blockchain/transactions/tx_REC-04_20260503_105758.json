@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-04",
+  "proof_hash": "438abb0ef76ef53b9f807005c4669c3baf46bc7337dc6dc3ead57c7f599051eb",
+  "timestamp": "2026-05-03T10:57:58.928675Z",
+  "metadata": {
+    "decision_id": "REC-04",
+    "decision_type": "trade_approval",
+    "symbol": "GOOGL",
+    "action": "BUY",
+    "value_usd": 250000.0
+  },
+  "tx_hash": "0x6d3241e09a0775d179316e6f6502f5383113a71ab02b9b246ad9861aa027d817",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
