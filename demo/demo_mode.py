@@ -28,13 +28,9 @@ def print_step(step_num: int, title: str, duration: int):
 
 def main():
     """Run 4-minute demo."""
-    print("""
-╔═══════════════════════════════════════════════════════════════════╗
-║         S O V E R E I G N   A L P H A                         ║
-║                    DEMO MODE                                 ║
-║              4-Minute Presentation                           ║
-╚═══════════════════════════════════════════════════════════════════╝
-""")
+    print("=== SOVEREIGN ALPHA - DEMO MODE ===")
+    print("4-Minute Presentation")
+    print("=" * 50)
     
     print("Starting demo in...")
     print("  3...")
