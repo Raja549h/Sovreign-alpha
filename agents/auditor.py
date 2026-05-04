@@ -103,14 +103,14 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
         'decision_type': 'trade_approval'
     }
     
-    proof_record = proof_generator.generate_proof(decision)
+    proof_record = proof_generator.generate_proof(decision, risk_checks)
     
     verification = proof_generator.verify_proof(proof_record)
     
-    policy_proof = proof_generator.create_policy_proof(risk_checks, decision)
+    policy_proof = proof_record  # Use the proof record itself
     
-    proof_data = proof_record.get('proof_data', {})
-    proof_hash = proof_data.get('proof_hash', '')
+    proof_data = proof_record  # RSA certificate has all info
+    proof_hash = proof_record.get('commitment_hash', '')
     
     tx_record = ledger.log_decision(proof_hash, {
         'decision_id': recommendation.decision_id,
