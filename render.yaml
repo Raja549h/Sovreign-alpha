@@ -3,7 +3,7 @@ services:
     name: sovereign-alpha-dashboard
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements-dashboard.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT dashboard.app:app
     envVars:
       - key: GROQ_API_KEY
