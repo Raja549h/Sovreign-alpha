@@ -3,10 +3,13 @@ services:
     name: sovereign-alpha-dashboard
     env: python
     plan: free
-    buildCommand: pip install flask>=3.0.0 gunicorn==21.2.0 python-dotenv==1.0.1 rich==13.9.4 requests>=2.31.0 pandas==2.2.3 groq==0.11.0 cryptography==42.0.5 yfinance==0.2.36
+    pythonVersion: "3.11.0"
+    buildCommand: pip install flask==3.0.3 gunicorn==21.2.0 python-dotenv==1.0.1 requests==2.31.0 pandas==2.2.3 groq==0.11.0 cryptography==42.0.5 yfinance==0.2.36
     startCommand: gunicorn --bind 0.0.0.0:$PORT dashboard.app:app
     envVars:
       - key: GROQ_API_KEY
         sync: false
       - key: RENDER
         value: true
+      - key: PYTHON_VERSION
+        value: "3.11.0"
