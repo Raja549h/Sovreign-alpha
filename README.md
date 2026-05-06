@@ -13,9 +13,11 @@ A private council of AI agents that analyzes your fund's data, finds alpha oppor
 
 ## Live Demo
 
-**Running now:** https://sovereign-alpha.onrender.com
+**Deploy to Render.com** (free tier) and add your URL:
 
-Try the dashboard, review live decisions, and see ZK proofs in action.
+```
+https://your-app-name.onrender.com
+```
 
 ---
 
@@ -40,11 +42,13 @@ Try the dashboard, review live decisions, and see ZK proofs in action.
 
 ## Screenshots
 
-![Dashboard Home](https://raw.githubusercontent.com/anomalyco/sovereign-alpha/main/docs/screenshots/dashboard-home.png)
-![Decisions](https://raw.githubusercontent.com/anomalyco/sovereign-alpha/main/docs/screenshots/decisions.png)
-![ZK Proofs](https://raw.githubusercontent.com/anomalyco/sovereign-alpha/main/docs/screenshots/proofs.png)
-![Performance](https://raw.githubusercontent.com/anomalyco/sovereign-alpha/main/docs/screenshots/performance.png)
-![Live Market](https://raw.githubusercontent.com/anomalyco/sovereign-alpha/main/docs/screenshots/live-market.png)
+| Dashboard | Decisions | ZK Proofs |
+|-----------|-----------|----------|
+| ![Home](docs/screenshots/dashboard-home.png) | ![Decisions](docs/screenshots/decisions.png) | ![Proofs](docs/screenshots/proofs.png) |
+
+| Performance | Live Market |
+|------------|-----------|
+| ![Performance](docs/screenshots/performance.png) | ![Live Market](docs/screenshots/live-market.png) |
 
 ---
 
