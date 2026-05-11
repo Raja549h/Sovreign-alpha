@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "89459baa73f03e6028d1443bd95f2a94eb79f5874e9a614993bd5238e4156321",
+  "timestamp": "2026-05-06T06:46:18.454581Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "NVDA",
+    "action": "BUY",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0xdcc5892aa6846cef7f3ff37888b92c98b6fb6c14dc7e58cf5857ee9c8051ff0b",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

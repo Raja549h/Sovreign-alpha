@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-02",
+  "proof_hash": "a4c5ddcf7449ed1b80cdf57cecb01522c8aa1d744aeab819963756bd8e646895",
+  "timestamp": "2026-05-06T06:51:07.976373Z",
+  "metadata": {
+    "decision_id": "REC-02",
+    "decision_type": "trade_approval",
+    "symbol": "CVX",
+    "action": "BUY",
+    "value_usd": 150000.0
+  },
+  "tx_hash": "0x0519aa794796c11b34a294e279a93194add2beb44d863fccf8b7c0b711fca471",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

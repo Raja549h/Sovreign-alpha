@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-02",
+  "proof_hash": "f09d1943e38976e25ff8cbef4ec41d08857957231afa74ab36898b0fea16e9ed",
+  "timestamp": "2026-05-06T06:53:03.425673Z",
+  "metadata": {
+    "decision_id": "REC-02",
+    "decision_type": "trade_approval",
+    "symbol": "AMD",
+    "action": "BUY",
+    "value_usd": 150000.0
+  },
+  "tx_hash": "0x551d2b9bc47b65ebbc560d7b23c2105239a0923238eb707fffec64f948535c94",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

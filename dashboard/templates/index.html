@@ -175,6 +175,17 @@
         }
         
         .btn:hover { background: var(--accent-dim); }
+        .btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
+        
+        .btn-running {
+            background: var(--warning);
+            animation: pulse-warning 1s infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
         
         .table-container {
             background: var(--bg-secondary);
@@ -249,6 +260,42 @@
             50% { opacity: 0.5; }
         }
         
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .notification.success {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        .notification.error {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--bg-primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 768px) {
             .nav { flex-direction: column; gap: 1rem; }
             .stats-grid { grid-template-columns: 1fr; }
@@ -257,7 +304,7 @@
 </head>
 <body>
     <nav class="nav">
-        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
+        <div class="nav-brand">SOVEREIGN ALPHA</div>
         <div class="nav-links">
             <a href="/" class="active">Home</a>
             <a href="/decisions">Decisions</a>
@@ -266,35 +313,37 @@
         </div>
     </nav>
     
+    <div class="notification" id="notification"></div>
+    
     <div class="container">
         <div class="header">
             <h1>Fund Overview</h1>
-            <p>Real-time Sovereign Alpha Dashboard</p>
+            <p>Real-time Sovereign Alpha Dashboard - Last updated: <span id="last-update">{{ last_verified }}</span></p>
         </div>
         
         <div class="stats-grid">
             <div class="stat-card">
                 <label>AUM</label>
-                <div class="value">$10.4M</div>
-                <div class="subtitle">+4.2% this session</div>
+                <div class="value">$59M</div>
+                <div class="subtitle">Configured AUM</div>
             </div>
             
             <div class="stat-card">
                 <label>Approval Rate</label>
-                <div class="value">{{ "%.0f"|format(approval_rate) }}%</div>
-                <div class="subtitle">{{ total_approved }}/{{ total_decisions }} decisions</div>
+                <div class="value" id="approval-rate">{{ "%.1f"|format(approval_rate) }}%</div>
+                <div class="subtitle" id="decisions-count">{{ total_approved }}/{{ total_decisions }} decisions</div>
             </div>
             
             <div class="stat-card">
                 <label>Alpha Generated</label>
-                <div class="value">${{ "%.0f"|format(total_alpha) }}</div>
+                <div class="value" id="total-alpha">${{ "%.0f"|format(total_alpha) }}</div>
                 <div class="subtitle">Est. fees: ${{ "%.0f"|format(total_alpha * 0.12) }}</div>
             </div>
             
             <div class="stat-card">
                 <label>ZK Proofs</label>
-                <div class="value">{{ proofs_verified }}</div>
-                <div class="subtitle">All verified ✓</div>
+                <div class="value" id="proofs-count">{{ proofs_verified }}</div>
+                <div class="subtitle">All verified</div>
             </div>
         </div>
         
@@ -303,9 +352,9 @@
                 <div class="section-title">Approval Rate</div>
                 <div class="gauge-container">
                     <div class="gauge-wrapper">
-                        <div class="gauge-circle">
+                        <div class="gauge-circle" id="gauge-circle">
                             <div class="gauge-inner">
-                                <div class="gauge-value">{{ "%.0f"|format(approval_rate) }}%</div>
+                                <div class="gauge-value" id="gauge-value">{{ "%.0f"|format(approval_rate) }}%</div>
                                 <div class="gauge-label">Approved</div>
                             </div>
                         </div>
@@ -320,13 +369,15 @@
                     <div>
                         <strong>All proofs verified</strong>
                         <p style="color: var(--text-secondary); font-size: 0.85rem;">
-                            Last verification: {{ last_verified }}
+                            Last verification: <span id="last-verified">{{ last_verified }}</span>
                         </p>
                     </div>
                 </div>
                 
                 <div style="margin-top: 1.5rem;">
-                    <a href="/run" class="btn">Run New Analysis</a>
+                    <button class="btn" id="run-btn" onclick="runAnalysis()">
+                        Run New Analysis
+                    </button>
                 </div>
             </div>
         </div>
@@ -350,7 +401,7 @@
                         <th>Value</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="decisions-tbody">
                     {% for decision in recent_decisions %}
                     <tr class="row-{{ decision.status }}">
                         <td>{{ decision.decision_id }}</td>
@@ -369,7 +420,7 @@
                     {% if not recent_decisions %}
                     <tr>
                         <td colspan="6" style="text-align: center; color: var(--text-secondary);">
-                            No decisions yet. Run analysis.
+                            No decisions yet. Click "Run New Analysis" to start.
                         </td>
                     </tr>
                     {% endif %}
@@ -379,12 +430,67 @@
     </div>
     
     <script>
-        function refreshData() {
-            fetch('/api/refresh', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => { if (data.success) location.reload(); });
+        function showNotification(message, type) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = 'notification ' + type;
+            notif.style.display = 'block';
+            setTimeout(() => { notif.style.display = 'none'; }, 5000);
         }
-        setInterval(refreshData, 30000);
+        
+        function runAnalysis() {
+            const btn = document.getElementById('run-btn');
+            btn.disabled = true;
+            btn.className = 'btn btn-running';
+            btn.innerHTML = '<span class="spinner"></span>Running Analysis...';
+            
+            fetch('/api/run', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.className = 'btn';
+                    btn.textContent = 'Run New Analysis';
+                    
+                    if (data.success) {
+                        showNotification(
+                            'Analysis complete! ' + 
+                            (data.new_decisions || 0) + ' new decisions, ' + 
+                            (data.new_proofs || 0) + ' new proofs',
+                            'success'
+                        );
+                        refreshStats();
+                    } else {
+                        showNotification('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.className = 'btn';
+                    btn.textContent = 'Run New Analysis';
+                    showNotification('Error running analysis: ' + err, 'error');
+                });
+        }
+        
+        function refreshStats() {
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('approval-rate').textContent = 
+                        (data.approved / (data.total_decisions || 1) * 100).toFixed(1) + '%';
+                    document.getElementById('decisions-count').textContent = 
+                        data.approved + '/' + data.total_decisions + ' decisions';
+                    document.getElementById('total-alpha').textContent = 
+                        '$' + (data.total_alpha || 0).toLocaleString();
+                    document.getElementById('proofs-count').textContent = 
+                        data.proofs_verified || 0;
+                    document.getElementById('last-verified').textContent = 
+                        new Date().toLocaleTimeString();
+                    document.getElementById('last-update').textContent = 
+                        new Date().toLocaleTimeString();
+                });
+        }
+        
+        setInterval(refreshStats, 10000);
     </script>
 </body>
 </html>

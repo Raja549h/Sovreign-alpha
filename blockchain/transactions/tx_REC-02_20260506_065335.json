@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-02",
+  "proof_hash": "ce86ad920404161461a0d455ac09b362731c55efed237c847b4f1ca6fb2a8106",
+  "timestamp": "2026-05-06T06:53:35.097142Z",
+  "metadata": {
+    "decision_id": "REC-02",
+    "decision_type": "trade_approval",
+    "symbol": "NVO",
+    "action": "BUY",
+    "value_usd": 150000.0
+  },
+  "tx_hash": "0x014270a374c34d49fc5ba14f139994b38e2a9768d1bca286e032f2ba1bc7c3bd",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
