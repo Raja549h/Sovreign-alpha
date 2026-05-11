@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 from crewai import Agent
-from config import logger
+from privacy import logger  # ✅ PRIVACY: Sanitized logger (WARNING+)
 
 
 class TradeRecommendation(BaseModel):
@@ -91,20 +91,13 @@ def create_analyst_agent(llm, knowledge_base) -> Agent:
 
 
 def execute_analyst_analysis(analyst: Agent, knowledge_base, portfolio_data: Dict[str, Any]) -> AnalystOutput:
-    """Execute analysis using the Analyst agent."""
-    logger.info("=" * 60)
-    logger.info("=" * 60)
-    logger.info("ANALYST AGENT: Starting position analysis")
-    logger.info("=" * 60)
+    """Execute analysis using the Analyst agent. ✅ PRIVACY: No raw positions in logs."""
+    logger.warning("ANALYST: Starting position analysis")  # ✅ PRIVACY: Metadata only
     
     active_positions = knowledge_base.get_active_positions()
     risk_params = knowledge_base.get_risk_parameters()
     
-    positions_summary = "\n".join([
-        f"- {p['symbol']}: ${p.get('unrealized_pnl', 0):,.2f} P&L, "
-        f"Confidence: {p.get('confidence_score', 0):.2f}"
-        for p in active_positions
-    ])
+    positions_count = len(active_positions)  # ✅ PRIVACY: Count only, no symbols
     
     sector_limits = json.dumps(risk_params.get('sector_limits', {}), indent=2)
     
@@ -144,10 +137,8 @@ Sector watch:
         expected_output="Structured trade recommendations with confidence scores"
     )
     
-    logger.info("Querying knowledge base for additional context...")
-    
     kb_results = knowledge_base.query("momentum signals technology buy", top_k=5)
-    logger.info(f"Found {len(kb_results)} relevant documents from knowledge base")
+    logger.warning(f"Analyst: processed {len(kb_results)} docs")  # ✅ PRIVACY: Count only
     
     recommendations = []
     
@@ -210,10 +201,9 @@ Sector watch:
         alerts=["Technology approaching sector limit", "Monitor NVDA earnings"]
     )
     
-    logger.info(f"ANALYST: Generated {len(recommendations)} recommendations")
+    logger.warning(f"ANALYST: Generated {len(recommendations)} recommendations")  # ✅ PRIVACY: Count only
     for rec in recommendations:
-        logger.info(f"  → {rec.action} {rec.symbol} @ ${rec.entry_price:.2f} "
-                   f"[Confidence: {rec.confidence_score:.0%}]")
+        logger.warning(f"  -> {rec.action} {rec.symbol} [Confidence: {rec.confidence_score:.0%}]")  # ✅ PRIVACY: No $ values
     
     return output
 
