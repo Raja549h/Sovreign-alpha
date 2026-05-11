@@ -150,45 +150,10 @@ class KnowledgeBase:
                 logger.warning(f"Embedding generation failed: {e}")
 
     def _generate_embeddings(self, texts: List[str], ids: List[str], metadatas: List[Dict]):
-        if not GROQ_AVAILABLE:
-            logger.warning("Groq not available for embeddings, using hash fallback")
-            for i, text in enumerate(texts):
-                embedding = self._simple_hash_embedding(text)
-                self.collection.upsert(
-                    ids=[ids[i]],
-                    embeddings=[embedding],
-                    metadatas=[metadatas[i]]
-                )
-            return
-
-        try:
-            client = Groq(api_key=GROQ_API_KEY)
-            
-            for i, text in enumerate(texts):
-                try:
-                    response = client.embeddings.create(
-                        model=embedding_model,
-                        input=text
-                    )
-                    embedding = response.data[0].embedding
-                    self.collection.upsert(
-                        ids=[ids[i]],
-                        embeddings=[embedding],
-                        metadatas=[metadatas[i]]
-                    )
-                except Exception as e:
-                    logger.warning(f"Embedding failed for {ids[i]}: {e}")
-                    embedding = self._simple_hash_embedding(text)
-                    self.collection.upsert(
-                        ids=[ids[i]],
-                        embeddings=[embedding],
-                        metadatas=[metadatas[i]]
-                    )
-                    
-        except Exception as e:
-            logger.warning(f"Groq embedding setup failed: {e}")
-            for i, text in enumerate(texts):
-                embedding = self._simple_hash_embedding(text)
+        logger.info("Using hash-based embeddings (no API calls)")
+        for i, text in enumerate(texts):
+            embedding = self._simple_hash_embedding(text)
+            if self.collection:
                 self.collection.upsert(
                     ids=[ids[i]],
                     embeddings=[embedding],
@@ -207,15 +172,7 @@ class KnowledgeBase:
             return self._fallback_query(query_text, top_k)
 
         try:
-            if not GROQ_AVAILABLE:
-                query_embedding = self._simple_hash_embedding(query_text)
-            else:
-                client = Groq(api_key=GROQ_API_KEY)
-                response = client.embeddings.create(
-                    model=embedding_model,
-                    input=query_text
-                )
-                query_embedding = response.data[0].embedding
+            query_embedding = self._simple_hash_embedding(query_text)
 
             results = self.collection.query(
                 query_embeddings=[query_embedding],
