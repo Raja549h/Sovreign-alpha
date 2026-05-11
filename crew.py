@@ -25,6 +25,7 @@ from typing import Dict, Any, List, Optional
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config import BASE_DIR, DATA_DIR, GROQ_API_KEY, logger, llm_config
+from privacy import logger, TenantScopedData  # ✅ PRIVACY: Sanitized logger, tenant isolation
 
 from rag.knowledge_base import get_knowledge_base
 
@@ -122,17 +123,12 @@ class SovereignAlphaOrchestrator:
     def run_analysis_cycle(self) -> Dict[str, Any]:
         """
         Execute a complete analysis cycle.
+        ✅ PRIVACY: No raw data in logs, metadata only.
         """
-        print("\n" + "=" * 70)
-        print("SOVEREIGN ALPHA - Starting Analysis Cycle")
-        print("=" * 70)
-        print(f"Timestamp: {datetime.utcnow().isoformat()}Z")
+        logger.warning("SOVEREIGN ALPHA: Starting analysis cycle")  # ✅ PRIVACY: Metadata only
         
         portfolio_data = self.kb.get_portfolio_summary()
-        
-        print("\n" + "-" * 50)
-        print("STEP 1: ANALYST AGENT - Generating Recommendations")
-        print("-" * 50)
+        positions_count = len(portfolio_data.get('positions', []))  # ✅ PRIVACY: Count only
         
         if self.analyst and self.llm:
             analyst_output = execute_analyst_analysis(
@@ -154,26 +150,19 @@ class SovereignAlphaOrchestrator:
         recommendations = analyst_output.recommendations if hasattr(analyst_output, 'recommendations') else []
         
         if not recommendations:
-            print("  No recommendations generated")
+            logger.warning("Analyst: No recommendations generated")  # ✅ PRIVACY: Status only
             return {'status': 'no_recommendations', 'cycle': 'failed'}
         
-        print(f"\n  Generated {len(recommendations)} recommendations")
+        logger.warning(f"Analyst: Generated {len(recommendations)} recommendations")  # ✅ PRIVACY: Count only
         
         results = []
         
         for i, rec in enumerate(recommendations[:3]):
-            print(f"\n  Processing: {rec.decision_id} - {rec.action} {rec.symbol}")
+            logger.warning(f"Processing: {rec.decision_id}")  # ✅ PRIVACY: ID only
             
             risk_params = self.kb.get_risk_parameters()
             
-            print("\n" + "-" * 50)
-            print(f"STEP 2: RISK MANAGER - Checking {rec.decision_id}")
-            print("-" * 50)
-            
-            print(f"  Analyzing: {rec.action} {rec.symbol} @ ${rec.entry_price:.2f}")
-            print(f"  Position Value: ${rec.estimated_value:,.2f}")
-            print(f"  Confidence: {rec.confidence_score:.0%}")
-            print(f"  Sector: {rec.sector}")
+            logger.warning(f"STEP 2: RISK MANAGER - Checking {rec.decision_id}")  # ✅ PRIVACY: ID only
             
             if self.risk_manager and self.llm:
                 risk_approval = execute_risk_approval(rec, risk_params, None)
@@ -192,21 +181,18 @@ class SovereignAlphaOrchestrator:
                 )
             
             if not risk_approval.approved:
-                print(f"\n  [FAIL] VETOED: {risk_approval.veto_message or 'Risk checks failed'}")
+                logger.warning(f"VETOED: {rec.decision_id}")  # ✅ PRIVACY: ID only
                 results.append({
                     'decision_id': rec.decision_id,
-                    'status': 'vetoed',
-                    'reason': risk_approval.veto_message or 'Risk checks failed'
-                })
+                    'status': 'vetoed'
+                })  # ✅ PRIVACY: No veto reason in logs
                 continue
             
-            print(f"  [PASS] Approved (passed {len(risk_approval.risk_checks)} checks)")
+            logger.warning(f"Approved: {rec.decision_id} | checks={len(risk_approval.risk_checks)}")  # ✅ PRIVACY: Count only
             
             risk_checks = create_risk_checks(rec, portfolio_data, risk_params)
             
-            print("\n" + "-" * 50)
-            print(f"STEP 3: AUDITOR - Generating ZK Proof")
-            print("-" * 50)
+            logger.warning(f"STEP 3: AUDITOR - Generating ZK proof")  # ✅ PRIVACY: Status only
             
             audit = execute_audit(
                 rec,
@@ -217,34 +203,21 @@ class SovereignAlphaOrchestrator:
             )
             
             if not audit.zk_proof:
-                print("  ERROR: Failed to generate ZK proof")
+                logger.warning(f"AUDITOR: Proof generation failed for {rec.decision_id}")  # ✅ PRIVACY: ID only
                 results.append({
                     'decision_id': rec.decision_id,
-                    'status': 'audit_failed',
-                    'reason': 'ZK proof generation failed'
-                })
+                    'status': 'audit_failed'
+                })  # ✅ PRIVACY: No raw data
                 continue
             
-            print(f"  [PASS] ZK Proof: {audit.zk_proof.proof_hash[:16]}...")
-            print(f"  [PASS] Blockchain: {'confirmed' if audit.tx_hash else 'local'}")
-            print(f"  [PASS] Fee: ${audit.fee_calculated:,.2f}")
-            
-            audit_result = audit.dict() if hasattr(audit, 'dict') else {
-                'decision_id': audit.decision_id,
-                'zk_proof': audit.zk_proof.dict() if audit.zk_proof else None,
-                'blockchain_logged': audit.blockchain_logged,
-                'tx_hash': audit.tx_hash,
-                'fee_calculated': audit.fee_calculated
-            }
+            logger.warning(f"AUDITOR: Proof generated | hash={audit.zk_proof.proof_hash[:16]}...")  # ✅ PRIVACY: Hash only
+            logger.warning(f"BLOCKCHAIN: {'confirmed' if audit.tx_hash else 'local'}")  # ✅ PRIVACY: Status only
             
             results.append({
                 'decision_id': rec.decision_id,
                 'status': 'approved',
-                'zk_proof_hash': audit.zk_proof.proof_hash[:32] if audit.zk_proof else None,
-                'tx_hash': audit.tx_hash,
-                'fee_calculated': audit.fee_calculated,
-                'blockchain_logged': audit.blockchain_logged
-            })
+                'zk_proof_hash': audit.zk_proof.proof_hash[:32] if audit.zk_proof else None
+            })  # ✅ PRIVACY: Proof only, no positions
         
         summary = self._generate_cycle_summary(results)
         
@@ -325,53 +298,22 @@ class SovereignAlphaOrchestrator:
         }
 
     def print_final_report(self, summary: Dict[str, Any]):
-        """Print final report to console."""
-        print("\n" + "=" * 70)
-        print("SOVEREIGN ALPHA - CYCLE COMPLETE")
-        print("=" * 70)
-        
-        print(f"\nTimestamp: {summary.get('timestamp', '')}")
-        print(f"Total Decisions: {summary.get('total_decisions', 0)}")
-        print(f"  [PASS] Approved: {summary.get('approved', 0)}")
-        print(f"  [FAIL] Vetoed: {summary.get('vetoed', 0)}")
+        """Print final report to console. ✅ PRIVACY: Proof-only output."""
+        logger.warning(f"CYCLE COMPLETE: {summary.get('total_decisions', 0)} decisions")  # ✅ PRIVACY: Count only
+        logger.warning(f"  APPROVED: {summary.get('approved', 0)} | VETOED: {summary.get('vetoed', 0)}")  # ✅ PRIVACY: Counts only
         
         if summary.get('total_fees'):
-            print(f"\nPerformance Fees Generated: ${summary.get('total_fees', 0):,.2f}")
-        
-        print("\n" + "-" * 50)
-        print("Decision Details:")
-        print("-" * 50)
+            logger.warning(f"Performance Fees: ${summary.get('total_fees', 0):,.2f}")  # ✅ PRIVACY: Fee only
         
         for result in summary.get('results', []):
             decision_id = result.get('decision_id', 'UNKNOWN')
             status = result.get('status', 'unknown')
             
             if status == 'approved':
-                print(f"\n  [PASS] {decision_id}: APPROVED")
-                print(f"    ZK Proof: {result.get('zk_proof_hash', 'N/A')[:24]}...")
-                print(f"    Blockchain: {result.get('tx_hash', 'N/A')[:20] if result.get('tx_hash') else 'local'}...")
-                print(f"    Fee: ${result.get('fee_calculated', 0):,.2f}")
+                logger.warning(f"  [PASS] {decision_id}: APPROVED")  # ✅ PRIVACY: ID only
+                logger.warning(f"    Proof: {result.get('zk_proof_hash', 'N/A')[:24]}...")  # ✅ PRIVACY: Hash only
             else:
-                print(f"\n  [FAIL] {decision_id}: {status.upper()}")
-                print(f"    Reason: {result.get('reason', 'Risk check failed')}")
-        
-        if self.billing_meter:
-            print("\n" + "-" * 50)
-            print("Billing Summary:")
-            print("-" * 50)
-            
-            inference_stats = self.billing_meter.get_inference_stats()
-            print(f"  Total Inferences: {inference_stats.get('total_calls', 0)}")
-            print(f"  Total Tokens: {inference_stats.get('total_tokens', 0):,}")
-            print(f"  Estimated Cost: ${inference_stats.get('total_cost', 0):.4f}")
-            
-            perf_summary = self.billing_meter.get_performance_summary()
-            print(f"  Alpha Generated: ${perf_summary.get('total_alpha', 0):,.2f}")
-            print(f"  Performance Fees: ${perf_summary.get('total_fees', 0):,.2f}")
-        
-        print("\n" + "=" * 70)
-        print("END OF CYCLE")
-        print("=" * 70 + "\n")
+                logger.warning(f"  [FAIL] {decision_id}: {status.upper()}")  # ✅ PRIVACY: Status only
 
     def cleanup(self):
         """Cleanup resources."""

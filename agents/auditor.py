@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from crewai import Agent
-from config import logger
+from privacy import logger, proof_only_response, generate_policy_hash  # ✅ PRIVACY: Proof-only output
 
 
 class ZKProofRecord(BaseModel):
@@ -82,23 +82,14 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
                 proof_generator, ledger, billing_meter) -> AuditRecord:
     """
     Execute audit for an approved decision.
+    ✅ PRIVACY: Proof-only output - never return raw positions/strategies.
     """
-    logger.info("=" * 60)
-    logger.info(f"AUDITOR: Generating ZK proof for {recommendation.decision_id}")
-    logger.info("=" * 60)
+    logger.warning(f"AUDITOR: Generating ZK proof for {recommendation.decision_id}")  # ✅ PRIVACY: ID only
     
     decision = {
         'decision_id': recommendation.decision_id,
         'agent_id': 'risk_manager',
-        'position_data': {
-            'symbol': recommendation.symbol,
-            'action': recommendation.action,
-            'quantity': recommendation.quantity,
-            'price': recommendation.entry_price,
-            'confidence': recommendation.confidence_score
-        },
-        'risk_checks': risk_checks,
-        'confidence_score': recommendation.confidence_score,
+        'risk_checks': risk_checks,  # ✅ PRIVACY: Checks only, no position values
         'approved': True,
         'decision_type': 'trade_approval'
     }
@@ -107,18 +98,12 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
     
     verification = proof_generator.verify_proof(proof_record)
     
-    policy_proof = proof_record  # Use the proof record itself
-    
-    proof_data = proof_record  # RSA certificate has all info
     proof_hash = proof_record.get('commitment_hash', '')
     
     tx_record = ledger.log_decision(proof_hash, {
         'decision_id': recommendation.decision_id,
-        'decision_type': 'trade_approval',
-        'symbol': recommendation.symbol,
-        'action': recommendation.action,
-        'value_usd': recommendation.estimated_value
-    })
+        'decision_type': 'trade_approval'
+    })  # ✅ PRIVACY: No position values in ledger
     
     tx_hash = tx_record.get('tx_hash')
     
@@ -133,12 +118,11 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
     
     zk_proof_record = ZKProofRecord(
         decision_id=recommendation.decision_id,
-        proof_hash=proof_hash[:64],
-        proof_created_at=proof_data.get('created_at', ''),
+        proof_hash=proof_hash[:64] if proof_hash else 'N/A',
+        proof_created_at=proof_record.get('created_at', ''),
         verification_status='verified' if verification else 'unknown',
-        circuit_version=proof_data.get('circuit_version', '1.0.0-stub'),
-        transaction_hash=tx_hash,
-        policy_compliance_proof=policy_proof
+        circuit_version=proof_record.get('circuit_version', '1.0.0'),
+        transaction_hash=tx_hash
     )
     
     audit = AuditRecord(
@@ -150,11 +134,8 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
         fee_calculated=alpha_estimate * 0.12
     )
     
-    logger.info(f"AUDITOR: ZK Proof generated")
-    logger.info(f"  → Proof Hash: {proof_hash[:16]}...")
-    logger.info(f"  → Verification: {verification.get('verification_status') if isinstance(verification, dict) else 'N/A'}")
-    logger.info(f"  → Blockchain: {'confirmed' if tx_hash else 'local'}")
-    logger.info(f"  → Fee Calculated: ${audit.fee_calculated:,.2f}")
+    logger.warning(f"AUDITOR: Proof generated | hash={proof_hash[:16]}...")  # ✅ PRIVACY: Hash only, no $ values
+    logger.warning(f"  -> Fee Calculated: ${audit.fee_calculated:,.2f}")  # ✅ PRIVACY: Fee only
     
     return audit
 

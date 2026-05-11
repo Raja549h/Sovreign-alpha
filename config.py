@@ -46,7 +46,7 @@ chroma_persist_dir = CHROMA_PERSIST_DIR
 
 PERFORMANCE_FEE_PCT = 12.0
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "WARNING")  # ✅ PRIVACY: Default WARNING, no raw data in logs
 
 def setup_logging():
     import logging

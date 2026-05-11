@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 from crewai import Agent
-from config import logger
+from privacy import logger  # ✅ PRIVACY: Sanitized logger (WARNING+)
 
 
 class RiskCheck(BaseModel):
@@ -148,7 +148,7 @@ def execute_risk_approval(recommendation, risk_params: Dict[str, Any],
             veto_message=pre_checks['position_size_message']
         )
     
-    logger.info(f"RISK MANAGER: Evaluating {recommendation.decision_id}")
+    logger.warning(f"RISK MANAGER: Evaluating {recommendation.decision_id}")  # ✅ PRIVACY: ID only
     
     checks = []
     
@@ -219,10 +219,10 @@ def execute_risk_approval(recommendation, risk_params: Dict[str, Any],
         veto_message=veto_message
     )
     
-    if all_passed:
-        logger.info(f"-> APPROVED by Risk Manager")
+    if all_passed:  # ✅ PRIVACY: Status only
+        logger.warning(f"-> APPROVED by Risk Manager")
     else:
-        logger.info(f"-> VETOED: {veto_message}")
+        logger.warning(f"-> VETOED")  # ✅ PRIVACY: No veto reason in logs
     
     return approval
 
