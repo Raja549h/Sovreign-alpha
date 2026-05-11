@@ -430,28 +430,28 @@ def api_status():
 
 @app.route('/api/run', methods=['POST'])
 def api_run():
-    """API endpoint to run analysis - FIX: Returns counts of new decisions/proofs."""
+    """API endpoint to run analysis - Uses standalone script for reliability."""
     before_count = len(get_decisions())
     before_proofs = count_proof_files()
     
     try:
         result = subprocess.run(
-            [sys.executable, str(BASE_DIR / 'crew.py')],
+            [sys.executable, str(BASE_DIR / 'run_analysis.py')],
             capture_output=True,
-            timeout=300,
-            cwd=str(BASE_DIR)
+            timeout=180,
+            cwd=str(BASE_DIR),
+            env={**os.environ, 'LOG_LEVEL': 'WARNING'}
         )
         
         success = result.returncode == 0
         output = result.stdout.decode('utf-8', errors='ignore') if result.stdout else ""
+        stderr = result.stderr.decode('utf-8', errors='ignore') if result.stderr else ""
         
         after_decisions = get_decisions()
         after_proofs = count_proof_files()
         
         new_decisions = len(after_decisions) - before_count
         new_proofs = after_proofs - before_proofs
-        new_alpha = sum(d.get('alpha_generated', 0) or 0 for d in after_decisions) - \
-                    sum(d.get('alpha_generated', 0) or 0 for d in get_decisions()[:before_count])
         
         return jsonify({
             'status': 'complete' if success else 'failed',
@@ -464,13 +464,13 @@ def api_run():
             'timestamp': datetime.utcnow().isoformat()
         })
     except subprocess.TimeoutExpired:
-        return jsonify({'status': 'timeout', 'success': False, 'error': 'Timeout after 5 minutes'})
+        return jsonify({'status': 'timeout', 'success': False, 'error': 'Timeout after 3 minutes'})
     except Exception as e:
         return jsonify({'status': 'error', 'success': False, 'error': str(e)})
 
 
 @app.route('/run', methods=['GET', 'POST'])
-def run_analysis():
+def run_analysis_page():
     """Run new analysis."""
     is_cloud = os.environ.get("RENDER", "false").lower() == "true"
     
@@ -491,12 +491,12 @@ def run_analysis():
     
     try:
         result = subprocess.run(
-            [sys.executable, str(BASE_DIR / 'crew.py')],
+            [sys.executable, str(BASE_DIR / 'run_analysis.py')],
             capture_output=True,
-            timeout=120,
-            cwd=str(BASE_DIR)
+            timeout=180,
+            cwd=str(BASE_DIR),
+            env={**os.environ, 'LOG_LEVEL': 'WARNING'}
         )
-        
         success = result.returncode == 0
     except Exception as e:
         success = False

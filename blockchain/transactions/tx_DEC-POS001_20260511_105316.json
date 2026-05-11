@@ -1,0 +1,13 @@
+{
+  "decision_id": "DEC-POS001",
+  "proof_hash": "cbaa54074d909995afc372134ccae0a8216ca4579af5ac667cae6423d0088b48",
+  "timestamp": "2026-05-11T10:53:16.891602Z",
+  "metadata": {
+    "decision_id": "DEC-POS001",
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x2180a91b1ac4b8f3be331b3ce9b08d252fa6a16fe906094b7f398d3e33cea480",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
