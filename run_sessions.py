@@ -415,19 +415,23 @@ class SessionRunner:
         ))
     
     def _print_summary_console(self, results: list):
-        """Console-only summary printing."""
+        """Print summary to console."""
         print("\n" + "=" * 60)
         print("MASTER SUMMARY")
         print("=" * 60)
         
-        total_approved = sum(r['approved_count'] for r in results)
-        total_vetoed = sum(r['vetoed_count'] for r in results)
-        total_alpha = sum(r['total_alpha'] for r in results)
+        total_approved = sum(r.get('approved_count', 0) for r in results)
+        total_vetoed = sum(r.get('vetoed_count', 0) for r in results)
+        total_alpha = sum(r.get('total_alpha', 0) for r in results)
         
         print(f"Total Decisions: {total_approved + total_vetoed}")
         print(f"Approved: {total_approved}")
         print(f"Vetoed: {total_vetoed}")
         print(f"Est. Alpha: ${total_alpha:,.0f}")
+        
+        approval_rate = (total_approved / (total_approved + total_vetoed) * 100) if (total_approved + total_vetoed) > 0 else 0
+        print(f"Approval Rate: {approval_rate:.1f}%")
+        
         print("\nZK Proof Hashes:")
         
         for i, r in enumerate(results):

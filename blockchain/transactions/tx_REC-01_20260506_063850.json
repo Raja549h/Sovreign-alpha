@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "b23e6ea99cde3a399d702e1bd2f5d09d2d2565c07743c933edebf2578e18a484",
+  "timestamp": "2026-05-06T06:38:50.032841Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "LLY",
+    "action": "HOLD",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0xa335a1ad0694aab1f0033d428471bcbd64579c76fce9f53bfe0df7552d488e5d",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

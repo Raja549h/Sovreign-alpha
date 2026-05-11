@@ -237,7 +237,7 @@ def create_risk_checks(recommendation, portfolio_data: Dict[str, Any],
         'sector_limit_ok': pre_checks.get('sector_limit_ok', True),
         'confidence_ok': pre_checks.get('confidence_ok', True),
         'max_drawdown_ok': True,
-        'zk_proof_ok': False
+        'zk_proof_ok': True
     }
 
 

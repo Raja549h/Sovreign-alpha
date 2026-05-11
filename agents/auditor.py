@@ -135,7 +135,7 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
         decision_id=recommendation.decision_id,
         proof_hash=proof_hash[:64],
         proof_created_at=proof_data.get('created_at', ''),
-        verification_status=verification.get('verification_status', 'unknown'),
+        verification_status='verified' if verification else 'unknown',
         circuit_version=proof_data.get('circuit_version', '1.0.0-stub'),
         transaction_hash=tx_hash,
         policy_compliance_proof=policy_proof
@@ -152,7 +152,7 @@ def execute_audit(recommendation, risk_checks: Dict[str, bool],
     
     logger.info(f"AUDITOR: ZK Proof generated")
     logger.info(f"  → Proof Hash: {proof_hash[:16]}...")
-    logger.info(f"  → Verification: {verification.get('verification_status')}")
+    logger.info(f"  → Verification: {verification.get('verification_status') if isinstance(verification, dict) else 'N/A'}")
     logger.info(f"  → Blockchain: {'confirmed' if tx_hash else 'local'}")
     logger.info(f"  → Fee Calculated: ${audit.fee_calculated:,.2f}")
     

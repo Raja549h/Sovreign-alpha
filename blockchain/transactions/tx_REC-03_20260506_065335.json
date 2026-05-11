@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-03",
+  "proof_hash": "de99635d628188be0ab32c8b2fa6ec8689245a7bf83c3b9f292fbd794b9b1878",
+  "timestamp": "2026-05-06T06:53:35.115380Z",
+  "metadata": {
+    "decision_id": "REC-03",
+    "decision_type": "trade_approval",
+    "symbol": "UNH",
+    "action": "BUY",
+    "value_usd": 200000.0
+  },
+  "tx_hash": "0x13b34e9050fbc332a969651baec62cae0bf0466d021d6298c086b70e8a1f4c65",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

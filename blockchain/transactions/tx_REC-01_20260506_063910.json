@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-01",
+  "proof_hash": "d36f5cd61221180796a37df5698c08260b602c736e80a6d406a5131ebd6e8153",
+  "timestamp": "2026-05-06T06:39:10.569291Z",
+  "metadata": {
+    "decision_id": "REC-01",
+    "decision_type": "trade_approval",
+    "symbol": "AMZN",
+    "action": "HOLD",
+    "value_usd": 100000.0
+  },
+  "tx_hash": "0x721cc8f585bf720a8e6e0ccd615ee25e134be3c8d5fdfcd301665a741ef514cc",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

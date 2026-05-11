@@ -1,6 +1,6 @@
 # Sovereign Alpha Fund - Investment Pitch
 
-**Generated:** May 03, 2026  
+**Generated:** May 06, 2026  
 **System Status:** Active
 
 ---
@@ -10,8 +10,8 @@
 Sovereign Alpha is a systematic, AI-driven investment system that combines 
 multiple agent expertise with zero-knowledge cryptographic verification to 
 generate alpha while maintaining institutional-grade risk controls. The system 
-has processed 52 decisions across 10 focused analysis runs, achieving 
-an 53.8% approval rate and generating estimated alpha of $667,500.
+has processed 54 decisions across 10 focused analysis runs, achieving 
+an 31.5% approval rate and generating estimated alpha of $412,500.
 
 The system's value proposition is simple: institutional-quality decision-making 
 powered by specialized AI agents with immutable audit trails. Every decision 
@@ -28,19 +28,33 @@ is verified, proven, and logged.
 | 3 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
 | 4 | healthcare pricing gaps and pa | 3 | 3 | 0 | 100.0% | $67,500 |
 | 5 | industrial procurement cost re | 3 | 0 | 3 | 0.0% | $0 |
-| 6 | consumer discretionary sentime | 3 | 3 | 0 | 100.0% | $67,500 |
-| 7 | emerging market currency arbit | 3 | 0 | 3 | 0.0% | $0 |
-| 8 | commodity price dislocation op | 3 | 3 | 0 | 100.0% | $67,500 |
-| 9 | ESG compliance gap exploitatio | 3 | 2 | 1 | 66.7% | $37,500 |
-| 10 | cross-sector correlation break | 4 | 3 | 1 | 75.0% | $82,500 |
-| 11 | technology sector momentum sig | 4 | 4 | 0 | 100.0% | $105,000 |
-| 12 | energy supply chain inefficien | 3 | 3 | 0 | 100.0% | $67,500 |
-| 13 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
-| 14 | technology sector momentum sig | 4 | 0 | 4 | 0.0% | $0 |
-| 15 | energy supply chain inefficien | 3 | 0 | 3 | 0.0% | $0 |
-| 16 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 6 | technology sector momentum sig | 4 | 4 | 0 | 100.0% | $105,000 |
+| 7 | energy supply chain inefficien | 3 | 3 | 0 | 100.0% | $67,500 |
+| 8 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 9 | technology sector momentum sig | 4 | 0 | 4 | 0.0% | $0 |
+| 10 | energy supply chain inefficien | 3 | 0 | 3 | 0.0% | $0 |
+| 11 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 12 | technology sector momentum sig | 0 | 0 | 0 | 0.0% | $0 |
+| 13 | energy supply chain inefficien | 0 | 0 | 0 | 0.0% | $0 |
+| 14 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 15 | technology sector momentum sig | 0 | 0 | 0 | 0.0% | $0 |
+| 16 | energy supply chain inefficien | 0 | 0 | 0 | 0.0% | $0 |
+| 17 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 18 | technology sector momentum sig | 0 | 0 | 0 | 0.0% | $0 |
+| 19 | energy supply chain inefficien | 0 | 0 | 0 | 0.0% | $0 |
+| 20 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 21 | technology sector momentum sig | 0 | 0 | 0 | 0.0% | $0 |
+| 22 | energy supply chain inefficien | 0 | 0 | 0 | 0.0% | $0 |
+| 23 | financial sector hidden risk e | 3 | 0 | 3 | 0.0% | $0 |
+| 24 | healthcare pricing gaps and pa | 0 | 0 | 0 | 0.0% | $0 |
+| 25 | industrial procurement cost re | 3 | 0 | 3 | 0.0% | $0 |
+| 26 | consumer discretionary sentime | 0 | 0 | 0 | 0.0% | $0 |
+| 27 | emerging market currency arbit | 3 | 0 | 3 | 0.0% | $0 |
+| 28 | commodity price dislocation op | 0 | 0 | 0 | 0.0% | $0 |
+| 29 | ESG compliance gap exploitatio | 0 | 0 | 0 | 0.0% | $0 |
+| 30 | cross-sector correlation break | 0 | 0 | 0 | 0.0% | $0 |
 
-**Totals** | - | **52** | **28** | **24** | **53.8%** | **$667,500**
+**Totals** | - | **54** | **17** | **37** | **31.5%** | **$412,500**
 
 ---
 
@@ -93,11 +107,12 @@ manufacturing scale-up ongoing. Strong pipeline in obesity and Alzheimer's.
 ## Risk Management Summary
 
 ### Decision Oversight
-- **Total Vetoes:** 24
-- **Veto Rate:** 46.2%
+- **Total Vetoes:** 37
+- **Veto Rate:** 68.5%
 
 ### Primary Veto Reasons
-- **Risk checks failed:** 24 occurrences
+- **Risk checks failed:** 30 occurrences
+- **Audit failed: 'bool' object has no attribute 'get':** 7 occurrences
 
 ### Risk Parameters Enforced
 - Max position size: 5% of AUM
@@ -114,18 +129,18 @@ proceeding to ZK proof generation.
 
 | # | Proof Hash | Decision | Created |
 |---|------------|----------|---------|
-| 1 | `42f1e2e8be9e1014c0a756158de8fbce...` | Decision-1 | Current Session |
-| 2 | `24b24c5ca438336ad0c1685bfe1977b9...` | Decision-2 | Current Session |
-| 3 | `b67600a1bfb684086f4262f41fe36615...` | Decision-3 | Current Session |
-| 4 | `438abb0ef76ef53b9f807005c4669c3b...` | Decision-4 | Current Session |
-| 5 | `37c9251ee827bb129b7b363e4d54b1a4...` | Decision-5 | Current Session |
-| 6 | `3621daf5c1a8519361bc3157be86baef...` | Decision-6 | Current Session |
-| 7 | `6224a46373c1ff25a79d0e43a3588905...` | Decision-7 | Current Session |
-| 8 | `54b0f00c8291d8a01031733d52d08312...` | Decision-8 | Current Session |
-| 9 | `0be10331d34243543c3f6214c0285653...` | Decision-9 | Current Session |
-| 10 | `91f2c2fddd93e1e3b5f26b4ed80bb7be...` | Decision-10 | Current Session |
+| 1 | `89459baa73f03e6028d1443bd95f2a94...` | Decision-1 | Current Session |
+| 2 | `f09d1943e38976e25ff8cbef4ec41d08...` | Decision-2 | Current Session |
+| 3 | `4abeb971ba7ad257a425acbec1067a3b...` | Decision-3 | Current Session |
+| 4 | `24d697daa31f4405a1d3d29749b48d96...` | Decision-4 | Current Session |
+| 5 | `d238d5bbae25ddfc2f94dd21c106659f...` | Decision-5 | Current Session |
+| 6 | `a4c5ddcf7449ed1b80cdf57cecb01522...` | Decision-6 | Current Session |
+| 7 | `a762628982ad4bc871e0dc0165b7ebbe...` | Decision-7 | Current Session |
+| 8 | `b23e6ea99cde3a399d702e1bd2f5d09d...` | Decision-8 | Current Session |
+| 9 | `ce86ad920404161461a0d455ac09b362...` | Decision-9 | Current Session |
+| 10 | `de99635d628188be0ab32c8b2fa6ec86...` | Decision-10 | Current Session |
 
-*...and 18 additional proofs in archive*
+*...and 7 additional proofs in archive*
 
 
 ---
@@ -134,9 +149,9 @@ proceeding to ZK proof generation.
 
 | Metric | Value |
 |--------|-------|
-| Total Alpha (90-day) | $667,500 |
-| Monthly Equivalent | $222,500 |
-| Performance Fee (12%) | $26,700/month |
+| Total Alpha (90-day) | $412,500 |
+| Monthly Equivalent | $137,500 |
+| Performance Fee (12%) | $16,500/month |
 | Win Rate Estimate | 65% |
 
 *Assuming 30% realized alpha from estimated potential*

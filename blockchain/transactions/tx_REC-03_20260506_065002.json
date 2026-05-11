@@ -1,0 +1,16 @@
+{
+  "decision_id": "REC-03",
+  "proof_hash": "4abeb971ba7ad257a425acbec1067a3bc78d7e36c478b2a2ad8ca0676517c9ca",
+  "timestamp": "2026-05-06T06:50:02.514239Z",
+  "metadata": {
+    "decision_id": "REC-03",
+    "decision_type": "trade_approval",
+    "symbol": "AVGO",
+    "action": "BUY",
+    "value_usd": 200000.0
+  },
+  "tx_hash": "0x52cd0216dcad4a2ac8208c1a0e693e5381733b464ebb03e5c7cb60a0c6b7f3d1",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
