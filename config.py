@@ -38,7 +38,7 @@ quick_llm_config = {
     "max_tokens": 1024
 }
 
-embedding_model = "mxbai-embed-large-v1"
+embedding_model = "embed-english-v3.0"
 
 CHROMA_PERSIST_DIR = str(DATA_DIR / "chroma_db")
 
