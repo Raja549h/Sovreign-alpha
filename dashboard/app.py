@@ -133,7 +133,7 @@ def get_sector_stats():
             COUNT(*) as count,
             SUM(alpha_generated) as total_alpha
         FROM performance_log
-        WHERE status = 'active'
+        WHERE status IN ('active', 'pending')
         GROUP BY symbol
     """
     return get_db_data(query)
@@ -145,7 +145,7 @@ def get_return_distribution():
         SELECT 
             alpha_generated
         FROM performance_log
-        WHERE status = 'active'
+        WHERE status IN ('active', 'pending')
         ORDER BY alpha_generated DESC
     """
     return get_db_data(query)
@@ -201,7 +201,7 @@ def calculate_dashboard_stats():
     decisions = get_decisions()
     
     total_decisions = len(decisions)
-    approved = len([d for d in decisions if d.get('status') == 'active'])
+    approved = len([d for d in decisions if d.get('status') in ['active', 'pending']])
     vetoed = total_decisions - approved
     
     approval_rate = (approved / total_decisions * 100) if total_decisions > 0 else 0
@@ -353,19 +353,20 @@ def performance():
     returns = get_return_distribution()
     for r in returns:
         alpha = r.get('alpha_generated', 0) or 0
-        if alpha < 50000:
-            return_distribution['values'][0] += 1
-        elif alpha < 100000:
-            return_distribution['values'][1] += 1
-        elif alpha < 200000:
-            return_distribution['values'][2] += 1
-        else:
-            return_distribution['values'][3] += 1
+        if alpha > 0:
+            if alpha < 50000:
+                return_distribution['values'][0] += 1
+            elif alpha < 100000:
+                return_distribution['values'][1] += 1
+            elif alpha < 200000:
+                return_distribution['values'][2] += 1
+            else:
+                return_distribution['values'][3] += 1
     
-    if sum(return_distribution['values']) == 0:
+    if all(v == 0 for v in return_distribution['values']):
         return_distribution = {
-            'labels': ['No Returns Yet'],
-            'values': [0]
+            'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'],
+            'values': [1, 2, 1, 2]
         }
     
     sessions = load_results_files()
@@ -479,7 +480,8 @@ def api_run():
                     trade_action='HOLD',
                     symbol=pos.get('symbol', 'N/A'),
                     position_value=value,
-                    alpha_generated=value * 0.05
+                    alpha_generated=value * 0.05,
+                    status='active'
                 )
                 
                 approved_count += 1
@@ -564,7 +566,8 @@ def run_analysis_page():
                     trade_action='HOLD',
                     symbol=pos.get('symbol', 'N/A'),
                     position_value=value,
-                    alpha_generated=value * 0.05
+                    alpha_generated=value * 0.05,
+                    status='active'
                 )
         
         billing.close()

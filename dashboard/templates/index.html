@@ -130,8 +130,8 @@
             border-radius: 50%;
             background: conic-gradient(
                 var(--accent) 0deg,
-                var(--accent) calc(3.6deg * {{ approval_rate }}),
-                var(--bg-tertiary) calc(3.6deg * {{ approval_rate }}),
+                var(--accent) calc(3.6deg * var(--approval-rate, 0)),
+                var(--bg-tertiary) calc(3.6deg * var(--approval-rate, 0)),
                 var(--bg-tertiary) 360deg
             );
             display: flex;
@@ -459,6 +459,7 @@
                             'success'
                         );
                         refreshStats();
+                        location.reload();
                     } else {
                         showNotification('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
                     }
@@ -475,8 +476,10 @@
             fetch('/api/status')
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('approval-rate').textContent = 
-                        (data.approved / (data.total_decisions || 1) * 100).toFixed(1) + '%';
+                    const rate = (data.approved / (data.total_decisions || 1) * 100);
+                    document.getElementById('approval-rate').textContent = rate.toFixed(1) + '%';
+                    document.getElementById('gauge-value').textContent = rate.toFixed(0) + '%';
+                    document.documentElement.style.setProperty('--approval-rate', rate);
                     document.getElementById('decisions-count').textContent = 
                         data.approved + '/' + data.total_decisions + ' decisions';
                     document.getElementById('total-alpha').textContent = 
@@ -491,6 +494,9 @@
         }
         
         setInterval(refreshStats, 10000);
+        
+        const initialRate = {{ approval_rate }};
+        document.documentElement.style.setProperty('--approval-rate', initialRate);
     </script>
 </body>
 </html>
