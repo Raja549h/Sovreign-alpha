@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-POS001",
+  "proof_hash": "b24466e3c4f0b5c69743cbcdaafe7557ab10021defcae1a416e9838142704e52",
+  "timestamp": "2026-05-11T04:27:36.538522Z",
+  "metadata": {
+    "decision_id": "DEC-POS001",
+    "decision_type": "trade_approval",
+    "symbol": "AAPL",
+    "action": "HOLD",
+    "value_usd": 473125.0
+  },
+  "tx_hash": "0xda41c966425ed0fc957fb414bcd8168983217c2adc81ccd664cd8341c2a3fd7f",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
