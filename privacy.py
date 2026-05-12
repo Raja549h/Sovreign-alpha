@@ -201,7 +201,7 @@ def create_session_token(fund_id: str) -> str:
     """Create a session token for the fund."""
     import jwt
     import time
-    secret = JWT_SECRET or "default_sovereign_secret_key_2024"
+    secret = JWT_SECRET if JWT_SECRET else "fallback_secret_key_sovereign_alpha_2024"
     payload = {
         "sub": fund_id,
         "exp": time.time() + 86400 * 7,
@@ -212,12 +212,16 @@ def create_session_token(fund_id: str) -> str:
 def verify_session_token(token: str) -> Optional[str]:
     """Verify a session token and return fund_id."""
     import jwt
-    secret = JWT_SECRET or "default_sovereign_secret_key_2024"
-    try:
-        payload = jwt.decode(token, secret, algorithms=["HS256"])
-        return payload.get("sub")
-    except Exception:
-        return None
+    secrets = [JWT_SECRET] if JWT_SECRET else []
+    secrets.append("fallback_secret_key_sovereign_alpha_2024")
+    
+    for secret in secrets:
+        try:
+            payload = jwt.decode(token, secret, algorithms=["HS256"])
+            return payload.get("sub")
+        except Exception:
+            continue
+    return None
 
 def validate_password(input_password: str, stored_password: str = None) -> bool:
     """Validate password against stored hash."""

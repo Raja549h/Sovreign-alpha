@@ -54,6 +54,10 @@ app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
+TEMPLATE_DIR = dashboard_dir / 'templates'
+if TEMPLATE_DIR.exists():
+    app.template_folder = str(TEMPLATE_DIR)
+
 DB_PATH = BILLING_DIR / "billing.db"
 FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
@@ -585,27 +589,30 @@ def api_public_key():
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     """Login page - no auth required."""
-    session_token = request.cookies.get('session_token')
-    if session_token:
-        from privacy import verify_session_token
-        fund_id = verify_session_token(session_token)
-        if fund_id:
-            return redirect(url_for('index'))
-    
-    error = None
-    if request.method == 'POST':
-        password = request.form.get('password', '')
+    try:
+        session_token = request.cookies.get('session_token')
+        if session_token:
+            from privacy import verify_session_token
+            fund_id = verify_session_token(session_token)
+            if fund_id:
+                return redirect(url_for('index'))
         
-        if password == FUND_PASSWORD:
-            from privacy import create_session_token
-            token = create_session_token('fund_manager')
-            resp = make_response(redirect(url_for('index')))
-            resp.set_cookie('session_token', token, httponly=True, max_age=86400*7)
-            return resp
-        else:
-            error = "Invalid password. Please try again."
-    
-    return render_template('login.html', error=error)
+        error = None
+        if request.method == 'POST':
+            password = request.form.get('password', '') or ''
+            
+            if password == FUND_PASSWORD:
+                from privacy import create_session_token
+                token = create_session_token('fund_manager')
+                resp = make_response(redirect(url_for('index')))
+                resp.set_cookie('session_token', token, httponly=True, max_age=86400*7)
+                return resp
+            else:
+                error = "Invalid password. Please try again."
+        
+        return render_template('login.html', error=error)
+    except Exception as e:
+        return f"Login error: {str(e)}", 500
 
 
 @app.route('/logout')
@@ -1037,8 +1044,11 @@ def health():
 
 def main():
     """Main entry point."""
-    print("=== SOVEREIGN ALPHA - Dashboard v1.1 ===")
-    print("FIX LOG: Proof loading, Performance real data, API run counts, Auto-refresh")
+    import logging
+    app.logger.setLevel(logging.WARNING)
+    
+    print("=== SOVEREIGN ALPHA - Dashboard v1.2 ===")
+    print("Features: Login system, Upload portal, Progress tracker")
     
     port = int(os.environ.get("PORT", 5000))
     is_cloud = os.environ.get("RENDER", "false").lower() == "true"
