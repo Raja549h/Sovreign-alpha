@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Sovereign Alpha Dashboard
-========================
+=======================
 
 Flask-based web dashboard for the Sovereign Alpha system.
 Run with: python dashboard/app.py
@@ -13,22 +13,25 @@ FIX LOG:
 - FIX 4: Decisions page shows message when empty
 - FIX 5: Proofs page better empty state handling
 - FIX 6: API /status counts proofs from folder
+- FIX 7: Login system added for fund protection
+- FIX 8: Upload portal for fund managers
 """
 
 import os
 import sys
 import json
 import sqlite3
-import subprocess
+import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
+from functools import wraps
 
 dashboard_dir = Path(__file__).parent
 project_dir = dashboard_dir.parent
 sys.path.insert(0, str(project_dir))
 
 try:
-    from flask import Flask, render_template, jsonify, request, redirect, url_for
+    from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
     FLASK_AVAILABLE = True
 except ImportError:
     print("ERROR: Flask not installed. Run: pip install flask")
@@ -40,15 +43,106 @@ DATA_DIR = BASE_DIR / "data"
 BILLING_DIR = BASE_DIR / "billing"
 RESULTS_DIR = BASE_DIR / "results"
 PROOFS_DIR = BASE_DIR / "zkml" / "proofs"
+FUNDS_DIR = DATA_DIR / "funds"
 
 RESULTS_DIR.mkdir(exist_ok=True)
 PROOFS_DIR.mkdir(exist_ok=True)
 BILLING_DIR.mkdir(exist_ok=True)
+FUNDS_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 DB_PATH = BILLING_DIR / "billing.db"
+FUND_DATA_DB = BILLING_DIR / "fund_data.db"
+
+FUND_PASSWORD = os.environ.get("FUND_PASSWORD", "sovereign2024")
+
+def init_fund_db():
+    conn = sqlite3.connect(str(FUND_DATA_DB))
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS fund_uploads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_type TEXT,
+            file_content BLOB,
+            uploaded_at TEXT
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS fund_params (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            param_key TEXT UNIQUE,
+            param_value TEXT,
+            updated_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_fund_db()
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        session_token = request.cookies.get('session_token')
+        if not session_token:
+            return redirect(url_for('login_page'))
+        from privacy import verify_session_token
+        fund_id = verify_session_token(session_token)
+        if not fund_id:
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def save_fund_file(file_type: str, content: bytes):
+    conn = sqlite3.connect(str(FUND_DATA_DB))
+    c = conn.cursor()
+    c.execute("DELETE FROM fund_uploads WHERE file_type = ?", (file_type,))
+    c.execute("INSERT INTO fund_uploads (file_type, file_content, uploaded_at) VALUES (?, ?, ?)",
+              (file_type, content, datetime.utcnow().isoformat() + 'Z'))
+    conn.commit()
+    conn.close()
+
+def get_fund_file(file_type: str) -> bytes:
+    conn = sqlite3.connect(str(FUND_DATA_DB))
+    c = conn.cursor()
+    c.execute("SELECT file_content FROM fund_uploads WHERE file_type = ?", (file_type,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+def save_fund_param(key: str, value: str):
+    conn = sqlite3.connect(str(FUND_DATA_DB))
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO fund_params (param_key, param_value, updated_at) VALUES (?, ?, ?)",
+              (key, value, datetime.utcnow().isoformat() + 'Z'))
+    conn.commit()
+    conn.close()
+
+def get_fund_params() -> dict:
+    conn = sqlite3.connect(str(FUND_DATA_DB))
+    c = conn.cursor()
+    c.execute("SELECT param_key, param_value FROM fund_params")
+    rows = c.fetchall()
+    conn.close()
+    return {row[0]: row[1] for row in rows}
+
+def check_setup_progress() -> dict:
+    has_positions = get_fund_file('positions') is not None
+    has_params = len(get_fund_params()) > 0
+    has_research = get_fund_file('research') is not None
+    decisions = get_decisions()
+    has_analysis = len(decisions) > 0
+    return {
+        'step1_done': True,
+        'step2_done': has_positions,
+        'step3_done': has_params,
+        'step4_done': has_research,
+        'step5_done': has_analysis,
+        'all_done': has_positions and has_params and has_research and has_analysis
+    }
 
 
 def get_db_data(query, params=None):
@@ -223,10 +317,12 @@ def calculate_dashboard_stats():
 
 
 @app.route('/')
+@login_required
 def index():
     """Home page."""
     stats = calculate_dashboard_stats()
     recent = get_recent_decisions(5)
+    progress = check_setup_progress()
     
     recent_decisions = []
     for d in recent:
@@ -246,10 +342,12 @@ def index():
                        total_alpha=stats['total_alpha'],
                        proofs_verified=stats['proofs_verified'],
                        last_verified=stats['last_verified'],
-                       recent_decisions=recent_decisions)
+                       recent_decisions=recent_decisions,
+                       progress=progress)
 
 
 @app.route('/decisions')
+@login_required
 def decisions():
     """Decisions page - FIX: Shows message when empty."""
     all_decisions = get_decisions()
@@ -278,6 +376,7 @@ def decisions():
 
 
 @app.route('/proofs')
+@login_required
 def proofs():
     """Proofs page - FIX: Better empty state handling."""
     proofs_list = load_proof_files()
@@ -309,6 +408,7 @@ def proofs():
 
 
 @app.route('/performance')
+@login_required
 def performance():
     """Performance page - FIX: Uses real database queries."""
     decisions = get_decisions()
@@ -398,186 +498,13 @@ def api_refresh():
 
 
 @app.route('/api/status')
-def api_status():
-    """API endpoint to get system status - FIX: Counts proofs from folder."""
-    stats = calculate_dashboard_stats()
-    
-    groq_connected = False
-    try:
-        from config import GROQ_API_KEY
-        if GROQ_API_KEY and GROQ_API_KEY != "gsk_placeholder_key_replace_me":
-            groq_connected = True
-    except:
-        pass
-    
-    last_run = None
-    decisions = get_decisions()
-    if decisions:
-        last_run = decisions[0].get('timestamp', None)
-    
-    proofs_count = count_proof_files()
-    
-    return jsonify({
-        "system": "online",
-        "total_decisions": stats['total_decisions'],
-        "approved": stats['approved'],
-        "vetoed": stats['vetoed'],
-        "total_alpha": stats['total_alpha'],
-        "proofs_verified": proofs_count,
-        "last_run": last_run or "Never",
-        "groq_connected": groq_connected
-    })
 
 
-@app.route('/api/run', methods=['POST'])
-def api_run():
-    """API endpoint to run analysis - Direct execution for Render compatibility."""
-    before_count = len(get_decisions())
-    before_proofs = count_proof_files()
-    
-    try:
-        from rag.knowledge_base import get_knowledge_base
-        from zkml.proof_generator import create_proof_generator
-        from blockchain.ledger import create_ledger
-        from billing.meter import create_billing_meter
-        
-        os.environ['LOG_LEVEL'] = 'WARNING'
-        
-        kb = get_knowledge_base()
-        proof_gen = create_proof_generator()
-        ledger = create_ledger()
-        billing = create_billing_meter()
-        
-        portfolio = kb.get_portfolio_summary()
-        positions = portfolio.get('positions', [])
-        
-        approved_count = 0
-        vetoed_count = 0
-        
-        for pos in positions[:5]:
-            value = pos.get('current_price', 100) * pos.get('quantity', 1000)
-            conf = pos.get('confidence_score', 0.80)
-            
-            if value <= 2500000 and conf >= 0.60:
-                decision = {
-                    'decision_id': f"DEC-{pos.get('position_id', '001')}",
-                    'agent_id': 'analyst',
-                    'risk_checks': {'position_size_ok': True, 'sector_limit_ok': True, 'confidence_ok': True},
-                    'approved': True,
-                    'decision_type': 'trade_approval'
-                }
-                
-                proof_record = proof_gen.generate_proof(decision, decision['risk_checks'])
-                proof_hash = proof_record.get('commitment_hash', '')
-                
-                ledger.log_decision(proof_hash, {
-                    'decision_id': decision['decision_id'],
-                    'decision_type': 'trade_approval'
-                })
-                
-                billing.log_performance(
-                    decision_id=decision['decision_id'],
-                    trade_action='HOLD',
-                    symbol=pos.get('symbol', 'N/A'),
-                    position_value=value,
-                    alpha_generated=value * 0.05,
-                    status='active'
-                )
-                
-                approved_count += 1
-            else:
-                vetoed_count += 1
-        
-        billing.close()
-        
-        after_decisions = get_decisions()
-        after_proofs = count_proof_files()
-        
-        return jsonify({
-            'status': 'complete',
-            'success': True,
-            'new_decisions': approved_count,
-            'new_proofs': approved_count,
-            'total_alpha': sum(d.get('alpha_generated', 0) or 0 for d in after_decisions),
-            'total_proofs': after_proofs,
-            'output': f'Analysis complete: {approved_count} approved, {vetoed_count} vetoed',
-            'timestamp': datetime.utcnow().isoformat()
-        })
-    except Exception as e:
-        return jsonify({'status': 'error', 'success': False, 'error': str(e), 'trace': str(e)})
-
-
-@app.route('/run', methods=['GET', 'POST'])
-def run_analysis_page():
-    """Run new analysis."""
-    is_cloud = os.environ.get("RENDER", "false").lower() == "true"
-    
-    if is_cloud:
-        stats = calculate_dashboard_stats()
-        return render_template('index.html',
-                           approval_rate=stats['approval_rate'],
-                           total_decisions=stats['total_decisions'],
-                           total_approved=stats['approved'],
-                           total_alpha=stats['total_alpha'],
-                           proofs_verified=stats['proofs_verified'],
-                           last_verified=datetime.utcnow().isoformat(),
-                           recent_decisions=[],
-                           error="Analysis runs locally, not on cloud dashboard")
-    
-    try:
-        from rag.knowledge_base import get_knowledge_base
-        from zkml.proof_generator import create_proof_generator
-        from blockchain.ledger import create_ledger
-        from billing.meter import create_billing_meter
-        
-        os.environ['LOG_LEVEL'] = 'WARNING'
-        
-        kb = get_knowledge_base()
-        proof_gen = create_proof_generator()
-        ledger = create_ledger()
-        billing = create_billing_meter()
-        
-        portfolio = kb.get_portfolio_summary()
-        positions = portfolio.get('positions', [])
-        
-        for pos in positions[:5]:
-            value = pos.get('current_price', 100) * pos.get('quantity', 1000)
-            conf = pos.get('confidence_score', 0.80)
-            
-            if value <= 2500000 and conf >= 0.60:
-                decision = {
-                    'decision_id': f"DEC-{pos.get('position_id', '001')}",
-                    'agent_id': 'analyst',
-                    'risk_checks': {'position_size_ok': True, 'sector_limit_ok': True, 'confidence_ok': True},
-                    'approved': True,
-                    'decision_type': 'trade_approval'
-                }
-                
-                proof_record = proof_gen.generate_proof(decision, decision['risk_checks'])
-                proof_hash = proof_record.get('commitment_hash', '')
-                
-                ledger.log_decision(proof_hash, {
-                    'decision_id': decision['decision_id'],
-                    'decision_type': 'trade_approval'
-                })
-                
-                billing.log_performance(
-                    decision_id=decision['decision_id'],
-                    trade_action='HOLD',
-                    symbol=pos.get('symbol', 'N/A'),
-                    position_value=value,
-                    alpha_generated=value * 0.05,
-                    status='active'
-                )
-        
-        billing.close()
-    except Exception as e:
-        print(f"Run error: {e}")
-    
-    return redirect(url_for('index'))
+@app.route('/api/track_record')
 
 
 @app.route('/live_market')
+@login_required
 def live_market():
     """Live market data page."""
     try:
@@ -653,6 +580,439 @@ def api_public_key():
         return jsonify({"error": "No public key found"})
     except Exception as e:
         return jsonify({"error": str(e)})
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    """Login page - no auth required."""
+    session_token = request.cookies.get('session_token')
+    if session_token:
+        from privacy import verify_session_token
+        if verify_session_token(session_token):
+            return redirect(url_for('index'))
+    
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == FUND_PASSWORD:
+            from privacy import create_session_token
+            token = create_session_token('fund_manager')
+            resp = make_response(redirect(url_for('index')))
+            resp.set_cookie('session_token', token, httponly=True, max_age=86400*7)
+            return resp
+        else:
+            error = "Invalid password. Please try again."
+    
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    """Logout - clear session."""
+    resp = make_response(redirect(url_for('login_page')))
+    resp.set_cookie('session_token', '', expires=0)
+    return resp
+
+
+@app.route('/upload')
+@login_required
+def upload_page():
+    """Data upload page for fund managers."""
+    params = get_fund_params()
+    has_positions = get_fund_file('positions') is not None
+    has_research = get_fund_file('research') is not None
+    progress = check_setup_progress()
+    
+    return render_template('upload.html',
+                           params=params,
+                           has_positions=has_positions,
+                           has_research=has_research,
+                           progress=progress)
+
+
+@app.route('/upload/positions', methods=['POST'])
+@login_required
+def upload_positions():
+    """Handle positions CSV upload."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'})
+    
+    try:
+        content = file.read()
+        
+        try:
+            df = pd.read_csv(content.decode('utf-8'))
+        except:
+            try:
+                import io
+                df = pd.read_excel(io.BytesIO(content))
+            except:
+                return jsonify({'success': False, 'error': 'Invalid file format. Please upload CSV or Excel.'})
+        
+        required_cols = ['ticker', 'company', 'sector', 'shares', 'avg_cost', 'current_price']
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            return jsonify({'success': False, 'error': f"Missing columns: {', '.join(missing)}"})
+        
+        if df.isnull().all(axis=1).any():
+            return jsonify({'success': False, 'error': 'File contains empty rows. Please remove empty rows.'})
+        
+        for col in ['shares', 'avg_cost', 'current_price']:
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                return jsonify({'success': False, 'error': f"Column '{col}' must contain numeric values."})
+        
+        save_fund_file('positions', content)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Positions validated successfully. {len(df)} positions loaded.',
+            'preview': df.head(5).to_dict('records')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/upload/params', methods=['POST'])
+@login_required
+def upload_params():
+    """Handle risk parameters form submission."""
+    try:
+        max_position = request.form.get('max_position', '5.0')
+        max_sector = request.form.get('max_sector', '20.0')
+        max_drawdown = request.form.get('max_drawdown', '15.0')
+        min_confidence = request.form.get('min_confidence', '65.0')
+        benchmark = request.form.get('benchmark', '8.0')
+        aum = request.form.get('aum', '59000000')
+        
+        try:
+            float(max_position); float(max_sector); float(max_drawdown)
+            float(min_confidence); float(benchmark); float(aum)
+        except:
+            return jsonify({'success': False, 'error': 'All values must be numeric.'})
+        
+        save_fund_param('max_position_size_pct', max_position)
+        save_fund_param('sector_limits', f"{{\"Technology\": {max_sector}, \"Financial\": {max_sector}}}")
+        save_fund_param('max_drawdown_pct', max_drawdown)
+        save_fund_param('min_confidence_score', str(float(min_confidence) / 100))
+        save_fund_param('benchmark_return_pct', benchmark)
+        save_fund_param('aum', aum)
+        
+        return jsonify({'success': True, 'message': 'Risk parameters saved successfully.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/upload/research', methods=['POST'])
+@login_required
+def upload_research():
+    """Handle research notes upload."""
+    research_text = request.form.get('research_text', '')
+    
+    if 'file' in request.files and request.files['file'].filename:
+        file = request.files['file']
+        content = file.read()
+        try:
+            research_text = content.decode('utf-8')
+        except:
+            try:
+                import io
+                content_str = io.BytesIO(content).read().decode('latin-1')
+                research_text = content_str[:10000]
+            except:
+                return jsonify({'success': False, 'error': 'Could not read file. Please upload .txt file.'})
+    
+    if not research_text.strip():
+        return jsonify({'success': False, 'error': 'Please provide research notes or upload a file.'})
+    
+    try:
+        save_fund_file('research', research_text.encode('utf-8'))
+        return jsonify({
+            'success': True,
+            'message': f'Research notes saved. {len(research_text)} characters.',
+            'char_count': len(research_text)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/download/positions-template')
+@login_required
+def download_positions_template():
+    """Download positions CSV template."""
+    template = """ticker,company,sector,shares,avg_cost,current_price,weight_pct
+NVDA,NVIDIA Corp,Technology,2000,450.00,892.40,3.5
+AAPL,Apple Inc,Technology,1500,175.00,189.25,2.8
+MSFT,Microsoft Corp,Technology,800,380.00,412.80,3.2
+JPM,JPMorgan Chase,Financial,1200,165.00,185.20,2.2
+LLY,Eli Lilly,Healthcare,500,650.00,812.60,4.0"""
+    
+    response = make_response(template)
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=positions_template.csv'
+    return response
+
+
+@app.route('/download/research-template')
+@login_required
+def download_research_template():
+    """Download research notes template."""
+    template = """Sovereign Alpha - Research Notes Template
+============================================
+
+INSTRUCTIONS:
+Paste your internal research notes below. Include any:
+- Market analysis findings
+- Sector-specific insights
+- Company research notes
+- Risk observations
+- Trading opportunities identified
+
+The AI will analyze your notes to generate better recommendations.
+
+---
+
+SECTOR ANALYSIS:
+
+TECHNOLOGY:
+- AI/ML infrastructure spending accelerating
+- GPU demand outpacing supply through 2025
+- Cloud migration continues across enterprises
+
+FINANCIAL:
+- Regional bank stress creating consolidation opportunities
+- Interest rate sensitivity increasing
+- Credit quality monitoring required
+
+ENERGY:
+- OPEC+ supply management affecting pricing
+- Renewable transition acceleration
+- Natural gas demand growth in emerging markets
+
+"""
+
+    response = make_response(template)
+    response.headers['Content-Type'] = 'text/plain'
+    response.headers['Content-Disposition'] = 'attachment; filename=research_template.txt'
+    return response
+
+
+@app.route('/api/run', methods=['POST'])
+@login_required
+def api_run():
+    """API endpoint to run analysis - Direct execution for Render compatibility."""
+    before_count = len(get_decisions())
+    before_proofs = count_proof_files()
+    
+    fund_positions = get_fund_file('positions')
+    fund_params = get_fund_params()
+    fund_research = get_fund_file('research')
+    
+    if fund_positions:
+        try:
+            df = pd.read_csv(fund_positions.decode('utf-8'))
+            sample_csv = DATA_DIR / "sample_positions.csv"
+            df.to_csv(sample_csv, index=False)
+        except:
+            pass
+    
+    if fund_params:
+        params_file = DATA_DIR / "risk_parameters.json"
+        import json
+        with open(params_file, 'w') as f:
+            json.dump({
+                'risk_parameters': {
+                    'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
+                    'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
+                },
+                'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
+                'governance': {
+                    'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
+                }
+            }, f)
+    
+    if fund_research:
+        research_file = DATA_DIR / "sample_research.txt"
+        with open(research_file, 'w') as f:
+            f.write(fund_research.decode('utf-8'))
+    
+    try:
+        from rag.knowledge_base import get_knowledge_base
+        from zkml.proof_generator import create_proof_generator
+        from blockchain.ledger import create_ledger
+        from billing.meter import create_billing_meter
+        
+        os.environ['LOG_LEVEL'] = 'WARNING'
+        
+        kb = get_knowledge_base()
+        proof_gen = create_proof_generator()
+        ledger = create_ledger()
+        billing = create_billing_meter()
+        
+        portfolio = kb.get_portfolio_summary()
+        positions = portfolio.get('positions', [])
+        
+        approved_count = 0
+        vetoed_count = 0
+        
+        for pos in positions[:5]:
+            value = pos.get('current_price', 100) * pos.get('quantity', 1000)
+            conf = pos.get('confidence_score', 0.80)
+            
+            if value <= 2500000 and conf >= 0.60:
+                decision = {
+                    'decision_id': f"DEC-{pos.get('position_id', '001')}",
+                    'agent_id': 'analyst',
+                    'risk_checks': {'position_size_ok': True, 'sector_limit_ok': True, 'confidence_ok': True},
+                    'approved': True,
+                    'decision_type': 'trade_approval'
+                }
+                
+                proof_record = proof_gen.generate_proof(decision, decision['risk_checks'])
+                proof_hash = proof_record.get('commitment_hash', '')
+                
+                ledger.log_decision(proof_hash, {
+                    'decision_id': decision['decision_id'],
+                    'decision_type': 'trade_approval'
+                })
+                
+                billing.log_performance(
+                    decision_id=decision['decision_id'],
+                    trade_action='HOLD',
+                    symbol=pos.get('symbol', 'N/A'),
+                    position_value=value,
+                    alpha_generated=value * 0.05,
+                    status='active'
+                )
+                
+                approved_count += 1
+            else:
+                vetoed_count += 1
+        
+        billing.close()
+        
+        after_decisions = get_decisions()
+        after_proofs = count_proof_files()
+        
+        return jsonify({
+            'status': 'complete',
+            'success': True,
+            'new_decisions': approved_count,
+            'new_proofs': approved_count,
+            'total_alpha': sum(d.get('alpha_generated', 0) or 0 for d in after_decisions),
+            'total_proofs': after_proofs,
+            'output': f'Analysis complete: {approved_count} approved, {vetoed_count} vetoed',
+            'timestamp': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'success': False, 'error': str(e), 'trace': str(e)})
+
+
+@app.route('/run', methods=['GET', 'POST'])
+@login_required
+def run_analysis_page():
+    """Run new analysis."""
+    is_cloud = os.environ.get("RENDER", "false").lower() == "true"
+    
+    if is_cloud:
+        stats = calculate_dashboard_stats()
+        return render_template('index.html',
+                           approval_rate=stats['approval_rate'],
+                           total_decisions=stats['total_decisions'],
+                           total_approved=stats['approved'],
+                           total_alpha=stats['total_alpha'],
+                           proofs_verified=stats['proofs_verified'],
+                           last_verified=datetime.utcnow().isoformat(),
+                           recent_decisions=[],
+                           error="Analysis runs locally, not on cloud dashboard",
+                           progress=check_setup_progress())
+    
+    fund_positions = get_fund_file('positions')
+    fund_params = get_fund_params()
+    fund_research = get_fund_file('research')
+    
+    if fund_positions:
+        try:
+            df = pd.read_csv(fund_positions.decode('utf-8'))
+            sample_csv = DATA_DIR / "sample_positions.csv"
+            df.to_csv(sample_csv, index=False)
+        except:
+            pass
+    
+    if fund_params:
+        params_file = DATA_DIR / "risk_parameters.json"
+        import json
+        with open(params_file, 'w') as f:
+            json.dump({
+                'risk_parameters': {
+                    'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
+                    'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
+                },
+                'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
+                'governance': {
+                    'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
+                }
+            }, f)
+    
+    if fund_research:
+        research_file = DATA_DIR / "sample_research.txt"
+        with open(research_file, 'w') as f:
+            f.write(fund_research.decode('utf-8'))
+    
+    try:
+        from rag.knowledge_base import get_knowledge_base
+        from zkml.proof_generator import create_proof_generator
+        from blockchain.ledger import create_ledger
+        from billing.meter import create_billing_meter
+        
+        os.environ['LOG_LEVEL'] = 'WARNING'
+        
+        kb = get_knowledge_base()
+        proof_gen = create_proof_generator()
+        ledger = create_ledger()
+        billing = create_billing_meter()
+        
+        portfolio = kb.get_portfolio_summary()
+        positions = portfolio.get('positions', [])
+        
+        for pos in positions[:5]:
+            value = pos.get('current_price', 100) * pos.get('quantity', 1000)
+            conf = pos.get('confidence_score', 0.80)
+            
+            if value <= 2500000 and conf >= 0.60:
+                decision = {
+                    'decision_id': f"DEC-{pos.get('position_id', '001')}",
+                    'agent_id': 'analyst',
+                    'risk_checks': {'position_size_ok': True, 'sector_limit_ok': True, 'confidence_ok': True},
+                    'approved': True,
+                    'decision_type': 'trade_approval'
+                }
+                
+                proof_record = proof_gen.generate_proof(decision, decision['risk_checks'])
+                proof_hash = proof_record.get('commitment_hash', '')
+                
+                ledger.log_decision(proof_hash, {
+                    'decision_id': decision['decision_id'],
+                    'decision_type': 'trade_approval'
+                })
+                
+                billing.log_performance(
+                    decision_id=decision['decision_id'],
+                    trade_action='HOLD',
+                    symbol=pos.get('symbol', 'N/A'),
+                    position_value=value,
+                    alpha_generated=value * 0.05,
+                    status='active'
+                )
+        
+        billing.close()
+    except Exception as e:
+        print(f"Run error: {e}")
+    
+    return redirect(url_for('index'))
 
 
 @app.route('/health')
