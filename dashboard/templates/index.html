@@ -307,15 +307,48 @@
         <div class="nav-brand">SOVEREIGN ALPHA</div>
         <div class="nav-links">
             <a href="/" class="active">Home</a>
+            <a href="/upload">Upload Data</a>
             <a href="/decisions">Decisions</a>
             <a href="/proofs">Proofs</a>
             <a href="/performance">Performance</a>
+            <a href="/logout">Logout</a>
         </div>
     </nav>
     
     <div class="notification" id="notification"></div>
     
     <div class="container">
+        {% if progress and not progress.step5_done %}
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">📋 SETUP PROGRESS</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step1_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
+                    {% if progress.step1_done %}✓{% else %}1{% endif %} Access
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step2_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
+                    {% if progress.step2_done %}✓{% else %}2{% endif %} Upload Positions
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step3_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
+                    {% if progress.step3_done %}✓{% else %}3{% endif %} Set Parameters
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step4_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
+                    {% if progress.step4_done %}✓{% else %}4{% endif %} Add Research
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step5_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
+                    {% if progress.step5_done %}✓{% else %}5{% endif %} Run Analysis
+                </div>
+            </div>
+            <a href="/upload" class="btn" style="margin-top: 1rem; display: inline-block;">Continue Setup →</a>
+        </div>
+        {% endif %}
+        
+        <div class="privacy-badge" style="background: rgba(0, 255, 136, 0.1); border: 1px solid var(--accent); border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+            <span style="font-size: 1.5rem;">🔒</span>
+            <div>
+                <strong style="color: var(--accent);">YOUR DATA IS PRIVATE</strong>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">All uploaded data is stored locally on this server only. Never transmitted externally.</p>
+            </div>
+        </div>
         <div class="header">
             <h1>Fund Overview</h1>
             <p>Real-time Sovereign Alpha Dashboard - Last updated: <span id="last-update">{{ last_verified }}</span></p>

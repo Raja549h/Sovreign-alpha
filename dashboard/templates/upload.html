@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Data - Sovereign Alpha</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1a1a1a;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --danger: #ff4444;
+            --warning: #ffaa00;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+        }
+        
+        .privacy-badge {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .privacy-badge .icon {
+            font-size: 1.5rem;
+        }
+        
+        .privacy-badge strong {
+            color: var(--accent);
+        }
+        
+        .privacy-badge p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .setup-progress {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .setup-progress h3 {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+        
+        .progress-step.done {
+            color: var(--accent);
+        }
+        
+        .progress-step .check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        .progress-step.done .check {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        .progress-step:not(.done) .check {
+            border: 2px solid var(--border);
+        }
+        
+        .upload-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .upload-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .upload-section h2 .step-num {
+            background: var(--accent);
+            color: var(--bg-primary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .upload-section p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+            margin-bottom: 1rem;
+        }
+        
+        .drop-zone:hover {
+            border-color: var(--accent);
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 255, 136, 0.1);
+        }
+        
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+        
+        .drop-zone p {
+            margin: 0;
+        }
+        
+        .drop-zone .hint {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .template-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 0.5rem;
+            transition: background 0.3s;
+        }
+        
+        .template-btn:hover {
+            background: var(--border);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .form-group input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover { background: var(--accent-dim); }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .char-count {
+            text-align: right;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .status-msg {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .status-msg.success {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .status-msg.error {
+            background: rgba(255, 68, 68, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .preview-table th, .preview-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .preview-table th {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        
+        .ready-banner {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            display: none;
+        }
+        
+        .ready-banner.show {
+            display: block;
+        }
+        
+        .ready-banner h2 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .ready-banner p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .run-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .run-btn:hover {
+            background: var(--accent-dim);
+            transform: scale(1.02);
+        }
+        
+        .current-params {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .current-params h4 {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .param-item span:last-child {
+            color: var(--accent);
+        }
+        
+        @media (max-width: 768px) {
+            .nav { flex-direction: column; gap: 1rem; }
+            .nav-links { flex-wrap: wrap; justify-content: center; }
+            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/upload" class="active">Upload Data</a>
+            <a href="/decisions">Decisions</a>
+            <a href="/proofs">Proofs</a>
+            <a href="/performance">Performance</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="privacy-badge">
+            <div class="icon">🔒</div>
+            <div>
+                <strong>YOUR DATA IS PRIVATE</strong>
+                <p>All uploaded data is stored locally on this server only. Never transmitted to external services. Never visible to Sovereign Alpha team.</p>
+            </div>
+        </div>
+        
+        <div class="setup-progress">
+            <h3>SETUP PROGRESS</h3>
+            <div class="progress-step {% if progress.step1_done %}done{% endif %}">
+                <div class="check">{% if progress.step1_done %}✓{% endif %}</div>
+                <span>Step 1: Access dashboard</span>
+            </div>
+            <div class="progress-step {% if progress.step2_done %}done{% endif %}">
+                <div class="check">{% if progress.step2_done %}✓{% endif %}</div>
+                <span>Step 2: Upload portfolio positions</span>
+            </div>
+            <div class="progress-step {% if progress.step3_done %}done{% endif %}">
+                <div class="check">{% if progress.step3_done %}✓{% endif %}</div>
+                <span>Step 3: Set risk parameters</span>
+            </div>
+            <div class="progress-step {% if progress.step4_done %}done{% endif %}">
+                <div class="check">{% if progress.step4_done %}✓{% endif %}</div>
+                <span>Step 4: Add research notes</span>
+            </div>
+            <div class="progress-step {% if progress.step5_done %}done{% endif %}">
+                <div class="check">{% if progress.step5_done %}✓{% endif %}</div>
+                <span>Step 5: Run first analysis</span>
+            </div>
+        </div>
+        
+        <h1>Upload Your Fund Data</h1>
+        
+        <div class="upload-section">
+            <h2><span class="step-num">1</span> Portfolio Positions</h2>
+            <p>Upload your current positions as CSV or Excel. Required columns: ticker, company, sector, shares, avg_cost, current_price</p>
+            
+            <div class="drop-zone" id="positions-drop" onclick="document.getElementById('positions-file').click()">
+                <p>📁 Drag and drop your file here or click to browse</p>
+                <p class="hint">Supports CSV and Excel (.xlsx) files</p>
+                <input type="file" id="positions-file" accept=".csv,.xlsx,.xls">
+            </div>
+            
+            <a href="/download/positions-template" class="template-btn">📥 Download Template CSV</a>
+            
+            <div id="positions-status" class="status-msg"></div>
+            <div id="positions-preview"></div>
+        </div>
+        
+        <div class="upload-section">
+            <h2><span class="step-num">2</span> Risk Parameters</h2>
+            <p>Set your fund's risk management parameters. These control position sizing and exposure limits.</p>
+            
+            <form id="params-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="max_position">Max Position Size %</label>
+                        <input type="number" id="max_position" name="max_position" value="{{ params.get('max_position_size_pct', '5.0') }}" step="0.1" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="max_sector">Max Sector Exposure %</label>
+                        <input type="number" id="max_sector" name="max_sector" value="20.0" step="0.1" min="5" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="max_drawdown">Max Drawdown %</label>
+                        <input type="number" id="max_drawdown" name="max_drawdown" value="{{ params.get('max_drawdown_pct', '15.0') }}" step="0.1" min="5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="min_confidence">Min Confidence Score %</label>
+                        <input type="number" id="min_confidence" name="min_confidence" value="65.0" step="1" min="50" max="90">
+                    </div>
+                    <div class="form-group">
+                        <label for="benchmark">Benchmark Return %</label>
+                        <input type="number" id="benchmark" name="benchmark" value="{{ params.get('benchmark_return_pct', '8.0') }}" step="0.1" min="0" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="aum">Fund AUM (USD)</label>
+                        <input type="number" id="aum" name="aum" value="{{ params.get('aum', '59000000') }}" step="1000000">
+                    </div>
+                </div>
+                <button type="submit" class="btn">Save Parameters</button>
+            </form>
+            
+            <div id="params-status" class="status-msg"></div>
+            
+            {% if params %}
+            <div class="current-params">
+                <h4>Current Saved Parameters</h4>
+                <div class="param-item"><span>Max Position</span><span>{{ params.get('max_position_size_pct', '5.0') }}%</span></div>
+                <div class="param-item"><span>Max Sector</span><span>20%</span></div>
+                <div class="param-item"><span>Max Drawdown</span><span>{{ params.get('max_drawdown_pct', '15.0') }}%</span></div>
+                <div class="param-item"><span>Min Confidence</span><span>{{ "%.0f"|format(float(params.get('min_confidence_score', 0.65)) * 100) }}%</span></div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="upload-section">
+            <h2><span class="step-num">3</span> Internal Research Notes</h2>
+            <p>Paste your internal research directly or upload a .txt file. This data stays private on your server only.</p>
+            
+            <textarea id="research-text" placeholder="Paste your research notes here..."></textarea>
+            <div class="char-count"><span id="char-count">0</span> characters</div>
+            
+            <p style="margin-top: 1rem; color: var(--text-secondary);">Or upload a file:</p>
+            <div class="drop-zone" id="research-drop" style="margin-top: 0.5rem;" onclick="document.getElementById('research-file').click()">
+                <p>📄 Upload .txt or .pdf file</p>
+                <input type="file" id="research-file" accept=".txt,.pdf">
+            </div>
+            
+            <button type="button" class="btn" style="margin-top: 1rem;" onclick="submitResearch()">Submit Research</button>
+            
+            <div id="research-status" class="status-msg"></div>
+        </div>
+        
+        <div class="ready-banner {% if progress.step2_done and progress.step3_done and progress.step4_done %}show{% endif %}" id="ready-banner">
+            <h2>✓ Your Fund Data Is Configured</h2>
+            <p>Click Run Analysis to generate your first AI-powered recommendations.</p>
+            <button class="run-btn" onclick="runAnalysis()">🚀 RUN ANALYSIS FOR MY FUND</button>
+        </div>
+    </div>
+    
+    <script>
+        const positionsDrop = document.getElementById('positions-drop');
+        const positionsFile = document.getElementById('positions-file');
+        const researchDrop = document.getElementById('research-drop');
+        const researchFile = document.getElementById('research-file');
+        const researchText = document.getElementById('research-text');
+        const charCount = document.getElementById('char-count');
+        
+        positionsDrop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            positionsDrop.classList.add('dragover');
+        });
+        
+        positionsDrop.addEventListener('dragleave', () => {
+            positionsDrop.classList.remove('dragover');
+        });
+        
+        positionsDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            positionsDrop.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                uploadPositions(e.dataTransfer.files[0]);
+            }
+        });
+        
+        positionsFile.addEventListener('change', () => {
+            if (positionsFile.files.length) {
+                uploadPositions(positionsFile.files[0]);
+            }
+        });
+        
+        researchFile.addEventListener('change', () => {
+            if (researchFile.files.length) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    researchText.value = e.target.result;
+                    charCount.textContent = researchText.value.length;
+                };
+                reader.readAsText(researchFile.files[0]);
+            }
+        });
+        
+        researchText.addEventListener('input', () => {
+            charCount.textContent = researchText.value.length;
+        });
+        
+        function uploadPositions(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/upload/positions', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                const status = document.getElementById('positions-status');
+                if (data.success) {
+                    status.className = 'status-msg success';
+                    status.textContent = '✓ ' + data.message;
+                    status.style.display = 'block';
+                    
+                    let preview = '<table class="preview-table"><tr><th>Ticker</th><th>Company</th><th>Sector</th><th>Shares</th></tr>';
+                    data.preview.forEach(row => {
+                        preview += `<tr><td>${row.ticker}</td><td>${row.company}</td><td>${row.sector}</td><td>${row.shares}</td></tr>`;
+                    });
+                    preview += '</table>';
+                    document.getElementById('positions-preview').innerHTML = preview;
+                    
+                    checkReady();
+                } else {
+                    status.className = 'status-msg error';
+                    status.textContent = '✗ ' + data.error;
+                    status.style.display = 'block';
+                }
+            });
+        }
+        
+        document.getElementById('params-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            fetch('/upload/params', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                const status = document.getElementById('params-status');
+                if (data.success) {
+                    status.className = 'status-msg success';
+                    status.textContent = '✓ ' + data.message;
+                    status.style.display = 'block';
+                    checkReady();
+                } else {
+                    status.className = 'status-msg error';
+                    status.textContent = '✗ ' + data.error;
+                    status.style.display = 'block';
+                }
+            });
+        });
+        
+        function submitResearch() {
+            const research = researchText.value;
+            if (!research.trim()) {
+                const status = document.getElementById('research-status');
+                status.className = 'status-msg error';
+                status.textContent = '✗ Please enter research notes or upload a file.';
+                status.style.display = 'block';
+                return;
+            }
+            
+            fetch('/upload/research', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'research_text=' + encodeURIComponent(research)
+            })
+            .then(r => r.json())
+            .then(data => {
+                const status = document.getElementById('research-status');
+                if (data.success) {
+                    status.className = 'status-msg success';
+                    status.textContent = '✓ ' + data.message;
+                    status.style.display = 'block';
+                    checkReady();
+                } else {
+                    status.className = 'status-msg error';
+                    status.textContent = '✗ ' + data.error;
+                    status.style.display = 'block';
+                }
+            });
+        }
+        
+        function checkReady() {
+            fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                if (data.total_decisions > 0) {
+                    document.getElementById('ready-banner').classList.add('show');
+                }
+            });
+        }
+        
+        function runAnalysis() {
+            if (!confirm('Run analysis with your fund data?')) return;
+            
+            const btn = document.querySelector('.run-btn');
+            btn.textContent = '⏳ Running...';
+            btn.disabled = true;
+            
+            fetch('/api/run', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Analysis complete! ' + data.new_decisions + ' decisions generated.');
+                    window.location.href = '/';
+                } else {
+                    alert('Analysis failed: ' + data.error);
+                    btn.textContent = '🚀 RUN ANALYSIS FOR MY FUND';
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert('Error: ' + err);
+                btn.textContent = '🚀 RUN ANALYSIS FOR MY FUND';
+                btn.disabled = false;
+            });
+        }
+        
+        checkReady();
+    </script>
+</body>
+</html>
