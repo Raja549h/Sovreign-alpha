@@ -588,12 +588,14 @@ def login_page():
     session_token = request.cookies.get('session_token')
     if session_token:
         from privacy import verify_session_token
-        if verify_session_token(session_token):
+        fund_id = verify_session_token(session_token)
+        if fund_id:
             return redirect(url_for('index'))
     
     error = None
     if request.method == 'POST':
         password = request.form.get('password', '')
+        
         if password == FUND_PASSWORD:
             from privacy import create_session_token
             token = create_session_token('fund_manager')
