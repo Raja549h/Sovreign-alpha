@@ -1,30 +1,28 @@
 # privacy.py - Sovereign Alpha Privacy & Security Module
-# ✅ PRIVACY: Zero raw data in logs, Fernet encryption, tenant isolation, proof-only output
+# Zero raw data in logs, Fernet encryption, tenant isolation, proof-only output
 
 import os
 import sys
 import hashlib
 import logging
-import traceback
-from datetime import datetime, timedelta
+import base64
+import time
+from datetime import datetime
 from typing import Optional, Any, Dict, List
 from pathlib import Path
 
-# ✅ PRIVACY: Fernet encryption loaded from env only
 try:
     from cryptography.fernet import Fernet
     FERNET_AVAILABLE = True
 except ImportError:
     FERNET_AVAILABLE = False
 
-# ✅ PRIVACY: Load secrets from env only
 FERNET_KEY = os.environ.get("FERNET_KEY", "")
 JWT_SECRET = os.environ.get("JWT_SECRET", "")
 
 _fernet: Optional[Fernet] = None
 
 def _get_fernet() -> Optional[Fernet]:
-    """Get or create Fernet instance. ✅ PRIVACY: Key from env only."""
     global _fernet
     if not FERNET_AVAILABLE:
         return None
@@ -32,9 +30,7 @@ def _get_fernet() -> Optional[Fernet]:
         _fernet = Fernet(FERNET_KEY.encode())
     return _fernet
 
-# ✅ PRIVACY: Sanitized logger - WARNING+ only, no raw data
 def setup_privacy_logger(name: str = "sovereign_alpha", level: int = logging.WARNING) -> logging.Logger:
-    """Setup logger with sanitized output. ✅ PRIVACY: No PII/positions in logs."""
     logger = logging.getLogger(name)
     logger.setLevel(level)
     if not logger.handlers:
@@ -51,72 +47,52 @@ def setup_privacy_logger(name: str = "sovereign_alpha", level: int = logging.WAR
 logger = setup_privacy_logger()
 
 def sanitize_log_data(data: Dict[str, Any], tenant_id: str = "unknown") -> Dict[str, Any]:
-    """Remove sensitive fields from data before logging. ✅ PRIVACY: Metadata only."""
     safe_keys = {'count', 'status', 'id', 'timestamp', 'type', 'source'}
     return {k: v for k, v in data.items() if k.lower() in safe_keys}
 
 def log_safe(logger: logging.Logger, level: int, msg: str, **kwargs):
-    """Log with sanitized metadata. ✅ PRIVACY: No raw positions/PII."""
     safe_kwargs = sanitize_log_data(kwargs)
     logger.log(level, f"{msg} | tenant={safe_kwargs.get('tenant_id', 'unknown')}")
 
-# ✅ PRIVACY: Fernet encryption helpers
 def encrypt_data(data: bytes) -> bytes:
-    """Encrypt data using Fernet. ✅ PRIVACY: Key from env."""
     f = _get_fernet()
     if f:
         return f.encrypt(data)
     return data
 
 def decrypt_data(data: bytes) -> bytes:
-    """Decrypt data using Fernet. ✅ PRIVACY: Key from env."""
     f = _get_fernet()
     if f:
         return f.decrypt(data)
     return data
 
 def encrypt_json(data: Dict) -> str:
-    """Encrypt JSON dict to base64 string. ✅ PRIVACY: Encrypted at rest."""
     import json
     json_bytes = json.dumps(data).encode()
     encrypted = encrypt_data(json_bytes)
-    import base64
     return base64.b64encode(encrypted).decode()
 
 def decrypt_json(data: str) -> Dict:
-    """Decrypt base64 string to JSON dict. ✅ PRIVACY: Decrypt in memory."""
-    import base64
     encrypted = base64.b64decode(data.encode())
     decrypted = decrypt_data(encrypted)
     import json
     return json.loads(decrypted.decode())
 
-# ✅ PRIVACY: Tenant-scoped data wrapper
 class TenantScopedData:
-    """Wrap all data access with tenant isolation. ✅ PRIVACY: tenant_{id}_ prefix."""
-    
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
         self.prefix = f"tenant_{tenant_id}_"
     
     def scope_key(self, key: str) -> str:
-        """Prefix key with tenant ID. ✅ PRIVACY: No cross-tenant access."""
         return f"{self.prefix}{key}"
     
     def scope_collection(self, collection: str) -> str:
-        """Scope ChromaDB collection. ✅ PRIVACY: Isolated namespaces."""
         return f"{self.prefix}{collection}"
     
     def scope_db_table(self, table: str) -> str:
-        """Scope SQLite table. ✅ PRIVACY: Per-tenant tables."""
         return f"{self.prefix}{table}"
 
-# ✅ PRIVACY: Deterministic proof generator
 def generate_proof(decision_id: str, policy_hash: str, timestamp: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Generate cryptographic proof from decision + policy.
-    ✅ PRIVACY: Proof-only output, no raw data in response.
-    """
     ts = timestamp or datetime.utcnow().isoformat() + 'Z'
     data = f"{decision_id}|{policy_hash}|{ts}"
     proof_hash = hashlib.sha256(data.encode()).hexdigest()
@@ -128,7 +104,6 @@ def generate_proof(decision_id: str, policy_hash: str, timestamp: Optional[str] 
     }
 
 def generate_policy_hash(risk_params: Dict, governance: Dict) -> str:
-    """Generate deterministic policy hash. ✅ PRIVACY: No policy details leaked."""
     policy_data = {
         "max_position": risk_params.get("max_position_size_pct", 4.5),
         "sectors": list(risk_params.get("sector_limits", {}).keys()),
@@ -137,12 +112,7 @@ def generate_policy_hash(risk_params: Dict, governance: Dict) -> str:
     import json
     return hashlib.sha256(json.dumps(policy_data, sort_keys=True).encode()).hexdigest()
 
-# ✅ PRIVACY: Audit proof-only output (no raw positions/strategies)
 def proof_only_response(decision_id: str, compliant: bool, fee: float = 0.0) -> Dict[str, Any]:
-    """
-    Generate auditor proof-only response.
-    ✅ PRIVACY: Rule 4 - NEVER return raw positions, strategies, research.
-    """
     return {
         "proof": f"0x{hashlib.sha256(decision_id.encode()).hexdigest()[:64]}",
         "policy_compliant": compliant,
@@ -151,41 +121,22 @@ def proof_only_response(decision_id: str, compliant: bool, fee: float = 0.0) -> 
         "status": "verified" if compliant else "rejected"
     }
 
-# ✅ PRIVACY: Clear sensitive data from memory
 def clear_sensitive(obj: Any) -> None:
-    """Clear sensitive data from memory after use. ✅ PRIVACY: Render ephemeral disk."""
     if hasattr(obj, '__dict__'):
         for key in list(obj.__dict__.keys()):
             if any(s in key.lower() for s in ['key', 'secret', 'token', 'password']):
                 obj.__dict__['key'] = None
 
-# ✅ PRIVACY: Validate required secrets at startup
 def validate_secrets(required: List[str] = None) -> bool:
-    """Fail startup if required secrets missing. ✅ PRIVACY: Hardcoded nothing."""
     if required is None:
         required = ['FERNET_KEY']
-    
     missing = [s for s in required if not os.environ.get(s)]
     if missing:
         logger.warning(f"Missing secrets (ok for dev): {missing}")
         return False
     return True
 
-# ✅ PRIVACY: JWT tenant validation
-def validate_jwt_tenant(token: str) -> Optional[str]:
-    """Extract tenant_id from JWT. ✅ PRIVACY: Strict tenant isolation."""
-    try:
-        import jwt
-        if not JWT_SECRET:
-            return "default"
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        return payload.get("sub", "unknown")
-    except Exception:
-        return None
-
-# ✅ PRIVACY: Safe error handler - no raw data exposed
 def safe_error_response(e: Exception) -> Dict[str, Any]:
-    """Return safe error without exposing internals. ✅ PRIVACY: No stack traces."""
     logger.error(f"Error occurred | type={type(e).__name__}")
     return {
         "error": "An error occurred",
@@ -194,36 +145,30 @@ def safe_error_response(e: Exception) -> Dict[str, Any]:
     }
 
 def hash_password(password: str) -> str:
-    """Hash password for storage."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 def create_session_token(fund_id: str) -> str:
-    """Create a session token for the fund."""
-    import jwt
-    import time
-    secret = JWT_SECRET if JWT_SECRET else "fallback_secret_key_sovereign_alpha_2024"
-    payload = {
-        "sub": fund_id,
-        "exp": time.time() + 86400 * 7,
-        "iat": time.time()
-    }
-    return jwt.encode(payload, secret, algorithm="HS256")
+    secret = JWT_SECRET or "fallback_session_secret_sovereign_2024"
+    token_data = f"{fund_id}:{int(time.time())}"
+    signature = hashlib.sha256(f"{token_data}:{secret}".encode()).hexdigest()
+    return base64.b64encode(f"{token_data}:{signature}".encode()).decode()
 
 def verify_session_token(token: str) -> Optional[str]:
-    """Verify a session token and return fund_id."""
-    import jwt
-    secrets = [JWT_SECRET] if JWT_SECRET else []
-    secrets.append("fallback_secret_key_sovereign_alpha_2024")
-    
-    for secret in secrets:
-        try:
-            payload = jwt.decode(token, secret, algorithms=["HS256"])
-            return payload.get("sub")
-        except Exception:
-            continue
-    return None
+    try:
+        secret = JWT_SECRET or "fallback_session_secret_sovereign_2024"
+        decoded = base64.b64decode(token.encode()).decode()
+        parts = decoded.rsplit(':', 1)
+        if len(parts) != 2:
+            return None
+        token_data, provided_sig = parts
+        expected_sig = hashlib.sha256(f"{token_data}:{secret}".encode()).hexdigest()
+        if provided_sig == expected_sig:
+            fund_id = token_data.split(':')[0]
+            return fund_id
+        return None
+    except Exception:
+        return None
 
 def validate_password(input_password: str, stored_password: str = None) -> bool:
-    """Validate password against stored hash."""
     fund_password = os.environ.get("FUND_PASSWORD", "sovereign2024")
     return input_password == fund_password
