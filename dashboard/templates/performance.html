@@ -178,6 +178,11 @@
     </style>
 </head>
 <body>
+    {% if is_demo %}
+    <div style="background: linear-gradient(90deg, #1a3a2a, #0a2a1a); border-bottom: 1px solid #00ff88; padding: 0.75rem 2rem; text-align: center; font-size: 0.85rem; color: #00ff88;">
+        ◈ Showing demo data — <a href="/upload" style="color: #88ffbb; text-decoration: underline;">upload your fund data</a> to see your personalised analysis
+    </div>
+    {% endif %}
     <nav class="nav">
         <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
         <div class="nav-links">
@@ -206,7 +211,7 @@
             </div>
             <div class="stat-card">
                 <label>Est. Fees (12%)</label>
-                <div class="value">${{ "%.0f"|format(total_alpha * 0.12) }}</div>
+                <div class="value">${{ "%.0f"|format(total_fees) }}</div>
             </div>
         </div>
         
