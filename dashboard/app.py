@@ -149,6 +149,71 @@ def check_setup_progress() -> dict:
     }
 
 
+# Demo data for when database is empty
+DEMO_STATS = {
+    'aum': 10400000,
+    'approval_rate': 53.8,
+    'total_decisions': 52,
+    'total_approved': 28,
+    'total_alpha': 913656,
+    'total_fees': 109639,
+    'proofs_verified': 28
+}
+
+DEMO_RECENT_DECISIONS = [
+    {'decision_id': 'DEMO-001', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.92, 'value': 150000},
+    {'decision_id': 'DEMO-002', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.88, 'value': 120000},
+    {'decision_id': 'DEMO-003', 'symbol': 'AMD', 'action': 'BUY', 'status': 'approved', 'confidence': 0.85, 'value': 100000},
+    {'decision_id': 'DEMO-004', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'value': 95000},
+    {'decision_id': 'DEMO-005', 'symbol': 'MSFT', 'action': 'BUY', 'status': 'approved', 'confidence': 0.80, 'value': 85000},
+]
+
+DEMO_ALL_DECISIONS = [
+    {'decision_id': 'DEMO-001', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.92, 'potential_return': 150000, 'zk_proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4', 'timestamp': '2026-05-13T10:30:00Z', 'fee': 18000},
+    {'decision_id': 'DEMO-002', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.88, 'potential_return': 120000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a9', 'timestamp': '2026-05-13T09:15:00Z', 'fee': 14400},
+    {'decision_id': 'DEMO-003', 'symbol': 'AMD', 'action': 'BUY', 'status': 'approved', 'confidence': 0.85, 'potential_return': 100000, 'zk_proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c3', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 12000},
+    {'decision_id': 'DEMO-004', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'potential_return': 95000, 'zk_proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c1', 'timestamp': '2026-05-12T16:20:00Z', 'fee': 11400},
+    {'decision_id': 'DEMO-005', 'symbol': 'MSFT', 'action': 'BUY', 'status': 'approved', 'confidence': 0.80, 'potential_return': 85000, 'zk_proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a5', 'timestamp': '2026-05-12T14:30:00Z', 'fee': 10200},
+    {'decision_id': 'DEMO-006', 'symbol': 'JPM', 'action': 'REDUCE', 'status': 'vetoed', 'confidence': 0.78, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d6', 'timestamp': '2026-05-12T11:00:00Z', 'fee': 0},
+    {'decision_id': 'DEMO-007', 'symbol': 'GOOGL', 'action': 'BUY', 'status': 'approved', 'confidence': 0.76, 'potential_return': 75000, 'zk_proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c9', 'timestamp': '2026-05-12T09:45:00Z', 'fee': 9000},
+    {'decision_id': 'DEMO-008', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.74, 'potential_return': 70000, 'zk_proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c2', 'timestamp': '2026-05-11T15:30:00Z', 'fee': 8400},
+    {'decision_id': 'DEMO-009', 'symbol': 'META', 'action': 'HOLD', 'status': 'vetoed', 'confidence': 0.65, 'potential_return': 0, 'zk_proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c1', 'timestamp': '2026-05-11T13:15:00Z', 'fee': 0},
+    {'decision_id': 'DEMO-010', 'symbol': 'CVX', 'action': 'BUY', 'status': 'approved', 'confidence': 0.71, 'potential_return': 65000, 'zk_proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f', 'timestamp': '2026-05-11T10:00:00Z', 'fee': 7800},
+]
+
+DEMO_PROOFS = [
+    {'decision_id': 'REC-01', 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a392837465', 'proof_hash_full': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a392837465', 'timestamp': '2026-05-13T10:30:00Z', 'symbol': 'NVDA', 'action': 'BUY', 'confidence': 0.92, 'value': 892400, 'verdict': 'VERIFIED'},
+    {'decision_id': 'REC-02', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a928374651', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a928374651', 'timestamp': '2026-05-13T09:15:00Z', 'symbol': 'LLY', 'action': 'BUY', 'confidence': 0.88, 'value': 406300, 'verdict': 'VERIFIED'},
+    {'decision_id': 'REC-03', 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c392837465', 'proof_hash_full': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c392837465', 'timestamp': '2026-05-13T08:45:00Z', 'symbol': 'AMD', 'action': 'BUY', 'confidence': 0.85, 'value': 245800, 'verdict': 'VERIFIED'},
+    {'decision_id': 'REC-04', 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c192837465', 'proof_hash_full': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c192837465', 'timestamp': '2026-05-12T16:20:00Z', 'symbol': 'AVGO', 'action': 'BUY', 'confidence': 0.83, 'value': 912400, 'verdict': 'VERIFIED'},
+    {'decision_id': 'REC-05', 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a592837465', 'proof_hash_full': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a592837465', 'timestamp': '2026-05-12T14:30:00Z', 'symbol': 'MSFT', 'action': 'BUY', 'confidence': 0.80, 'value': 330240, 'verdict': 'VERIFIED'},
+]
+
+DEMO_PERFORMANCE = {
+    'total_sessions': 16,
+    'avg_confidence': 0.81,
+    'confidence_history': {
+        'labels': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12', 'S13', 'S14', 'S15', 'S16'],
+        'values': [0.75, 0.78, 0.82, 0.79, 0.85, 0.88, 0.84, 0.90, 0.87, 0.92, 0.86, 0.83, 0.89, 0.91, 0.88, 0.85]
+    },
+    'sector_data': {
+        'labels': ['Tech', 'Financial', 'Healthcare', 'Energy', 'Consumer'],
+        'approved': [12, 6, 4, 3, 3],
+        'vetoed': [2, 1, 1, 1, 1]
+    },
+    'return_distribution': {
+        'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'],
+        'values': [8, 12, 6, 2]
+    }
+}
+
+def is_demo_mode():
+    """Check if we should show demo data."""
+    decisions = get_decisions()
+    proofs = count_proof_files()
+    return len(decisions) == 0 and proofs == 0
+
+
 def get_db_data(query, params=None):
     """Get data from SQLite database."""
     if not DB_PATH.exists():
@@ -324,170 +389,179 @@ def calculate_dashboard_stats():
 @login_required
 def index():
     """Home page."""
-    stats = calculate_dashboard_stats()
-    recent = get_recent_decisions(5)
+    demo_mode = is_demo_mode()
     progress = check_setup_progress()
     
-    recent_decisions = []
-    for d in recent:
-        recent_decisions.append({
-            'decision_id': d.get('decision_id', 'N/A'),
-            'symbol': d.get('symbol', ''),
-            'action': d.get('action', ''),
-            'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-            'confidence': 0.85,
-            'value': d.get('alpha_generated', 0) or 0
-        })
+    if demo_mode:
+        stats = DEMO_STATS
+        recent = DEMO_RECENT_DECISIONS
+        recent_decisions = recent
+    else:
+        stats = calculate_dashboard_stats()
+        recent = get_recent_decisions(5)
+        recent_decisions = []
+        for d in recent:
+            recent_decisions.append({
+                'decision_id': d.get('decision_id', 'N/A'),
+                'symbol': d.get('symbol', ''),
+                'action': d.get('action', ''),
+                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
+                'confidence': 0.85,
+                'value': d.get('alpha_generated', 0) or 0
+            })
     
     return render_template('index.html',
                        approval_rate=stats['approval_rate'],
                        total_decisions=stats['total_decisions'],
-                       total_approved=stats['approved'],
+                       total_approved=stats['total_approved'],
                        total_alpha=stats['total_alpha'],
                        proofs_verified=stats['proofs_verified'],
-                       last_verified=stats['last_verified'],
+                       last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                        recent_decisions=recent_decisions,
-                       progress=progress)
+                       progress=progress,
+                       is_demo=demo_mode)
 
 
 @app.route('/decisions')
 @login_required
 def decisions():
-    """Decisions page - FIX: Shows message when empty."""
-    all_decisions = get_decisions()
+    """Decisions page."""
+    demo_mode = is_demo_mode()
     
-    decisions_list = []
-    for d in all_decisions:
-        decisions_list.append({
-            'decision_id': d.get('decision_id', 'N/A'),
-            'symbol': d.get('symbol', ''),
-            'action': d.get('action', ''),
-            'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-            'confidence': 0.75 + (hash(d.get('decision_id', '') or '') % 20) / 100,
-            'potential_return': d.get('alpha_generated', 0) or 0,
-            'zk_proof_hash': f"0x{(d.get('decision_id') or 'N/A')[:32]}",
-            'timestamp': d.get('timestamp', ''),
-            'fee': d.get('fee_calculated', 0) or 0
-        })
-    
-    stats = calculate_dashboard_stats()
-    has_data = len(decisions_list) > 0
+    if demo_mode:
+        decisions_list = DEMO_ALL_DECISIONS
+        stats = DEMO_STATS
+        has_data = True
+    else:
+        all_decisions = get_decisions()
+        decisions_list = []
+        for d in all_decisions:
+            decisions_list.append({
+                'decision_id': d.get('decision_id', 'N/A'),
+                'symbol': d.get('symbol', ''),
+                'action': d.get('action', ''),
+                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
+                'confidence': 0.75 + (hash(d.get('decision_id', '') or '') % 20) / 100,
+                'potential_return': d.get('alpha_generated', 0) or 0,
+                'zk_proof_hash': f"0x{(d.get('decision_id') or 'N/A')[:32]}",
+                'timestamp': d.get('timestamp', ''),
+                'fee': d.get('fee_calculated', 0) or 0
+            })
+        stats = calculate_dashboard_stats()
+        has_data = len(decisions_list) > 0
     
     return render_template('decisions.html', 
                            decisions=decisions_list,
                            has_data=has_data,
-                           stats=stats)
+                           stats=stats,
+                           is_demo=demo_mode)
 
 
 @app.route('/proofs')
 @login_required
 def proofs():
-    """Proofs page - FIX: Better empty state handling."""
-    proofs_list = load_proof_files()
+    """Proofs page."""
+    demo_mode = is_demo_mode()
     
-    formatted_proofs = []
-    for p in proofs_list:
-        pd = p.get('proof_data', {}) if isinstance(p, dict) else {}
-        commitment = pd.get('commitment_hash', '') or p.get('commitment_hash', '')
-        
-        formatted_proofs.append({
-            'decision_id': p.get('decision_id', p.get('trade_id', 'N/A')),
-            'proof_hash': commitment[:32] + '...' if commitment else 'N/A',
-            'proof_hash_full': commitment,
-            'timestamp': pd.get('created_at', '') or pd.get('timestamp', '') or datetime.utcnow().isoformat(),
-            'symbol': p.get('symbol', pd.get('trade_action', 'N/A')),
-            'action': p.get('action', pd.get('trade_action', 'BUY')),
-            'confidence': 0.85,
-            'value': p.get('position_value', p.get('estimated_value', 0)) or 0,
-            'verdict': pd.get('verdict', 'VERIFIED')
-        })
-    
-    has_proofs = len(formatted_proofs) > 0
-    stats = calculate_dashboard_stats()
+    if demo_mode:
+        formatted_proofs = DEMO_PROOFS
+        has_proofs = True
+        stats = DEMO_STATS
+    else:
+        proofs_list = load_proof_files()
+        formatted_proofs = []
+        for p in proofs_list:
+            pd = p.get('proof_data', {}) if isinstance(p, dict) else {}
+            commitment = pd.get('commitment_hash', '') or p.get('commitment_hash', '')
+            
+            formatted_proofs.append({
+                'decision_id': p.get('decision_id', p.get('trade_id', 'N/A')),
+                'proof_hash': commitment[:32] + '...' if commitment else 'N/A',
+                'proof_hash_full': commitment,
+                'timestamp': pd.get('created_at', '') or pd.get('timestamp', '') or datetime.utcnow().isoformat(),
+                'symbol': p.get('symbol', pd.get('trade_action', 'N/A')),
+                'action': p.get('action', pd.get('trade_action', 'BUY')),
+                'confidence': 0.85,
+                'value': p.get('position_value', p.get('estimated_value', 0)) or 0,
+                'verdict': pd.get('verdict', 'VERIFIED')
+            })
+        has_proofs = len(formatted_proofs) > 0
+        stats = calculate_dashboard_stats()
     
     return render_template('proofs.html', 
                            proofs=formatted_proofs,
                            has_proofs=has_proofs,
-                           stats=stats)
+                           stats=stats,
+                           is_demo=demo_mode)
 
 
 @app.route('/performance')
 @login_required
 def performance():
-    """Performance page - FIX: Uses real database queries."""
-    decisions = get_decisions()
-    stats = calculate_dashboard_stats()
+    """Performance page."""
+    demo_mode = is_demo_mode()
     
-    confidence_history = {
-        'labels': [],
-        'values': []
-    }
-    
-    for i, d in enumerate(decisions[:20]):
-        confidence_history['labels'].append(f"D{i+1}")
-        confidence_history['values'].append(0.65 + (hash(str(d.get('decision_id', ''))) % 35) / 100)
-    
-    sector_data = {
-        'labels': [],
-        'approved': [],
-        'vetoed': []
-    }
-    
-    sector_stats = get_sector_stats()
-    for s in sector_stats:
-        symbol = s.get('symbol', 'Unknown')
-        if len(symbol) > 4:
-            symbol = symbol[:4]
-        sector_data['labels'].append(symbol)
-        sector_data['approved'].append(s.get('count', 0))
-        sector_data['vetoed'].append(0)
-    
-    if not sector_data['labels']:
-        sector_data = {
-            'labels': ['No Data'],
-            'approved': [0],
-            'vetoed': [0]
-        }
-    
-    return_distribution = {
-        'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'],
-        'values': [0, 0, 0, 0]
-    }
-    
-    returns = get_return_distribution()
-    for r in returns:
-        alpha = r.get('alpha_generated', 0) or 0
-        if alpha > 0:
-            if alpha < 50000:
-                return_distribution['values'][0] += 1
-            elif alpha < 100000:
-                return_distribution['values'][1] += 1
-            elif alpha < 200000:
-                return_distribution['values'][2] += 1
-            else:
-                return_distribution['values'][3] += 1
-    
-    if all(v == 0 for v in return_distribution['values']):
-        return_distribution = {
-            'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'],
-            'values': [1, 2, 1, 2]
-        }
-    
-    sessions = load_results_files()
-    total_sessions = len(sessions)
-    
-    avg_confidence = 0.75
-    if decisions:
-        avg_confidence = 0.65 + (sum(hash(str(d.get('decision_id', ''))) for d in decisions) % 35) / 100 / len(decisions)
+    if demo_mode:
+        stats = DEMO_STATS
+        perf = DEMO_PERFORMANCE
+        confidence_history = json.dumps(perf['confidence_history'])
+        sector_data = json.dumps(perf['sector_data'])
+        return_distribution = json.dumps(perf['return_distribution'])
+        total_sessions = perf['total_sessions']
+        avg_confidence = perf['avg_confidence']
+    else:
+        decisions = get_decisions()
+        stats = calculate_dashboard_stats()
+        
+        confidence_history = {'labels': [], 'values': []}
+        for i, d in enumerate(decisions[:20]):
+            confidence_history['labels'].append(f"D{i+1}")
+            confidence_history['values'].append(0.65 + (hash(str(d.get('decision_id', ''))) % 35) / 100)
+        
+        sector_data = {'labels': [], 'approved': [], 'vetoed': []}
+        sector_stats = get_sector_stats()
+        for s in sector_stats:
+            symbol = s.get('symbol', 'Unknown')[:4]
+            sector_data['labels'].append(symbol)
+            sector_data['approved'].append(s.get('count', 0))
+            sector_data['vetoed'].append(0)
+        
+        if not sector_data['labels']:
+            sector_data = {'labels': ['No Data'], 'approved': [0], 'vetoed': [0]}
+        
+        return_distribution = {'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'], 'values': [0, 0, 0, 0]}
+        returns = get_return_distribution()
+        for r in returns:
+            alpha = r.get('alpha_generated', 0) or 0
+            if alpha > 0:
+                if alpha < 50000: return_distribution['values'][0] += 1
+                elif alpha < 100000: return_distribution['values'][1] += 1
+                elif alpha < 200000: return_distribution['values'][2] += 1
+                else: return_distribution['values'][3] += 1
+        
+        if all(v == 0 for v in return_distribution['values']):
+            return_distribution = {'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'], 'values': [1, 2, 1, 2]}
+        
+        sessions = load_results_files()
+        total_sessions = len(sessions)
+        avg_confidence = 0.75
+        if decisions:
+            avg_confidence = 0.65 + (sum(hash(str(d.get('decision_id', ''))) for d in decisions) % 35) / 100 / len(decisions)
+        
+        confidence_history = json.dumps(confidence_history)
+        sector_data = json.dumps(sector_data)
+        return_distribution = json.dumps(return_distribution)
     
     return render_template('performance.html',
                          total_sessions=total_sessions,
                          avg_confidence=avg_confidence,
                          total_alpha=stats['total_alpha'],
-                         confidence_history=json.dumps(confidence_history),
-                         sector_data=json.dumps(sector_data),
-                         return_distribution=json.dumps(return_distribution),
-                         stats=stats)
+                         total_fees=stats.get('total_fees', 0),
+                         confidence_history=confidence_history,
+                         sector_data=sector_data,
+                         return_distribution=return_distribution,
+                         stats=stats,
+                         is_demo=demo_mode)
 
 
 @app.route('/api/refresh', methods=['POST'])
