@@ -138,8 +138,13 @@
         
         <form method="POST" action="/login">
             <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="fund_manager" value="fund_manager" required autofocus>
+            </div>
+            
+            <div class="form-group">
                 <label for="password">Fund Access Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your fund password" required autofocus>
+                <input type="password" id="password" name="password" placeholder="Enter your fund password" required>
             </div>
             
             <button type="submit" class="btn">Access Fund Dashboard</button>

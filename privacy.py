@@ -164,6 +164,9 @@ def verify_session_token(token: str) -> Optional[str]:
         expected_sig = hashlib.sha256(f"{token_data}:{secret}".encode()).hexdigest()
         if provided_sig == expected_sig:
             fund_id = token_data.split(':')[0]
+            timestamp = int(token_data.split(':')[1])
+            if time.time() - timestamp > 86400:
+                return None
             return fund_id
         return None
     except Exception:
