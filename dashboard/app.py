@@ -52,7 +52,7 @@ FUNDS_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB limit
 
 TEMPLATE_DIR = dashboard_dir / 'templates'
 if TEMPLATE_DIR.exists():
@@ -642,7 +642,7 @@ def upload_page():
 @app.route('/upload/positions', methods=['POST'])
 @login_required
 def upload_positions():
-    """Handle positions CSV upload."""
+    """Handle positions CSV upload with flexible column validation."""
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'No file provided'})
     
@@ -653,36 +653,115 @@ def upload_positions():
     try:
         content = file.read()
         
-        try:
-            df = pd.read_csv(content.decode('utf-8'))
-        except:
+        # Try CSV with different delimiters first
+        df = None
+        for sep in [',', ';', '\t']:
+            try:
+                lines = content.decode('utf-8', errors='ignore').strip().split('\n')
+                # Skip empty lines at start
+                start_idx = 0
+                for i, line in enumerate(lines):
+                    if line.strip():
+                        start_idx = i
+                        break
+                
+                cleaned_content = '\n'.join(lines[start_idx:])
+                df = pd.read_csv(pd.io.common.StringIO(cleaned_content), sep=sep, header=0)
+                
+                # Normalize column names - lowercase and strip
+                df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+                
+                print(f"Uploaded file columns: {list(df.columns)}")
+                break
+            except:
+                continue
+        
+        # If CSV failed, try Excel
+        if df is None:
             try:
                 import io
                 df = pd.read_excel(io.BytesIO(content))
+                df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+                print(f"Uploaded Excel file columns: {list(df.columns)}")
             except:
-                return jsonify({'success': False, 'error': 'Invalid file format. Please upload CSV or Excel.'})
+                return jsonify({'success': False, 'error': 'Invalid file format. Please upload CSV or Excel (.xlsx, .xls)'})
         
+        # Define column aliases (case-insensitive matching)
+        col_aliases = {
+            'ticker': ['ticker', 'symbol', 'stock', 'ticker_symbol'],
+            'company': ['company', 'name', 'company_name', 'stock_name', 'security'],
+            'sector': ['sector', 'industry', 'sector_industry'],
+            'shares': ['shares', 'quantity', 'qty', 'shares_outstanding'],
+            'avg_cost': ['avg_cost', 'average_cost', 'cost_basis', 'avg_cost_per_share', 'cost'],
+            'current_price': ['current_price', 'price', 'current_market_price', 'market_price', 'last_price'],
+            'weight_pct': ['weight_pct', 'weight', 'portfolio_weight', 'weight_percentage', 'pct_weight', 'allocation']
+        }
+        
+        # Map found columns to required columns
+        df_renamed = df.copy()
+        found_cols = list(df.columns)
+        
+        column_mapping = {}
+        for req_col, aliases in col_aliases.items():
+            for alias in aliases:
+                if alias in found_cols:
+                    column_mapping[req_col] = alias
+                    if alias != req_col:
+                        df_renamed = df_renamed.rename(columns={alias: req_col})
+                    break
+        
+        # Check which required columns are missing
         required_cols = ['ticker', 'company', 'sector', 'shares', 'avg_cost', 'current_price']
-        missing = [c for c in required_cols if c not in df.columns]
+        missing = [c for c in required_cols if c not in df_renamed.columns]
+        
         if missing:
-            return jsonify({'success': False, 'error': f"Missing columns: {', '.join(missing)}"})
+            return jsonify({
+                'success': False,
+                'error': f"Missing required columns: {', '.join(missing)}. Your file has: {', '.join(found_cols)}"
+            })
         
-        if df.isnull().all(axis=1).any():
-            return jsonify({'success': False, 'error': 'File contains empty rows. Please remove empty rows.'})
+        # Remove empty rows
+        original_len = len(df_renamed)
+        df_renamed = df_renamed.dropna(how='all')
+        df_renamed = df_renamed[df_renamed[required_cols].notna().all(axis=1)]
+        dropped = original_len - len(df_renamed)
         
-        for col in ['shares', 'avg_cost', 'current_price']:
-            if not pd.api.types.is_numeric_dtype(df[col]):
-                return jsonify({'success': False, 'error': f"Column '{col}' must contain numeric values."})
+        # Check for numeric values in required numeric columns
+        numeric_cols = ['shares', 'avg_cost', 'current_price']
+        for col in numeric_cols:
+            if col in df_renamed.columns:
+                # Try to convert to numeric, coerce errors to NaN
+                df_renamed[col] = pd.to_numeric(df_renamed[col], errors='coerce')
+                if df_renamed[col].isna().all():
+                    return jsonify({
+                        'success': False,
+                        'error': f"Column '{col}' must contain numeric values. Found: {df_renamed[col].dtype}"
+                    })
         
+        # Save the original content
         save_fund_file('positions', content)
+        
+        # Create preview (first 3 rows)
+        preview_data = []
+        for idx, row in df_renamed.head(3).iterrows():
+            preview_data.append({
+                'ticker': str(row.get('ticker', '')),
+                'company': str(row.get('company', ''))[:30],
+                'sector': str(row.get('sector', '')),
+                'shares': float(row.get('shares', 0)),
+                'avg_cost': float(row.get('avg_cost', 0)) if pd.notna(row.get('avg_cost')) else 0,
+                'current_price': float(row.get('current_price', 0)) if pd.notna(row.get('current_price')) else 0
+            })
         
         return jsonify({
             'success': True,
-            'message': f'Positions validated successfully. {len(df)} positions loaded.',
-            'preview': df.head(5).to_dict('records')
+            'message': f'Positions validated successfully. {len(df_renamed)} positions loaded.{" (" + str(dropped) + " empty rows removed)" if dropped > 0 else ""}',
+            'preview': preview_data,
+            'columns_found': found_cols
         })
+        
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({'success': False, 'error': f'Upload failed: {str(e)}'})
 
 
 @app.route('/upload/params', methods=['POST'])
