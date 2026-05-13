@@ -93,9 +93,12 @@ def login_required(f):
         session_token = request.cookies.get('session_token')
         if not session_token:
             return redirect(url_for('login_page'))
-        from privacy import verify_session_token
-        fund_id = verify_session_token(session_token)
-        if not fund_id:
+        try:
+            from privacy import verify_session_token
+            fund_id = verify_session_token(session_token)
+            if not fund_id:
+                return redirect(url_for('login_page'))
+        except Exception:
             return redirect(url_for('login_page'))
         return f(*args, **kwargs)
     return decorated_function
@@ -391,7 +394,6 @@ def index():
     """Home page."""
     demo_mode = is_demo_mode()
     progress = check_setup_progress()
-    session_user = request.cookies.get('session_user', 'fund_manager')
     
     if demo_mode:
         stats = DEMO_STATS
@@ -410,6 +412,8 @@ def index():
                 'confidence': 0.85,
                 'value': d.get('alpha_generated', 0) or 0
             })
+    
+    session_user = request.cookies.get('session_user', 'fund_manager')
     
     return render_template('index.html',
                        approval_rate=stats['approval_rate'],
@@ -674,10 +678,13 @@ def login_page():
     try:
         session_token = request.cookies.get('session_token')
         if session_token:
-            from privacy import verify_session_token
-            fund_id = verify_session_token(session_token)
-            if fund_id:
-                return redirect(url_for('index'))
+            try:
+                from privacy import verify_session_token
+                fund_id = verify_session_token(session_token)
+                if fund_id:
+                    return redirect(url_for('index'))
+            except Exception:
+                pass
         
         error = None
         if request.method == 'POST':
@@ -696,7 +703,7 @@ def login_page():
         
         return render_template('login.html', error=error)
     except Exception as e:
-        return f"Login error: {str(e)}", 500
+        return render_template('login.html', error="System temporarily unavailable")
 
 
 @app.route('/logout')
