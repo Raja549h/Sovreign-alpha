@@ -391,6 +391,7 @@ def index():
     """Home page."""
     demo_mode = is_demo_mode()
     progress = check_setup_progress()
+    session_user = request.cookies.get('session_user', 'fund_manager')
     
     if demo_mode:
         stats = DEMO_STATS
@@ -419,7 +420,8 @@ def index():
                        last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                        recent_decisions=recent_decisions,
                        progress=progress,
-                       is_demo=demo_mode)
+                       is_demo=demo_mode,
+                       session_user=session_user)
 
 
 @app.route('/decisions')
@@ -427,6 +429,7 @@ def index():
 def decisions():
     """Decisions page."""
     demo_mode = is_demo_mode()
+    session_user = request.cookies.get('session_user', 'fund_manager')
     
     if demo_mode:
         decisions_list = DEMO_ALL_DECISIONS
@@ -454,7 +457,8 @@ def decisions():
                            decisions=decisions_list,
                            has_data=has_data,
                            stats=stats,
-                           is_demo=demo_mode)
+                           is_demo=demo_mode,
+                           session_user=session_user)
 
 
 @app.route('/proofs')
@@ -462,6 +466,7 @@ def decisions():
 def proofs():
     """Proofs page."""
     demo_mode = is_demo_mode()
+    session_user = request.cookies.get('session_user', 'fund_manager')
     
     if demo_mode:
         formatted_proofs = DEMO_PROOFS
@@ -492,7 +497,8 @@ def proofs():
                            proofs=formatted_proofs,
                            has_proofs=has_proofs,
                            stats=stats,
-                           is_demo=demo_mode)
+                           is_demo=demo_mode,
+                           session_user=session_user)
 
 
 @app.route('/performance')
@@ -500,6 +506,7 @@ def proofs():
 def performance():
     """Performance page."""
     demo_mode = is_demo_mode()
+    session_user = request.cookies.get('session_user', 'fund_manager')
     
     if demo_mode:
         stats = DEMO_STATS
@@ -561,7 +568,8 @@ def performance():
                          sector_data=sector_data,
                          return_distribution=return_distribution,
                          stats=stats,
-                         is_demo=demo_mode)
+                         is_demo=demo_mode,
+                         session_user=session_user)
 
 
 @app.route('/api/refresh', methods=['POST'])
@@ -673,13 +681,15 @@ def login_page():
         
         error = None
         if request.method == 'POST':
+            username = request.form.get('username', 'fund_manager')
             password = request.form.get('password', '') or ''
             
             if password == FUND_PASSWORD:
                 from privacy import create_session_token
-                token = create_session_token('fund_manager')
+                token = create_session_token(username)
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie('session_token', token, httponly=True, max_age=86400*7)
+                resp.set_cookie('session_token', token, httponly=True, max_age=86400)
+                resp.set_cookie('session_user', username, max_age=86400)
                 return resp
             else:
                 error = "Invalid password. Please try again."

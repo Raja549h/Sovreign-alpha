@@ -233,6 +233,8 @@
             <a href="/decisions" class="active">Decisions</a>
             <a href="/proofs">Proofs</a>
             <a href="/performance">Performance</a>
+            {% if session_user %}<span style="color: var(--text-secondary);">| Logged in as <strong style="color: var(--accent);">{{ session_user }}</strong></span>{% endif %}
+            <a href="/logout">Logout</a>
         </div>
     </nav>
     
