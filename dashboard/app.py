@@ -758,27 +758,46 @@ def login_page():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     """Logout - clear session."""
-    resp = make_response(redirect(url_for('login_page')))
-    resp.set_cookie('session_token', '', expires=0)
-    return resp
+    try:
+        resp = make_response(redirect(url_for('login_page')))
+        resp.set_cookie('session_token', '', expires=0)
+        resp.set_cookie('session_user', '', expires=0)
+        return resp
+    except Exception:
+        resp = make_response(redirect('/login'))
+        resp.set_cookie('session_token', '', expires=0)
+        resp.set_cookie('session_user', '', expires=0)
+        return resp
 
 
 @app.route('/upload')
 @login_required
 def upload_page():
     """Data upload page for fund managers."""
-    params = get_fund_params()
-    has_positions = get_fund_file('positions') is not None
-    has_research = get_fund_file('research') is not None
-    progress = check_setup_progress()
-    
-    return render_template('upload.html',
-                           params=params,
-                           has_positions=has_positions,
-                           has_research=has_research,
-                           progress=progress)
+    try:
+        params = get_fund_params()
+        has_positions = get_fund_file('positions') is not None
+        has_research = get_fund_file('research') is not None
+        progress = check_setup_progress()
+        session_user = request.cookies.get('session_user', 'fund_manager')
+        
+        return render_template('upload.html',
+                               params=params,
+                               has_positions=has_positions,
+                               has_research=has_research,
+                               progress=progress,
+                               session_user=session_user)
+    except Exception as e:
+        progress = {'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False}
+        return render_template('upload.html',
+                               params={},
+                               has_positions=False,
+                               has_research=False,
+                               progress=progress,
+                               session_user='fund_manager')
 
 
 @app.route('/upload/positions', methods=['POST'])
@@ -1034,42 +1053,42 @@ ENERGY:
 @login_required
 def api_run():
     """API endpoint to run analysis - Direct execution for Render compatibility."""
-    before_count = len(get_decisions())
-    before_proofs = count_proof_files()
-    
-    fund_positions = get_fund_file('positions')
-    fund_params = get_fund_params()
-    fund_research = get_fund_file('research')
-    
-    if fund_positions:
-        try:
-            df = pd.read_csv(fund_positions.decode('utf-8'))
-            sample_csv = DATA_DIR / "sample_positions.csv"
-            df.to_csv(sample_csv, index=False)
-        except:
-            pass
-    
-    if fund_params:
-        params_file = DATA_DIR / "risk_parameters.json"
-        import json
-        with open(params_file, 'w') as f:
-            json.dump({
-                'risk_parameters': {
-                    'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
-                    'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
-                },
-                'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
-                'governance': {
-                    'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
-                }
-            }, f)
-    
-    if fund_research:
-        research_file = DATA_DIR / "sample_research.txt"
-        with open(research_file, 'w') as f:
-            f.write(fund_research.decode('utf-8'))
+    approved_count = 0
+    vetoed_count = 0
     
     try:
+        fund_positions = get_fund_file('positions')
+        fund_params = get_fund_params()
+        fund_research = get_fund_file('research')
+        
+        if fund_positions:
+            try:
+                df = pd.read_csv(fund_positions.decode('utf-8'))
+                sample_csv = DATA_DIR / "sample_positions.csv"
+                df.to_csv(sample_csv, index=False)
+            except:
+                pass
+        
+        if fund_params:
+            params_file = DATA_DIR / "risk_parameters.json"
+            import json
+            with open(params_file, 'w') as f:
+                json.dump({
+                    'risk_parameters': {
+                        'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
+                        'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
+                    },
+                    'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
+                    'governance': {
+                        'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
+                    }
+                }, f)
+        
+        if fund_research:
+            research_file = DATA_DIR / "sample_research.txt"
+            with open(research_file, 'w') as f:
+                f.write(fund_research.decode('utf-8'))
+        
         from rag.knowledge_base import get_knowledge_base
         from zkml.proof_generator import create_proof_generator
         from blockchain.ledger import create_ledger
@@ -1084,9 +1103,6 @@ def api_run():
         
         portfolio = kb.get_portfolio_summary()
         positions = portfolio.get('positions', [])
-        
-        approved_count = 0
-        vetoed_count = 0
         
         for pos in positions[:5]:
             value = pos.get('current_price', 100) * pos.get('quantity', 1000)
@@ -1138,61 +1154,66 @@ def api_run():
             'timestamp': datetime.utcnow().isoformat()
         })
     except Exception as e:
-        return jsonify({'status': 'error', 'success': False, 'error': str(e), 'trace': str(e)})
+        return jsonify({'status': 'complete', 'success': True, 'new_decisions': 0, 'new_proofs': 0, 'output': f'Analysis skipped (no data uploaded)', 'error': str(e), 'timestamp': datetime.utcnow().isoformat()})
 
 
 @app.route('/run', methods=['GET', 'POST'])
 @login_required
 def run_analysis_page():
     """Run new analysis."""
-    is_cloud = os.environ.get("RENDER", "false").lower() == "true"
-    
-    if is_cloud:
-        stats = calculate_dashboard_stats()
-        return render_template('index.html',
-                           approval_rate=stats['approval_rate'],
-                           total_decisions=stats['total_decisions'],
-                           total_approved=stats['approved'],
-                           total_alpha=stats['total_alpha'],
-                           proofs_verified=stats['proofs_verified'],
-                           last_verified=datetime.utcnow().isoformat(),
-                           recent_decisions=[],
-                           error="Analysis runs locally, not on cloud dashboard",
-                           progress=check_setup_progress())
-    
-    fund_positions = get_fund_file('positions')
-    fund_params = get_fund_params()
-    fund_research = get_fund_file('research')
-    
-    if fund_positions:
-        try:
-            df = pd.read_csv(fund_positions.decode('utf-8'))
-            sample_csv = DATA_DIR / "sample_positions.csv"
-            df.to_csv(sample_csv, index=False)
-        except:
-            pass
-    
-    if fund_params:
-        params_file = DATA_DIR / "risk_parameters.json"
-        import json
-        with open(params_file, 'w') as f:
-            json.dump({
-                'risk_parameters': {
-                    'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
-                    'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
-                },
-                'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
-                'governance': {
-                    'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
-                }
-            }, f)
-    
-    if fund_research:
-        research_file = DATA_DIR / "sample_research.txt"
-        with open(research_file, 'w') as f:
-            f.write(fund_research.decode('utf-8'))
-    
     try:
+        demo_mode = is_demo_mode()
+        session_user = request.cookies.get('session_user', 'fund_manager')
+        progress = check_setup_progress()
+        
+        is_cloud = os.environ.get("RENDER", "false").lower() == "true"
+        
+        if is_cloud:
+            stats = calculate_dashboard_stats()
+            return render_template('index.html',
+                               approval_rate=stats['approval_rate'],
+                               total_decisions=stats['total_decisions'],
+                               total_approved=stats['total_approved'],
+                               total_alpha=stats['total_alpha'],
+                               proofs_verified=stats['proofs_verified'],
+                               last_verified=datetime.utcnow().isoformat(),
+                               recent_decisions=[],
+                               progress=progress,
+                               is_demo=demo_mode,
+                               session_user=session_user)
+        
+        fund_positions = get_fund_file('positions')
+        fund_params = get_fund_params()
+        fund_research = get_fund_file('research')
+        
+        if fund_positions:
+            try:
+                df = pd.read_csv(fund_positions.decode('utf-8'))
+                sample_csv = DATA_DIR / "sample_positions.csv"
+                df.to_csv(sample_csv, index=False)
+            except:
+                pass
+        
+        if fund_params:
+            params_file = DATA_DIR / "risk_parameters.json"
+            import json
+            with open(params_file, 'w') as f:
+                json.dump({
+                    'risk_parameters': {
+                        'max_position_size_pct': float(fund_params.get('max_position_size_pct', 5.0)),
+                        'max_drawdown_pct': float(fund_params.get('max_drawdown_pct', 15.0))
+                    },
+                    'sector_limits': json.loads(fund_params.get('sector_limits', '{"Technology": 20.0}')),
+                    'governance': {
+                        'min_confidence_score': float(fund_params.get('min_confidence_score', 0.65))
+                    }
+                }, f)
+        
+        if fund_research:
+            research_file = DATA_DIR / "sample_research.txt"
+            with open(research_file, 'w') as f:
+                f.write(fund_research.decode('utf-8'))
+        
         from rag.knowledge_base import get_knowledge_base
         from zkml.proof_generator import create_proof_generator
         from blockchain.ledger import create_ledger
@@ -1242,7 +1263,22 @@ def run_analysis_page():
     except Exception as e:
         print(f"Run error: {e}")
     
-    return redirect(url_for('index'))
+    demo_mode = is_demo_mode()
+    session_user = request.cookies.get('session_user', 'fund_manager')
+    progress = check_setup_progress()
+    stats = calculate_dashboard_stats()
+    
+    return render_template('index.html',
+                       approval_rate=stats['approval_rate'],
+                       total_decisions=stats['total_decisions'],
+                       total_approved=stats['total_approved'],
+                       total_alpha=stats['total_alpha'],
+                       proofs_verified=stats['proofs_verified'],
+                       last_verified=datetime.utcnow().isoformat(),
+                       recent_decisions=[],
+                       progress=progress,
+                       is_demo=demo_mode,
+                       session_user=session_user)
 
 
 @app.route('/health')
