@@ -356,8 +356,8 @@
             </div>
         </div>
         <div class="header">
-            <h1>Fund Overview</h1>
-            <p>Real-time Sovereign Alpha Dashboard - Last updated: <span id="last-update">{{ last_verified }}</span></p>
+            <h1>Portfolio Intelligence Summary</h1>
+            <p>Sovereign Alpha Intelligence Terminal - Last updated: <span id="last-update">{{ last_verified }}</span></p>
         </div>
         
         <div class="stats-grid">
@@ -368,19 +368,19 @@
             </div>
             
             <div class="stat-card">
-                <label>Approval Rate</label>
+                <label>Clearance Rate</label>
                 <div class="value" id="approval-rate">{{ "%.1f"|format(approval_rate) }}%</div>
-                <div class="subtitle" id="decisions-count">{{ total_approved }}/{{ total_decisions }} decisions</div>
+                <div class="subtitle" id="decisions-count">{{ total_approved }}/{{ total_decisions }} recommendations</div>
             </div>
             
             <div class="stat-card">
-                <label>Alpha Generated</label>
+                <label>Excess Return</label>
                 <div class="value" id="total-alpha">${{ "%.0f"|format(stats.total_alpha if stats else 913656) }}</div>
                 <div class="subtitle">Est. fees: ${{ "%.0f"|format(stats.total_fees if stats else 109639) }}</div>
             </div>
             
             <div class="stat-card">
-                <label>ZK Proofs</label>
+                <label>Cryptographic Audit Certificates</label>
                 <div class="value" id="proofs-count">{{ proofs_verified }}</div>
                 <div class="subtitle">All verified</div>
             </div>
@@ -388,13 +388,13 @@
         
         <div class="stats-grid">
             <div>
-                <div class="section-title">Approval Rate</div>
+                <div class="section-title">Clearance Rate</div>
                 <div class="gauge-container">
                     <div class="gauge-wrapper">
                         <div class="gauge-circle" id="gauge-circle">
                             <div class="gauge-inner">
                                 <div class="gauge-value" id="gauge-value">{{ "%.0f"|format(approval_rate) }}%</div>
-                                <div class="gauge-label">Approved</div>
+                                <div class="gauge-label">Cleared</div>
                             </div>
                         </div>
                     </div>
@@ -402,11 +402,11 @@
             </div>
             
             <div>
-                <div class="section-title">ZK Proof Status</div>
+                <div class="section-title">Cryptographic Audit Status</div>
                 <div class="zk-indicator">
                     <div class="zk-dot"></div>
                     <div>
-                        <strong>All proofs verified</strong>
+                        <strong>All certificates verified</strong>
                         <p style="color: var(--text-secondary); font-size: 0.85rem;">
                             Last verification: <span id="last-verified">{{ last_verified }}</span>
                         </p>
@@ -415,13 +415,13 @@
                 
                 <div style="margin-top: 1.5rem;">
                     <button class="btn" id="run-btn" onclick="runAnalysis()">
-                        Run New Analysis
+                        Execute Analysis Cycle
                     </button>
                 </div>
             </div>
         </div>
         
-        <div class="section-title" style="margin-top: 2rem;">Recent Decisions</div>
+        <div class="section-title" style="margin-top: 2rem;">Recent Recommendations</div>
         
         <div class="table-container">
             <div class="table-header">
