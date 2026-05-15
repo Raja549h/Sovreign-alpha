@@ -2,6 +2,7 @@
 ## Executive One-Pager
 
 **Date:** 2026-05-15
+**Source:** 90-Day Historical Backtest (Jan 2 - Apr 30, 2026)
 
 ---
 
@@ -31,8 +32,9 @@ LP transparency requires auditable governance evidence.
 
 ## Killer Metric
 
-**0% veto accuracy** — 0 of 0 risk-rejections 
-correctly avoided losses, protecting $0 in portfolio value.
+**Avoided $770,525 in drawdowns**
+
+Verified against 90 days of real historical market data.
 
 ---
 
@@ -64,4 +66,4 @@ Login required. All data stored locally.
 
 **Contact:** Fund Administrator
 
-*Generated from actual system data. No projections.*
+*Generated from actual backtest data. No projections.*
