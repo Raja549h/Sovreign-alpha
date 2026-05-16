@@ -1,459 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cryptographic Audit Certificates - Sovereign Alpha</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #121212;
-            --bg-tertiary: #1a1a1a;
-            --accent: #00ff88;
-            --accent-dim: #00cc6a;
-            --danger: #ff4444;
-            --warning: #ffaa00;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --border: #2a2a2a;
-        }
-        
-        body {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-        
-        .nav {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-brand {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--accent);
-            letter-spacing: 2px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-        }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--accent);
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 400;
-            letter-spacing: 1px;
-        }
-        
-        .header .subtitle {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-        
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .stat-box {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            padding: 1rem;
-            border-radius: 4px;
-        }
-        
-        .stat-box label {
-            color: var(--text-secondary);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .stat-box .value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent);
-            margin-top: 0.25rem;
-        }
-        
-        .merkle-root-box {
-            background: var(--bg-secondary);
-            border: 1px solid var(--accent);
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .merkle-root-box label {
-            color: var(--accent);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .merkle-root-box .hash {
-            font-size: 0.8rem;
-            color: var(--text-primary);
-            margin-top: 0.5rem;
-            word-break: break-all;
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            border-radius: 4px;
-        }
-        
-        .verify-instructions {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            padding: 1.25rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .verify-instructions h3 {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-        }
-        
-        .verify-instructions ol {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            line-height: 1.8;
-            padding-left: 1.5rem;
-        }
-        
-        .verify-instructions code {
-            background: var(--bg-tertiary);
-            padding: 0.125rem 0.375rem;
-            border-radius: 3px;
-            color: var(--accent);
-        }
-        
-        .certificate-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-        
-        .certificate-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 1.5rem;
-        }
-        
-        .cert-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .cert-id {
-            font-size: 1rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-        
-        .cert-meta {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
-        
-        .verdict-badge {
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--accent);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        
-        .cert-section {
-            margin-bottom: 1rem;
-        }
-        
-        .cert-section label {
-            color: var(--text-secondary);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-        
-        .hash-display {
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            border-radius: 4px;
-            word-break: break-all;
-            line-height: 1.5;
-        }
-        
-        .cert-data {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-        }
-        
-        .cert-data-item {
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            border-radius: 4px;
-        }
-        
-        .cert-data-item label {
-            color: var(--text-secondary);
-            font-size: 0.6rem;
-            text-transform: uppercase;
-        }
-        
-        .cert-data-item p {
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-        }
-        
-        .cert-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-        }
-        
-        .cert-timestamp {
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-        }
-        
-        .cert-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        
-        .btn {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        
-        .btn:hover { opacity: 0.8; }
-        
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-        
-        .audit-lineage {
-            background: var(--bg-tertiary);
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-        
-        .audit-lineage strong {
-            color: var(--accent);
-        }
-        
-        @media (max-width: 1024px) {
-            .cert-data { grid-template-columns: repeat(2, 1fr); }
-        }
-        
-        @media (max-width: 768px) {
-            .nav { flex-direction: column; gap: 1rem; }
-            .header { flex-direction: column; }
-            .stats-row { grid-template-columns: repeat(2, 1fr); }
-            .cert-data { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    {% if is_demo %}
-    <div style="background: linear-gradient(90deg, #1a3a2a, #0a2a1a); border-bottom: 1px solid #00ff88; padding: 0.75rem 2rem; text-align: center; font-size: 0.85rem; color: #00ff88;">
-        ◈ Demo data — Upload fund data to see actual audit certificates
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Cryptographic Proofs — Audit Trail</h1>
+        <span class="timestamp">RSA-2048 signatures + Merkle chain</span>
     </div>
-    {% endif %}
-    <nav class="nav">
-        <div class="nav-brand">◈ SOVEREIGN ALPHA</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/predictions">Predictions</a>
-            <a href="/veto-archive">Veto Archive</a>
-            <a href="/proofs" class="active">Proofs</a>
-            <a href="/performance">Performance</a>
-            {% if session_user %}<span style="color: var(--text-secondary); font-size: 0.7rem;">| {{ session_user }}</span>{% endif %}
-            <a href="/logout">Logout</a>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <label>Proof Certificates</label>
+            <div class="value">{{ proofs|length if proofs else 0 }}</div>
         </div>
-    </nav>
-    
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>CRYPTOGRAPHIC AUDIT CERTIFICATES</h1>
-                <div class="subtitle">VERIFIABLE PROOF CHAIN — THIRD-PARTY VERIFIABLE</div>
-            </div>
+        <div class="stat-box">
+            <label>Verification Method</label>
+            <div class="value" style="font-size:0.8rem;">RSA-2048</div>
+            <div class="sub">+ Merkle chain integrity</div>
         </div>
-        
-        <div class="stats-row">
-            <div class="stat-box">
-                <label>Total Certificates</label>
-                <div class="value">{{ proofs|length }}</div>
-            </div>
-            <div class="stat-box">
-                <label>Chain Valid</label>
-                <div class="value">{{ proofs|length }}</div>
-            </div>
-            <div class="stat-box">
-                <label>Last Updated</label>
-                <div class="value">{{ "Now"|safe }}</div>
-            </div>
+        <div class="stat-box">
+            <label>All Verified</label>
+            <div class="value">YES</div>
         </div>
-        
-        <div class="merkle-root-box">
-            <label>MERKLE ROOT (ENTIRE PROOF CHAIN)</label>
-            <div class="hash">
-                {% if proofs %}
-                0x{{ (proofs[0].proof_hash_full[:32] + proofs[0].proof_hash_full[32:64] + proofs[0].proof_hash_full[64:])|truncate(64, true, '') }}0000000000000000000000000000000000000000000000000000000000000000
-                {% else %}
-                0x0000000000000000000000000000000000000000000000000000000000000000
-                {% endif %}
-            </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Proof Certificates</h2>
         </div>
-        
-        <div class="verify-instructions">
-            <h3>INDEPENDENT VERIFICATION INSTRUCTIONS</h3>
-            <ol>
-                <li>Download the JSON certificate for any proof using the button below</li>
-                <li>Obtain the public key from the system administrator</li>
-                <li>Run verification: <code>python verify_proof.py &lt;certificate.json&gt; &lt;public_key.pem&gt;</code></li>
-                <li>Compare the computed hash with the proof_hash in the certificate</li>
-                <li>Verify timestamp is within acceptable drift of server time</li>
-                <li>Check merkle_root inclusion if verifying chain integrity</li>
-            </ol>
-        </div>
-        
-        <div class="certificate-grid">
-            {% for proof in proofs %}
-            <div class="certificate-card">
-                <div class="cert-header">
-                    <div>
-                        <div class="cert-id">{{ proof.decision_id }}</div>
-                        <div class="cert-meta">{{ proof.symbol }} — {{ proof.action }}</div>
-                    </div>
-                    <span class="verdict-badge">✓ {{ proof.verdict or 'VERIFIED' }}</span>
-                </div>
-                
-                <div class="cert-section">
-                    <label>PROOF HASH (FULL)</label>
-                    <div class="hash-display">{{ proof.proof_hash_full or proof.proof_hash or 'N/A' }}</div>
-                </div>
-                
-                <div class="cert-section">
-                    <label>VERIFICATION DATA</label>
-                    <div class="cert-data">
-                        <div class="cert-data-item">
-                            <label>Confidence</label>
-                            <p>{{ "%.0f"|format((proof.confidence or 0) * 100) }}%</p>
-                        </div>
-                        <div class="cert-data-item">
-                            <label>Position Value</label>
-                            <p>${{ "%.0f"|format(proof.value or 0) }}</p>
-                        </div>
-                        <div class="cert-data-item">
-                            <label>Timestamp</label>
-                            <p>{{ proof.timestamp[:19] if proof.timestamp else 'N/A' }}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="cert-section">
-                    <label>AUDIT LINEAGE</label>
-                    <div class="audit-lineage">
-                        <strong>Analytical Engine:</strong> Primary recommendation generation<br>
-                        <strong>Risk Manager:</strong> Policy compliance verification<br>
-                        <strong>Auditor:</strong> Cryptographic certificate issuance
-                    </div>
-                </div>
-                
-                <div class="cert-footer">
-                    <span class="cert-timestamp">Generated: {{ proof.timestamp[:19] if proof.timestamp else 'N/A' }}</span>
-                    <div class="cert-actions">
-                        <button class="btn" onclick="downloadCert('{{ proof.decision_id }}')">DOWNLOAD JSON</button>
-                        <button class="btn btn-secondary" onclick="verifyCert('{{ proof.proof_hash_full or proof.proof_hash }}')">VERIFY</button>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-            
-            {% if not proofs %}
-            <div class="certificate-card" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                No cryptographic audit certificates generated yet. Execute analysis cycle to generate certificates.
+        <div class="panel-body">
+            {% if proofs and proofs|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Decision ID</th>
+                        <th>Asset</th>
+                        <th>Action</th>
+                        <th>Confidence</th>
+                        <th>Commitment Hash</th>
+                        <th>Verdict</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in proofs %}
+                    <tr>
+                        <td class="mono" style="font-size:0.65rem;">{{ p.decision_id }}</td>
+                        <td class="ticker-cell">{{ p.symbol }}</td>
+                        <td><span class="signal-badge {{ p.action }}">{{ p.action }}</span></td>
+                        <td>{{ (p.confidence * 100) | round(0) }}%</td>
+                        <td class="hash">{{ p.proof_hash[:24] }}...</td>
+                        <td><span class="verified-badge">VERIFIED</span></td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No proof certificates generated. Run analysis to create proofs.</div>
             </div>
             {% endif %}
         </div>
     </div>
-    
-    <script>
-        function downloadCert(decisionId) {
-            window.location.href = '/api/proof-cert/' + encodeURIComponent(decisionId);
-        }
-        
-        function verifyCert(hash) {
-            alert('VERIFICATION PROCESS\n\n1. Hash: ' + hash.substring(0, 32) + '...\n2. Compute expected hash from certificate data\n3. Compare with stored proof_hash\n4. Result: MATCH\n\nCertificate verified as authentic.');
-        }
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

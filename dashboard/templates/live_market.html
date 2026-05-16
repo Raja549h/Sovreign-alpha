@@ -1,113 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Market - Sovereign Alpha</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { color: #1a1a2e; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .nav { margin-bottom: 20px; }
-        .nav a { margin-right: 20px; color: #0066cc; text-decoration: none; }
-        .nav a.active { font-weight: bold; }
-        .timestamp { color: #666; font-size: 0.9em; }
-        
-        .signals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
-        .signal-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .signal-card h3 { margin: 0 0 10px 0; font-size: 1em; }
-        .signal-card .count { font-size: 2em; font-weight: bold; }
-        .signal-card.buy { border-left: 4px solid #22c55e; }
-        .signal-card.sell { border-left: 4px solid #ef4444; }
-        .signal-card.warning { border-left: 4px solid #eab308; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #1a1a2e; color: white; }
-        tr:hover { background: #f9f9f9; }
-        
-        .price { font-weight: bold; }
-        .positive { color: #22c55e; }
-        .negative { color: #ef4444; }
-        .oversold { color: #22c55e; font-weight: bold; }
-        .overbought { color: #ef4444; font-weight: bold; }
-        .volume-warning { background: #fef3c7; }
-        
-        .btn { background: #1a1a2e; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background: #333; }
-        
-        .refresh-info { margin-top: 20px; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Live Market Data</h1>
-            <a href="/" class="btn">Back to Dashboard</a>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Live Market Data</h1>
+        <span class="timestamp">{{ market_data.fetched_at or 'No data' }}</span>
+    </div>
+
+    {% if market_data.tickers and market_data.tickers|length > 0 %}
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Watchlist</h2>
         </div>
-        
-        <div class="nav">
-            <a href="/">Home</a>
-            <a href="/decisions">Decisions</a>
-            <a href="/proofs">Proofs</a>
-            <a href="/performance">Performance</a>
-            <a href="/live_market" class="active">Live Market</a>
-        </div>
-        
-        <p class="timestamp">Last updated: {{ market_data.fetched_at }}</p>
-        
-        <div class="signals-grid">
-            <div class="signal-card buy">
-                <h3>Oversold (RSI &lt; 30)</h3>
-                <div class="count">{{ signals.oversold|length }}</div>
-            </div>
-            <div class="signal-card sell">
-                <h3>Overbought (RSI &gt; 70)</h3>
-                <div class="count">{{ signals.overbought|length }}</div>
-            </div>
-            <div class="signal-card warning">
-                <h3>Unusual Volume (2x)</h3>
-                <div class="count">{{ signals.unusual_volume|length }}</div>
-            </div>
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Symbol</th>
-                    <th>Price</th>
-                    <th>RSI</th>
-                    <th>Volume 2x</th>
-                    <th>MA50</th>
-                    <th>MA200</th>
-                    <th>% vs MA200</th>
-                    <th>Analyst Target</th>
-                    <th>Consensus</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ticker, data in market_data.tickers.items() %}
-                <tr class="{% if data.rsi_14 < 30 %}oversold{% elif data.rsi_14 > 70 %}overbought{% endif %}{% if data.volume_ratio >= 2 %} volume-warning{% endif %}">
-                    <td class="price">{{ ticker }}</td>
-                    <td>${{ "%.2f"|format(data.current_price) }}</td>
-                    <td class="{% if data.rsi_14 < 30 %}oversold{% elif data.rsi_14 > 70 %}overbought{% else %}{% endif %}">{{ "%.1f"|format(data.rsi_14) }}</td>
-                    <td class="{% if data.volume_ratio >= 2 %}volume-warning{% endif %}">{{ "%.1f"|format(data.volume_ratio) }}x</td>
-                    <td>{% if data.ma50 %}${{ "%.2f"|format(data.ma50) }}{% else %}N/A{% endif %}</td>
-                    <td>{% if data.ma200 %}${{ "%.2f"|format(data.ma200) }}{% else %}N/A{% endif %}</td>
-                    <td class="{% if data.percent_above_ma200 > 0 %}positive{% elif data.percent_above_ma200 < 0 %}negative{% endif %}">
-                        {% if data.percent_above_ma200 %}{{ "%.1f"|format(data.percent_above_ma200) }}%{% else %}N/A{% endif %}
-                    </td>
-                    <td>{% if data.analyst_target %}${{ "%.2f"|format(data.analyst_target) }}{% else %}N/A{% endif %}</td>
-                    <td>{{ data.analyst_consensus or 'N/A' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <div class="refresh-info">
-            <p>Data fetched via yfinance. Refresh by running: <code>py data/market_feed.py</code></p>
+        <div class="panel-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Price</th>
+                        <th>Change %</th>
+                        <th>Volume</th>
+                        <th>Market Cap</th>
+                        <th>P/E</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticker, data in market_data.tickers.items() %}
+                    {% if 'error' not in data %}
+                    <tr>
+                        <td class="ticker-cell">{{ ticker }}</td>
+                        <td>{{ data.price }}</td>
+                        <td class="{% if data.change_pct >= 0 %}value{% else %}value danger{% endif %}">{{ data.change_pct }}%</td>
+                        <td>{{ data.volume }}</td>
+                        <td>{{ data.market_cap }}</td>
+                        <td>{{ data.pe_ratio }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-</body>
-</html>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">—</div>
+        <div>No live market data available. Run daily cycle to fetch.</div>
+    </div>
+    {% endif %}
+
+    {% if signals %}
+    <div class="grid-3" style="margin-top:0.75rem;">
+        <div class="panel">
+            <div class="panel-header"><h2>Oversold</h2></div>
+            <div class="panel-body padded">
+                {% for s in signals.oversold or [] %}
+                <div style="font-size:0.75rem;margin-bottom:0.25rem;"><span class="ticker-cell">{{ s.symbol }}</span> <span style="color:var(--text-dim);">{{ s.reason }}</span></div>
+                {% endfor %}
+                {% if not signals.oversold %}<div style="color:var(--text-dim);font-size:0.75rem;">None</div>{% endif %}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><h2>Overbought</h2></div>
+            <div class="panel-body padded">
+                {% for s in signals.overbought or [] %}
+                <div style="font-size:0.75rem;margin-bottom:0.25rem;"><span class="ticker-cell">{{ s.symbol }}</span> <span style="color:var(--text-dim);">{{ s.reason }}</span></div>
+                {% endfor %}
+                {% if not signals.overbought %}<div style="color:var(--text-dim);font-size:0.75rem;">None</div>{% endif %}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><h2>Unusual Volume</h2></div>
+            <div class="panel-body padded">
+                {% for s in signals.unusual_volume or [] %}
+                <div style="font-size:0.75rem;margin-bottom:0.25rem;"><span class="ticker-cell">{{ s.symbol }}</span> <span style="color:var(--text-dim);">{{ s.reason }}</span></div>
+                {% endfor %}
+                {% if not signals.unusual_volume %}<div style="color:var(--text-dim);font-size:0.75rem;">None</div>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

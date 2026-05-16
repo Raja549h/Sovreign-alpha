@@ -1,412 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decisions - Sovereign Alpha</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #121212;
-            --bg-tertiary: #1a1a1a;
-            --accent: #00ff88;
-            --accent-dim: #00cc6a;
-            --danger: #ff4444;
-            --warning: #ffaa00;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --border: #2a2a2a;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-        
-        .nav {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent);
-            letter-spacing: 2px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-        
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--accent);
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header {
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 300;
-        }
-        
-        .btn {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        
-        .btn:hover { background: var(--accent-dim); }
-        
-        .stats-bar {
-            display: flex;
-            gap: 2rem;
-            margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .stat-item label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-        
-        .stat-item .value {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-        
-        .table-container {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        th, td {
-            padding: 1rem;
-            text-align: left;
-        }
-        
-        th {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-        
-        th:hover { color: var(--accent); }
-        
-        tr { border-bottom: 1px solid var(--border); }
-        tr:hover { background: var(--bg-tertiary); }
-        
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-        
-        .status-badge.approved {
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--accent);
-        }
-        
-        .status-badge.vetoed {
-            background: rgba(255, 68, 68, 0.15);
-            color: var(--danger);
-        }
-        
-        .row-approved { border-left: 3px solid var(--accent); }
-        .row-vetoed { border-left: 3px solid var(--danger); }
-        
-        .hash-cell {
-            font-family: monospace;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-        
-        .empty {
-            text-align: center;
-            padding: 4rem;
-            color: var(--text-secondary);
-        }
-        
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .empty-text {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .btn-run {
-            margin-top: 1rem;
-            background: var(--accent);
-        }
-        
-        .notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            font-weight: bold;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .notification.success {
-            background: var(--accent);
-            color: var(--bg-primary);
-        }
-        
-        .notification.error {
-            background: var(--danger);
-            color: white;
-        }
-        
-        @media (max-width: 768px) {
-            .header { flex-direction: column; }
-            .stats-bar { flex-wrap: wrap; }
-            table { font-size: 0.85rem; }
-            th, td { padding: 0.5rem; }
-        }
-    </style>
-</head>
-<body>
-    {% if is_demo %}
-    <div style="background: linear-gradient(90deg, #1a3a2a, #0a2a1a); border-bottom: 1px solid #00ff88; padding: 0.75rem 2rem; text-align: center; font-size: 0.85rem; color: #00ff88;">
-        ◈ Showing demo data — <a href="/upload" style="color: #88ffbb; text-decoration: underline;">upload your fund data</a> to see your personalised analysis
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Decision Log — Trade Approvals</h1>
+        <span class="timestamp">{{ stats.total_decisions | default(0) }} total decisions</span>
     </div>
-    {% endif %}
-    <nav class="nav">
-        <div class="nav-brand">SOVEREIGN ALPHA</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/decisions" class="active">Decisions</a>
-            <a href="/proofs">Proofs</a>
-            <a href="/performance">Performance</a>
-            {% if session_user %}<span style="color: var(--text-secondary);">| Logged in as <strong style="color: var(--accent);">{{ session_user }}</strong></span>{% endif %}
-            <a href="/logout">Logout</a>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <label>Approval Rate</label>
+            <div class="value">{{ stats.approval_rate | default(0) | round(1) }}%</div>
         </div>
-    </nav>
-    
-    <div class="notification" id="notification"></div>
-    
-    <div class="container">
-        <div class="header">
-            <h1>Trade Decisions</h1>
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn" onclick="exportCSV()">Export CSV</button>
-                <button class="btn btn-run" onclick="runAnalysis()">Run New Analysis</button>
-            </div>
+        <div class="stat-box">
+            <label>Approved</label>
+            <div class="value">{{ stats.approved | default(0) }}</div>
         </div>
-        
-        <div class="stats-bar">
-            <div class="stat-item">
-                <label>Total Decisions</label>
-                <div class="value" id="stat-total">{{ stats.total_decisions if stats else 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <label>Approved</label>
-                <div class="value" style="color: var(--accent);" id="stat-approved">{{ stats.approved if stats else 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <label>Vetoed</label>
-                <div class="value" style="color: var(--danger);" id="stat-vetoed">{{ stats.vetoed if stats else 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <label>Approval Rate</label>
-                <div class="value" id="stat-rate">{{ "%.1f"|format(stats.approval_rate if stats else 0) }}%</div>
-            </div>
-            <div class="stat-item">
-                <label>Total Alpha</label>
-                <div class="value" id="stat-alpha">${{ "%.0f"|format(stats.total_alpha if stats else 0) }}</div>
-            </div>
-            <div class="stat-item">
-                <label>ZK Proofs</label>
-                <div class="value" id="stat-proofs">{{ stats.proofs_verified if stats else 0 }}</div>
-            </div>
+        <div class="stat-box">
+            <label>Vetoed</label>
+            <div class="value danger">{{ stats.vetoed | default(0) }}</div>
         </div>
-        
-        <div class="table-container">
-            <table id="decisionsTable">
+        <div class="stat-box">
+            <label>Total Alpha</label>
+            <div class="value">${{ (stats.total_alpha | default(0)) | round(0) | int }}</div>
+        </div>
+        <div class="stat-box">
+            <label>Performance Fees</label>
+            <div class="value warning">${{ (stats.total_fees | default(0)) | round(0) | int }}</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>All Decisions</h2>
+        </div>
+        <div class="panel-body">
+            {% if decisions and decisions|length > 0 %}
+            <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">Trade ID</th>
-                        <th onclick="sortTable(1)">Ticker</th>
-                        <th onclick="sortTable(2)">Action</th>
-                        <th onclick="sortTable(3)">Status</th>
-                        <th onclick="sortTable(4)">Confidence</th>
-                        <th onclick="sortTable(5)">Return</th>
-                        <th onclick="sortTable(6)">Fee</th>
-                        <th onclick="sortTable(7)">ZK Proof</th>
-                        <th onclick="sortTable(8)">Timestamp</th>
+                        <th>Decision ID</th>
+                        <th>Symbol</th>
+                        <th>Action</th>
+                        <th>Status</th>
+                        <th>Confidence</th>
+                        <th>Alpha Generated</th>
+                        <th>Fee</th>
+                        <th>Proof Hash</th>
+                        <th>Timestamp</th>
                     </tr>
                 </thead>
-                <tbody id="decisions-tbody">
+                <tbody>
                     {% for d in decisions %}
-                    <tr class="row-{{ d.status }}">
-                        <td>{{ d.decision_id }}</td>
-                        <td><strong>{{ d.symbol }}</strong></td>
-                        <td>{{ d.action }}</td>
+                    <tr>
+                        <td class="mono" style="font-size:0.65rem;">{{ d.decision_id }}</td>
+                        <td class="ticker-cell">{{ d.symbol }}</td>
+                        <td><span class="signal-badge {{ d.action }}">{{ d.action }}</span></td>
                         <td>
-                            <span class="status-badge {{ d.status }}">
-                                {{ d.status }}
-                            </span>
-                        </td>
-                        <td>{{ "%.0f"|format(d.confidence * 100) }}%</td>
-                        <td>${{ "%.0f"|format(d.potential_return or 0) }}</td>
-                        <td>${{ "%.0f"|format(d.fee or 0) }}</td>
-                        <td class="hash-cell">
-                            {% if d.zk_proof_hash %}
-                            {{ d.zk_proof_hash[:24] }}...
+                            {% if d.status == 'approved' or d.status == 'active' %}
+                            <span class="signal-badge BUY">APPROVED</span>
                             {% else %}
-                            <span style="color: var(--text-secondary);">N/A</span>
+                            <span class="signal-badge SELL">VETOED</span>
                             {% endif %}
                         </td>
-                        <td>{{ d.timestamp[:19] if d.timestamp else '' }}</td>
+                        <td>{{ (d.confidence * 100) | round(0) }}%</td>
+                        <td>${{ (d.potential_return or d.alpha_generated or 0) | round(0) | int }}</td>
+                        <td>${{ (d.fee or d.fee_calculated or 0) | round(0) | int }}</td>
+                        <td class="hash">{{ d.zk_proof_hash[:20] if d.zk_proof_hash else '—' }}...</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (d.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
-                    
-                    {% if not decisions %}
-                    <tr>
-                        <td colspan="9" class="empty">
-                            <div class="empty-icon">[ ]</div>
-                            <div class="empty-text">No decisions yet</div>
-                            <p>Run analysis to see trade decisions here.</p>
-                            <button class="btn btn-run" onclick="runAnalysis()">Run New Analysis</button>
-                        </td>
-                    </tr>
-                    {% endif %}
                 </tbody>
             </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No decisions recorded. Run analysis to generate decisions.</div>
+            </div>
+            {% endif %}
         </div>
     </div>
-    
-    <script>
-        function showNotification(message, type) {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = 'notification ' + type;
-            notif.style.display = 'block';
-            setTimeout(() => { notif.style.display = 'none'; }, 5000);
-        }
-        
-        function runAnalysis() {
-            fetch('/api/run', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification(
-                            'Analysis complete! ' + (data.new_decisions || 0) + ' new decisions',
-                            'success'
-                        );
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        showNotification('Analysis failed', 'error');
-                    }
-                })
-                .catch(err => showNotification('Error: ' + err, 'error'));
-        }
-        
-        function refreshStats() {
-            fetch('/api/status')
-                .then(r => r.json())
-                .then(data => {
-                    document.getElementById('stat-total').textContent = data.total_decisions;
-                    document.getElementById('stat-approved').textContent = data.approved;
-                    document.getElementById('stat-vetoed').textContent = data.vetoed;
-                    document.getElementById('stat-rate').textContent = 
-                        (data.approved / (data.total_decisions || 1) * 100).toFixed(1) + '%';
-                    document.getElementById('stat-alpha').textContent = 
-                        '$' + (data.total_alpha || 0).toLocaleString();
-                    document.getElementById('stat-proofs').textContent = data.proofs_verified;
-                });
-        }
-        
-        let sortDir = 1;
-        
-        function sortTable(col) {
-            const table = document.getElementById('decisionsTable');
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
-            
-            rows.sort((a, b) => {
-                const aVal = a.cells[col].textContent;
-                const bVal = b.cells[col].textContent;
-                return aVal.localeCompare(bVal) * sortDir;
-            });
-            
-            sortDir *= -1;
-            rows.forEach(row => table.querySelector('tbody').appendChild(row));
-        }
-        
-        function exportCSV() {
-            const rows = [['Trade ID', 'Ticker', 'Action', 'Status', 'Confidence', 'Return', 'Fee', 'ZK Hash', 'Timestamp']];
-            
-            document.querySelectorAll('#decisionsTable tbody tr').forEach(tr => {
-                if (tr.cells.length > 1) {
-                    rows.push(Array.from(tr.cells).map(td => td.textContent.trim()));
-                }
-            });
-            
-            const csv = rows.map(r => r.join(',')).join('\n');
-            const blob = new Blob([csv], {type: 'text/csv'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'sovereign_decisions.csv';
-            a.click();
-        }
-        
-        setInterval(refreshStats, 10000);
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

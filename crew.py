@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Sovereign Alpha Agent System - Master Orchestrator
-=================================================
+SOVEREIGN ALPHA — Institutional Intelligence Pipeline
+=====================================================
+Master orchestrator for the Sovereign Alpha system.
 
-This orchestrator executes the complete Sovereign Alpha pipeline:
-
-1. Analyst reads data → generates recommendation
-2. Risk Manager checks + demands ZK proof
-3. Auditor generates proof → Risk Manager verifies
-4. Decision logged to blockchain
-5. Billing updated
-6. Report printed to console
+Pipeline:
+1. Market Regime Engine classifies current regime
+2. Data Layer fetches multi-source market intelligence
+3. Analyst Agent generates institutional predictions
+4. Risk Manager applies dynamic veto filtering
+5. Cryptographic Auditor signs and chains approved predictions
+6. Results persisted to prediction ledger and veto archive
 
 Run with: python crew.py
 """
@@ -24,321 +24,234 @@ from typing import Dict, Any, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import BASE_DIR, DATA_DIR, GROQ_API_KEY, logger, llm_config
-from privacy import logger, TenantScopedData  # ✅ PRIVACY: Sanitized logger, tenant isolation
-
-from rag.knowledge_base import get_knowledge_base
-
-from rag.knowledge_base import get_knowledge_base
-from zkml.proof_generator import create_proof_generator
-from blockchain.ledger import create_ledger
-from billing.meter import create_billing_meter
-
-from agents.analyst import (
-    TradeRecommendation, AnalystOutput, create_analyst_agent,
-    execute_analyst_analysis
-)
-from agents.risk_manager import (
-    RiskApproval, RiskCheck, create_risk_manager_agent,
-    execute_risk_approval, create_risk_checks
-)
-from agents.auditor import (
-    AuditRecord, ZKProofRecord, create_auditor_agent,
-    execute_audit
-)
+from config import BASE_DIR, DATA_DIR, GROQ_API_KEY, logger, BILLING_DIR
+from engine.regime import MarketRegimeEngine
+from engine.data_layer import DataLayer
+from agents.analyst import AnalystAgent, InstitutionalPrediction
+from agents.risk_manager import RiskManager, RiskApproval
+from agents.auditor import CryptographicAuditor, AuditCertificate
 
 
-try:
-    from groq import Groq
-    GROQ_AVAILABLE = True
-except ImportError:
-    GROQ_AVAILABLE = False
-    print("WARNING: Groq not available")
-
-try:
-    from langchain.chat_models import ChatGroq
-    LANGCHAIN_AVAILABLE = True
-except ImportError:
-    try:
-        from langchain_groq import ChatGroq
-        LANGCHAIN_AVAILABLE = True
-    except ImportError:
-        LANGCHAIN_AVAILABLE = False
-
-
-class SovereignAlphaOrchestrator:
+class SovereignAlphaPipeline:
     """
-    Main orchestrator for Sovereign Alpha Agent system.
-    Coordinates the Council of Experts.
+    Institutional-grade intelligence pipeline.
+    Coordinates all engines and agents.
     """
-    
+
     def __init__(self):
-        self.kb = None
-        self.proof_generator = None
-        self.ledger = None
-        self.billing_meter = None
-        self.llm = None
-        
+        self.regime_engine = None
+        self.data_layer = None
+        self.analyst = None
+        self.risk_manager = None
+        self.auditor = None
         self._initialize()
 
     def _initialize(self):
         print("\n" + "=" * 70)
-        print("SOVEREIGN ALPHA AGENT SYSTEM - Initializing")
+        print("SOVEREIGN ALPHA — Institutional Intelligence Pipeline")
         print("=" * 70)
-        
+
         if not GROQ_API_KEY:
-            print("ERROR: GROQ_API_KEY not set. Copy .env.example to .env and add key.")
-            sys.exit(1)
-        
-        self.kb = get_knowledge_base()
-        logger.info("Knowledge Base loaded")
-        
-        self.proof_generator = create_proof_generator()
-        logger.info("ZK Proof Generator initialized")
-        
-        self.ledger = create_ledger()
-        logger.info("Blockchain Ledger initialized")
-        
-        self.billing_meter = create_billing_meter()
-        logger.info("Billing Meter initialized")
-        
-        if LANGCHAIN_AVAILABLE and GROQ_AVAILABLE:
-            self.llm = ChatGroq(
-                api_key=GROQ_API_KEY,
-                model=llm_config['model'],
-                temperature=llm_config['temperature']
-            )
-            logger.info(f"LLM initialized: {llm_config['model']}")
-        else:
-            logger.warning("LangChain not available - using simple responses")
-            self.llm = None
-        
-        self.analyst = create_analyst_agent(self.llm, self.kb) if self.llm else None
-        self.risk_manager = create_risk_manager_agent(self.llm) if self.llm else None
-        self.auditor = create_auditor_agent(self.llm) if self.llm else None
-        
+            print("WARNING: GROQ_API_KEY not set — using rule-based analysis only")
+
+        self.regime_engine = MarketRegimeEngine()
+        logger.info("Market Regime Engine initialized")
+
+        self.data_layer = DataLayer()
+        logger.info("Data Layer initialized")
+
+        self.analyst = AnalystAgent()
+        logger.info("Analyst Agent initialized")
+
+        self.risk_manager = RiskManager()
+        logger.info("Risk Manager initialized")
+
+        self.auditor = CryptographicAuditor()
+        logger.info("Cryptographic Auditor initialized")
+
         print("\n[PASS] All systems initialized")
         print("=" * 70)
 
-    def run_analysis_cycle(self) -> Dict[str, Any]:
+    def run(self, tickers: Optional[List[str]] = None) -> Dict[str, Any]:
         """
-        Execute a complete analysis cycle.
-        ✅ PRIVACY: No raw data in logs, metadata only.
+        Execute full intelligence pipeline.
+        Returns structured results.
         """
-        logger.warning("SOVEREIGN ALPHA: Starting analysis cycle")  # ✅ PRIVACY: Metadata only
-        
-        portfolio_data = self.kb.get_portfolio_summary()
-        positions_count = len(portfolio_data.get('positions', []))  # ✅ PRIVACY: Count only
-        
-        if self.analyst and self.llm:
-            analyst_output = execute_analyst_analysis(
-                self.analyst, self.kb, portfolio_data
-            )
-        else:
-            analyst_output = self._generate_simple_recommendations(portfolio_data)
-        
-        if self.billing_meter:
-            self.billing_meter.log_inference(
-                agent_id="analyst",
-                model=llm_config['model'],
-                input_tokens=1500,
-                output_tokens=800,
-                latency_ms=2500.0,
-                status="completed"
-            )
-        
-        recommendations = analyst_output.recommendations if hasattr(analyst_output, 'recommendations') else []
-        
-        if not recommendations:
-            logger.warning("Analyst: No recommendations generated")  # ✅ PRIVACY: Status only
-            return {'status': 'no_recommendations', 'cycle': 'failed'}
-        
-        logger.warning(f"Analyst: Generated {len(recommendations)} recommendations")  # ✅ PRIVACY: Count only
-        
-        results = []
-        
-        for i, rec in enumerate(recommendations[:3]):
-            logger.warning(f"Processing: {rec.decision_id}")  # ✅ PRIVACY: ID only
-            
-            risk_params = self.kb.get_risk_parameters()
-            
-            logger.warning(f"STEP 2: RISK MANAGER - Checking {rec.decision_id}")  # ✅ PRIVACY: ID only
-            
-            if self.risk_manager and self.llm:
-                risk_approval = execute_risk_approval(rec, risk_params, None)
-            else:
-                risk_approval = self._simple_risk_check(rec, risk_params)
-            
-            if self.billing_meter:
-                self.billing_meter.log_inference(
-                    agent_id="risk_manager",
-                    model=llm_config['model'],
-                    input_tokens=800,
-                    output_tokens=400,
-                    latency_ms=1500.0,
-                    decision_id=rec.decision_id,
-                    status="completed"
-                )
-            
-            if not risk_approval.approved:
-                logger.warning(f"VETOED: {rec.decision_id}")  # ✅ PRIVACY: ID only
-                results.append({
-                    'decision_id': rec.decision_id,
-                    'status': 'vetoed'
-                })  # ✅ PRIVACY: No veto reason in logs
-                continue
-            
-            logger.warning(f"Approved: {rec.decision_id} | checks={len(risk_approval.risk_checks)}")  # ✅ PRIVACY: Count only
-            
-            risk_checks = create_risk_checks(rec, portfolio_data, risk_params)
-            
-            logger.warning(f"STEP 3: AUDITOR - Generating ZK proof")  # ✅ PRIVACY: Status only
-            
-            audit = execute_audit(
-                rec,
-                risk_checks,
-                self.proof_generator,
-                self.ledger,
-                self.billing_meter
-            )
-            
-            if not audit.zk_proof:
-                logger.warning(f"AUDITOR: Proof generation failed for {rec.decision_id}")  # ✅ PRIVACY: ID only
-                results.append({
-                    'decision_id': rec.decision_id,
-                    'status': 'audit_failed'
-                })  # ✅ PRIVACY: No raw data
-                continue
-            
-            logger.warning(f"AUDITOR: Proof generated | hash={audit.zk_proof.proof_hash[:16]}...")  # ✅ PRIVACY: Hash only
-            logger.warning(f"BLOCKCHAIN: {'confirmed' if audit.tx_hash else 'local'}")  # ✅ PRIVACY: Status only
-            
-            results.append({
-                'decision_id': rec.decision_id,
-                'status': 'approved',
-                'zk_proof_hash': audit.zk_proof.proof_hash[:32] if audit.zk_proof else None
-            })  # ✅ PRIVACY: Proof only, no positions
-        
-        summary = self._generate_cycle_summary(results)
-        
-        return summary
-
-    def _generate_simple_recommendations(self, portfolio_data: Dict) -> AnalystOutput:
-        """Generate simple recommendations without CrewAI."""
-        recommendations = []
-        
-        for pos in portfolio_data.get('positions', [])[:5]:
-            aum = 59000000
-            current_price = pos.get('current_price', 892.40)
-            quantity = pos.get('quantity', 1000)
-            estimated_value = current_price * quantity
-            weight_pct = (estimated_value / aum) * 100
-            weight_pct = min(weight_pct, 4.0)  # Cap at 4%
-            
-            rec = TradeRecommendation(
-                decision_id=f"DEC-{pos.get('position_id', '001')}",
-                symbol=pos.get('symbol', 'NVDA'),
-                action="HOLD",
-                quantity=quantity,
-                entry_price=current_price,
-                estimated_value=estimated_value,
-                recommended_weight_pct=weight_pct,
-                confidence_score=pos.get('confidence_score', 0.80),
-                rationale="Maintain position within risk parameters",
-                sector=pos.get('sector', 'Technology'),
-                momentum_signal="STRONG BUY" if pos.get('confidence_score', 0) > 0.85 else "MODERATE BUY",
-                expected_holding_period="30-60 days",
-                exit_conditions="Stop loss at 12% decline"
-            )
-            recommendations.append(rec)
-        
-        return AnalystOutput(
-            recommendations=recommendations,
-            market_analysis="Portfolio review complete",
-            portfolio_summary=portfolio_data
-        )
-
-    def _simple_risk_check(self, rec, risk_params) -> RiskApproval:
-        """Simple risk check without CrewAI."""
-        checks = [
-            RiskCheck(
-                check_name="Position Size",
-                passed=rec.estimated_value <= 500000,
-                details=f"Position ${rec.estimated_value:,.2f} within limits"
-            ),
-            RiskCheck(
-                check_name="Confidence",
-                passed=rec.confidence_score >= 0.65,
-                details=f"Confidence {rec.confidence_score:.0%} meets threshold"
-            )
-        ]
-        
-        return RiskApproval(
-            decision_id=rec.decision_id,
-            approved=all(c.passed for c in checks),
-            risk_checks=checks,
-            zk_proof_required=True,
-            zk_proof_status="pending",
-            reasoning="Risk checks passed" if all(c.passed for c in checks) else "Risk checks failed"
-        )
-
-    def _generate_cycle_summary(self, results: List[Dict]) -> Dict[str, Any]:
-        """Generate cycle summary."""
-        approved = len([r for r in results if r.get('status') == 'approved'])
-        vetoed = len([r for r in results if r.get('status') == 'vetoed'])
-        total_fees = sum(r.get('fee_calculated', 0) for r in results if r.get('fee_calculated'))
-        
-        return {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'total_decisions': len(results),
-            'approved': approved,
-            'vetoed': vetoed,
-            'total_fees': total_fees,
-            'results': results
+        results = {
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "regime": {},
+            "predictions": [],
+            "approved": [],
+            "vetoed": [],
+            "certificates": [],
+            "summary": {}
         }
 
-    def print_final_report(self, summary: Dict[str, Any]):
-        """Print final report to console. ✅ PRIVACY: Proof-only output."""
-        logger.warning(f"CYCLE COMPLETE: {summary.get('total_decisions', 0)} decisions")  # ✅ PRIVACY: Count only
-        logger.warning(f"  APPROVED: {summary.get('approved', 0)} | VETOED: {summary.get('vetoed', 0)}")  # ✅ PRIVACY: Counts only
-        
-        if summary.get('total_fees'):
-            logger.warning(f"Performance Fees: ${summary.get('total_fees', 0):,.2f}")  # ✅ PRIVACY: Fee only
-        
-        for result in summary.get('results', []):
-            decision_id = result.get('decision_id', 'UNKNOWN')
-            status = result.get('status', 'unknown')
-            
-            if status == 'approved':
-                logger.warning(f"  [PASS] {decision_id}: APPROVED")  # ✅ PRIVACY: ID only
-                logger.warning(f"    Proof: {result.get('zk_proof_hash', 'N/A')[:24]}...")  # ✅ PRIVACY: Hash only
-            else:
-                logger.warning(f"  [FAIL] {decision_id}: {status.upper()}")  # ✅ PRIVACY: Status only
+        print("\n[1/5] Classifying market regime...")
+        regime = self.regime_engine.classify()
+        results["regime"] = {
+            "regime": regime.regime,
+            "confidence": regime.confidence,
+            "summary": regime.summary,
+            "timestamp": regime.timestamp
+        }
+        print(f"      Regime: {regime.regime} (confidence: {regime.confidence:.1%})")
+        print(f"      Summary: {regime.summary}")
 
-    def cleanup(self):
-        """Cleanup resources."""
-        if self.billing_meter:
-            self.billing_meter.close()
+        print("\n[2/5] Fetching market intelligence...")
+        macro = self.data_layer.fetch_macro_snapshot()
+        print(f"      VIX: {macro.vix} | 10Y: {macro.treasury_10y}% | DXY: {macro.dxy}")
+
+        print("\n[3/5] Generating predictions...")
+        predictions = self.analyst.run_full_analysis(tickers)
+        print(f"      Generated {len(predictions)} predictions")
+
+        print("\n[4/5] Applying risk governance...")
+        approved_predictions = []
+        vetoed_predictions = []
+        audit_batch = []
+
+        for pred in predictions:
+            approval = self.risk_manager.evaluate(pred)
+
+            if approval.approved:
+                approved_predictions.append(pred)
+                audit_batch.append((pred, approval.risk_checks))
+            else:
+                vetoed_predictions.append({
+                    "ticker": pred.ticker,
+                    "signal": pred.signal,
+                    "confidence": pred.confidence,
+                    "veto_reason": approval.reasoning,
+                    "timestamp": approval.timestamp
+                })
+
+        print(f"      Approved: {len(approved_predictions)} | Vetoed: {len(vetoed_predictions)}")
+
+        print("\n[5/5] Generating audit certificates...")
+        certificates = self.auditor.audit_batch(audit_batch)
+        print(f"      Generated {len(certificates)} certificates")
+
+        results["predictions"] = [self._serialize_prediction(p) for p in predictions]
+        results["approved"] = [self._serialize_prediction(p) for p in approved_predictions]
+        results["vetoed"] = vetoed_predictions
+        results["certificates"] = [self._serialize_certificate(c) for c in certificates]
+        results["summary"] = self._build_summary(predictions, approved_predictions, vetoed_predictions, certificates, regime)
+
+        return results
+
+    def _serialize_prediction(self, pred: InstitutionalPrediction) -> Dict[str, Any]:
+        """Convert prediction to serializable dict."""
+        return {
+            "prediction_id": pred.prediction_id,
+            "ticker": pred.ticker,
+            "signal": pred.signal,
+            "confidence": pred.confidence,
+            "market_regime": pred.market_regime,
+            "thesis": pred.thesis,
+            "risk_factors": pred.risk_factors,
+            "entry_price": pred.entry_price,
+            "target_price": pred.target_price,
+            "stop_loss": pred.stop_loss,
+            "risk_reward_ratio": pred.risk_reward_ratio,
+            "expected_timeline_days": pred.expected_timeline_days,
+            "timestamp": pred.timestamp
+        }
+
+    def _serialize_certificate(self, cert: AuditCertificate) -> Dict[str, Any]:
+        """Convert certificate to serializable dict."""
+        return {
+            "certificate_id": cert.certificate_id,
+            "prediction_id": cert.prediction_id,
+            "ticker": cert.ticker,
+            "commitment_hash": cert.commitment_hash,
+            "merkle_root": cert.merkle_root,
+            "timestamp": cert.timestamp,
+            "verdict": cert.verdict,
+            "chain_status": cert.chain_status
+        }
+
+    def _build_summary(self, all_preds, approved, vetoed, certs, regime) -> Dict[str, Any]:
+        """Build pipeline summary."""
+        buy_count = sum(1 for p in all_preds if p.signal == "BUY")
+        sell_count = sum(1 for p in all_preds if p.signal == "SELL")
+        hold_count = sum(1 for p in all_preds if p.signal == "HOLD")
+
+        avg_conf = sum(p.confidence for p in all_preds) / len(all_preds) if all_preds else 0
+
+        return {
+            "total_predictions": len(all_preds),
+            "approved": len(approved),
+            "vetoed": len(vetoed),
+            "buy_signals": buy_count,
+            "sell_signals": sell_count,
+            "hold_signals": hold_count,
+            "avg_confidence": round(avg_conf, 3),
+            "regime": regime.regime,
+            "certificates_generated": len(certs),
+            "audit_chain_integrity": self.auditor.merkle_chain.verify_chain_integrity()
+        }
+
+    def print_report(self, results: Dict[str, Any]):
+        """Print institutional report to console."""
+        s = results["summary"]
+        r = results["regime"]
+
+        print("\n" + "=" * 70)
+        print("SOVEREIGN ALPHA — DAILY INTELLIGENCE REPORT")
+        print("=" * 70)
+        print(f"Timestamp: {results['timestamp']}")
+        print(f"Market Regime: {r['regime']} (confidence: {r['confidence']:.1%})")
+        print(f"Regime Context: {r['summary']}")
+        print("-" * 70)
+
+        print(f"\nPredictions Generated: {s['total_predictions']}")
+        print(f"  Approved: {s['approved']}")
+        print(f"  Vetoed: {s['vetoed']}")
+        print(f"  BUY signals: {s['buy_signals']}")
+        print(f"  SELL signals: {s['sell_signals']}")
+        print(f"  HOLD signals: {s['hold_signals']}")
+        print(f"  Avg Confidence: {s['avg_confidence']:.0%}")
+        print(f"  Audit Certificates: {s['certificates_generated']}")
+        print(f"  Chain Integrity: {'VERIFIED' if s['audit_chain_integrity'] else 'PENDING'}")
+
+        if results["approved"]:
+            print("\nAPPROVED PREDICTIONS:")
+            for p in results["approved"]:
+                print(f"  [+] {p['ticker']} | {p['signal']} | Conf: {p['confidence']:.0%} | Entry: ${p['entry_price']} | Target: ${p['target_price']}")
+                print(f"      {p['thesis'][:100]}...")
+
+        if results["vetoed"]:
+            print("\nVETOED PREDICTIONS:")
+            for v in results["vetoed"]:
+                print(f"  [-] {v['ticker']} | {v['signal']} | Conf: {v['confidence']:.0%}")
+                print(f"      Reason: {v['veto_reason'][:80]}...")
+
+        print("\n" + "=" * 70)
+        print("END OF REPORT")
+        print("=" * 70)
 
 
 def main():
     """Main entry point."""
-    print("\n" + "="*60)
-    print("SOVEREIGN ALPHA AGENT SYSTEM")
-    print("Private AI Agent Council for Alpha Generation")
-    print("Zero-Knowledge Proofs | Blockchain Settlements")
-    print("="*60 + "\n")
-    
-    orchestrator = SovereignAlphaOrchestrator()
-    
-    summary = orchestrator.run_analysis_cycle()
-    
-    orchestrator.print_final_report(summary)
-    
-    orchestrator.cleanup()
-    
-    print("\n>>> Sovereign Alpha cycle completed successfully")
-    
+    pipeline = SovereignAlphaPipeline()
+
+    tickers = None
+    if len(sys.argv) > 1:
+        tickers = sys.argv[1:]
+
+    results = pipeline.run(tickers)
+    pipeline.print_report(results)
+
+    results_file = BASE_DIR / "results" / f"pipeline_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    results_file.parent.mkdir(exist_ok=True)
+    try:
+        with open(results_file, 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        print(f"\nResults saved: {results_file}")
+    except Exception as e:
+        print(f"\nWarning: Could not save results: {e}")
+
     return 0
 
 
