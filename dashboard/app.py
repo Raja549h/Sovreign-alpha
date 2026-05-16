@@ -43,12 +43,47 @@ DATA_DIR = BASE_DIR / "data"
 BILLING_DIR = BASE_DIR / "billing"
 RESULTS_DIR = BASE_DIR / "results"
 PROOFS_DIR = BASE_DIR / "zkml" / "proofs"
+CERTS_DIR = BASE_DIR / "zkml" / "certificates"
 FUNDS_DIR = DATA_DIR / "funds"
 
 RESULTS_DIR.mkdir(exist_ok=True)
 PROOFS_DIR.mkdir(exist_ok=True)
+CERTS_DIR.mkdir(exist_ok=True)
 BILLING_DIR.mkdir(exist_ok=True)
 FUNDS_DIR.mkdir(exist_ok=True)
+
+def get_regime_data():
+    """Get current regime classification for dashboard."""
+    try:
+        from engine.regime import MarketRegimeEngine
+        engine = MarketRegimeEngine()
+        latest = engine.get_latest()
+        if latest:
+            return {
+                "regime": latest.regime,
+                "confidence": f"{latest.confidence:.0%}",
+                "summary": latest.summary,
+                "indicators": latest.indicators or {}
+            }
+    except Exception:
+        pass
+    return {"regime": "NEUTRAL", "confidence": "—", "summary": "No data", "indicators": {}}
+
+def get_macro_tickers():
+    """Get macro ticker data for ticker strip."""
+    try:
+        from engine.data_layer import DataLayer
+        dl = DataLayer()
+        macro = dl.fetch_macro_snapshot()
+        return {
+            "vix": macro.vix,
+            "dxy": macro.dxy,
+            "treasury_10y": macro.treasury_10y,
+            "gold": macro.gold,
+            "oil_wti": macro.oil_wti
+        }
+    except Exception:
+        return {}
 
 app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
@@ -660,11 +695,14 @@ def index():
     try:
         demo_mode = is_demo_mode()
         progress = check_setup_progress()
-        
+        regime = get_regime_data()
+
         if demo_mode:
             stats = DEMO_STATS
             recent = DEMO_RECENT_DECISIONS
             recent_decisions = recent
+            predictions_list = DEMO_PREDICTIONS
+            veto_list = DEMO_VETOES
         else:
             stats = calculate_dashboard_stats()
             recent = get_recent_decisions(5)
@@ -678,15 +716,28 @@ def index():
                     'confidence': 0.85,
                     'value': d.get('alpha_generated', 0) or 0
                 })
-        
+            predictions_list = get_predictions(8)
+            veto_list = get_veto_archive(6)
+
+        ledger_stats = calculate_ledger_stats()
         session_user = request.cookies.get('session_user', 'fund_manager')
-        
+
         return render_template('index.html',
                            approval_rate=stats['approval_rate'],
-                           total_decisions=stats['total_decisions'],
-                           total_approved=stats['total_approved'],
-                           total_alpha=stats['total_alpha'],
-                           proofs_verified=stats['proofs_verified'],
+                           total_decisions=ledger_stats['total_predictions'],
+                           cleared=ledger_stats['cleared'],
+                           risk_rejected=ledger_stats['risk_rejected'],
+                           success_rate=ledger_stats['success_rate'],
+                           with_outcome=ledger_stats['with_outcome'],
+                           veto_efficiency=ledger_stats['veto_efficiency'],
+                           veto_correct_count=ledger_stats['veto_correct_count'],
+                           total_vetoes=ledger_stats['total_vetoes'],
+                           total_avoided_drawdown=ledger_stats['total_avoided_drawdown'],
+                           certificates=count_proof_files() + len(list(CERTS_DIR.glob("*.json"))),
+                           predictions=predictions_list,
+                           vetoes=veto_list,
+                           regime=regime['regime'],
+                           regime_confidence=regime['confidence'],
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                            recent_decisions=recent_decisions,
                            progress=progress,
@@ -695,10 +746,20 @@ def index():
     except Exception as e:
         return render_template('index.html',
                            approval_rate=53.8,
-                           total_decisions=52,
-                           total_approved=28,
-                           total_alpha=913656,
-                           proofs_verified=28,
+                           total_decisions=0,
+                           cleared=0,
+                           risk_rejected=0,
+                           success_rate=0,
+                           with_outcome=0,
+                           veto_efficiency=0,
+                           veto_correct_count=0,
+                           total_vetoes=0,
+                           total_avoided_drawdown=0,
+                           certificates=0,
+                           predictions=[],
+                           vetoes=[],
+                           regime='NEUTRAL',
+                           regime_confidence='—',
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                            recent_decisions=DEMO_RECENT_DECISIONS,
                            progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
@@ -1714,14 +1775,38 @@ def health():
         'results_dir': RESULTS_DIR.exists(),
         'proofs_dir': PROOFS_DIR.exists()
     }
-    
+
     is_cloud = os.environ.get("RENDER", "false").lower() == "true"
-    
+
     return jsonify({
         'status': 'healthy' if all(checks.values()) else 'degraded',
         'is_cloud': is_cloud,
         'checks': checks
     })
+
+
+@app.route('/api/regime')
+@login_required
+def api_regime():
+    """Get current market regime classification."""
+    try:
+        regime = get_regime_data()
+        return jsonify(regime)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route('/api/intelligence')
+@login_required
+def api_intelligence():
+    """Get full intelligence package."""
+    try:
+        from engine.data_layer import DataLayer
+        dl = DataLayer()
+        intel = dl.get_full_intelligence()
+        return jsonify(intel)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 def main():

@@ -3,158 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sovereign Alpha</title>
+    <title>Sovereign Alpha — Login</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #121212;
-            --bg-tertiary: #1a1a1a;
-            --accent: #00ff88;
-            --accent-dim: #00cc6a;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --border: #2a2a2a;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #000;
+            color: #e0e0e0;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .login-container {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 3rem;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        .login-box {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            padding: 2.5rem;
+            width: 380px;
+            border-radius: 2px;
         }
-        
-        .logo {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--accent);
-            letter-spacing: 3px;
-            margin-bottom: 0.5rem;
-        }
-        
-        .subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            text-align: left;
-            color: var(--text-secondary);
+        .login-box h1 {
             font-size: 0.85rem;
-            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: #00d4aa;
+            letter-spacing: 3px;
             text-transform: uppercase;
+            margin-bottom: 0.25rem;
+            font-family: 'Consolas', monospace;
         }
-        
-        .form-group input {
+        .login-box .subtitle {
+            font-size: 0.7rem;
+            color: #505050;
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+        .login-box label {
+            display: block;
+            font-size: 0.65rem;
+            color: #707070;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.4rem;
+        }
+        .login-box input[type="password"] {
             width: 100%;
-            padding: 1rem;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 0.6rem 0.75rem;
+            background: #0d0d0d;
+            border: 1px solid #1e1e1e;
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+            font-family: 'Consolas', monospace;
         }
-        
-        .form-group input:focus {
+        .login-box input[type="password"]:focus {
             outline: none;
-            border-color: var(--accent);
+            border-color: #00d4aa;
         }
-        
-        .btn {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
+        .login-box button {
             width: 100%;
-            transition: background 0.3s;
+            padding: 0.6rem;
+            background: #00d4aa;
+            color: #000;
+            border: none;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 2px;
         }
-        
-        .btn:hover { background: var(--accent-dim); }
-        
+        .login-box button:hover { background: #00a888; }
         .error {
-            background: rgba(255, 68, 68, 0.15);
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .privacy-note {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            line-height: 1.5;
-        }
-        
-        .privacy-note strong {
-            color: var(--accent);
-        }
-        
-        @media (max-width: 480px) {
-            .login-container {
-                margin: 1rem;
-                padding: 2rem;
-            }
+            background: rgba(224, 48, 48, 0.15);
+            border: 1px solid #e03030;
+            color: #e03030;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            margin-bottom: 1.5rem;
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo">◈ SOVEREIGN ALPHA</div>
-        <div class="subtitle">Private Fund Management Dashboard</div>
-        
+    <div class="login-box">
+        <h1>Sovereign Alpha</h1>
+        <div class="subtitle">Institutional Intelligence Pipeline</div>
         {% if error %}
         <div class="error">{{ error }}</div>
         {% endif %}
-        
-        <form method="POST" action="/login">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="fund_manager" required autofocus>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Fund Access Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your fund password" required>
-            </div>
-            
-            <button type="submit" class="btn">Access Fund Dashboard</button>
+        <form method="POST">
+            <label>Fund Password</label>
+            <input type="password" name="password" placeholder="Enter fund password" autofocus required>
+            <button type="submit">Authenticate</button>
         </form>
-        
-        <div class="privacy-note">
-            <strong>🔒 YOUR DATA IS PRIVATE</strong><br>
-            All uploaded data stays on this server only.<br>
-            Never transmitted externally. Never visible to Sovereign Alpha team.
-        </div>
     </div>
 </body>
 </html>

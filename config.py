@@ -7,10 +7,12 @@ load_dotenv()
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 AGENTS_DIR = BASE_DIR / "agents"
+ENGINE_DIR = BASE_DIR / "engine"
 RAG_DIR = BASE_DIR / "rag"
 ZKML_DIR = BASE_DIR / "zkml"
 BLOCKCHAIN_DIR = BASE_DIR / "blockchain"
 BILLING_DIR = BASE_DIR / "billing"
+DASHBOARD_DIR = BASE_DIR / "dashboard"
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 if not GROQ_API_KEY:
@@ -21,32 +23,28 @@ PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 COINBASE_AGENT_KIT_TOKEN = os.getenv("COINBASE_AGENT_KIT_TOKEN", "")
 WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "")
 
-LLAMA_33_70B = "llama-3.3-70b-versatile"
-LLAMA_31_8B = "llama-3.1-8b-instant"
+LLM_MODEL = "llama-3.3-70b-versatile"
+LLM_MODEL_FAST = "llama-3.1-8b-instant"
 
 llm_config = {
-    "model": LLAMA_33_70B,
+    "model": LLM_MODEL,
     "api_key": GROQ_API_KEY,
     "temperature": 0.3,
     "max_tokens": 2048
 }
 
 quick_llm_config = {
-    "model": LLAMA_31_8B,
+    "model": LLM_MODEL_FAST,
     "api_key": GROQ_API_KEY,
     "temperature": 0.1,
     "max_tokens": 1024
 }
 
-embedding_model = "embed-english-v3.0"
-
 CHROMA_PERSIST_DIR = str(DATA_DIR / "chroma_db")
-
-chroma_persist_dir = CHROMA_PERSIST_DIR
 
 PERFORMANCE_FEE_PCT = 12.0
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "WARNING")  # ✅ PRIVACY: Default WARNING, no raw data in logs
+LOG_LEVEL = os.getenv("LOG_LEVEL", "WARNING")
 
 def setup_logging():
     import logging

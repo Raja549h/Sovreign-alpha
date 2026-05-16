@@ -1,541 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Alpha - Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #121212;
-            --bg-tertiary: #1a1a1a;
-            --accent: #00ff88;
-            --accent-dim: #00cc6a;
-            --danger: #ff4444;
-            --warning: #ffaa00;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --border: #2a2a2a;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-        
-        .nav {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent);
-            letter-spacing: 2px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--accent);
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header {
-            margin-bottom: 2rem;
-        }
-        
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 300;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-        }
-        
-        .stat-card label {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-        
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-top: 0.5rem;
-            color: var(--accent);
-        }
-        
-        .stat-card .value.danger { color: var(--danger); }
-        
-        .section-title {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-        
-        .gauge-container {
-            display: flex;
-            justify-content: center;
-            padding: 2rem;
-        }
-        
-        .gauge-wrapper {
-            position: relative;
-            width: 220px;
-            height: 220px;
-        }
-        
-        .gauge-circle {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(
-                var(--accent) 0deg,
-                var(--accent) calc(3.6deg * var(--approval-rate, 0)),
-                var(--bg-tertiary) calc(3.6deg * var(--approval-rate, 0)),
-                var(--bg-tertiary) 360deg
-            );
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .gauge-inner {
-            width: 170px;
-            height: 170px;
-            border-radius: 50%;
-            background: var(--bg-secondary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .gauge-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-        
-        .gauge-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .btn {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        .btn:hover { background: var(--accent-dim); }
-        .btn:disabled { background: var(--text-secondary); cursor: not-allowed; }
-        
-        .btn-running {
-            background: var(--warning);
-            animation: pulse-warning 1s infinite;
-        }
-        
-        @keyframes pulse-warning {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        .table-container {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .table-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .table-header h2 {
-            font-size: 1.1rem;
-        }
-        
-        table { width: 100%; border-collapse: collapse; }
-        
-        th, td { padding: 1rem 1.5rem; text-align: left; }
-        
-        th {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-        }
-        
-        tr { border-bottom: 1px solid var(--border); }
-        
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-        
-        .status-badge.approved {
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--accent);
-        }
-        
-        .status-badge.vetoed {
-            background: rgba(255, 68, 68, 0.15);
-            color: var(--danger);
-        }
-        
-        .row-approved { border-left: 3px solid var(--accent); }
-        .row-vetoed { border-left: 3px solid var(--danger); }
-        
-        .zk-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-        }
-        
-        .zk-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--accent);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            font-weight: bold;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .notification.success {
-            background: var(--accent);
-            color: var(--bg-primary);
-        }
-        
-        .notification.error {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--bg-primary);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 768px) {
-            .nav { flex-direction: column; gap: 1rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    {% if is_demo %}
-    <div style="background: linear-gradient(90deg, #1a3a2a, #0a2a1a); border-bottom: 1px solid #00ff88; padding: 0.75rem 2rem; text-align: center; font-size: 0.85rem; color: #00ff88;">
-        ◈ Showing demo data — <a href="/upload" style="color: #88ffbb; text-decoration: underline;">upload your fund data</a> to see your personalised analysis
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Market Intelligence Dashboard</h1>
+        <span class="timestamp">Last updated: {{ last_verified }}</span>
     </div>
-    {% endif %}
-    <nav class="nav">
-        <div class="nav-brand">SOVEREIGN ALPHA</div>
-        <div class="nav-links">
-            <a href="/" class="active">Home</a>
-            <a href="/upload">Upload Data</a>
-            <a href="/decisions">Decisions</a>
-            <a href="/proofs">Proofs</a>
-            <a href="/performance">Performance</a>
-            {% if session_user %}<span style="color: var(--text-secondary);">| Logged in as <strong style="color: var(--accent);">{{ session_user }}</strong></span>{% endif %}
-            <a href="/logout">Logout</a>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <label>Market Regime</label>
+            <div class="value">
+                {% if regime %}
+                <span class="regime-badge {{ regime }}">{{ regime }}</span>
+                {% else %}
+                <span class="regime-badge NEUTRAL">NEUTRAL</span>
+                {% endif %}
+            </div>
+            <div class="sub">Confidence: {{ regime_confidence | default('—') }}</div>
         </div>
-    </nav>
-    
-    <div class="notification" id="notification"></div>
-    
-    <div class="container">
-        {% if progress and not progress.step5_done %}
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">📋 SETUP PROGRESS</h3>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step1_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
-                    {% if progress.step1_done %}✓{% else %}1{% endif %} Access
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step2_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
-                    {% if progress.step2_done %}✓{% else %}2{% endif %} Upload Positions
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step3_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
-                    {% if progress.step3_done %}✓{% else %}3{% endif %} Set Parameters
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step4_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
-                    {% if progress.step4_done %}✓{% else %}4{% endif %} Add Research
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; {% if progress.step5_done %}background: rgba(0, 255, 136, 0.15); color: var(--accent);{% else %}background: var(--bg-tertiary); color: var(--text-secondary);{% endif %};">
-                    {% if progress.step5_done %}✓{% else %}5{% endif %} Run Analysis
-                </div>
-            </div>
-            <a href="/upload" class="btn" style="margin-top: 1rem; display: inline-block;">Continue Setup →</a>
+        <div class="stat-box">
+            <label>Total Predictions</label>
+            <div class="value">{{ total_decisions | default(0) }}</div>
+            <div class="sub">{{ cleared | default(0) }} cleared / {{ risk_rejected | default(0) }} rejected</div>
         </div>
-        {% endif %}
-        
-        <div class="privacy-badge" style="background: rgba(0, 255, 136, 0.1); border: 1px solid var(--accent); border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-            <span style="font-size: 1.5rem;">🔒</span>
-            <div>
-                <strong style="color: var(--accent);">YOUR DATA IS PRIVATE</strong>
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">All uploaded data is stored locally on this server only. Never transmitted externally.</p>
-            </div>
+        <div class="stat-box">
+            <label>Hit Rate</label>
+            <div class="value {% if success_rate and success_rate < 50 %}danger{% elif success_rate and success_rate >= 65 %}{% else %}warning{% endif %}">{{ success_rate | default(0) | round(1) }}%</div>
+            <div class="sub">{{ with_outcome | default(0) }} outcomes recorded</div>
         </div>
-        <div class="header">
-            <h1>Portfolio Intelligence Summary</h1>
-            <p>Sovereign Alpha Intelligence Terminal - Last updated: <span id="last-update">{{ last_verified }}</span></p>
+        <div class="stat-box">
+            <label>Veto Efficiency</label>
+            <div class="value info">{{ veto_efficiency | default(0) | round(1) }}%</div>
+            <div class="sub">{{ veto_correct_count | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
         </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <label>AUM</label>
-                <div class="value">${{ "%.1f"|format((stats.aum if stats else 10400000) / 1000000) }}M</div>
-                <div class="subtitle">Configured AUM</div>
-            </div>
-            
-            <div class="stat-card">
-                <label>Clearance Rate</label>
-                <div class="value" id="approval-rate">{{ "%.1f"|format(approval_rate) }}%</div>
-                <div class="subtitle" id="decisions-count">{{ total_approved }}/{{ total_decisions }} recommendations</div>
-            </div>
-            
-            <div class="stat-card">
-                <label>Excess Return</label>
-                <div class="value" id="total-alpha">${{ "%.0f"|format(stats.total_alpha if stats else 913656) }}</div>
-                <div class="subtitle">Est. fees: ${{ "%.0f"|format(stats.total_fees if stats else 109639) }}</div>
-            </div>
-            
-            <div class="stat-card">
-                <label>Cryptographic Audit Certificates</label>
-                <div class="value" id="proofs-count">{{ proofs_verified }}</div>
-                <div class="subtitle">All verified</div>
-            </div>
+        <div class="stat-box">
+            <label>Avoided Drawdown</label>
+            <div class="value">${{ (total_avoided_drawdown | default(0)) | round(0) | int }}</div>
+            <div class="sub">Cumulative risk avoided</div>
         </div>
-        
-        <div class="stats-grid">
-            <div>
-                <div class="section-title">Clearance Rate</div>
-                <div class="gauge-container">
-                    <div class="gauge-wrapper">
-                        <div class="gauge-circle" id="gauge-circle">
-                            <div class="gauge-inner">
-                                <div class="gauge-value" id="gauge-value">{{ "%.0f"|format(approval_rate) }}%</div>
-                                <div class="gauge-label">Cleared</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div>
-                <div class="section-title">Cryptographic Audit Status</div>
-                <div class="zk-indicator">
-                    <div class="zk-dot"></div>
-                    <div>
-                        <strong>All certificates verified</strong>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem;">
-                            Last verification: <span id="last-verified">{{ last_verified }}</span>
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem;">
-                    <button class="btn" id="run-btn" onclick="runAnalysis()">
-                        Execute Analysis Cycle
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="section-title" style="margin-top: 2rem;">Recent Recommendations</div>
-        
-        <div class="table-container">
-            <div class="table-header">
-                <h2>Latest Trade Decisions</h2>
-                <a href="/decisions" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">View All</a>
-            </div>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Trade ID</th>
-                        <th>Ticker</th>
-                        <th>Action</th>
-                        <th>Status</th>
-                        <th>Confidence</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody id="decisions-tbody">
-                    {% for decision in recent_decisions %}
-                    <tr class="row-{{ decision.status }}">
-                        <td>{{ decision.decision_id }}</td>
-                        <td><strong>{{ decision.symbol }}</strong></td>
-                        <td>{{ decision.action }}</td>
-                        <td>
-                            <span class="status-badge {{ decision.status }}">
-                                {{ decision.status }}
-                            </span>
-                        </td>
-                        <td>{{ "%.0f"|format(decision.confidence * 100) }}%</td>
-                        <td>${{ "%.0f"|format(decision.value) }}</td>
-                    </tr>
-                    {% endfor %}
-                    
-                    {% if not recent_decisions %}
-                    <tr>
-                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">
-                            No decisions yet. Click "Run New Analysis" to start.
-                        </td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+        <div class="stat-box">
+            <label>Audit Chain</label>
+            <div class="value" style="font-size:0.9rem;">{{ certificates | default(0) }}</div>
+            <div class="sub">Cryptographic certificates</div>
         </div>
     </div>
-    
-    <script>
-        function showNotification(message, type) {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = 'notification ' + type;
-            notif.style.display = 'block';
-            setTimeout(() => { notif.style.display = 'none'; }, 5000);
-        }
-        
-        function runAnalysis() {
-            const btn = document.getElementById('run-btn');
-            btn.disabled = true;
-            btn.className = 'btn btn-running';
-            btn.innerHTML = '<span class="spinner"></span>Running Analysis...';
-            
-            fetch('/api/run', {method: 'POST'})
-                .then(r => r.json())
-                .then(data => {
-                    btn.disabled = false;
-                    btn.className = 'btn';
-                    btn.textContent = 'Run New Analysis';
-                    
-                    if (data.success) {
-                        showNotification(
-                            'Analysis complete! ' + 
-                            (data.new_decisions || 0) + ' new decisions, ' + 
-                            (data.new_proofs || 0) + ' new proofs',
-                            'success'
-                        );
-                        refreshStats();
-                        location.reload();
-                    } else {
-                        showNotification('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                })
-                .catch(err => {
-                    btn.disabled = false;
-                    btn.className = 'btn';
-                    btn.textContent = 'Run New Analysis';
-                    showNotification('Error running analysis: ' + err, 'error');
-                });
-        }
-        
-        function refreshStats() {
-            fetch('/api/status')
-                .then(r => r.json())
-                .then(data => {
-                    const rate = (data.approved / (data.total_decisions || 1) * 100);
-                    document.getElementById('approval-rate').textContent = rate.toFixed(1) + '%';
-                    document.getElementById('gauge-value').textContent = rate.toFixed(0) + '%';
-                    document.documentElement.style.setProperty('--approval-rate', rate);
-                    document.getElementById('decisions-count').textContent = 
-                        data.approved + '/' + data.total_decisions + ' decisions';
-                    document.getElementById('total-alpha').textContent = 
-                        '$' + (data.total_alpha || 0).toLocaleString();
-                    document.getElementById('proofs-count').textContent = 
-                        data.proofs_verified || 0;
-                    document.getElementById('last-verified').textContent = 
-                        new Date().toLocaleTimeString();
-                    document.getElementById('last-update').textContent = 
-                        new Date().toLocaleTimeString();
-                });
-        }
-        
-        setInterval(refreshStats, 10000);
-        
-        const initialRate = {{ approval_rate }};
-        document.documentElement.style.setProperty('--approval-rate', initialRate);
-    </script>
-</body>
-</html>
+
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Recent Predictions</h2>
+                <a href="/predictions" class="btn outline">View All</a>
+            </div>
+            <div class="panel-body">
+                {% if predictions and predictions|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Signal</th>
+                            <th>Confidence</th>
+                            <th>Regime</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in predictions[:8] %}
+                        <tr>
+                            <td class="ticker-cell">{{ p.asset or p.ticker }}</td>
+                            <td><span class="signal-badge {{ p.status == 'cleared' and 'BUY' or 'SELL' }}">{{ p.status }}</span></td>
+                            <td>{{ (p.confidence_score or p.confidence or 0) | round(0) }}%</td>
+                            <td><span class="regime-badge {{ p.market_regime or 'NEUTRAL' }}">{{ p.market_regime or '—' }}</span></td>
+                            <td>{{ p.actual_outcome or 'Pending' }}</td>
+                            <td class="mono">{{ (p.timestamp or '')[:10] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">—</div>
+                    <div>No predictions recorded. Run analysis to begin.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Recent Vetoes</h2>
+                <a href="/veto-archive" class="btn outline">View All</a>
+            </div>
+            <div class="panel-body">
+                {% if vetoes and vetoes|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Rejected Conf</th>
+                            <th>Reason</th>
+                            <th>Avoided DD</th>
+                            <th>Correct</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in vetoes[:6] %}
+                        <tr>
+                            <td class="ticker-cell">{{ v.asset }}</td>
+                            <td>{{ (v.rejected_confidence or v.confidence_score or 0) | round(0) }}%</td>
+                            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
+                            <td>{{ v.avoided_drawdown or '—' }}</td>
+                            <td>{{ 'Yes' if v.veto_correct else 'No' if v.veto_correct == False else 'Pending' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">—</div>
+                    <div>No vetoes recorded.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="panel-body padded" style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <form action="/run" method="POST" style="display:inline;">
+                <button type="submit" class="btn">Run Analysis</button>
+            </form>
+            <a href="/upload" class="btn outline">Upload Fund Data</a>
+            <a href="/api/export-predictions" class="btn outline">Export Predictions CSV</a>
+            <a href="/live_market" class="btn outline">Live Market</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
