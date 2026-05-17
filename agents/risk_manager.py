@@ -281,7 +281,7 @@ class RiskManager:
         veto_reason = "; ".join(veto_reasons)
 
         veto = VetoRecord(
-            veto_id=f"VETO-{datetime.utcnow().strftime('%Y%m%d%H%M')}-{prediction.ticker}",
+            veto_id=f"VETO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{prediction.ticker}",
             prediction_id=prediction.prediction_id,
             ticker=prediction.ticker,
             signal=prediction.signal,
