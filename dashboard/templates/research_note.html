@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ note.note_reference }} — Research Note{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="terminal-title">{{ note.note_reference }}</h2>
+            <p class="text-muted">{{ note.title }}</p>
+            <a href="/research/export/{{ note.note_reference }}" class="btn btn-outline-info">Download PDF</a>
+            <a href="/research" class="btn btn-outline-secondary ms-2">Back to Research</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    {{ note.full_content|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

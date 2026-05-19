@@ -155,7 +155,7 @@ def run_pipeline():
     # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from dashboard.app import FUND_DATA_DB, save_prediction, save_veto
+        from dashboard.app import FUND_DATA_DB, save_prediction
         for pred in predictions:
             status = 'cleared' if any(a.ticker == pred.ticker for a in approved) else 'risk-rejected'
             pred_data = {
@@ -171,48 +171,39 @@ def run_pipeline():
             }
             save_prediction(pred_data)
 
-        for v in vetoed:
-            veto_data = {
-                'veto_id': f"VETO-{datetime.utcnow().strftime('%Y%m%d')}-{v['ticker']}",
-                'prediction_id': '',
-                'timestamp': v['timestamp'],
-                'asset': v['ticker'],
-                'sector': '',
-                'rejection_reason': v['reason'],
-                'expected_loss_pct': -10.0,
-                'proof_hash': ''
-            }
-            save_veto(veto_data)
-
         results["steps"]["ledger"] = f"{len(predictions)} recorded"
-        log(f"      Recorded {len(predictions)} predictions to ledger")
+        log(f"      Recorded {len(predictions)} predictions to ledger (vetoes already saved by Risk Manager)")
     except Exception as e:
         results["steps"]["ledger"] = f"FAIL: {str(e)}"
         results["errors"].append(f"ledger: {str(e)}")
         log(f"      ERROR: {e}")
 
-    # Step 7: Git sync
+    # Step 7: Git sync (skip on GitHub Actions)
     log("[7/8] Syncing data...")
-    try:
-        import subprocess
-        subprocess.run(
-            ['git', 'add', 'data/regime/', 'engine/', 'agents/', 'results/'],
-            cwd=str(BASE_DIR),
-            capture_output=True,
-            timeout=30
-        )
-        subprocess.run(
-            ['git', 'commit', '-m', f'Daily pipeline {datetime.utcnow().strftime("%Y-%m-%d")} automated'],
-            cwd=str(BASE_DIR),
-            capture_output=True,
-            timeout=30
-        )
-        results["steps"]["git_sync"] = "OK"
-        log("      Git sync complete")
-    except Exception as e:
-        results["steps"]["git_sync"] = f"FAIL: {str(e)}"
-        results["errors"].append(f"git_sync: {str(e)}")
-        log(f"      ERROR: {e}")
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        log("      Skipped (running on GitHub Actions)")
+        results["steps"]["git_sync"] = "SKIPPED"
+    else:
+        try:
+            import subprocess
+            subprocess.run(
+                ['git', 'add', 'data/regime/', 'engine/', 'agents/', 'results/'],
+                cwd=str(BASE_DIR),
+                capture_output=True,
+                timeout=30
+            )
+            subprocess.run(
+                ['git', 'commit', '-m', f'Daily pipeline {datetime.utcnow().strftime("%Y-%m-%d")} automated'],
+                cwd=str(BASE_DIR),
+                capture_output=True,
+                timeout=30
+            )
+            results["steps"]["git_sync"] = "OK"
+            log("      Git sync complete")
+        except Exception as e:
+            results["steps"]["git_sync"] = f"FAIL: {str(e)}"
+            results["errors"].append(f"git_sync: {str(e)}")
+            log(f"      ERROR: {e}")
 
     # Step 8: Email digest
     log("[8/8] Sending email digest...")

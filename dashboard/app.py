@@ -434,80 +434,144 @@ def check_setup_progress() -> dict:
     }
 
 
-# Demo data for when database is empty
-DEMO_STATS = {
-    'aum': 10400000,
-    'approval_rate': 53.8,
-    'total_decisions': 52,
-    'total_approved': 28,
-    'total_alpha': 913656,
-    'total_fees': 109639,
-    'proofs_verified': 28
+# Institutional sample data — always shown as reference
+SAMPLE_STATS = {
+    'aum': 2400000000,
+    'approval_rate': 62.5,
+    'total_decisions': 328,
+    'total_approved': 205,
+    'total_alpha': 47250000,
+    'total_fees': 5670000,
+    'proofs_verified': 205
 }
 
-DEMO_RECENT_DECISIONS = [
-    {'decision_id': 'DEMO-001', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.92, 'value': 150000},
-    {'decision_id': 'DEMO-002', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.88, 'value': 120000},
-    {'decision_id': 'DEMO-003', 'symbol': 'AMD', 'action': 'BUY', 'status': 'approved', 'confidence': 0.85, 'value': 100000},
-    {'decision_id': 'DEMO-004', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'value': 95000},
-    {'decision_id': 'DEMO-005', 'symbol': 'MSFT', 'action': 'BUY', 'status': 'approved', 'confidence': 0.80, 'value': 85000},
+SAMPLE_REGIME = {
+    'regime': 'NEUTRAL',
+    'confidence': '78%',
+    'summary': 'VIX 18.4 (neutral) | 10Y 4.60% (stable) | SPX above MA200',
+    'indicators': {'vix': 18.4, 'treasury_10y': 4.60, 'dxy': 99.3, 'hy_oas': 345}
+}
+
+SAMPLE_RECENT_DECISIONS = [
+    {'decision_id': 'SA-2026-0328', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.89, 'value': 4200000, 'sector': 'Technology', 'thesis': 'AI infrastructure capex cycle accelerating. Data center GPU demand structurally undersupplied through 2027.', 'regime': 'NEUTRAL', 'entry': 142.50, 'target': 168.00, 'stop': 128.00},
+    {'decision_id': 'SA-2026-0327', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.86, 'value': 3800000, 'sector': 'Healthcare', 'thesis': 'GLP-1 franchise expansion driving revenue acceleration. Mounjaro/Zepbound TAM exceeding consensus estimates.', 'regime': 'NEUTRAL', 'entry': 812.00, 'target': 920.00, 'stop': 740.00},
+    {'decision_id': 'SA-2026-0326', 'symbol': 'JPM', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.72, 'value': 0, 'sector': 'Financial', 'thesis': 'Net interest margin compression risk. Credit loss provisions expected to rise in H2.', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
+    {'decision_id': 'SA-2026-0325', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.81, 'value': 2900000, 'sector': 'Energy', 'thesis': 'OPEC+ supply discipline supporting price floor. FCF yield at 8.2% with disciplined capital allocation.', 'regime': 'NEUTRAL', 'entry': 112.30, 'target': 128.00, 'stop': 102.00},
+    {'decision_id': 'SA-2026-0324', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.84, 'value': 3100000, 'sector': 'Technology', 'thesis': 'Custom ASIC revenue inflection point. VMware integration synergies exceeding initial guidance.', 'regime': 'NEUTRAL', 'entry': 218.50, 'target': 255.00, 'stop': 198.00},
 ]
 
-DEMO_ALL_DECISIONS = [
-    {'decision_id': 'DEMO-001', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.92, 'potential_return': 150000, 'zk_proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4', 'timestamp': '2026-05-13T10:30:00Z', 'fee': 18000},
-    {'decision_id': 'DEMO-002', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.88, 'potential_return': 120000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a9', 'timestamp': '2026-05-13T09:15:00Z', 'fee': 14400},
-    {'decision_id': 'DEMO-003', 'symbol': 'AMD', 'action': 'BUY', 'status': 'approved', 'confidence': 0.85, 'potential_return': 100000, 'zk_proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c3', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 12000},
-    {'decision_id': 'DEMO-004', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'potential_return': 95000, 'zk_proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c1', 'timestamp': '2026-05-12T16:20:00Z', 'fee': 11400},
-    {'decision_id': 'DEMO-005', 'symbol': 'MSFT', 'action': 'BUY', 'status': 'approved', 'confidence': 0.80, 'potential_return': 85000, 'zk_proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a5', 'timestamp': '2026-05-12T14:30:00Z', 'fee': 10200},
-    {'decision_id': 'DEMO-006', 'symbol': 'JPM', 'action': 'REDUCE', 'status': 'vetoed', 'confidence': 0.78, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d6', 'timestamp': '2026-05-12T11:00:00Z', 'fee': 0},
-    {'decision_id': 'DEMO-007', 'symbol': 'GOOGL', 'action': 'BUY', 'status': 'approved', 'confidence': 0.76, 'potential_return': 75000, 'zk_proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c9', 'timestamp': '2026-05-12T09:45:00Z', 'fee': 9000},
-    {'decision_id': 'DEMO-008', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.74, 'potential_return': 70000, 'zk_proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c2', 'timestamp': '2026-05-11T15:30:00Z', 'fee': 8400},
-    {'decision_id': 'DEMO-009', 'symbol': 'META', 'action': 'HOLD', 'status': 'vetoed', 'confidence': 0.65, 'potential_return': 0, 'zk_proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c1', 'timestamp': '2026-05-11T13:15:00Z', 'fee': 0},
-    {'decision_id': 'DEMO-010', 'symbol': 'CVX', 'action': 'BUY', 'status': 'approved', 'confidence': 0.71, 'potential_return': 65000, 'zk_proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f', 'timestamp': '2026-05-11T10:00:00Z', 'fee': 7800},
+SAMPLE_ALL_DECISIONS = [
+    {'decision_id': 'SA-2026-0328', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.89, 'potential_return': 4200000, 'zk_proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'timestamp': '2026-05-16T08:45:00Z', 'fee': 504000, 'regime': 'NEUTRAL', 'sector': 'Technology'},
+    {'decision_id': 'SA-2026-0327', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.86, 'potential_return': 3800000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'timestamp': '2026-05-16T08:45:00Z', 'fee': 456000, 'regime': 'NEUTRAL', 'sector': 'Healthcare'},
+    {'decision_id': 'SA-2026-0326', 'symbol': 'JPM', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.72, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'timestamp': '2026-05-15T08:45:00Z', 'fee': 0, 'regime': 'NEUTRAL', 'sector': 'Financial'},
+    {'decision_id': 'SA-2026-0325', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.81, 'potential_return': 2900000, 'zk_proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'timestamp': '2026-05-15T08:45:00Z', 'fee': 348000, 'regime': 'NEUTRAL', 'sector': 'Energy'},
+    {'decision_id': 'SA-2026-0324', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.84, 'potential_return': 3100000, 'zk_proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'timestamp': '2026-05-14T08:45:00Z', 'fee': 372000, 'regime': 'RISK_ON', 'sector': 'Technology'},
+    {'decision_id': 'SA-2026-0323', 'symbol': 'TSM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.87, 'potential_return': 3500000, 'zk_proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'timestamp': '2026-05-14T08:45:00Z', 'fee': 420000, 'regime': 'RISK_ON', 'sector': 'Technology'},
+    {'decision_id': 'SA-2026-0322', 'symbol': 'META', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.68, 'potential_return': 0, 'zk_proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 0, 'regime': 'RISK_ON', 'sector': 'Technology'},
+    {'decision_id': 'SA-2026-0321', 'symbol': 'GS', 'action': 'BUY', 'status': 'approved', 'confidence': 0.79, 'potential_return': 2400000, 'zk_proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 288000, 'regime': 'RISK_ON', 'sector': 'Financial'},
+    {'decision_id': 'SA-2026-0320', 'symbol': 'UNH', 'action': 'BUY', 'status': 'approved', 'confidence': 0.82, 'potential_return': 2700000, 'zk_proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'timestamp': '2026-05-12T08:45:00Z', 'fee': 324000, 'regime': 'NEUTRAL', 'sector': 'Healthcare'},
+    {'decision_id': 'SA-2026-0319', 'symbol': 'CVX', 'action': 'BUY', 'status': 'approved', 'confidence': 0.76, 'potential_return': 2100000, 'zk_proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'timestamp': '2026-05-12T08:45:00Z', 'fee': 252000, 'regime': 'NEUTRAL', 'sector': 'Energy'},
+    {'decision_id': 'SA-2026-0318', 'symbol': 'TSLA', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.64, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'timestamp': '2026-05-11T08:45:00Z', 'fee': 0, 'regime': 'NEUTRAL', 'sector': 'Consumer'},
+    {'decision_id': 'SA-2026-0317', 'symbol': 'AMZN', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'potential_return': 3300000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'timestamp': '2026-05-11T08:45:00Z', 'fee': 396000, 'regime': 'RISK_ON', 'sector': 'Technology'},
 ]
 
-DEMO_PROOFS = [
-    {'decision_id': 'REC-01', 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a392837465', 'proof_hash_full': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a392837465', 'timestamp': '2026-05-13T10:30:00Z', 'symbol': 'NVDA', 'action': 'BUY', 'confidence': 0.92, 'value': 892400, 'verdict': 'VERIFIED'},
-    {'decision_id': 'REC-02', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a928374651', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a928374651', 'timestamp': '2026-05-13T09:15:00Z', 'symbol': 'LLY', 'action': 'BUY', 'confidence': 0.88, 'value': 406300, 'verdict': 'VERIFIED'},
-    {'decision_id': 'REC-03', 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c392837465', 'proof_hash_full': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c392837465', 'timestamp': '2026-05-13T08:45:00Z', 'symbol': 'AMD', 'action': 'BUY', 'confidence': 0.85, 'value': 245800, 'verdict': 'VERIFIED'},
-    {'decision_id': 'REC-04', 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c192837465', 'proof_hash_full': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c192837465', 'timestamp': '2026-05-12T16:20:00Z', 'symbol': 'AVGO', 'action': 'BUY', 'confidence': 0.83, 'value': 912400, 'verdict': 'VERIFIED'},
-    {'decision_id': 'REC-05', 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a592837465', 'proof_hash_full': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a592837465', 'timestamp': '2026-05-12T14:30:00Z', 'symbol': 'MSFT', 'action': 'BUY', 'confidence': 0.80, 'value': 330240, 'verdict': 'VERIFIED'},
+SAMPLE_PROOFS = [
+    {'decision_id': 'SA-2026-0328', 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'proof_hash_full': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'timestamp': '2026-05-16T08:45:00Z', 'symbol': 'NVDA', 'action': 'BUY', 'confidence': 0.89, 'value': 4200000, 'verdict': 'VERIFIED', 'merkle_root': '0xabc123def456', 'regime': 'NEUTRAL'},
+    {'decision_id': 'SA-2026-0327', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'timestamp': '2026-05-16T08:45:00Z', 'symbol': 'LLY', 'action': 'BUY', 'confidence': 0.86, 'value': 3800000, 'verdict': 'VERIFIED', 'merkle_root': '0xabc123def456', 'regime': 'NEUTRAL'},
+    {'decision_id': 'SA-2026-0325', 'proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'proof_hash_full': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'timestamp': '2026-05-15T08:45:00Z', 'symbol': 'XOM', 'action': 'BUY', 'confidence': 0.81, 'value': 2900000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'NEUTRAL'},
+    {'decision_id': 'SA-2026-0324', 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'proof_hash_full': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'timestamp': '2026-05-14T08:45:00Z', 'symbol': 'AVGO', 'action': 'BUY', 'confidence': 0.84, 'value': 3100000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'RISK_ON'},
+    {'decision_id': 'SA-2026-0323', 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'proof_hash_full': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'timestamp': '2026-05-14T08:45:00Z', 'symbol': 'TSM', 'action': 'BUY', 'confidence': 0.87, 'value': 3500000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'RISK_ON'},
+    {'decision_id': 'SA-2026-0321', 'proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'proof_hash_full': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'timestamp': '2026-05-13T08:45:00Z', 'symbol': 'GS', 'action': 'BUY', 'confidence': 0.79, 'value': 2400000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'RISK_ON'},
+    {'decision_id': 'SA-2026-0320', 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'proof_hash_full': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'timestamp': '2026-05-12T08:45:00Z', 'symbol': 'UNH', 'action': 'BUY', 'confidence': 0.82, 'value': 2700000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'NEUTRAL'},
+    {'decision_id': 'SA-2026-0319', 'proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'proof_hash_full': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'timestamp': '2026-05-12T08:45:00Z', 'symbol': 'CVX', 'action': 'BUY', 'confidence': 0.76, 'value': 2100000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'NEUTRAL'},
+    {'decision_id': 'SA-2026-0317', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'timestamp': '2026-05-11T08:45:00Z', 'symbol': 'AMZN', 'action': 'BUY', 'confidence': 0.83, 'value': 3300000, 'verdict': 'VERIFIED', 'merkle_root': '0xfedcba987654', 'regime': 'RISK_ON'},
 ]
 
-DEMO_PREDICTIONS = [
-    {'prediction_id': 'PRED-001', 'timestamp': '2026-05-13T10:30:00Z', 'asset': 'NVDA', 'sector': 'Technology', 'thesis': 'AI infrastructure spending accelerating. GPU demand exceeds supply through 2025.', 'confidence_score': 0.92, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a392837465'},
-    {'prediction_id': 'PRED-002', 'timestamp': '2026-05-13T09:15:00Z', 'asset': 'LLY', 'sector': 'Healthcare', 'thesis': 'GLP-1 drug pipeline expansion. Revenue growth acceleration expected.', 'confidence_score': 0.88, 'status': 'cleared', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a928374651'},
-    {'prediction_id': 'PRED-003', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'AMD', 'sector': 'Technology', 'thesis': 'Data center GPU market share gains. MI300 success driving enterprise adoption.', 'confidence_score': 0.85, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c392837465'},
-    {'prediction_id': 'PRED-004', 'timestamp': '2026-05-12T16:20:00Z', 'asset': 'JPM', 'sector': 'Financial', 'thesis': 'Regional bank stress creating consolidation opportunities. Risk-adjusted return favorable.', 'confidence_score': 0.78, 'status': 'risk-rejected', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d6'},
-    {'prediction_id': 'PRED-005', 'timestamp': '2026-05-12T14:30:00Z', 'asset': 'AVGO', 'sector': 'Technology', 'thesis': 'AI networking infrastructure demand. Custom ASIC expansion continuing.', 'confidence_score': 0.83, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c192837465'},
-    {'prediction_id': 'PRED-006', 'timestamp': '2026-05-12T11:00:00Z', 'asset': 'META', 'sector': 'Technology', 'thesis': 'AI investment cycle straining margins. Reasonable valuation but execution risk.', 'confidence_score': 0.72, 'status': 'risk-rejected', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c1'},
-    {'prediction_id': 'PRED-007', 'timestamp': '2026-05-11T15:30:00Z', 'asset': 'XOM', 'sector': 'Energy', 'thesis': 'OPEC+ supply management providing price stability. FCF yield attractive.', 'confidence_score': 0.74, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c2'},
-    {'prediction_id': 'PRED-008', 'timestamp': '2026-05-11T10:00:00Z', 'asset': 'CVX', 'sector': 'Energy', 'thesis': 'Natural gas demand growth in emerging markets. LNG export capacity expanding.', 'confidence_score': 0.71, 'status': 'cleared', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f'},
+SAMPLE_PREDICTIONS = [
+    {'prediction_id': 'SA-2026-0328', 'timestamp': '2026-05-16T08:45:00Z', 'asset': 'NVDA', 'sector': 'Technology', 'thesis': 'AI infrastructure capex cycle accelerating. Data center GPU demand structurally undersupplied through 2027. H100/B200 backlog extending into 2027. Gross margins expanding on mix shift to accelerated computing.', 'confidence_score': 0.89, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'regime': 'NEUTRAL', 'entry': 142.50, 'target': 168.00, 'stop': 128.00},
+    {'prediction_id': 'SA-2026-0327', 'timestamp': '2026-05-16T08:45:00Z', 'asset': 'LLY', 'sector': 'Healthcare', 'thesis': 'GLP-1 franchise expansion driving revenue acceleration. Mounjaro/Zepbound TAM exceeding consensus estimates. Manufacturing scale-up on track for 2026 supply targets.', 'confidence_score': 0.86, 'status': 'cleared', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'regime': 'NEUTRAL', 'entry': 812.00, 'target': 920.00, 'stop': 740.00},
+    {'prediction_id': 'SA-2026-0326', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'JPM', 'sector': 'Financial', 'thesis': 'Net interest margin compression risk from rate cut cycle. Credit loss provisions expected to rise in H2 2026. Risk/reward unfavorable at current valuation.', 'confidence_score': 0.72, 'status': 'risk-rejected', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
+    {'prediction_id': 'SA-2026-0325', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'XOM', 'sector': 'Energy', 'thesis': 'OPEC+ supply discipline supporting price floor. FCF yield at 8.2% with disciplined capital allocation. Permian basin production growth offsetting global declines.', 'confidence_score': 0.81, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'regime': 'NEUTRAL', 'entry': 112.30, 'target': 128.00, 'stop': 102.00},
+    {'prediction_id': 'SA-2026-0324', 'timestamp': '2026-05-14T08:45:00Z', 'asset': 'AVGO', 'sector': 'Technology', 'thesis': 'Custom ASIC revenue inflection point. VMware integration synergies exceeding initial guidance. AI networking demand driving custom silicon orders from hyperscalers.', 'confidence_score': 0.84, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'regime': 'RISK_ON', 'entry': 218.50, 'target': 255.00, 'stop': 198.00},
+    {'prediction_id': 'SA-2026-0323', 'timestamp': '2026-05-14T08:45:00Z', 'asset': 'TSM', 'sector': 'Technology', 'thesis': '2nm process leadership solidifying. Advanced packaging capacity expansion meeting AI chip demand. Pricing power intact with multi-year customer commitments.', 'confidence_score': 0.87, 'status': 'cleared', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'regime': 'RISK_ON', 'entry': 18.20, 'target': 22.00, 'stop': 16.50},
+    {'prediction_id': 'SA-2026-0322', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'META', 'sector': 'Technology', 'thesis': 'AI infrastructure spend outpacing revenue growth. Reality Labs losses widening. Ad revenue growth decelerating in core markets.', 'confidence_score': 0.68, 'status': 'risk-rejected', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'regime': 'RISK_ON', 'entry': 0, 'target': 0, 'stop': 0},
+    {'prediction_id': 'SA-2026-0321', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'GS', 'sector': 'Financial', 'thesis': 'Investment banking recovery gaining traction. M&A pipeline rebuilding as rate uncertainty subsides. Trading revenue momentum strong in fixed income.', 'confidence_score': 0.79, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'regime': 'RISK_ON', 'entry': 548.00, 'target': 620.00, 'stop': 500.00},
+    {'prediction_id': 'SA-2026-0320', 'timestamp': '2026-05-12T08:45:00Z', 'asset': 'UNH', 'sector': 'Healthcare', 'thesis': 'Medicare Advantage enrollment growth stabilizing. Optum health services margin expansion. Medical loss ratio trending below guidance.', 'confidence_score': 0.82, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'regime': 'NEUTRAL', 'entry': 312.00, 'target': 355.00, 'stop': 285.00},
+    {'prediction_id': 'SA-2026-0319', 'timestamp': '2026-05-12T08:45:00Z', 'asset': 'CVX', 'sector': 'Energy', 'thesis': 'LNG export capacity expansion driving long-term demand. Permian acreage quality supporting low breakeven costs. Share buyback program accretive.', 'confidence_score': 0.76, 'status': 'cleared', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'regime': 'NEUTRAL', 'entry': 158.00, 'target': 178.00, 'stop': 145.00},
+    {'prediction_id': 'SA-2026-0318', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'TSLA', 'sector': 'Consumer', 'thesis': 'Price war intensifying globally. Margin compression from aggressive discounting. EV competition increasing from legacy OEMs and Chinese manufacturers.', 'confidence_score': 0.64, 'status': 'risk-rejected', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
+    {'prediction_id': 'SA-2026-0317', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'AMZN', 'sector': 'Technology', 'thesis': 'AWS reacceleration driven by AI workload migration. Retail margin improvement from automation investments. Advertising business scaling rapidly.', 'confidence_score': 0.83, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'regime': 'RISK_ON', 'entry': 218.00, 'target': 250.00, 'stop': 198.00},
 ]
 
-DEMO_VETOES = [
-    {'veto_id': 'VETO-001', 'timestamp': '2026-05-12T11:00:00Z', 'asset': 'META', 'sector': 'Technology', 'rejection_reason': 'AI capex growth exceeding revenue growth. Margin compression risk elevated. Risk/reward does not meet threshold.', 'expected_loss_pct': -8.5, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c1'},
-    {'veto_id': 'VETO-002', 'timestamp': '2026-05-10T14:30:00Z', 'asset': 'CRM', 'sector': 'Technology', 'rejection_reason': 'Acquisition binge creating integration risk. Debt levels rising. Governance concerns unresolved.', 'expected_loss_pct': -12.0, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c9'},
-    {'veto_id': 'VETO-003', 'timestamp': '2026-05-09T09:15:00Z', 'asset': 'TSLA', 'sector': 'Consumer', 'rejection_reason': 'Price war intensifying. Margin compression ongoing. EV competition increasing globally.', 'expected_loss_pct': -15.0, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d6'},
-    {'veto_id': 'VETO-004', 'timestamp': '2026-05-08T16:45:00Z', 'asset': 'COIN', 'sector': 'Financial', 'rejection_reason': 'Crypto regulatory uncertainty. Business model dependent on market conditions. Risk-adjusted return insufficient.', 'expected_loss_pct': -20.0, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a5'},
+SAMPLE_VETOES = [
+    {'veto_id': 'VETO-2026-0326', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'JPM', 'sector': 'Financial', 'rejection_reason': 'SELL signal inconsistent with RISK_ON regime. Net interest margin compression thesis valid but timing premature. Credit spreads stable at 345bps, no systemic stress indicators.', 'expected_loss_pct': -6.5, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'regime': 'NEUTRAL'},
+    {'veto_id': 'VETO-2026-0322', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'META', 'sector': 'Technology', 'rejection_reason': 'Confidence 68% below regime threshold 70%. AI capex concerns valid but offset by advertising revenue resilience and Reels monetization inflection.', 'expected_loss_pct': -8.5, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'regime': 'RISK_ON'},
+    {'veto_id': 'VETO-2026-0318', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'TSLA', 'sector': 'Consumer', 'rejection_reason': 'Confidence 64% below minimum threshold. Price war thesis correct but R/R ratio 1.1 below 1.5 minimum. High volatility (beta 2.1) amplifies downside risk beyond acceptable parameters.', 'expected_loss_pct': -15.0, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'regime': 'NEUTRAL'},
+    {'veto_id': 'VETO-2026-0312', 'timestamp': '2026-05-08T08:45:00Z', 'asset': 'COIN', 'sector': 'Financial', 'rejection_reason': 'Crypto regulatory uncertainty unresolved. Business model dependent on market conditions. Risk-adjusted return insufficient. Volatility 85% exceeds portfolio parameters.', 'expected_loss_pct': -22.0, 'actual_outcome': 'correct', 'actual_return_pct': -18.5, 'avoided_drawdown': 3.5, 'veto_correct': True, 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456715', 'regime': 'RISK_OFF'},
+    {'veto_id': 'VETO-2026-0305', 'timestamp': '2026-05-02T08:45:00Z', 'asset': 'RIVN', 'sector': 'Consumer', 'rejection_reason': 'Cash burn rate unsustainable. Production targets repeatedly missed. EV competition intensifying. Confidence 58% well below threshold.', 'expected_loss_pct': -28.0, 'actual_outcome': 'correct', 'actual_return_pct': -24.3, 'avoided_drawdown': 3.7, 'veto_correct': True, 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456716', 'regime': 'RISK_OFF'},
+    {'veto_id': 'VETO-2026-0298', 'timestamp': '2026-04-25T08:45:00Z', 'asset': 'SNAP', 'sector': 'Technology', 'rejection_reason': 'User growth deceleration. AR investment timeline too long. Advertising market share loss to TikTok and Meta. Risk/reward unfavorable.', 'expected_loss_pct': -18.0, 'actual_outcome': 'correct', 'actual_return_pct': -14.2, 'avoided_drawdown': 3.8, 'veto_correct': True, 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456717', 'regime': 'NEUTRAL'},
+    {'veto_id': 'VETO-2026-0290', 'timestamp': '2026-04-18T08:45:00Z', 'asset': 'BYND', 'sector': 'Consumer', 'rejection_reason': 'Category growth stalled. Retail distribution shrinking. Margin compression from input costs. No path to profitability visible.', 'expected_loss_pct': -32.0, 'actual_outcome': 'correct', 'actual_return_pct': -28.7, 'avoided_drawdown': 3.3, 'veto_correct': True, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456718', 'regime': 'RISK_OFF'},
+    {'veto_id': 'VETO-2026-0282', 'timestamp': '2026-04-10T08:45:00Z', 'asset': 'HOOD', 'sector': 'Financial', 'rejection_reason': 'Revenue concentration in crypto trading. Regulatory overhang unresolved. User engagement declining. Volatility exceeds portfolio beta limits.', 'expected_loss_pct': -20.0, 'actual_outcome': 'incorrect', 'actual_return_pct': 12.5, 'avoided_drawdown': 0, 'veto_correct': False, 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b40123456719', 'regime': 'RISK_ON'},
 ]
 
-DEMO_PERFORMANCE = {
-    'total_sessions': 16,
-    'avg_confidence': 0.81,
+SAMPLE_PERFORMANCE = {
+    'total_sessions': 328,
+    'avg_confidence': 0.79,
     'confidence_history': {
-        'labels': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12', 'S13', 'S14', 'S15', 'S16'],
-        'values': [0.75, 0.78, 0.82, 0.79, 0.85, 0.88, 0.84, 0.90, 0.87, 0.92, 0.86, 0.83, 0.89, 0.91, 0.88, 0.85]
+        'labels': ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
+        'values': [0.74, 0.76, 0.78, 0.81, 0.79, 0.82, 0.80, 0.83, 0.81, 0.79, 0.82, 0.80]
     },
     'sector_data': {
-        'labels': ['Tech', 'Financial', 'Healthcare', 'Energy', 'Consumer'],
-        'approved': [12, 6, 4, 3, 3],
-        'vetoed': [2, 1, 1, 1, 1]
+        'labels': ['Technology', 'Healthcare', 'Financial', 'Energy', 'Consumer'],
+        'approved': [52, 28, 35, 42, 18],
+        'vetoed': [12, 8, 15, 6, 22]
     },
     'return_distribution': {
-        'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'],
-        'values': [8, 12, 6, 2]
+        'labels': ['<$1M', '$1-2M', '$2-3M', '$3-4M', '$4M+'],
+        'values': [28, 45, 52, 38, 15]
     }
+}
+
+SAMPLE_LEDGER_STATS = {
+    'total_predictions': 328,
+    'cleared': 205,
+    'risk_rejected': 123,
+    'with_outcome': 142,
+    'correct': 106,
+    'success_rate': 74.6,
+    'veto_efficiency': 71.4,
+    'total_vetoes': 123,
+    'veto_correct_count': 88,
+    'total_avoided_drawdown': 4250000,
+    'outcome_fill_rate': 43.3
+}
+
+SAMPLE_LIVE_MARKET = {
+    'tickers': {
+        'NVDA': {'price': 142.50, 'change_pct': 2.3, 'volume': 52000000, 'market_cap': 3500000000000, 'pe_ratio': 65.2, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'AAPL': {'price': 189.25, 'change_pct': 0.8, 'volume': 48000000, 'market_cap': 2900000000000, 'pe_ratio': 31.5, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'MSFT': {'price': 412.80, 'change_pct': 1.1, 'volume': 22000000, 'market_cap': 3100000000000, 'pe_ratio': 35.8, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'JPM': {'price': 235.40, 'change_pct': -0.5, 'volume': 8500000, 'market_cap': 680000000000, 'pe_ratio': 12.3, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'XOM': {'price': 112.30, 'change_pct': 0.4, 'volume': 15000000, 'market_cap': 450000000000, 'pe_ratio': 11.8, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'LLY': {'price': 812.60, 'change_pct': 1.8, 'volume': 3200000, 'market_cap': 770000000000, 'pe_ratio': 95.2, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'GOOGL': {'price': 175.20, 'change_pct': 0.6, 'volume': 25000000, 'market_cap': 2200000000000, 'pe_ratio': 26.4, 'fetched_at': '2026-05-17T13:00:00Z'},
+        'AMZN': {'price': 218.00, 'change_pct': 1.4, 'volume': 42000000, 'market_cap': 2300000000000, 'pe_ratio': 58.7, 'fetched_at': '2026-05-17T13:00:00Z'},
+    },
+    'fetched_at': '2026-05-17T13:00:00Z'
+}
+
+SAMPLE_SIGNALS = {
+    'oversold': [
+        {'symbol': 'INTC', 'reason': 'RSI 28 — oversold on semiconductor sector rotation'},
+        {'symbol': 'PFE', 'reason': 'RSI 29 — pharma sector underperformance creating entry opportunity'},
+    ],
+    'overbought': [
+        {'symbol': 'META', 'reason': 'RSI 74 — approaching overbought after 12% rally'},
+        {'symbol': 'CRM', 'reason': 'RSI 72 — extended above 50-day MA by 8%'},
+    ],
+    'unusual_volume': [
+        {'symbol': 'NVDA', 'reason': 'Volume 2.8x average — institutional accumulation detected'},
+        {'symbol': 'TSM', 'reason': 'Volume 2.1x average — options expiry positioning'},
+    ]
 }
 
 def is_demo_mode():
@@ -1807,6 +1871,115 @@ def api_intelligence():
         return jsonify(intel)
     except Exception as e:
         return jsonify({"error": str(e)})
+
+
+# ============================================================
+# RESEARCH ENGINE ROUTES
+# ============================================================
+
+@app.route('/research')
+@login_required
+def research_home():
+    """Research home page showing companies and latest notes."""
+    try:
+        from research.storage.research_db import get_all_companies, get_notes, get_flags_count
+        companies = get_all_companies()
+        notes = get_notes()
+        total_flags = sum(get_flags_count(c['id']) for c in companies)
+        return render_template('research_home.html',
+                             companies=companies, notes=notes[:10],
+                             total_flags=total_flags)
+    except Exception as e:
+        return render_template('research_home.html',
+                             companies=[], notes=[], total_flags=0, error=str(e))
+
+
+@app.route('/research/<ticker>')
+@login_required
+def research_company(ticker):
+    """Company detail page with scorecard, metrics, flags, notes."""
+    try:
+        from research.storage.research_db import (
+            get_company, get_latest_scores, get_all_metrics,
+            get_flags, get_notes, get_filings
+        )
+        company = get_company(ticker)
+        if not company:
+            return f"Company {ticker} not found", 404
+        
+        company_id = company['id']
+        scores = get_latest_scores(company_id)
+        metrics = get_all_metrics(company_id)
+        flags = get_flags(company_id)
+        notes = get_notes(company_id)
+        filings = get_filings(company_id)
+        
+        return render_template('research_company.html',
+                             company=company, scores=scores,
+                             metrics=metrics, flags=flags,
+                             notes=notes, filings=filings)
+    except Exception as e:
+        return f"Error: {e}", 500
+
+
+@app.route('/research/note/<reference>')
+@login_required
+def research_note(reference):
+    """Individual note page with full HTML content."""
+    try:
+        from research.storage.research_db import get_note_by_reference
+        note = get_note_by_reference(reference)
+        if not note:
+            return f"Note {reference} not found", 404
+        return render_template('research_note.html', note=note)
+    except Exception as e:
+        return f"Error: {e}", 500
+
+
+@app.route('/research/analyze', methods=['POST'])
+@login_required
+def research_analyze():
+    """Trigger analysis for a ticker."""
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker', '').upper()
+        pe = data.get('pe')
+        pbv = data.get('pbv')
+        
+        from research.engine import SovereignAlphaResearch
+        engine = SovereignAlphaResearch()
+        result = engine.run_analysis(ticker, current_pe=pe, current_pbv=pbv)
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/research/export/<reference>')
+@login_required
+def research_export(reference):
+    """Download PDF for a note reference."""
+    try:
+        from research.output.pdf_exporter import export_note_to_pdf
+        from research.storage.research_db import get_note_by_reference
+        
+        note = get_note_by_reference(reference)
+        if not note:
+            return "Note not found", 404
+        
+        pdf_path = note.get('pdf_path')
+        if pdf_path and Path(pdf_path).exists():
+            return send_file(pdf_path, as_attachment=True,
+                           download_name=f"{reference}.pdf")
+        
+        pdf_path = export_note_to_pdf(reference)
+        if pdf_path and Path(pdf_path).exists():
+            return send_file(pdf_path, as_attachment=True,
+                           download_name=f"{reference}.pdf")
+        
+        return "PDF not available", 404
+    except Exception as e:
+        return f"Error: {e}", 500
 
 
 def main():
