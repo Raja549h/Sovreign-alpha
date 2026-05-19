@@ -30,6 +30,9 @@ dashboard_dir = Path(__file__).parent
 project_dir = dashboard_dir.parent
 sys.path.insert(0, str(project_dir))
 
+from dotenv import load_dotenv
+load_dotenv(str(project_dir / '.env'))
+
 try:
     from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
     FLASK_AVAILABLE = True
@@ -89,13 +92,18 @@ app = Flask(__name__, template_folder='templates')
 app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB limit
 
+@app.errorhandler(404)
+def handle_404(e):
+    return render_template('error.html', error_code=404, error_message="Page not found"), 404
+
+@app.errorhandler(500)
+def handle_500(e):
+    return render_template('error.html', error_code=500, error_message="Internal server error"), 500
+
 @app.errorhandler(Exception)
 def handle_error(e):
-    try:
-        app.logger.error(f"Unhandled error: {str(e)}")
-    except Exception:
-        pass
-    return render_template('login.html', error=None), 200
+    app.logger.error(f"Unhandled error: {str(e)}", exc_info=True)
+    return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 TEMPLATE_DIR = dashboard_dir / 'templates'
 if TEMPLATE_DIR.exists():
@@ -1908,18 +1916,20 @@ def research_company(ticker):
             return f"Company {ticker} not found", 404
         
         company_id = company['id']
-        scores = get_latest_scores(company_id)
-        metrics = get_all_metrics(company_id)
-        flags = get_flags(company_id)
-        notes = get_notes(company_id)
-        filings = get_filings(company_id)
+        scores = get_latest_scores(company_id) or {}
+        metrics = get_all_metrics(company_id) or {}
+        flags = get_flags(company_id) or []
+        notes = get_notes(company_id) or []
+        filings = get_filings(company_id) or []
         
         return render_template('research_company.html',
                              company=company, scores=scores,
                              metrics=metrics, flags=flags,
                              notes=notes, filings=filings)
     except Exception as e:
-        return f"Error: {e}", 500
+        import traceback
+        traceback.print_exc()
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/research/note/<reference>')

@@ -1,7 +1,7 @@
 """
 PDF Exporter — Convert HTML research notes to print-ready PDF
 ==============================================================
-Uses weasyprint for PDF generation with institutional formatting.
+Uses xhtml2pdf for PDF generation with institutional formatting.
 """
 
 import os
@@ -144,21 +144,23 @@ def export_to_pdf(html_path: str, output_path: str) -> str:
         Output PDF path
     """
     try:
-        from weasyprint import HTML, CSS
-        from weasyprint.text.fonts import FontConfiguration
+        from xhtml2pdf import pisa
         
-        font_config = FontConfiguration()
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
         
-        html = HTML(filename=html_path)
-        css = CSS(string=PRINT_CSS, font_config=font_config)
+        with open(output_path, 'wb') as f:
+            converter = pisa.CreatePDF(html_content, dest=f)
         
-        html.write_pdf(output_path, stylesheets=[css], font_config=font_config)
-        
+        if converter.err:
+            print(f"  [ERROR] PDF export failed with errors")
+            return None
+            
         return output_path
         
     except ImportError:
-        print("  [WARN] weasyprint not installed. Skipping PDF export.")
-        print("  Install with: pip install weasyprint")
+        print("  [WARN] xhtml2pdf not installed. Skipping PDF export.")
+        print("  Install with: pip install xhtml2pdf")
         return None
     except Exception as e:
         print(f"  [ERROR] PDF export failed: {e}")
