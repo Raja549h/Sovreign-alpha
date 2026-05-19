@@ -760,6 +760,62 @@ def calculate_dashboard_stats():
     }
 
 
+def get_db_connection():
+    """Get database connection for billing.db."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_dashboard_stats():
+    """Get real dashboard statistics from database."""
+    try:
+        conn = get_db_connection()
+        # performance_log has the actual trading decisions
+        total_decisions = conn.execute(
+            "SELECT COUNT(*) FROM performance_log"
+        ).fetchone()[0]
+        approved = conn.execute(
+            "SELECT COUNT(*) FROM performance_log WHERE status = 'active'"
+        ).fetchone()[0]
+        vetoed = conn.execute(
+            "SELECT COUNT(*) FROM performance_log WHERE status = 'vetoed'"
+        ).fetchone()[0]
+        conn.close()
+        
+        accuracy = 0
+        if total_decisions > 0:
+            accuracy = round((approved / total_decisions) * 100, 1)
+        
+        return {
+            'total_decisions': total_decisions,
+            'approved': approved,
+            'vetoed': vetoed,
+            'accuracy': accuracy
+        }
+    except Exception:
+        return {
+            'total_decisions': 0,
+            'approved': 0,
+            'vetoed': 0,
+            'accuracy': 0
+        }
+
+
+def get_recent_decisions(limit=10):
+    """Get recent decisions from performance_log."""
+    try:
+        conn = get_db_connection()
+        rows = conn.execute(
+            "SELECT * FROM performance_log ORDER BY timestamp DESC LIMIT ?",
+            (limit,)
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
 @app.route('/')
 @login_required
 def index():
@@ -769,25 +825,24 @@ def index():
         progress = check_setup_progress()
         regime = get_regime_data()
 
+        # Use real data functions instead of demo data
+        stats = get_dashboard_stats()
+        recent = get_recent_decisions(5)
+        recent_decisions = []
+        for d in recent:
+            recent_decisions.append({
+                'decision_id': d.get('decision_id', 'N/A'),
+                'symbol': d.get('symbol', ''),
+                'action': d.get('trade_action', ''),
+                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
+                'confidence': 0.85,
+                'value': d.get('alpha_generated', 0) or 0
+            })
+        
         if demo_mode:
-            stats = DEMO_STATS
-            recent = DEMO_RECENT_DECISIONS
-            recent_decisions = recent
             predictions_list = DEMO_PREDICTIONS
             veto_list = DEMO_VETOES
         else:
-            stats = calculate_dashboard_stats()
-            recent = get_recent_decisions(5)
-            recent_decisions = []
-            for d in recent:
-                recent_decisions.append({
-                    'decision_id': d.get('decision_id', 'N/A'),
-                    'symbol': d.get('symbol', ''),
-                    'action': d.get('action', ''),
-                    'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-                    'confidence': 0.85,
-                    'value': d.get('alpha_generated', 0) or 0
-                })
             predictions_list = get_predictions(8)
             veto_list = get_veto_archive(6)
 
@@ -795,10 +850,10 @@ def index():
         session_user = request.cookies.get('session_user', 'fund_manager')
 
         return render_template('index.html',
-                           approval_rate=stats['approval_rate'],
-                           total_decisions=ledger_stats['total_predictions'],
-                           cleared=ledger_stats['cleared'],
-                           risk_rejected=ledger_stats['risk_rejected'],
+                           approval_rate=stats.get('accuracy', 0),
+                           total_decisions=stats.get('total_decisions', 0),
+                           cleared=stats.get('approved', 0),
+                           risk_rejected=stats.get('vetoed', 0),
                            success_rate=ledger_stats['success_rate'],
                            with_outcome=ledger_stats['with_outcome'],
                            veto_efficiency=ledger_stats['veto_efficiency'],
@@ -833,7 +888,7 @@ def index():
                            regime='NEUTRAL',
                            regime_confidence='—',
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
-                           recent_decisions=DEMO_RECENT_DECISIONS,
+                           recent_decisions=get_recent_decisions(5),
                            progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
                            is_demo=True,
                            session_user='fund_manager')
