@@ -237,6 +237,7 @@ def score_company(company_id: int, sector: str = 'NBFC') -> Dict:
         'regime_sensitivity': regime['score'],
         'structural_quality': quality['score'],
         'composite': composite,
+        'composite_score': composite,
         'forensic_flags_count': len(get_flags(company_id))
     }
     
