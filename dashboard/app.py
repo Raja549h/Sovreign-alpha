@@ -331,51 +331,67 @@ def update_veto_outcome(veto_id: str, outcome_data: dict) -> bool:
 
 def calculate_ledger_stats() -> dict:
     """Calculate statistics for the prediction ledger."""
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
-    total = c.fetchone()['total'] or 0
-    
-    c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE status = 'cleared'")
-    approved = c.fetchone()['approved'] or 0
-    
-    c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE status = 'risk-rejected'")
-    rejected = c.fetchone()['rejected'] or 0
-    
-    c.execute("SELECT COUNT(*) as with_outcome FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
-    with_outcome = c.fetchone()['with_outcome'] or 0
-    
-    c.execute("SELECT COUNT(*) as correct FROM prediction_ledger WHERE actual_outcome = 'correct'")
-    correct = c.fetchone()['correct'] or 0
-    
-    c.execute("SELECT COUNT(*) as veto_correct FROM veto_archive WHERE veto_correct = 1")
-    veto_correct_count = c.fetchone()['veto_correct'] or 0
-    
-    c.execute("SELECT COUNT(*) as total_vetoes FROM veto_archive")
-    total_vetoes = c.fetchone()['total_vetoes'] or 0
-    
-    c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
-    total_avoided = c.fetchone()['total_avoided'] or 0
-    
-    conn.close()
-    
-    success_rate = (correct / with_outcome * 100) if with_outcome > 0 else 0
-    veto_efficiency = (veto_correct_count / total_vetoes * 100) if total_vetoes > 0 else 0
-    
-    return {
-        'total_predictions': total,
-        'cleared': approved,
-        'risk_rejected': rejected,
-        'with_outcome': with_outcome,
-        'correct': correct,
-        'success_rate': success_rate,
-        'veto_efficiency': veto_efficiency,
-        'total_vetoes': total_vetoes,
-        'veto_correct_count': veto_correct_count,
-        'total_avoided_drawdown': total_avoided,
-        'outcome_fill_rate': (with_outcome / total * 100) if total > 0 else 0
-    }
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
+        total = c.fetchone()['total'] or 0
+        
+        c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE status = 'cleared'")
+        approved = c.fetchone()['approved'] or 0
+        
+        c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE status = 'risk-rejected'")
+        rejected = c.fetchone()['rejected'] or 0
+        
+        c.execute("SELECT COUNT(*) as with_outcome FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
+        with_outcome = c.fetchone()['with_outcome'] or 0
+        
+        c.execute("SELECT COUNT(*) as correct FROM prediction_ledger WHERE actual_outcome = 'correct'")
+        correct = c.fetchone()['correct'] or 0
+        
+        c.execute("SELECT COUNT(*) as veto_correct FROM veto_archive WHERE veto_correct = 1")
+        veto_correct_count = c.fetchone()['veto_correct'] or 0
+        
+        c.execute("SELECT COUNT(*) as total_vetoes FROM veto_archive")
+        total_vetoes = c.fetchone()['total_vetoes'] or 0
+        
+        c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
+        total_avoided = c.fetchone()['total_avoided'] or 0
+        
+        conn.close()
+        
+        success_rate = (correct / with_outcome * 100) if with_outcome > 0 else 0
+        veto_efficiency = (veto_correct_count / total_vetoes * 100) if total_vetoes > 0 else 0
+        
+        return {
+            'total_predictions': total,
+            'cleared': approved,
+            'risk_rejected': rejected,
+            'with_outcome': with_outcome,
+            'correct': correct,
+            'success_rate': success_rate,
+            'veto_efficiency': veto_efficiency,
+            'total_vetoes': total_vetoes,
+            'veto_correct_count': veto_correct_count,
+            'total_avoided_drawdown': total_avoided,
+            'outcome_fill_rate': (with_outcome / total * 100) if total > 0 else 0
+        }
+    except Exception:
+        # Return default stats if tables don't exist
+        return {
+            'total_predictions': 0,
+            'cleared': 0,
+            'risk_rejected': 0,
+            'with_outcome': 0,
+            'correct': 0,
+            'success_rate': 0,
+            'veto_efficiency': 0,
+            'total_vetoes': 0,
+            'veto_correct_count': 0,
+            'total_avoided_drawdown': 0,
+            'outcome_fill_rate': 0
+        }
 
 def login_required(f):
     @wraps(f)
