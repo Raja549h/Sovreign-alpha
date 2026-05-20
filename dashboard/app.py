@@ -1895,7 +1895,17 @@ def api_intelligence():
         intel = dl.get_full_intelligence()
         return jsonify(intel)
     except Exception as e:
-        return jsonify({"error": str(e)})
+        # Return minimal intelligence if full fetch fails
+        return jsonify({
+            "regime": "NEUTRAL",
+            "confidence": 0.5,
+            "vix": 0,
+            "dxy": 0,
+            "treasury_10y": 0,
+            "gold": 0,
+            "oil_wti": 0,
+            "error": str(e)
+        })
 
 
 # ============================================================
