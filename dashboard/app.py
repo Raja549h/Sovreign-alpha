@@ -986,34 +986,18 @@ def proofs():
 def predictions():
     """Prediction Ledger page - immutable record of all predictions."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         
-        if demo_mode:
-            predictions_list = DEMO_PREDICTIONS
-            ledger_stats = calculate_ledger_stats()
-        else:
-            predictions_list = get_predictions(200)
-            ledger_stats = calculate_ledger_stats()
+        predictions_list = get_predictions(200)
+        ledger_stats = calculate_ledger_stats()
         
         return render_template('predictions.html',
                                predictions=predictions_list,
                                ledger_stats=ledger_stats,
-                               is_demo=demo_mode,
+                               is_demo=False,
                                session_user=session_user)
     except Exception as e:
-        return render_template('predictions.html',
-                               predictions=DEMO_PREDICTIONS,
-                               ledger_stats={
-                                   'total_predictions': len(DEMO_PREDICTIONS),
-                                   'cleared': len([p for p in DEMO_PREDICTIONS if p.get('status') == 'cleared']),
-                                   'risk_rejected': len([p for p in DEMO_PREDICTIONS if p.get('status') == 'risk-rejected']),
-                                   'with_outcome': len([p for p in DEMO_PREDICTIONS if p.get('actual_outcome')]),
-                                   'success_rate': 0,
-                                   'outcome_fill_rate': 0
-                               },
-                               is_demo=True,
-                               session_user='fund_manager')
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/veto-archive')
@@ -1021,31 +1005,18 @@ def predictions():
 def veto_archive():
     """Veto Archive page - shows all risk-rejections with outcomes."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         
-        if demo_mode:
-            veto_list = DEMO_VETOES
-            ledger_stats = calculate_ledger_stats()
-        else:
-            veto_list = get_veto_archive(200)
-            ledger_stats = calculate_ledger_stats()
+        veto_list = get_veto_archive(200)
+        ledger_stats = calculate_ledger_stats()
         
         return render_template('veto_archive.html',
                                vetoes=veto_list,
                                ledger_stats=ledger_stats,
-                               is_demo=demo_mode,
+                               is_demo=False,
                                session_user=session_user)
     except Exception as e:
-        return render_template('veto_archive.html',
-                               vetoes=DEMO_VETOES,
-                               ledger_stats={
-                                   'total_vetoes': len(DEMO_VETOES),
-                                   'veto_correct_count': 0,
-                                   'total_avoided_drawdown': 0
-                               },
-                               is_demo=True,
-                               session_user='fund_manager')
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/update-outcome', methods=['POST'])
