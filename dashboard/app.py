@@ -2027,6 +2027,12 @@ def seed_database_on_startup():
     import uuid
     from datetime import datetime, timedelta
     try:
+        # Force recreate DB on Render to ensure clean schema
+        is_render = os.environ.get("RENDER", "false").lower() == "true"
+        if is_render and DB_PATH.exists():
+            print("[seed] Render detected - removing old DB for clean schema")
+            DB_PATH.unlink()
+
         conn = sqlite3.connect(str(DB_PATH))
         c = conn.cursor()
 
