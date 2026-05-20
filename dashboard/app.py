@@ -215,16 +215,19 @@ def save_prediction(prediction_data: dict) -> bool:
 
 def get_predictions(limit: int = 100) -> list:
     """Get all predictions ordered by timestamp descending."""
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("""
-        SELECT * FROM prediction_ledger 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-    """, (limit,))
-    rows = c.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT * FROM prediction_ledger 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        """, (limit,))
+        rows = c.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+    except Exception:
+        return []
 
 def update_prediction_outcome(prediction_id: str, outcome_data: dict) -> bool:
     """Update a prediction with its outcome. Can only update outcome fields."""
@@ -284,16 +287,19 @@ def save_veto(veto_data: dict) -> bool:
 
 def get_veto_archive(limit: int = 100) -> list:
     """Get all vetoed items ordered by timestamp descending."""
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("""
-        SELECT * FROM veto_archive 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-    """, (limit,))
-    rows = c.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT * FROM veto_archive 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        """, (limit,))
+        rows = c.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+    except Exception:
+        return []
 
 def update_veto_outcome(veto_id: str, outcome_data: dict) -> bool:
     """Update veto with actual outcome after time passes."""
