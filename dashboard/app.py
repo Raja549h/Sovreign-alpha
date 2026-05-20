@@ -2066,6 +2066,28 @@ def seed_database_on_startup():
             )
         """)
 
+        # Migration: check if old schema exists and recreate if needed
+        cols = [r[1] for r in c.execute("PRAGMA table_info(veto_archive)").fetchall()]
+        if 'symbol' in cols and 'asset' not in cols:
+            print("[seed] Migrating veto_archive from old schema...")
+            c.execute("DROP TABLE veto_archive")
+            c.execute("""
+                CREATE TABLE veto_archive (
+                    veto_id TEXT PRIMARY KEY,
+                    asset TEXT,
+                    sector TEXT,
+                    rejection_reason TEXT,
+                    risk_score REAL,
+                    timestamp TEXT,
+                    actual_outcome TEXT,
+                    actual_return_pct REAL,
+                    expected_loss_pct REAL,
+                    avoided_drawdown REAL,
+                    veto_correct INTEGER,
+                    notes TEXT
+                )
+            """)
+
         c.execute("""
             CREATE TABLE IF NOT EXISTS performance_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
