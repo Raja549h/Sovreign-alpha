@@ -843,7 +843,6 @@ def get_recent_decisions(limit=10):
 def index():
     """Home page."""
     try:
-        demo_mode = is_demo_mode()
         progress = check_setup_progress()
         regime = get_regime_data()
 
@@ -861,12 +860,8 @@ def index():
                 'value': d.get('alpha_generated', 0) or 0
             })
         
-        if demo_mode:
-            predictions_list = DEMO_PREDICTIONS
-            veto_list = DEMO_VETOES
-        else:
-            predictions_list = get_predictions(8)
-            veto_list = get_veto_archive(6)
+        predictions_list = get_predictions(8)
+        veto_list = get_veto_archive(6)
 
         ledger_stats = calculate_ledger_stats()
         session_user = request.cookies.get('session_user', 'fund_manager')
@@ -890,7 +885,7 @@ def index():
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                            recent_decisions=recent_decisions,
                            progress=progress,
-                           is_demo=demo_mode,
+                           is_demo=False,
                            session_user=session_user)
     except Exception as e:
         return render_template('index.html',
@@ -1714,7 +1709,6 @@ def api_run():
 def run_analysis_page():
     """Run new analysis."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         progress = check_setup_progress()
         
@@ -1731,7 +1725,7 @@ def run_analysis_page():
                                last_verified=datetime.utcnow().isoformat(),
                                recent_decisions=[],
                                progress=progress,
-                               is_demo=demo_mode,
+                               is_demo=False,
                                session_user=session_user)
         
         fund_positions = get_fund_file('positions')
@@ -1815,7 +1809,6 @@ def run_analysis_page():
     except Exception as e:
         print(f"Run error: {e}")
     
-    demo_mode = is_demo_mode()
     session_user = request.cookies.get('session_user', 'fund_manager')
     progress = check_setup_progress()
     stats = calculate_dashboard_stats()
@@ -1829,7 +1822,7 @@ def run_analysis_page():
                        last_verified=datetime.utcnow().isoformat(),
                        recent_decisions=[],
                        progress=progress,
-                       is_demo=demo_mode,
+                       is_demo=False,
                        session_user=session_user)
 
 
