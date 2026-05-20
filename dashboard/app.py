@@ -2142,6 +2142,8 @@ def seed_database_on_startup():
         print(f"[seed] Seeding failed: {e}")
 
 seed_database_on_startup()
+
+def main():
     try:
         from research.storage.research_db import init_db as init_research_db
         init_research_db()
