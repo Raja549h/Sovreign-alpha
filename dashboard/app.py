@@ -899,44 +899,33 @@ def index():
 def decisions():
     """Decisions page."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         
-        if demo_mode:
-            decisions_list = DEMO_ALL_DECISIONS
-            stats = DEMO_STATS
-            has_data = True
-        else:
-            all_decisions = get_decisions()
-            decisions_list = []
-            for d in all_decisions:
-                decisions_list.append({
-                    'decision_id': d.get('decision_id', 'N/A'),
-                    'symbol': d.get('symbol', ''),
-                    'action': d.get('action', ''),
-                    'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-                    'confidence': 0.75 + (hash(d.get('decision_id', '') or '') % 20) / 100,
-                    'potential_return': d.get('alpha_generated', 0) or 0,
-                    'zk_proof_hash': f"0x{(d.get('decision_id') or 'N/A')[:32]}",
-                    'timestamp': d.get('timestamp', ''),
-                    'fee': d.get('fee_calculated', 0) or 0
-                })
-            stats = calculate_dashboard_stats()
-            has_data = len(decisions_list) > 0
+        all_decisions = get_decisions()
+        decisions_list = []
+        for d in all_decisions:
+            decisions_list.append({
+                'decision_id': d.get('decision_id', 'N/A'),
+                'symbol': d.get('symbol', ''),
+                'action': d.get('action', ''),
+                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
+                'confidence': 0.75 + (hash(d.get('decision_id', '') or '') % 20) / 100,
+                'potential_return': d.get('alpha_generated', 0) or 0,
+                'zk_proof_hash': f"0x{(d.get('decision_id') or 'N/A')[:32]}",
+                'timestamp': d.get('timestamp', ''),
+                'fee': d.get('fee_calculated', 0) or 0
+            })
+        stats = get_dashboard_stats()
+        has_data = len(decisions_list) > 0
         
         return render_template('decisions.html', 
                                decisions=decisions_list,
                                has_data=has_data,
                                stats=stats,
-                               is_demo=demo_mode,
+                               is_demo=False,
                                session_user=session_user)
     except Exception as e:
-        return render_template('decisions.html', 
-                               decisions=DEMO_ALL_DECISIONS,
-                               has_data=True,
-                               stats=DEMO_STATS,
-                               is_demo=True,
-                               session_user='fund_manager')
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/proofs')
@@ -944,47 +933,36 @@ def decisions():
 def proofs():
     """Proofs page."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         
-        if demo_mode:
-            formatted_proofs = DEMO_PROOFS
-            has_proofs = True
-            stats = DEMO_STATS
-        else:
-            proofs_list = load_proof_files()
-            formatted_proofs = []
-            for p in proofs_list:
-                pd = p.get('proof_data', {}) if isinstance(p, dict) else {}
-                commitment = pd.get('commitment_hash', '') or p.get('commitment_hash', '')
-                
-                formatted_proofs.append({
-                    'decision_id': p.get('decision_id', p.get('trade_id', 'N/A')),
-                    'proof_hash': commitment[:32] + '...' if commitment else 'N/A',
-                    'proof_hash_full': commitment,
-                    'timestamp': pd.get('created_at', '') or pd.get('timestamp', '') or datetime.utcnow().isoformat(),
-                    'symbol': p.get('symbol', pd.get('trade_action', 'N/A')),
-                    'action': p.get('action', pd.get('trade_action', 'BUY')),
-                    'confidence': 0.85,
-                    'value': p.get('position_value', p.get('estimated_value', 0)) or 0,
-                    'verdict': pd.get('verdict', 'VERIFIED')
-                })
-            has_proofs = len(formatted_proofs) > 0
-            stats = calculate_dashboard_stats()
+        proofs_list = load_proof_files()
+        formatted_proofs = []
+        for p in proofs_list:
+            pd = p.get('proof_data', {}) if isinstance(p, dict) else {}
+            commitment = pd.get('commitment_hash', '') or p.get('commitment_hash', '')
+            
+            formatted_proofs.append({
+                'decision_id': p.get('decision_id', p.get('trade_id', 'N/A')),
+                'proof_hash': commitment[:32] + '...' if commitment else 'N/A',
+                'proof_hash_full': commitment,
+                'timestamp': pd.get('created_at', '') or pd.get('timestamp', '') or datetime.utcnow().isoformat(),
+                'symbol': p.get('symbol', pd.get('trade_action', 'N/A')),
+                'action': p.get('action', pd.get('trade_action', 'BUY')),
+                'confidence': 0.85,
+                'value': p.get('position_value', p.get('estimated_value', 0)) or 0,
+                'verdict': pd.get('verdict', 'VERIFIED')
+            })
+        has_proofs = len(formatted_proofs) > 0
+        stats = get_dashboard_stats()
         
         return render_template('proofs.html', 
                                proofs=formatted_proofs,
                                has_proofs=has_proofs,
                                stats=stats,
-                               is_demo=demo_mode,
+                               is_demo=False,
                                session_user=session_user)
     except Exception as e:
-        return render_template('proofs.html', 
-                               proofs=DEMO_PROOFS,
-                               has_proofs=True,
-                               stats=DEMO_STATS,
-                               is_demo=True,
-                               session_user='fund_manager')
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/predictions')
@@ -1146,98 +1124,66 @@ def api_proof_cert(decision_id):
 def performance():
     """Performance page."""
     try:
-        demo_mode = is_demo_mode()
         session_user = request.cookies.get('session_user', 'fund_manager')
         
-        if demo_mode:
-            stats = DEMO_STATS
-            perf = DEMO_PERFORMANCE
-            confidence_history = json.dumps(perf['confidence_history'])
-            sector_data = json.dumps(perf['sector_data'])
-            return_distribution = json.dumps(perf['return_distribution'])
-            total_sessions = perf['total_sessions']
-            avg_confidence = perf['avg_confidence']
-        else:
-            decisions = get_decisions()
-            stats = calculate_dashboard_stats()
-            
-            confidence_history = {'labels': [], 'values': []}
-            for i, d in enumerate(decisions[:20]):
-                confidence_history['labels'].append(f"D{i+1}")
-                confidence_history['values'].append(0.65 + (hash(str(d.get('decision_id', ''))) % 35) / 100)
-            
-            sector_data = {'labels': [], 'approved': [], 'vetoed': []}
-            sector_stats = get_sector_stats()
-            for s in sector_stats:
-                symbol = s.get('symbol', 'Unknown')[:4]
-                sector_data['labels'].append(symbol)
-                sector_data['approved'].append(s.get('count', 0))
-                sector_data['vetoed'].append(0)
-            
-            if not sector_data['labels']:
-                sector_data = {'labels': ['No Data'], 'approved': [0], 'vetoed': [0]}
-            
-            return_distribution = {'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'], 'values': [0, 0, 0, 0]}
-            returns = get_return_distribution()
-            for r in returns:
-                alpha = r.get('alpha_generated', 0) or 0
-                if alpha > 0:
-                    if alpha < 50000: return_distribution['values'][0] += 1
-                    elif alpha < 100000: return_distribution['values'][1] += 1
-                    elif alpha < 200000: return_distribution['values'][2] += 1
-                    else: return_distribution['values'][3] += 1
-            
-            if all(v == 0 for v in return_distribution['values']):
-                return_distribution = {'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'], 'values': [1, 2, 1, 2]}
-            
-            sessions = load_results_files()
-            total_sessions = len(sessions)
-            avg_confidence = 0.75
-            if decisions:
-                avg_confidence = 0.65 + (sum(hash(str(d.get('decision_id', ''))) for d in decisions) % 35) / 100 / len(decisions)
-            
-            confidence_history = json.dumps(confidence_history)
-            sector_data = json.dumps(sector_data)
-            return_distribution = json.dumps(return_distribution)
+        decisions = get_decisions()
+        stats = get_dashboard_stats()
+        
+        confidence_history = {'labels': [], 'values': []}
+        for i, d in enumerate(decisions[:20]):
+            confidence_history['labels'].append(f"D{i+1}")
+            confidence_history['values'].append(0.65 + (hash(str(d.get('decision_id', ''))) % 35) / 100)
+        
+        sector_data = {'labels': [], 'approved': [], 'vetoed': []}
+        sector_stats = get_sector_stats()
+        for s in sector_stats:
+            symbol = s.get('symbol', 'Unknown')[:4]
+            sector_data['labels'].append(symbol)
+            sector_data['approved'].append(s.get('count', 0))
+            sector_data['vetoed'].append(0)
+        
+        if not sector_data['labels']:
+            sector_data = {'labels': ['No Data'], 'approved': [0], 'vetoed': [0]}
+        
+        return_distribution = {'labels': ['<$50K', '$50-100K', '$100-200K', '$200K+'], 'values': [0, 0, 0, 0]}
+        returns = get_return_distribution()
+        for r in returns:
+            alpha = r.get('alpha_generated', 0) or 0
+            if alpha > 0:
+                if alpha < 50000: return_distribution['values'][0] += 1
+                elif alpha < 100000: return_distribution['values'][1] += 1
+                elif alpha < 200000: return_distribution['values'][2] += 1
+                else: return_distribution['values'][3] += 1
+        
+        if all(v == 0 for v in return_distribution['values']):
+            return_distribution = {'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'], 'values': [1, 2, 1, 2]}
+        
+        sessions = load_results_files()
+        total_sessions = len(sessions)
+        avg_confidence = 0.75
+        if decisions:
+            avg_confidence = 0.65 + (sum(hash(str(d.get('decision_id', ''))) for d in decisions) % 35) / 100 / len(decisions)
+        
+        confidence_history = json.dumps(confidence_history)
+        sector_data = json.dumps(sector_data)
+        return_distribution = json.dumps(return_distribution)
         
         ledger_stats = calculate_ledger_stats()
         
         return render_template('performance.html',
                              total_sessions=total_sessions,
                              avg_confidence=avg_confidence,
-                             total_alpha=stats['total_alpha'],
-                             total_fees=stats.get('total_fees', 0),
+                             total_alpha=stats.get('total_decisions', 0),
+                             total_fees=0,
                              confidence_history=confidence_history,
                              sector_data=sector_data,
                              return_distribution=return_distribution,
                              stats=stats,
                              ledger_stats=ledger_stats,
-                             is_demo=demo_mode,
+                             is_demo=False,
                              session_user=session_user)
     except Exception as e:
-        perf = DEMO_PERFORMANCE
-        ledger_stats = {
-            'success_rate': 78.5,
-            'veto_efficiency': 65.0,
-            'total_avoided_drawdown': 125000,
-            'risk_rejected': 8,
-            'total_predictions': 52,
-            'outcome_fill_rate': 35.0,
-            'veto_correct_count': 4,
-            'total_vetoes': 6
-        }
-        return render_template('performance.html',
-                             total_sessions=perf['total_sessions'],
-                             avg_confidence=perf['avg_confidence'],
-                             total_alpha=DEMO_STATS['total_alpha'],
-                             total_fees=DEMO_STATS['total_fees'],
-                             confidence_history=json.dumps(perf['confidence_history']),
-                             sector_data=json.dumps(perf['sector_data']),
-                             return_distribution=json.dumps(perf['return_distribution']),
-                             stats=DEMO_STATS,
-                             ledger_stats=ledger_stats,
-                             is_demo=True,
-                             session_user='fund_manager')
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/api/refresh', methods=['POST'])
@@ -1998,7 +1944,7 @@ def research_note(reference):
             return f"Note {reference} not found", 404
         return render_template('research_note.html', note=note)
     except Exception as e:
-        return f"Error: {e}", 500
+        return render_template('error.html', error_code=500, error_message=str(e)), 500
 
 
 @app.route('/research/analyze', methods=['POST'])
@@ -2051,6 +1997,14 @@ def main():
     """Main entry point."""
     import logging
     app.logger.setLevel(logging.WARNING)
+    
+    # Initialize databases
+    init_fund_db()
+    try:
+        from research.storage.research_db import init_db as init_research_db
+        init_research_db()
+    except Exception as e:
+        print(f"Warning: Could not initialize research DB: {e}")
     
     print("=== SOVEREIGN ALPHA - Dashboard v1.2 ===")
     print("Features: Login system, Upload portal, Progress tracker")
