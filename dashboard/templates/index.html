@@ -21,10 +21,10 @@
         <div class="stat-box">
             <label>Total Predictions</label>
             <div class="value">{{ total_decisions | default(0) }}</div>
-            <div class="sub">{{ cleared | default(0) }} cleared / {{ risk_rejected | default(0) }} rejected</div>
+            <div class="sub">{{ cleared | default(0) }} approved / {{ risk_rejected | default(0) }} rejected</div>
         </div>
         <div class="stat-box">
-            <label>Hit Rate</label>
+            <label>Approval Rate</label>
             <div class="value {% if success_rate and success_rate < 50 %}danger{% elif success_rate and success_rate >= 65 %}{% else %}warning{% endif %}">{{ success_rate | default(0) | round(1) }}%</div>
             <div class="sub">{{ with_outcome | default(0) }} outcomes recorded</div>
         </div>
