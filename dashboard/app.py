@@ -2006,8 +2006,8 @@ def main():
     except Exception as e:
         print(f"Warning: Could not initialize research DB: {e}")
     
-    print("=== SOVEREIGN ALPHA - Dashboard v1.2 ===")
-    print("Features: Login system, Upload portal, Progress tracker")
+    print("=== SOVEREIGN ALPHA - Dashboard v1.3 ===")
+    print("Features: Login system, Upload portal, Progress tracker, Real-time data")
     
     port = int(os.environ.get("PORT", 5000))
     is_cloud = os.environ.get("RENDER", "false").lower() == "true"
