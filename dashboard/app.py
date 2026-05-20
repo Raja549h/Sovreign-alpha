@@ -1844,6 +1844,31 @@ def health():
     })
 
 
+@app.route('/debug/db')
+@login_required
+def debug_db():
+    """Debug endpoint to check database status."""
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        c = conn.cursor()
+        
+        tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        table_info = {}
+        for (name,) in tables:
+            count = c.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+            table_info[name] = count
+        
+        conn.close()
+        
+        return jsonify({
+            'db_exists': DB_PATH.exists(),
+            'db_path': str(DB_PATH),
+            'tables': table_info
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/regime')
 @login_required
 def api_regime():
