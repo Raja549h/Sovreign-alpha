@@ -3,9 +3,9 @@ services:
     name: sovereign-alpha-dashboard
     env: python
     plan: free
-    pythonVersion: "3.11.0"
-    buildCommand: pip install -r requirements-dashboard.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT dashboard.app:app
+    pythonVersion: "3.11"
+    buildCommand: pip install --no-cache-dir -r requirements-dashboard.txt && python -c "import py_compile; py_compile.compile('dashboard/app.py', doraise=True)"
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --preload dashboard.app:app
     envVars:
       - key: GROQ_API_KEY
         sync: false
@@ -18,4 +18,4 @@ services:
       - key: RENDER
         value: true
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.11"
