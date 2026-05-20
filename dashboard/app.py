@@ -2052,8 +2052,9 @@ def seed_database_on_startup():
         c.execute("""
             CREATE TABLE IF NOT EXISTS veto_archive (
                 veto_id TEXT PRIMARY KEY,
-                symbol TEXT,
-                reason TEXT,
+                asset TEXT,
+                sector TEXT,
+                rejection_reason TEXT,
                 risk_score REAL,
                 timestamp TEXT,
                 actual_outcome TEXT,
@@ -2123,16 +2124,16 @@ def seed_database_on_startup():
         if c.fetchone()[0] == 0:
             now = datetime.utcnow()
             samples = [
-                ("veto-001", "ADANIENT", "High promoter pledge risk", 0.91, (now - timedelta(days=7)).isoformat(), "correct", -12.5, 8.0, 12.5, 1, "Stock fell 12.5% after pledge news"),
-                ("veto-002", "PAYTM", "Regulatory overhang unresolved", 0.85, (now - timedelta(days=4)).isoformat(), "correct", -8.2, 6.0, 8.2, 1, "RBI restrictions continued"),
-                ("veto-003", "ZEEL", "Governance red flags", 0.88, (now - timedelta(days=2)).isoformat(), None, None, 7.0, None, None, None),
+                ("veto-001", "ADANIENT", "Energy", "High promoter pledge risk", 0.91, (now - timedelta(days=7)).isoformat(), "correct", -12.5, 8.0, 12.5, 1, "Stock fell 12.5% after pledge news"),
+                ("veto-002", "PAYTM", "Fintech", "Regulatory overhang unresolved", 0.85, (now - timedelta(days=4)).isoformat(), "correct", -8.2, 6.0, 8.2, 1, "RBI restrictions continued"),
+                ("veto-003", "ZEEL", "Media", "Governance red flags", 0.88, (now - timedelta(days=2)).isoformat(), None, None, 7.0, None, None, None),
             ]
-            for vid, sym, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes in samples:
+            for vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes in samples:
                 c.execute("""
                     INSERT OR IGNORE INTO veto_archive
-                    (veto_id, symbol, reason, risk_score, timestamp, actual_outcome, actual_return_pct, expected_loss_pct, avoided_drawdown, veto_correct, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (vid, sym, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes))
+                    (veto_id, asset, sector, rejection_reason, risk_score, timestamp, actual_outcome, actual_return_pct, expected_loss_pct, avoided_drawdown, veto_correct, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes))
             print(f"[seed] Inserted {len(samples)} sample vetoes")
 
         conn.commit()
