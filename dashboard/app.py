@@ -2008,16 +2008,19 @@ def seed_database_on_startup():
         c.execute("""
             CREATE TABLE IF NOT EXISTS prediction_ledger (
                 prediction_id TEXT PRIMARY KEY,
-                symbol TEXT,
-                action TEXT,
-                status TEXT,
-                confidence REAL,
-                rationale TEXT,
                 timestamp TEXT,
+                asset TEXT,
+                sector TEXT,
+                thesis TEXT,
+                confidence_score REAL,
+                status TEXT,
+                expected_timeline_days INTEGER,
+                proof_hash TEXT,
+                created_at TEXT,
+                updated_at TEXT,
                 actual_outcome TEXT,
                 actual_return_pct REAL,
-                outcome_notes TEXT,
-                updated_at TEXT
+                outcome_notes TEXT
             )
         """)
 
@@ -2077,18 +2080,18 @@ def seed_database_on_startup():
         if c.fetchone()[0] == 0:
             now = datetime.utcnow()
             samples = [
-                ("pred-001", "RELIANCE", "LONG", "cleared", 0.82, "Strong momentum in refining margins", (now - timedelta(days=5)).isoformat()),
-                ("pred-002", "TCS", "SHORT", "risk-rejected", 0.45, "Weak guidance on IT spending", (now - timedelta(days=3)).isoformat()),
-                ("pred-003", "INFY", "LONG", "cleared", 0.71, "Deal wins in AI/ML segment", (now - timedelta(days=2)).isoformat()),
-                ("pred-004", "HDFCBANK", "HOLD", "cleared", 0.60, "Stable NIM, awaiting credit growth", (now - timedelta(days=1)).isoformat()),
-                ("pred-005", "BAJFINANCE", "LONG", "cleared", 0.78, "AUM growth accelerating, ROE stabilizing", now.isoformat()),
+                ("pred-001", (now - timedelta(days=5)).isoformat() + 'Z', "RELIANCE", "Energy", "Strong momentum in refining margins", 0.82, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat()),
+                ("pred-002", (now - timedelta(days=3)).isoformat() + 'Z', "TCS", "IT", "Weak guidance on IT spending outlook", 0.45, "risk-rejected", 14, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat()),
+                ("pred-003", (now - timedelta(days=2)).isoformat() + 'Z', "INFY", "IT", "Deal wins in AI/ML segment driving growth", 0.71, "cleared", 45, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat()),
+                ("pred-004", (now - timedelta(days=1)).isoformat() + 'Z', "HDFCBANK", "Banking", "Stable NIM, awaiting credit growth pickup", 0.60, "cleared", 60, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat()),
+                ("pred-005", now.isoformat() + 'Z', "BAJFINANCE", "NBFC", "AUM growth accelerating, ROE stabilizing", 0.78, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat()),
             ]
-            for pid, sym, action, status, conf, rationale, ts in samples:
+            for pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated in samples:
                 c.execute("""
                     INSERT OR IGNORE INTO prediction_ledger
-                    (prediction_id, symbol, action, status, confidence, rationale, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (pid, sym, action, status, conf, rationale, ts))
+                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, status, expected_timeline_days, proof_hash, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated))
             print(f"[seed] Inserted {len(samples)} sample predictions")
 
         c.execute("SELECT COUNT(*) FROM veto_archive")
