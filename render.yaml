@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     pythonVersion: "3.11"
-    buildCommand: pip install --no-cache-dir -r requirements-dashboard.txt && python scripts/seed_on_deploy.py
+    buildCommand: pip install --no-cache-dir -r requirements-dashboard.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --preload dashboard.app:app
     envVars:
       - key: GROQ_API_KEY
