@@ -1,0 +1,16 @@
+.venv/
+venv/
+env/
+research/data/filings/
+research/data/transcripts/
+research/data/notes/
+logs/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+tests/
+*.pdf
+*.csv
+node_modules/
+.git/
