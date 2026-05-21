@@ -1,21 +1,15 @@
 services:
   - type: web
-    name: sovereign-alpha-dashboard
+    name: sovereign-alpha
     env: python
+    region: singapore
     plan: free
-    pythonVersion: "3.11"
-    buildCommand: pip install --no-cache-dir -r requirements-dashboard.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --preload dashboard.app:app
+    buildCommand: >
+      pip install -r requirements-render.txt &&
+      python dashboard/seed_db.py
+    startCommand: python dashboard/app.py
     envVars:
-      - key: GROQ_API_KEY
-        sync: false
-      - key: FERNET_KEY
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: FUND_PASSWORD
-        sync: false
-      - key: RENDER
-        value: true
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
