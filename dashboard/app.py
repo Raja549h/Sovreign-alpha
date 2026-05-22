@@ -43,6 +43,7 @@ try:
     from flask_wtf.csrf import CSRFProtect
     from flask_cors import CORS
     from werkzeug.utils import secure_filename
+    from werkzeug.middleware.proxy_fix import ProxyFix
     FLASK_AVAILABLE = True
 except ImportError:
     print("ERROR: Flask not installed. Run: pip install flask")
@@ -97,6 +98,9 @@ def get_macro_tickers():
         return {}
 
 app = Flask(__name__, template_folder='templates')
+if os.environ.get("RENDER", "false").lower() == "true":
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET', os.environ.get('SECRET_KEY', 'change-this-secret-in-production'))
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -118,7 +122,11 @@ csp = {
 Talisman(app, force_https=False, strict_transport_security=True,
          strict_transport_security_max_age=31536000,
          content_security_policy=csp,
-         referrer_policy='strict-origin-when-cross-origin')
+         referrer_policy='strict-origin-when-cross-origin',
+         frame_options='DENY',
+         x_xss_protection=True,
+         session_cookie_secure=False,
+         permissions_policy={'geolocation': "()", 'camera': "()", 'microphone': "()"})
 CORS(app, origins=['https://sovereign-alpha.onrender.com', 'http://localhost:5000'], supports_credentials=True)
 
 limiter = Limiter(app=app, key_func=get_remote_address,
@@ -154,11 +162,7 @@ def file_too_large(e):
 
 @app.after_request
 def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
-    response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
     return response
 
 TEMPLATE_DIR = dashboard_dir / 'templates'
@@ -1077,8 +1081,8 @@ def veto_archive():
 
 
 @app.route('/update-outcome', methods=['POST'])
-@limiter.limit("30 per minute")
 @login_required
+@limiter.limit("30 per minute")
 def update_outcome():
     """Update prediction or veto outcome."""
     try:
@@ -1234,6 +1238,7 @@ def performance():
 
 
 @app.route('/api/refresh', methods=['POST'])
+@login_required
 def api_refresh():
     """API endpoint to refresh data."""
     stats = calculate_dashboard_stats()
@@ -1242,12 +1247,6 @@ def api_refresh():
         'timestamp': datetime.utcnow().isoformat(),
         'stats': stats
     })
-
-
-@app.route('/api/status')
-
-
-@app.route('/api/track_record')
 
 
 @app.route('/live_market')
@@ -1365,9 +1364,10 @@ def login_page():
             if hmac.compare_digest(password.encode('utf-8'), FUND_PASSWORD.encode('utf-8')):
                 from privacy import create_session_token
                 token = create_session_token(username)
+                is_secure = os.environ.get("RENDER", "false").lower() == "true"
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie('session_token', token, httponly=True, max_age=86400, secure=True, samesite='Lax')
-                resp.set_cookie('session_user', username, max_age=86400, secure=True, samesite='Lax')
+                resp.set_cookie('session_token', token, httponly=True, max_age=86400, secure=is_secure, samesite='Lax')
+                resp.set_cookie('session_user', username, max_age=86400, secure=is_secure, samesite='Lax')
                 # Clear failed attempts on success
                 failed_attempts.pop(client_ip, None)
                 return resp
@@ -1427,9 +1427,9 @@ def upload_page():
 
 
 @app.route('/upload/positions', methods=['POST'])
-@limiter.limit("5 per minute")
 @csrf.exempt
 @login_required
+@limiter.limit("5 per minute")
 def upload_positions():
     """Handle positions CSV upload with flexible column validation."""
     from dashboard.security import InputValidator
@@ -1556,9 +1556,9 @@ def upload_positions():
 
 
 @app.route('/upload/params', methods=['POST'])
-@limiter.limit("30 per minute")
 @csrf.exempt
 @login_required
+@limiter.limit("30 per minute")
 def upload_params():
     """Handle risk parameters form submission."""
     try:
@@ -1588,9 +1588,9 @@ def upload_params():
 
 
 @app.route('/upload/research', methods=['POST'])
-@limiter.limit("5 per minute")
 @csrf.exempt
 @login_required
+@limiter.limit("5 per minute")
 def upload_research():
     """Handle research notes upload."""
     research_text = request.form.get('research_text', '')
@@ -1684,8 +1684,8 @@ ENERGY:
 
 
 @app.route('/api/run', methods=['POST'])
-@limiter.limit("3 per minute")
 @login_required
+@limiter.limit("3 per minute")
 def api_run():
     """API endpoint to run analysis - Direct execution for Render compatibility."""
     approved_count = 0
@@ -2057,8 +2057,8 @@ def research_note(reference):
 
 
 @app.route('/research/analyze', methods=['POST'])
-@limiter.limit("10 per minute")
 @login_required
+@limiter.limit("10 per minute")
 def research_analyze():
     """Trigger analysis for a ticker."""
     try:
