@@ -156,11 +156,15 @@ def safe_error_response(e: Exception) -> Dict[str, Any]:
     }
 
 def validate_password(input_password: str) -> bool:
-    fund_password = os.environ.get("FUND_PASSWORD", "sovereign2024")
-    return input_password == fund_password
+    import hmac
+    fund_password = os.environ.get("FUND_PASSWORD", "")
+    return hmac.compare_digest(input_password.encode('utf-8'), fund_password.encode('utf-8'))
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+def _get_jwt_secret() -> str:
+    return JWT_SECRET or os.environ.get('SECRET_KEY', 'change-in-production')
 
 def create_session_token(fund_id: str) -> str:
     import jwt
@@ -170,12 +174,12 @@ def create_session_token(fund_id: str) -> str:
         "exp": time.time() + 86400 * 7,
         "iat": time.time()
     }
-    return jwt.encode(payload, JWT_SECRET or "default_secret", algorithm="HS256")
+    return jwt.encode(payload, _get_jwt_secret(), algorithm="HS256")
 
 def verify_session_token(token: str) -> Optional[str]:
     import jwt
     try:
-        payload = jwt.decode(token, JWT_SECRET or "default_secret", algorithms=["HS256"])
+        payload = jwt.decode(token, _get_jwt_secret(), algorithms=["HS256"])
         return payload.get("sub")
     except:
         return None

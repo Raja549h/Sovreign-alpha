@@ -25,6 +25,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
 from functools import wraps
+import time
+import hmac
 
 dashboard_dir = Path(__file__).parent
 project_dir = dashboard_dir.parent
@@ -35,6 +37,12 @@ load_dotenv(str(project_dir / '.env'))
 
 try:
     from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    from flask_talisman import Talisman
+    from flask_wtf.csrf import CSRFProtect
+    from flask_cors import CORS
+    from werkzeug.utils import secure_filename
     FLASK_AVAILABLE = True
 except ImportError:
     print("ERROR: Flask not installed. Run: pip install flask")
@@ -89,8 +97,37 @@ def get_macro_tickers():
         return {}
 
 app = Flask(__name__, template_folder='templates')
-app.config['SECRET_KEY'] = 'sovereign-alpha-secret-key'
-app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB limit
+app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET', os.environ.get('SECRET_KEY', 'change-this-secret-in-production'))
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
+app.config['SESSION_COOKIE_NAME'] = 'sa_session'
+app.config['WTF_CSRF_SECRET_KEY'] = os.environ.get('JWT_SECRET', app.config['SECRET_KEY'])
+
+csp = {
+    'default-src': "'self'",
+    'script-src': ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
+    'style-src': ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+    'font-src': ["'self'", "fonts.gstatic.com"],
+    'img-src': "'self' data:",
+    'connect-src': "'self'",
+    'frame-ancestors': "'none'"
+}
+Talisman(app, force_https=False, strict_transport_security=True,
+         strict_transport_security_max_age=31536000,
+         content_security_policy=csp,
+         referrer_policy='strict-origin-when-cross-origin')
+CORS(app, origins=['https://sovereign-alpha.onrender.com', 'http://localhost:5000'], supports_credentials=True)
+
+limiter = Limiter(app=app, key_func=get_remote_address,
+                  default_limits=["200 per day", "50 per hour"],
+                  storage_uri="memory://")
+
+csrf = CSRFProtect(app)
+
+failed_attempts = {}
 
 @app.errorhandler(404)
 def handle_404(e):
@@ -105,6 +142,25 @@ def handle_error(e):
     app.logger.error(f"Unhandled error: {str(e)}", exc_info=True)
     return render_template('error.html', error_code=500, error_message=str(e)), 500
 
+@app.errorhandler(429)
+def rate_limit_exceeded(e):
+    return render_template('error.html', error_code=429,
+                           error_message="Too many requests. Please wait before trying again."), 429
+
+@app.errorhandler(413)
+def file_too_large(e):
+    return render_template('error.html', error_code=413,
+                           error_message="File too large. Maximum 10MB."), 413
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
+    return response
+
 TEMPLATE_DIR = dashboard_dir / 'templates'
 if TEMPLATE_DIR.exists():
     app.template_folder = str(TEMPLATE_DIR)
@@ -112,7 +168,7 @@ if TEMPLATE_DIR.exists():
 DB_PATH = BILLING_DIR / "billing.db"
 FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
-FUND_PASSWORD = os.environ.get("FUND_PASSWORD", "sovereign2024")
+FUND_PASSWORD = os.environ.get("FUND_PASSWORD", "")
 
 def init_fund_db():
     conn = sqlite3.connect(str(FUND_DATA_DB))
@@ -1021,11 +1077,14 @@ def veto_archive():
 
 
 @app.route('/update-outcome', methods=['POST'])
+@limiter.limit("30 per minute")
 @login_required
 def update_outcome():
     """Update prediction or veto outcome."""
     try:
-        data = request.get_json()
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(), [],
+                                                     ['prediction_id', 'veto_id', 'outcome', 'notes'])
         prediction_id = data.get('prediction_id', '')
         veto_id = data.get('veto_id', '')
         outcome = data.get('outcome', '')
@@ -1271,6 +1330,9 @@ def api_public_key():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per 15 minutes")
+@limiter.limit("20 per day")
+@csrf.exempt
 def login_page():
     """Login page - no auth required."""
     try:
@@ -1285,18 +1347,35 @@ def login_page():
                 pass
         
         error = None
+        client_ip = request.remote_addr or 'unknown'
+        
+        # Check failed attempts
+        now = time.time()
+        if client_ip in failed_attempts:
+            data = failed_attempts[client_ip]
+            if now - data['first'] > 900:
+                failed_attempts[client_ip] = {'count': 0, 'first': now}
+            elif data['count'] >= 5:
+                return render_template('login.html', error="Account temporarily locked. Try again in 15 minutes.")
+        
         if request.method == 'POST':
             username = request.form.get('username', 'fund_manager')
             password = request.form.get('password', '') or ''
             
-            if password == FUND_PASSWORD:
+            if hmac.compare_digest(password.encode('utf-8'), FUND_PASSWORD.encode('utf-8')):
                 from privacy import create_session_token
                 token = create_session_token(username)
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie('session_token', token, httponly=True, max_age=86400)
-                resp.set_cookie('session_user', username, max_age=86400)
+                resp.set_cookie('session_token', token, httponly=True, max_age=86400, secure=True, samesite='Lax')
+                resp.set_cookie('session_user', username, max_age=86400, secure=True, samesite='Lax')
+                # Clear failed attempts on success
+                failed_attempts.pop(client_ip, None)
                 return resp
             else:
+                if client_ip not in failed_attempts:
+                    failed_attempts[client_ip] = {'count': 1, 'first': now}
+                else:
+                    failed_attempts[client_ip]['count'] += 1
                 error = "Invalid password. Please try again."
         
         return render_template('login.html', error=error)
@@ -1348,15 +1427,19 @@ def upload_page():
 
 
 @app.route('/upload/positions', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf.exempt
 @login_required
 def upload_positions():
     """Handle positions CSV upload with flexible column validation."""
+    from dashboard.security import InputValidator
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'No file provided'})
     
     file = request.files['file']
     if file.filename == '':
         return jsonify({'success': False, 'error': 'No file selected'})
+    InputValidator.validate_file_upload(file)
     
     try:
         content = file.read()
@@ -1473,6 +1556,8 @@ def upload_positions():
 
 
 @app.route('/upload/params', methods=['POST'])
+@limiter.limit("30 per minute")
+@csrf.exempt
 @login_required
 def upload_params():
     """Handle risk parameters form submission."""
@@ -1503,6 +1588,8 @@ def upload_params():
 
 
 @app.route('/upload/research', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf.exempt
 @login_required
 def upload_research():
     """Handle research notes upload."""
@@ -1597,6 +1684,7 @@ ENERGY:
 
 
 @app.route('/api/run', methods=['POST'])
+@limiter.limit("3 per minute")
 @login_required
 def api_run():
     """API endpoint to run analysis - Direct execution for Render compatibility."""
@@ -1855,7 +1943,7 @@ def debug_db():
         tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         table_info = {}
         for (name,) in tables:
-            count = c.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+            count = c.execute("SELECT COUNT(*) FROM [{}]".format(name.replace(']', ']]'))).fetchone()[0]
             table_info[name] = count
         
         conn.close()
@@ -1969,12 +2057,15 @@ def research_note(reference):
 
 
 @app.route('/research/analyze', methods=['POST'])
+@limiter.limit("10 per minute")
 @login_required
 def research_analyze():
     """Trigger analysis for a ticker."""
     try:
-        data = request.get_json()
-        ticker = data.get('ticker', '').upper()
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(), ['ticker'],
+                                                     ['pe', 'pbv'])
+        ticker = InputValidator.validate_ticker(data.get('ticker', ''))
         pe = data.get('pe')
         pbv = data.get('pbv')
         
