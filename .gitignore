@@ -52,6 +52,12 @@ data/chroma_db/
 research/data/filings/
 research/data/transcripts/
 
+# Generated research notes (engine output)
+research/data/notes/BAJFINANCE_*.html
+research/data/notes/MUTHOOTFIN_*.html
+research/data/notes/SR-2026-BAJ-*
+research/data/notes/SR-2026-MUT-*
+
 # Temp
 tmp/
 temp/

@@ -243,7 +243,7 @@ def run_analysis_pipeline():
             
             if status == 'risk-rejected':
                 veto_data = {
-                    'veto_id': f"VETO-{datetime.utcnow().strftime('%Y%m%d')}-{pos.get('position_id', '001')}",
+                    'veto_id': f"VETO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{pos.get('position_id', '001')}",
                     'prediction_id': prediction_id,
                     'timestamp': timestamp,
                     'asset': pos.get('symbol', 'N/A'),
