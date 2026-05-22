@@ -147,15 +147,18 @@ def safe_error_response(e: Exception) -> Dict[str, Any]:
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
+def _get_jwt_secret() -> str:
+    return JWT_SECRET or os.environ.get('SECRET_KEY', 'sovereign-alpha-fallback-secret-change-in-production')
+
 def create_session_token(fund_id: str) -> str:
-    secret = JWT_SECRET or "fallback_session_secret_sovereign_2024"
+    secret = _get_jwt_secret()
     token_data = f"{fund_id}:{int(time.time())}"
     signature = hashlib.sha256(f"{token_data}:{secret}".encode()).hexdigest()
     return base64.b64encode(f"{token_data}:{signature}".encode()).decode()
 
 def verify_session_token(token: str) -> Optional[str]:
     try:
-        secret = JWT_SECRET or "fallback_session_secret_sovereign_2024"
+        secret = _get_jwt_secret()
         decoded = base64.b64decode(token.encode()).decode()
         parts = decoded.rsplit(':', 1)
         if len(parts) != 2:
@@ -173,5 +176,6 @@ def verify_session_token(token: str) -> Optional[str]:
         return None
 
 def validate_password(input_password: str, stored_password: str = None) -> bool:
-    fund_password = os.environ.get("FUND_PASSWORD", "sovereign2024")
-    return input_password == fund_password
+    import hmac
+    fund_password = os.environ.get("FUND_PASSWORD", "")
+    return hmac.compare_digest(input_password.encode('utf-8'), fund_password.encode('utf-8'))
