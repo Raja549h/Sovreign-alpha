@@ -2231,14 +2231,6 @@ def research_export(reference):
         return f"Error: {e}", 500
 
 
-def main():
-    """Main entry point."""
-    import logging
-    app.logger.setLevel(logging.WARNING)
-    
-    # Initialize databases
-init_fund_db()
-
 def seed_database_on_startup():
     """Create essential tables and seed sample data on first startup."""
     import uuid
