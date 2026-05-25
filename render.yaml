@@ -4,8 +4,8 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: pip install -r requirements-render.txt
-    startCommand: python -m gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 dashboard.app:app
+    buildCommand: python -m pip install -r requirements-render.txt
+    startCommand: python dashboard/app.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
