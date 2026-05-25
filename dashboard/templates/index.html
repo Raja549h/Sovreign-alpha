@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
+<div class="container fade-in">
     <div class="page-header">
         <h1>Market Intelligence Dashboard</h1>
         <span class="timestamp">Last updated: {{ last_verified }}</span>
@@ -10,28 +10,24 @@
         <div class="stat-box">
             <label>Market Regime</label>
             <div class="value">
-                {% if regime %}
-                <span class="regime-badge {{ regime }}">{{ regime }}</span>
-                {% else %}
-                <span class="regime-badge NEUTRAL">NEUTRAL</span>
-                {% endif %}
+                <span class="regime-badge {{ regime or 'NEUTRAL' }}" id="regime-badge">{{ regime or 'NEUTRAL' }}</span>
             </div>
-            <div class="sub">Confidence: {{ regime_confidence | default('—') }}</div>
+            <div class="sub" id="regime-confidence">Confidence: {{ regime_confidence | default('—') }}</div>
         </div>
         <div class="stat-box">
             <label>Total Predictions</label>
-            <div class="value">{{ total_decisions | default(0) }}</div>
+            <div class="value stat-refresh" data-key="total_predictions">{{ total_decisions | default(0) }}</div>
             <div class="sub">{{ cleared | default(0) }} approved / {{ risk_rejected | default(0) }} rejected</div>
         </div>
         <div class="stat-box">
             <label>Approval Rate</label>
-            <div class="value {% if success_rate and success_rate < 50 %}danger{% elif success_rate and success_rate >= 65 %}{% else %}warning{% endif %}">{{ success_rate | default(0) | round(1) }}%</div>
-            <div class="sub">{{ with_outcome | default(0) }} outcomes recorded</div>
+            <div class="value stat-refresh {% if success_rate and success_rate < 50 %}danger{% elif success_rate and success_rate >= 65 %}{% else %}warning{% endif %}" data-key="success_rate">{{ success_rate | default(0) | round(1) }}%</div>
+            <div class="sub stat-refresh" data-key="with_outcome">{{ with_outcome | default(0) }} outcomes recorded</div>
         </div>
         <div class="stat-box">
             <label>Veto Efficiency</label>
-            <div class="value info">{{ veto_efficiency | default(0) | round(1) }}%</div>
-            <div class="sub">{{ veto_correct_count | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
+            <div class="value info stat-refresh" data-key="veto_efficiency">{{ veto_efficiency | default(0) | round(1) }}%</div>
+            <div class="sub stat-refresh" data-key="veto_correct_count">{{ veto_correct_count | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
         </div>
         <div class="stat-box">
             <label>Avoided Drawdown</label>
@@ -44,6 +40,43 @@
             <div class="sub">Cryptographic certificates</div>
         </div>
     </div>
+
+    {% if regime_data and regime_data.indicators %}
+    <div class="grid-4" style="margin-bottom:0.85rem;">
+        <div class="intel-card">
+            <div class="label">VIX (Volatility)</div>
+            <div class="stat accent">{{ regime_data.indicators.vix | default('—') }}</div>
+            <div class="conf-bar"><div class="fill {{ 'high' if (regime_data.indicators.vix|default(0)) < 20 else 'med' if (regime_data.indicators.vix|default(0)) < 30 else 'low' }}" style="width:{{ ((20 - (regime_data.indicators.vix|default(0))) / 20 * 100) | round(0) if (regime_data.indicators.vix|default(0)) < 20 else 10 }}%;"></div></div>
+        </div>
+        <div class="intel-card">
+            <div class="label">10Y Treasury</div>
+            <div class="stat warning">{{ regime_data.indicators.treasury_10y | default('—') }}%</div>
+            <div class="note">US risk-free rate anchor</div>
+        </div>
+        <div class="intel-card">
+            <div class="label">DXY (USD Index)</div>
+            <div class="stat info">{{ regime_data.indicators.dxy | default('—') }}</div>
+            <div class="note">Dollar strength indicator</div>
+        </div>
+        <div class="intel-card">
+            <div class="label">HY OAS</div>
+            <div class="stat {% if (regime_data.indicators.hy_oas|default(400)) > 450 %}danger{% else %}accent{% endif %}">{{ regime_data.indicators.hy_oas | default('—') }}</div>
+            <div class="note">Credit stress barometer</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if regime_data and regime_data.summary %}
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Regime Intelligence Summary</h2>
+            <span class="timestamp">{{ last_verified }}</span>
+        </div>
+        <div class="panel-body padded" style="font-size:0.75rem;color:var(--text-secondary);">
+            {{ regime_data.summary }}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="grid-2">
         <div class="panel">
@@ -59,18 +92,16 @@
                             <th>Ticker</th>
                             <th>Signal</th>
                             <th>Confidence</th>
-                            <th>Regime</th>
-                            <th>Status</th>
+                            <th>Outcome</th>
                             <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="prediction-table-body">
                         {% for p in predictions[:8] %}
                         <tr>
                             <td class="ticker-cell">{{ p.asset or p.ticker }}</td>
-                            <td><span class="signal-badge {{ p.status == 'cleared' and 'BUY' or 'SELL' }}">{{ p.status }}</span></td>
+                            <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' }}">{{ p.status }}</span></td>
                             <td>{{ (p.confidence_score or p.confidence or 0) | round(0) }}%</td>
-                            <td><span class="regime-badge {{ p.market_regime or 'NEUTRAL' }}">{{ p.market_regime or '—' }}</span></td>
                             <td>{{ p.actual_outcome or 'Pending' }}</td>
                             <td class="mono">{{ (p.timestamp or '')[:10] }}</td>
                         </tr>
@@ -103,11 +134,11 @@
                             <th>Correct</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="veto-table-body">
                         {% for v in vetoes[:6] %}
                         <tr>
                             <td class="ticker-cell">{{ v.asset }}</td>
-                            <td>{{ (v.rejected_confidence or v.confidence_score or 0) | round(0) }}%</td>
+                            <td>{{ (v.risk_score or v.confidence_score or v.rejected_confidence or 0) | round(0) }}%</td>
                             <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
                             <td>{{ v.avoided_drawdown or '—' }}</td>
                             <td>{{ 'Yes' if v.veto_correct else 'No' if v.veto_correct == False else 'Pending' }}</td>
@@ -129,7 +160,7 @@
         <div class="panel-header">
             <h2>Quick Actions</h2>
         </div>
-        <div class="panel-body padded" style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <div class="panel-body padded" style="display:flex;gap:0.65rem;flex-wrap:wrap;">
             <form action="/run" method="POST" style="display:inline;">
                 <button type="submit" class="btn">Run Analysis</button>
             </form>
