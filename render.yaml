@@ -4,10 +4,8 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: >
-      pip install -r requirements-render.txt &&
-      python dashboard/seed_db.py
-    startCommand: python dashboard/app.py
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 dashboard.app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
