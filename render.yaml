@@ -4,7 +4,8 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: python -m pip install -r requirements-render.txt
+    buildCommand: >
+      python -m pip install -r requirements-render.txt
     startCommand: python dashboard/app.py
     envVars:
       - key: PYTHON_VERSION
