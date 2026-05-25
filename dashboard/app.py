@@ -2389,35 +2389,20 @@ def seed_database_on_startup():
 
 seed_database_on_startup()
 
-def main():
-    try:
-        from research.storage.research_db import init_db as init_research_db
-        init_research_db()
-    except Exception as e:
-        print(f"Warning: Could not initialize research DB: {e}")
-    
-    print("=== SOVEREIGN ALPHA - Dashboard v1.3 ===")
-    print("Features: Login system, Upload portal, Progress tracker, Real-time data")
-    
+try:
+    from research.storage.research_db import init_db as init_research_db
+    init_research_db()
+except Exception as e:
+    print(f"Warning: Could not initialize research DB: {e}")
+
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     is_cloud = os.environ.get("RENDER", "false").lower() == "true"
     
+    print("=== SOVEREIGN ALPHA - Dashboard v1.3 ===")
     print(f"Database: {DB_PATH} (exists: {DB_PATH.exists()})")
     print(f"Proofs: {PROOFS_DIR} (count: {count_proof_files()})")
     print(f"Starting dashboard at http://localhost:{port}")
     print(f"Cloud mode: {is_cloud}")
-    print("")
-    print("Routes:")
-    print(f"  - http://localhost:{port}/           (Home)")
-    print(f"  - http://localhost:{port}/decisions  (Decisions)")
-    print(f"  - http://localhost:{port}/proofs     (Proofs)")
-    print(f"  - http://localhost:{port}/performance (Performance)")
-    print(f"  - http://localhost:{port}/live_market (Live Market)")
-    print(f"  - http://localhost:{port}/health     (Health)")
-    print("")
     
     app.run(host='0.0.0.0', port=port, debug=False)
-
-
-if __name__ == '__main__':
-    main()
