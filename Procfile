@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:$PORT --timeout 120 dashboard.app:app
+web: python dashboard/app.py
