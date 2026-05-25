@@ -35,20 +35,27 @@ sys.path.insert(0, str(project_dir))
 from dotenv import load_dotenv
 load_dotenv(str(project_dir / '.env'))
 
-try:
-    from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
-    from flask_limiter import Limiter
-    from flask_limiter.util import get_remote_address
-    from flask_talisman import Talisman
-    from flask_wtf.csrf import CSRFProtect
-    from flask_cors import CORS
-    from werkzeug.utils import secure_filename
-    from werkzeug.middleware.proxy_fix import ProxyFix
-    FLASK_AVAILABLE = True
-except ImportError:
-    print("ERROR: Flask not installed. Run: pip install flask")
-    FLASK_AVAILABLE = False
-    sys.exit(1)
+_missing = []
+for _mod in ['flask', 'flask_limiter', 'flask_talisman', 'flask_wtf', 'flask_cors', 'werkzeug']:
+    try:
+        __import__(_mod)
+    except ImportError:
+        _missing.append(_mod)
+if _missing:
+    print(f"Missing packages: {_missing}. Installing...")
+    import subprocess
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r',
+                          str(Path(__file__).parent.parent / 'requirements-render.txt')])
+
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
+from flask_wtf.csrf import CSRFProtect
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
+FLASK_AVAILABLE = True
 
 BASE_DIR = project_dir
 DATA_DIR = BASE_DIR / "data"
