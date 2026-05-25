@@ -5,7 +5,8 @@ services:
     region: singapore
     plan: free
     buildCommand: >
-      pip install -r requirements-render.txt
+      pip install -r requirements-render.txt &&
+      python -c "import flask; print('BUILD OK: flask='+flask.__version__)"
     startCommand: python dashboard/app.py
     envVars:
       - key: PYTHON_VERSION
