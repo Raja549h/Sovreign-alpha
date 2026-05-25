@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
+<div class="container fade-in">
     <div class="page-header">
         <h1>Data Upload — Fund Manager Portal</h1>
         <span class="timestamp">Upload positions, parameters, and research</span>
@@ -103,11 +103,21 @@
 </div>
 
 <script>
+const csrfToken = '{{ csrf_token() }}';
+function csrfFetch(url, opts) {
+    opts = opts || {};
+    opts.headers = opts.headers || {};
+    if (!(opts.body instanceof FormData)) {
+        opts.headers['X-CSRFToken'] = csrfToken;
+    }
+    return fetch(url, opts);
+}
 document.getElementById('positions-file').addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('csrf_token', csrfToken);
     const status = document.getElementById('positions-status');
     status.textContent = 'Uploading...';
     fetch('/upload/positions', { method: 'POST', body: formData })
@@ -127,6 +137,7 @@ document.getElementById('positions-file').addEventListener('change', function() 
 document.getElementById('params-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
     const status = document.getElementById('params-status');
     status.textContent = 'Saving...';
     fetch('/upload/params', { method: 'POST', body: formData })
@@ -141,6 +152,7 @@ document.getElementById('params-form').addEventListener('submit', function(e) {
 document.getElementById('research-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    formData.append('csrf_token', csrfToken);
     const status = document.getElementById('research-status');
     status.textContent = 'Saving...';
     fetch('/upload/research', { method: 'POST', body: formData })
