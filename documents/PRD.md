@@ -145,7 +145,7 @@ Replace retail-grade dashboards and generic AI wrappers with a calm, expensive, 
 
 ## 5. SYSTEM CONSTRAINTS
 
-- **Hosting:** Render free tier (512MB RAM, ephemeral filesystem)
+- **Hosting:** Hugging Face Spaces (Docker, always-on)
 - **Database:** SQLite (single-file, no external DB service)
 - **LLM:** Groq API (llama-3.1-8b-instant), requires API key
 - **Market Data:** yfinance (free, no API key)
