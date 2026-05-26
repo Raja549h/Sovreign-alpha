@@ -642,6 +642,8 @@ SAMPLE_VETOES = [
 SAMPLE_PERFORMANCE = {
     'total_sessions': 328,
     'avg_confidence': 0.79,
+    'total_alpha': 47250000,
+    'total_fees': 5670000,
     'confidence_history': {
         'labels': ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
         'values': [0.74, 0.76, 0.78, 0.81, 0.79, 0.82, 0.80, 0.83, 0.81, 0.79, 0.82, 0.80]
@@ -996,6 +998,25 @@ def index():
         ledger_stats = calculate_ledger_stats()
         demo = is_demo_mode()
 
+        if demo:
+            return render_template('index.html',
+                               total_predictions=SAMPLE_STATS['total_decisions'],
+                               approved=SAMPLE_STATS['total_approved'],
+                               vetoed_count=SAMPLE_STATS['total_decisions'] - SAMPLE_STATS['total_approved'],
+                               approval_rate=SAMPLE_STATS['approval_rate'],
+                               veto_efficiency=SAMPLE_LEDGER_STATS['veto_efficiency'],
+                               total_vetoes=SAMPLE_LEDGER_STATS['total_vetoes'],
+                               correct_vetoes=SAMPLE_LEDGER_STATS['veto_correct_count'],
+                               total_avoided_drawdown=SAMPLE_LEDGER_STATS['total_avoided_drawdown'],
+                               certificates=12,
+                               predictions=SAMPLE_PREDICTIONS[:8],
+                               vetoes=SAMPLE_VETOES[:6],
+                               regime=regime['regime'],
+                               regime_confidence=regime['confidence'],
+                               last_verified=datetime.utcnow().strftime('%H:%M:%S'),
+                               progress=progress,
+                               is_demo=True)
+
         return render_template('index.html',
                            total_predictions=stats.get('total_predictions', 0),
                            approved=stats.get('approved', 0),
@@ -1015,14 +1036,14 @@ def index():
                            is_demo=demo)
     except Exception as e:
         return render_template('index.html',
-                           total_predictions=5,
-                           approved=3,
-                           vetoed_count=2,
-                           approval_rate=60.0,
-                           veto_efficiency=71.4,
-                           total_vetoes=2,
-                           correct_vetoes=2,
-                           total_avoided_drawdown=20.7,
+                           total_predictions=SAMPLE_STATS['total_decisions'],
+                           approved=SAMPLE_STATS['total_approved'],
+                           vetoed_count=SAMPLE_STATS['total_decisions'] - SAMPLE_STATS['total_approved'],
+                           approval_rate=SAMPLE_STATS['approval_rate'],
+                           veto_efficiency=SAMPLE_LEDGER_STATS['veto_efficiency'],
+                           total_vetoes=SAMPLE_LEDGER_STATS['total_vetoes'],
+                           correct_vetoes=SAMPLE_LEDGER_STATS['veto_correct_count'],
+                           total_avoided_drawdown=SAMPLE_LEDGER_STATS['total_avoided_drawdown'],
                            certificates=12,
                            predictions=SAMPLE_PREDICTIONS[:8],
                            vetoes=SAMPLE_VETOES[:6],
@@ -1272,8 +1293,8 @@ def performance():
             return render_template('performance.html',
                                  total_sessions=SAMPLE_PERFORMANCE['total_sessions'],
                                  avg_confidence=SAMPLE_PERFORMANCE['avg_confidence'],
-                                 total_alpha=stats.get('total_decisions', 0),
-                                 total_fees=SAMPLE_PERFORMANCE['total_alpha'] * 0.12,
+                                 total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
+                                 total_fees=SAMPLE_PERFORMANCE['total_fees'],
                                  confidence_history=json.dumps(SAMPLE_PERFORMANCE['confidence_history']),
                                  sector_data=json.dumps(SAMPLE_PERFORMANCE['sector_data']),
                                  return_distribution=json.dumps(SAMPLE_PERFORMANCE['return_distribution']),
