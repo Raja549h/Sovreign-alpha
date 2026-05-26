@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Sovereign Alpha — Database Seed Script for Render Deploy
-=========================================================
+Sovereign Alpha — Database Seed Script
+=======================================
 Uses ONLY stdlib (sqlite3, os, json, datetime).
 Zero external dependencies.
 
@@ -255,7 +255,7 @@ def seed_fund_db():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("SOVEREIGN ALPHA — Database Seed for Render Deploy")
+    print("SOVEREIGN ALPHA — Database Seed")
     print("=" * 60)
     try:
         seed_research_db()

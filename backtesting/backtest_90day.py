@@ -918,7 +918,7 @@ def generate_executive_one_pager(metrics):
     lines.append("")
     lines.append("## Dashboard")
     lines.append("")
-    lines.append("Access at: sovereign-alpha.onrender.com")
+    lines.append("Access at: https://demonsatan-soverignalpha.hf.space")
     lines.append("Login required. All data stored locally.")
     lines.append("")
     lines.append("---")

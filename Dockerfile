@@ -15,9 +15,9 @@ ENV HOME=/home/user \
 
 WORKDIR $HOME/app
 
-COPY --chown=user requirements-render.txt .
+COPY --chown=user requirements-docker.txt .
 
-RUN pip install --no-cache-dir -r requirements-render.txt
+RUN pip install --no-cache-dir -r requirements-docker.txt
 
 COPY --chown=user . .
 

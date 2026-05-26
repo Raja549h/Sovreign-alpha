@@ -45,7 +45,7 @@ if _missing:
     print(f"Missing packages: {_missing}. Installing...")
     import subprocess
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r',
-                          str(Path(__file__).parent.parent / 'requirements-render.txt')])
+                           str(Path(__file__).parent.parent / 'requirements-docker.txt')])
 
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, make_response
 from flask_limiter import Limiter
@@ -56,7 +56,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 FLASK_AVAILABLE = True
-IS_CLOUD = os.environ.get("RENDER", "false").lower() == "true" or bool(os.environ.get("SPACE_ID"))
+IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false").lower() == "true"
 
 BASE_DIR = project_dir
 DATA_DIR = BASE_DIR / "data"
@@ -149,7 +149,7 @@ Talisman(app, force_https=False, strict_transport_security=True,
          x_xss_protection=True,
          session_cookie_secure=False,
          permissions_policy={'geolocation': "()", 'camera': "()", 'microphone': "()"})
-CORS(app, origins=['https://sovereign-alpha.onrender.com', 'http://localhost:5000', 'http://localhost:7860', 'https://demonsatan-soverignalpha.hf.space'], supports_credentials=True)
+CORS(app, origins=['http://localhost:5000', 'http://localhost:7860', 'https://demonsatan-soverignalpha.hf.space'], supports_credentials=True)
 
 limiter = Limiter(app=app, key_func=get_remote_address,
                   default_limits=["200 per day", "50 per hour"],
@@ -1812,7 +1812,7 @@ ENERGY:
 @login_required
 @limiter.limit("3 per minute")
 def api_run():
-    """API endpoint to run analysis - Direct execution for Render compatibility."""
+    """API endpoint to run analysis."""
     approved_count = 0
     vetoed_count = 0
     
@@ -2239,8 +2239,8 @@ def seed_database_on_startup():
     import uuid
     from datetime import datetime, timedelta
     try:
-        if os.environ.get("RENDER", "false").lower() == "true" and DB_PATH.exists():
-            print("[seed] Render detected - removing old DB for clean schema")
+        if IS_CLOUD and DB_PATH.exists():
+            print("[seed] Cloud deploy detected - removing old DB for clean schema")
             DB_PATH.unlink()
 
         conn = sqlite3.connect(str(DB_PATH))
