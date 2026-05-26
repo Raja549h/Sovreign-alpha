@@ -62,7 +62,7 @@
                             <span class="signal-badge SELL">VETOED</span>
                             {% endif %}
                         </td>
-                        <td>{{ (d.confidence * 100) | round(0) }}%</td>
+                        <td>{{ d.confidence | pct }}</td>
                         <td>${{ (d.potential_return or d.alpha_generated or 0) | round(0) | int }}</td>
                         <td>${{ (d.fee or d.fee_calculated or 0) | round(0) | int }}</td>
                         <td class="hash">{{ d.zk_proof_hash[:20] if d.zk_proof_hash else '—' }}...</td>

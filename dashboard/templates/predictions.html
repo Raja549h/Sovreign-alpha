@@ -58,7 +58,7 @@
                         <td class="mono" style="font-size:0.65rem;">{{ p.prediction_id }}</td>
                         <td class="ticker-cell">{{ p.asset }}</td>
                         <td>{{ p.sector }}</td>
-                        <td>{{ (p.confidence_score * 100) | round(0) }}%</td>
+                        <td>{{ p.confidence_score | pct }}</td>
                         <td>
                             {% if p.status == 'cleared' %}
                             <span class="signal-badge BUY">CLEARED</span>
