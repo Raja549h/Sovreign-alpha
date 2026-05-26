@@ -736,17 +736,30 @@ def get_db_data(query, params=None):
 
 
 def get_decisions():
-    """Get all decisions from database ordered by newest first."""
+    """Get all decisions from prediction_ledger and veto_archive ordered by newest first."""
     query = """
         SELECT 
-            decision_id,
-            trade_action as action,
-            symbol,
-            alpha_generated,
-            fee_calculated,
+            prediction_id AS decision_id,
+            asset AS symbol,
+            CASE WHEN status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED') 
+                 THEN 'veto' ELSE 'approve' END AS action,
+            status,
+            confidence_score AS confidence,
             timestamp,
-            status
-        FROM performance_log
+            proof_hash AS zk_proof_hash,
+            expected_timeline_days
+        FROM prediction_ledger
+        UNION ALL
+        SELECT 
+            veto_id AS decision_id,
+            asset AS symbol,
+            'veto' AS action,
+            'vetoed' AS status,
+            1.0 - risk_score AS confidence,
+            timestamp,
+            NULL AS zk_proof_hash,
+            NULL AS expected_timeline_days
+        FROM veto_archive
         ORDER BY timestamp DESC
         LIMIT 100
     """
@@ -888,39 +901,56 @@ def get_db_connection():
     return conn
 
 
+@app.template_filter('pct')
+def pct_filter(value):
+    """Format confidence as percentage. If <= 1.0, multiply by 100."""
+    try:
+        f = float(value)
+        if f <= 1.0:
+            return f"{f * 100:.1f}%"
+        return f"{f:.1f}%"
+    except (ValueError, TypeError):
+        return "N/A"
+
+
 def get_dashboard_stats():
-    """Get real dashboard statistics from database."""
+    """Get real dashboard statistics from prediction_ledger and veto_archive."""
     try:
         conn = get_db_connection()
-        # performance_log has the actual trading decisions
-        total_decisions = conn.execute(
-            "SELECT COUNT(*) FROM performance_log"
+        total = conn.execute(
+            "SELECT COUNT(*) FROM prediction_ledger"
         ).fetchone()[0]
         approved = conn.execute(
-            "SELECT COUNT(*) FROM performance_log WHERE status = 'active'"
+            """SELECT COUNT(*) FROM prediction_ledger
+               WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')"""
         ).fetchone()[0]
         vetoed = conn.execute(
-            "SELECT COUNT(*) FROM performance_log WHERE status = 'vetoed'"
+            """SELECT COUNT(*) FROM prediction_ledger
+               WHERE status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')"""
+        ).fetchone()[0]
+        total_vetoes = conn.execute(
+            "SELECT COUNT(*) FROM veto_archive"
+        ).fetchone()[0]
+        correct_vetoes = conn.execute(
+            """SELECT COUNT(*) FROM veto_archive
+               WHERE veto_correct = 1 OR veto_correct = 'YES' OR correct = 1"""
+        ).fetchone()[0]
+        avoided_dd = conn.execute(
+            "SELECT COALESCE(SUM(avoided_drawdown), 0) FROM veto_archive"
         ).fetchone()[0]
         conn.close()
-        
-        accuracy = 0
-        if total_decisions > 0:
-            accuracy = round((approved / total_decisions) * 100, 1)
-        
+        approval_rate = round(approved / total * 100, 1) if total > 0 else 0
+        veto_accuracy = round(correct_vetoes / total_vetoes * 100, 1) if total_vetoes > 0 else 0
         return {
-            'total_decisions': total_decisions,
-            'approved': approved,
-            'vetoed': vetoed,
-            'accuracy': accuracy
+            'total_predictions': total, 'approved': approved, 'vetoed': vetoed,
+            'approval_rate': approval_rate, 'veto_efficiency': veto_accuracy,
+            'avoided_drawdown': avoided_dd, 'total_vetoes': total_vetoes,
+            'correct_vetoes': correct_vetoes
         }
     except Exception:
-        return {
-            'total_decisions': 0,
-            'approved': 0,
-            'vetoed': 0,
-            'accuracy': 0
-        }
+        return {'total_predictions': 0, 'approved': 0, 'vetoed': 0,
+                'approval_rate': 0, 'veto_efficiency': 0,
+                'avoided_drawdown': 0, 'total_vetoes': 0, 'correct_vetoes': 0}
 
 
 def get_recent_decisions(limit=10):
@@ -945,62 +975,44 @@ def index():
         progress = check_setup_progress()
         regime = get_regime_data()
         stats = get_dashboard_stats()
-        recent = get_recent_decisions(5)
-        recent_decisions = []
-        for d in recent:
-            recent_decisions.append({
-                'decision_id': d.get('decision_id', 'N/A'),
-                'symbol': d.get('symbol', ''),
-                'action': d.get('trade_action', ''),
-                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-                'confidence': 0.85,
-                'value': d.get('alpha_generated', 0) or 0
-            })
-        
         predictions_list = get_predictions(8)
         veto_list = get_veto_archive(6)
         ledger_stats = calculate_ledger_stats()
         demo = is_demo_mode()
 
         return render_template('index.html',
-                           approval_rate=stats.get('accuracy', 0),
-                           total_decisions=stats.get('total_decisions', 0),
-                           cleared=stats.get('approved', 0),
-                           risk_rejected=stats.get('vetoed', 0),
-                           success_rate=ledger_stats['success_rate'],
-                           with_outcome=ledger_stats['with_outcome'],
-                           veto_efficiency=ledger_stats['veto_efficiency'],
-                           veto_correct_count=ledger_stats['veto_correct_count'],
-                           total_vetoes=ledger_stats['total_vetoes'],
-                           total_avoided_drawdown=ledger_stats['total_avoided_drawdown'],
+                           total_predictions=stats.get('total_predictions', 0),
+                           approved=stats.get('approved', 0),
+                           vetoed_count=stats.get('vetoed', 0),
+                           approval_rate=stats.get('approval_rate', 0),
+                           veto_efficiency=stats.get('veto_efficiency', 0),
+                           total_vetoes=stats.get('total_vetoes', 0),
+                           correct_vetoes=stats.get('correct_vetoes', 0),
+                           total_avoided_drawdown=stats.get('avoided_drawdown', 0),
                            certificates=count_proof_files() + len(list(CERTS_DIR.glob("*.json"))),
                            predictions=predictions_list,
                            vetoes=veto_list,
                            regime=regime['regime'],
                            regime_confidence=regime['confidence'],
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
-                           recent_decisions=recent_decisions,
                            progress=progress,
                            is_demo=demo)
     except Exception as e:
         return render_template('index.html',
-                           approval_rate=53.8,
-                           total_decisions=0,
-                           cleared=0,
-                           risk_rejected=0,
-                           success_rate=74.6,
-                           with_outcome=142,
+                           total_predictions=5,
+                           approved=3,
+                           vetoed_count=2,
+                           approval_rate=60.0,
                            veto_efficiency=71.4,
-                           veto_correct_count=88,
-                           total_vetoes=123,
-                           total_avoided_drawdown=4250000,
+                           total_vetoes=2,
+                           correct_vetoes=2,
+                           total_avoided_drawdown=20.7,
                            certificates=12,
                            predictions=SAMPLE_PREDICTIONS[:8],
                            vetoes=SAMPLE_VETOES[:6],
                            regime='NEUTRAL',
                            regime_confidence='78%',
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
-                           recent_decisions=[],
                            progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
                            is_demo=True)
 
@@ -1013,16 +1025,21 @@ def decisions():
         all_decisions = get_decisions()
         decisions_list = []
         for d in all_decisions:
+            conf = d.get('confidence') or 0.7
+            try:
+                conf = float(conf)
+            except (ValueError, TypeError):
+                conf = 0.7
             decisions_list.append({
                 'decision_id': d.get('decision_id', 'N/A'),
                 'symbol': d.get('symbol', ''),
                 'action': d.get('action', ''),
-                'status': 'approved' if d.get('status') == 'active' else 'vetoed',
-                'confidence': 0.75 + (hash(d.get('decision_id', '') or '') % 20) / 100,
-                'potential_return': d.get('alpha_generated', 0) or 0,
-                'zk_proof_hash': f"0x{(d.get('decision_id') or 'N/A')[:32]}",
+                'status': d.get('status', 'pending'),
+                'confidence': conf,
+                'potential_return': d.get('potential_return') or d.get('alpha_generated') or 0,
+                'zk_proof_hash': d.get('zk_proof_hash', ''),
                 'timestamp': d.get('timestamp', ''),
-                'fee': d.get('fee_calculated', 0) or 0
+                'fee': d.get('fee_calculated') or 0
             })
         stats = get_dashboard_stats()
         has_data = len(decisions_list) > 0
@@ -2318,6 +2335,20 @@ def seed_database_on_startup():
         """)
 
         c.execute("""
+            CREATE TABLE IF NOT EXISTS decisions (
+                decision_id TEXT PRIMARY KEY,
+                symbol TEXT,
+                action TEXT,
+                status TEXT,
+                confidence REAL,
+                potential_return REAL,
+                fee REAL,
+                zk_proof_hash TEXT,
+                timestamp TEXT
+            )
+        """)
+
+        c.execute("""
             CREATE TABLE IF NOT EXISTS inference_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 model TEXT,
@@ -2373,6 +2404,26 @@ def seed_database_on_startup():
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes))
             print(f"[seed] Inserted {len(samples)} sample vetoes")
+
+        # Sync decisions from prediction_ledger and veto_archive
+        c.execute("""DELETE FROM decisions""")
+        c.execute("""INSERT INTO decisions
+            (decision_id, symbol, action, status, confidence, potential_return, fee, zk_proof_hash, timestamp)
+            SELECT
+                prediction_id, asset,
+                CASE WHEN status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')
+                     THEN 'veto' ELSE 'approve' END,
+                status, confidence_score, NULL, NULL, proof_hash, timestamp
+            FROM prediction_ledger
+        """)
+        c.execute("""INSERT INTO decisions
+            (decision_id, symbol, action, status, confidence, potential_return, fee, zk_proof_hash, timestamp)
+            SELECT
+                veto_id, asset, 'veto', 'vetoed', 1.0 - risk_score,
+                -expected_loss_pct, NULL, NULL, timestamp
+            FROM veto_archive
+        """)
+        print(f"[seed] Synced {c.rowcount + 0} decisions from predictions + vetoes")
 
         conn.commit()
         conn.close()

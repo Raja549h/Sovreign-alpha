@@ -16,18 +16,18 @@
         </div>
         <div class="stat-box">
             <label>Total Predictions</label>
-            <div class="value stat-refresh" data-key="total_predictions">{{ total_decisions | default(0) }}</div>
-            <div class="sub">{{ cleared | default(0) }} approved / {{ risk_rejected | default(0) }} rejected</div>
+            <div class="value stat-refresh" data-key="total_predictions">{{ total_predictions | default(0) }}</div>
+            <div class="sub">{{ approved | default(0) }} approved / {{ vetoed_count | default(0) }} rejected</div>
         </div>
         <div class="stat-box">
             <label>Approval Rate</label>
-            <div class="value stat-refresh {% if success_rate and success_rate < 50 %}danger{% elif success_rate and success_rate >= 65 %}{% else %}warning{% endif %}" data-key="success_rate">{{ success_rate | default(0) | round(1) }}%</div>
-            <div class="sub stat-refresh" data-key="with_outcome">{{ with_outcome | default(0) }} outcomes recorded</div>
+            <div class="value stat-refresh {% if approval_rate and approval_rate < 50 %}danger{% elif approval_rate and approval_rate >= 65 %}{% else %}warning{% endif %}" data-key="approval_rate">{{ approval_rate | default(0) | round(1) }}%</div>
+            <div class="sub stat-refresh" data-key="with_outcome">Veto saved</div>
         </div>
         <div class="stat-box">
             <label>Veto Efficiency</label>
             <div class="value info stat-refresh" data-key="veto_efficiency">{{ veto_efficiency | default(0) | round(1) }}%</div>
-            <div class="sub stat-refresh" data-key="veto_correct_count">{{ veto_correct_count | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
+            <div class="sub stat-refresh" data-key="veto_correct_count">{{ correct_vetoes | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
         </div>
         <div class="stat-box">
             <label>Avoided Drawdown</label>
@@ -101,7 +101,7 @@
                         <tr>
                             <td class="ticker-cell">{{ p.asset or p.ticker }}</td>
                             <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' }}">{{ p.status }}</span></td>
-                            <td>{{ (p.confidence_score or p.confidence or 0) | round(0) }}%</td>
+                            <td>{{ (p.confidence_score or p.confidence or 0) | pct }}</td>
                             <td>{{ p.actual_outcome or 'Pending' }}</td>
                             <td class="mono">{{ (p.timestamp or '')[:10] }}</td>
                         </tr>
@@ -138,7 +138,7 @@
                         {% for v in vetoes[:6] %}
                         <tr>
                             <td class="ticker-cell">{{ v.asset }}</td>
-                            <td>{{ (v.risk_score or v.confidence_score or v.rejected_confidence or 0) | round(0) }}%</td>
+                            <td>{{ (v.risk_score or 0) | pct }}</td>
                             <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
                             <td>{{ v.avoided_drawdown or '—' }}</td>
                             <td>{{ 'Yes' if v.veto_correct else 'No' if v.veto_correct == False else 'Pending' }}</td>
