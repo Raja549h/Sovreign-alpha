@@ -2040,14 +2040,6 @@ def run_analysis_page():
 @app.route('/health')
 def health():
     """Health check endpoint."""
-    pkgs = {}
-    for mod in ['os', 'sqlite3', 'flask', 'yfinance', 'fredapi', 'xhtml2pdf', 'groq']:
-        try:
-            __import__(mod)
-            pkgs[mod] = 'ok'
-        except ImportError:
-            pkgs[mod] = 'missing'
-
     checks = {
         'database': DB_PATH.exists(),
         'results_dir': RESULTS_DIR.exists(),
@@ -2057,8 +2049,7 @@ def health():
     return jsonify({
         'status': 'healthy' if all(checks.values()) else 'degraded',
         'is_cloud': IS_CLOUD,
-        'checks': checks,
-        'packages': pkgs
+        'checks': checks
     })
 
 
