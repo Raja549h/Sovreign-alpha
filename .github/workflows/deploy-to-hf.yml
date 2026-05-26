@@ -55,7 +55,8 @@ jobs:
                   "exports/",
                   ".env",
                   "SUMMARY.md",
-                  "*.md"
+                  "*.md",
+                  "requirements-pipeline.txt"
               ]
           )
           print("Deployed to HF Spaces successfully")
