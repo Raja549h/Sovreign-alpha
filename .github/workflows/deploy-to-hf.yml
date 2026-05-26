@@ -1,0 +1,52 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Deploy to Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub
+          python - <<'PYEOF'
+          from huggingface_hub import HfApi
+          import os
+
+          token = os.environ.get('HF_TOKEN')
+          if not token:
+              print("HF_TOKEN not set — skipping deploy")
+              exit(0)
+
+          api = HfApi(token=token)
+
+          api.upload_folder(
+              folder_path=".",
+              repo_id="Demonsatan/soverignalpha",
+              repo_type="space",
+              ignore_patterns=[
+                  ".git*",
+                  ".venv/",
+                  "venv/",
+                  "__pycache__/",
+                  "*.pyc",
+                  "research/data/filings/",
+                  "research/data/transcripts/",
+                  "logs/",
+                  "*.log",
+                  "exports/",
+                  ".env"
+              ]
+          )
+          print("Deployed to HF Spaces successfully")
+          PYEOF
