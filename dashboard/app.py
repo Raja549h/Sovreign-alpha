@@ -990,12 +990,6 @@ def get_recent_decisions(limit=10):
 def index():
     """Home page."""
     try:
-        progress = check_setup_progress()
-        regime = get_regime_data()
-        stats = get_dashboard_stats()
-        predictions_list = get_predictions(8)
-        veto_list = get_veto_archive(6)
-        ledger_stats = calculate_ledger_stats()
         demo = is_demo_mode()
 
         if demo:
@@ -1011,11 +1005,17 @@ def index():
                                certificates=12,
                                predictions=SAMPLE_PREDICTIONS[:8],
                                vetoes=SAMPLE_VETOES[:6],
-                               regime=regime['regime'],
-                               regime_confidence=regime['confidence'],
+                               regime='NEUTRAL',
+                               regime_confidence='78%',
                                last_verified=datetime.utcnow().strftime('%H:%M:%S'),
-                               progress=progress,
+                               progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
                                is_demo=True)
+
+        progress = check_setup_progress()
+        regime = get_regime_data()
+        stats = get_dashboard_stats()
+        predictions_list = get_predictions(8)
+        veto_list = get_veto_archive(6)
 
         return render_template('index.html',
                            total_predictions=stats.get('total_predictions', 0),
@@ -1285,7 +1285,6 @@ def api_proof_cert(decision_id):
 def performance():
     """Performance page."""
     try:
-        decisions = get_decisions()
         stats = get_dashboard_stats()
         demo = is_demo_mode()
         
@@ -1301,7 +1300,8 @@ def performance():
                                  stats={'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328},
                                  ledger_stats=SAMPLE_LEDGER_STATS,
                                  is_demo=True)
-        
+
+        decisions = get_decisions()
         confidence_history = {'labels': [], 'values': []}
         for i, d in enumerate(decisions[:20]):
             confidence_history['labels'].append(f"D{i+1}")
@@ -1342,8 +1342,8 @@ def performance():
         return render_template('performance.html',
                              total_sessions=total_sessions,
                              avg_confidence=avg_confidence,
-                             total_alpha=stats.get('total_decisions', 0),
-                             total_fees=0,
+                             total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
+                             total_fees=SAMPLE_PERFORMANCE['total_fees'],
                              confidence_history=json.dumps(confidence_history),
                              sector_data=json.dumps(sector_data),
                              return_distribution=json.dumps(return_distribution),
@@ -1354,8 +1354,8 @@ def performance():
         return render_template('performance.html',
                              total_sessions=SAMPLE_PERFORMANCE['total_sessions'],
                              avg_confidence=SAMPLE_PERFORMANCE['avg_confidence'],
-                             total_alpha=0,
-                             total_fees=0,
+                             total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
+                             total_fees=SAMPLE_PERFORMANCE['total_fees'],
                              confidence_history=json.dumps(SAMPLE_PERFORMANCE['confidence_history']),
                              sector_data=json.dumps(SAMPLE_PERFORMANCE['sector_data']),
                              return_distribution=json.dumps(SAMPLE_PERFORMANCE['return_distribution']),
