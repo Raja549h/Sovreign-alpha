@@ -67,9 +67,9 @@
                 <tbody>
                     {% for p in predictions %}
                     <tr>
-                        <td class="mono" style="font-size:0.6rem;">{{ p.prediction_id }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ p.prediction_id }}</td>
                         <td class="ticker-cell">{{ p.asset }}</td>
-                        <td style="font-size:0.6rem;">{{ p.sector }}</td>
+                        <td style="font-size:0.65rem;">{{ p.sector }}</td>
                         <td>
                             <div class="conf-label">
                                 <span>{{ p.confidence_score | pct }}</span>
@@ -84,7 +84,7 @@
                         <td>{{ p.actual_outcome or 'Pending' }}</td>
                         <td class="{% if p.actual_return_pct and p.actual_return_pct > 0 %}value-positive{% elif p.actual_return_pct and p.actual_return_pct < 0 %}value-negative{% endif %}">{{ p.actual_return_pct | default('—') }}%</td>
                         <td class="hash" data-full="{{ p.proof_hash }}">{{ (p.proof_hash[:20] if p.proof_hash else '—') }}...</td>
-                        <td class="mono" style="font-size:0.6rem;">{{ (p.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -52,7 +52,7 @@
                         <tr>
                             <td class="ticker-cell">{{ c.ticker }}</td>
                             <td>{{ c.company_name }}</td>
-                            <td style="font-size:0.6rem;">{{ c.sector or '—' }}</td>
+                            <td style="font-size:0.65rem;">{{ c.sector or '—' }}</td>
                             <td><a href="/research/{{ c.ticker }}" class="btn outline small">View</a></td>
                         </tr>
                         {% endfor %}
@@ -84,9 +84,9 @@
                     <tbody>
                         {% for n in notes %}
                         <tr>
-                            <td class="mono" style="font-size:0.6rem;">{{ n.note_reference }}</td>
+                            <td class="mono" style="font-size:0.65rem;">{{ n.note_reference }}</td>
                             <td>{{ (n.title[:50] if n.title else '') }}{{ '...' if n.title and n.title|length > 50 }}</td>
-                            <td class="mono" style="font-size:0.6rem;">{{ (n.generated_at or '')[:10] }}</td>
+                            <td class="mono" style="font-size:0.65rem;">{{ (n.generated_at or '')[:10] }}</td>
                             <td>
                                 <a href="/research/note/{{ n.note_reference }}" class="btn outline small">View</a>
                                 <a href="/research/export/{{ n.note_reference }}" class="btn outline small">PDF</a>

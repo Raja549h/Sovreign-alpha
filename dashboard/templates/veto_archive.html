@@ -54,9 +54,9 @@
                 <tbody>
                     {% for v in vetoes %}
                     <tr>
-                        <td class="mono" style="font-size:0.6rem;">{{ v.veto_id }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ v.veto_id }}</td>
                         <td class="ticker-cell">{{ v.asset }}</td>
-                        <td style="font-size:0.6rem;">{{ v.sector }}</td>
+                        <td style="font-size:0.65rem;">{{ v.sector }}</td>
                         <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-tip="{{ v.rejection_reason }}">{{ (v.rejection_reason[:80] if v.rejection_reason else '—') }}{{ '...' if v.rejection_reason and v.rejection_reason|length > 80 }}</td>
                         <td class="value-negative">{{ v.expected_loss_pct | default('—') }}%</td>
                         <td class="{% if v.actual_return_pct and v.actual_return_pct > 0 %}value-positive{% elif v.actual_return_pct and v.actual_return_pct < 0 %}value-negative{% endif %}">{{ v.actual_return_pct | default('—') }}%</td>
@@ -70,7 +70,7 @@
                             <span class="signal-badge PENDING">PENDING</span>
                             {% endif %}
                         </td>
-                        <td class="mono" style="font-size:0.6rem;">{{ (v.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (v.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

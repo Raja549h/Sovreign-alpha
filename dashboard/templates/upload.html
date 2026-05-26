@@ -31,23 +31,23 @@
             <div class="panel-body padded">
                 <form id="params-form">
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Position Size (%)</label>
+                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Position Size (%)</label>
                         <input type="number" name="max_position" value="{{ params.max_position_size_pct or '5.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Sector Exposure (%)</label>
+                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Sector Exposure (%)</label>
                         <input type="number" name="max_sector" value="{{ params.sector_limits or '20.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Drawdown (%)</label>
+                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Drawdown (%)</label>
                         <input type="number" name="max_drawdown" value="{{ params.max_drawdown_pct or '15.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Min Confidence (%)</label>
+                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Min Confidence (%)</label>
                         <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">AUM ($)</label>
+                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">AUM ($)</label>
                         <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
                     <button type="submit" class="btn" style="margin-top:0.45rem;">Save Parameters</button>

@@ -57,7 +57,7 @@
                 <tbody>
                     {% for d in decisions %}
                     <tr>
-                        <td class="mono" style="font-size:0.6rem;">{{ d.decision_id }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ d.decision_id }}</td>
                         <td class="ticker-cell">{{ d.symbol }}</td>
                         <td><span class="signal-badge {{ d.action }}">{{ d.action }}</span></td>
                         <td>
@@ -71,7 +71,7 @@
                         <td>${{ ((d.potential_return or d.alpha_generated or 0)) | round(0) | int }}</td>
                         <td>${{ ((d.fee or d.fee_calculated or 0)) | round(0) | int }}</td>
                         <td class="hash" data-full="{{ d.zk_proof_hash }}">{{ (d.zk_proof_hash[:20] if d.zk_proof_hash else '—') }}...</td>
-                        <td class="mono" style="font-size:0.6rem;">{{ (d.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (d.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
