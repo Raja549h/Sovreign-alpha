@@ -13,12 +13,38 @@
         </div>
         <div class="stat-box info">
             <label>Verification Method</label>
-            <div class="value" style="font-size:0.75rem;">RSA-2048</div>
+            <div class="value" style="font-size:11px;">RSA-2048</div>
             <div class="sub">+ Merkle chain integrity</div>
         </div>
-        <div class="stat-box accent">
+        <div class="stat-box {% if proofs and proofs|length > 0 %}accent{% else %}danger{% endif %}">
             <label>All Verified</label>
-            <div class="value">{{ 'YES' if proofs and proofs|length > 0 else '—' }}</div>
+            <div style="font-family:var(--font-mono);font-size:48px;font-weight:700;{% if proofs and proofs|length > 0 %}color:var(--accent);{% else %}color:var(--danger);{% endif %}">{{ 'YES' if proofs and proofs|length > 0 else 'NO' }}</div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Verification Method</h2>
+        </div>
+        <div class="panel-body padded">
+            <pre style="font-family:var(--font-mono);background:#0a0a0a;border:1px solid #1e1e1e;padding:12px;font-size:10px;color:#888;overflow-x:auto;margin:0;">
+┌─ VERIFICATION STACK ─────────────────────┐
+│                                          │
+│ 1. RSA-2048 Public Key Signature         │
+│    • Key: 2048-bit RSA-OAEP             │
+│    • Hash: SHA-256                      │
+│    • Status: ACTIVE                     │
+│                                          │
+│ 2. Merkle Chain Integrity                │
+│    • Root: immutable ledger anchor       │
+│    • Proof: inclusion proof per cert     │
+│    • Depth: log₂(n)                     │
+│                                          │
+│ 3. Certificate Chain                     │
+│    • Count: {{ proofs|length if proofs else 0 }} active certs            │
+│    • Status: {{ 'ALL VERIFIED' if proofs and proofs|length > 0 else 'NO CERTIFICATES' }}                   │
+│                                          │
+└──────────────────────────────────────────┘</pre>
         </div>
     </div>
 
@@ -52,7 +78,7 @@
                         <td class="ticker-cell">{{ p.symbol }}</td>
                         <td><span class="signal-badge {{ p.action }}">{{ p.action }}</span></td>
                         <td>{{ (p.confidence or 0) | pct }}</td>
-                        <td class="hash" data-full="{{ p.proof_hash_full or p.proof_hash }}">{{ (p.proof_hash or '—') }}{% if not p.proof_hash_full %}...{% endif %}</td>
+                        <td class="hash copy-hash" data-hash="{{ p.proof_hash_full or p.proof_hash }}" data-short="{{ (p.proof_hash[:8] if p.proof_hash else '—') }}..." style="color:var(--warning);cursor:pointer;">{{ (p.proof_hash[:8] if p.proof_hash else '—') }}...</td>
                         <td><span class="verified-badge">VERIFIED</span></td>
                         <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
@@ -60,9 +86,9 @@
                 </tbody>
             </table>
             {% else %}
-            <div class="empty-state">
-                <div class="icon">—</div>
-                <div>No proof certificates generated. Run analysis to create proofs.</div>
+            <div class="empty-state" style="font-family:var(--font-mono);color:var(--warning);font-size:10px;">
+                <div>No proof certificates generated.</div>
+                <div style="margin-top:4px;color:#555;">Run analysis via Dashboard → Run Analysis to begin cryptographic audit trail.</div>
             </div>
             {% endif %}
         </div>

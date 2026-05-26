@@ -75,19 +75,20 @@ new Chart(document.getElementById('confidenceChart'), {
         datasets: [{
             label: 'Confidence Score',
             data: confidenceData.values || [],
-            borderColor: '#00d4aa',
-            backgroundColor: 'rgba(0, 212, 170, 0.1)',
-            fill: true,
+            borderColor: '#00ff9f',
+            borderWidth: 1.5,
+            fill: false,
             tension: 0.3,
-            pointRadius: 2
+            pointRadius: 2,
+            pointBackgroundColor: '#00ff9f'
         }]
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#707070', font: { size: 10 } } } },
+        plugins: { legend: { display: false } },
         scales: {
-            x: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' } },
-            y: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' }, min: 0, max: 1 }
+            x: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' } },
+            y: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' }, min: 0, max: 1 }
         }
     }
 });
@@ -97,16 +98,16 @@ new Chart(document.getElementById('sectorChart'), {
     data: {
         labels: sectorData.labels || [],
         datasets: [
-            { label: 'Approved', data: sectorData.approved || [], backgroundColor: '#00d4aa' },
-            { label: 'Vetoed', data: sectorData.vetoed || [], backgroundColor: '#e03030' }
+            { label: 'Approved', data: sectorData.approved || [], backgroundColor: '#00ff9f', barPercentage: 1.0, categoryPercentage: 1.0 },
+            { label: 'Vetoed', data: sectorData.vetoed || [], backgroundColor: '#ff4444', barPercentage: 1.0, categoryPercentage: 1.0 }
         ]
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#707070', font: { size: 10 } } } },
+        plugins: { legend: { labels: { color: '#555', font: { size: 9, family: 'monospace' } } } },
         scales: {
-            x: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' } },
-            y: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' } }
+            x: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' } },
+            y: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' } }
         }
     }
 });
@@ -118,15 +119,16 @@ new Chart(document.getElementById('returnChart'), {
         datasets: [{
             label: 'Count',
             data: returnData.values || [],
-            backgroundColor: '#00d4aa'
+            backgroundColor: '#00ff9f',
+            barPercentage: 1.0, categoryPercentage: 1.0
         }]
     },
     options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#707070', font: { size: 10 } } } },
+        plugins: { legend: { display: false } },
         scales: {
-            x: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' } },
-            y: { ticks: { color: '#505050', font: { size: 9 } }, grid: { color: '#1e1e1e' } }
+            x: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' } },
+            y: { ticks: { color: '#555', font: { size: 9, family: 'monospace' } }, grid: { color: '#1a1a1a' } }
         }
     }
 });
