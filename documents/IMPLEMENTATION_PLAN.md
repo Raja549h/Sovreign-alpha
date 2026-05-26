@@ -160,7 +160,7 @@ sovereign-alpha/
 ### Pre-Deploy
 - [x] `.env` configured with `FUND_PASSWORD`, `JWT_SECRET`, `GROQ_API_KEY`
 - [x] `requirements-docker.txt` includes all 5 security packages
-- [x] `render.yaml` / Render Dashboard configured
+- [x] `Dockerfile` / HF Spaces configured
 - [x] CSP allows `cdnjs.cloudflare.com`, `fonts.googleapis.com`
 - [x] `RENDER=true` set in Render environment
 
