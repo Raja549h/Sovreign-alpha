@@ -48,13 +48,13 @@
                 <tbody>
                     {% for p in proofs %}
                     <tr>
-                        <td class="mono" style="font-size:0.6rem;">{{ p.decision_id }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ p.decision_id }}</td>
                         <td class="ticker-cell">{{ p.symbol }}</td>
                         <td><span class="signal-badge {{ p.action }}">{{ p.action }}</span></td>
                         <td>{{ (p.confidence or 0) | pct }}</td>
                         <td class="hash" data-full="{{ p.proof_hash_full or p.proof_hash }}">{{ (p.proof_hash or '—') }}{% if not p.proof_hash_full %}...{% endif %}</td>
                         <td><span class="verified-badge">VERIFIED</span></td>
-                        <td class="mono" style="font-size:0.6rem;">{{ (p.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

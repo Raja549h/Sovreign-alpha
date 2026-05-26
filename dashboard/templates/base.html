@@ -352,7 +352,7 @@
 
         .severity-tag {
             display: inline-block; padding: 0.08rem 0.35rem;
-            font-size: 0.6rem; font-weight: 700; font-family: var(--font-mono);
+            font-size: 0.65rem; font-weight: 700; font-family: var(--font-mono);
             text-transform: uppercase;
         }
         .severity-tag.critical { background: rgba(224,68,68,0.2); color: var(--danger); }
@@ -456,7 +456,7 @@
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
-            <span data-tip="Last full refresh" id="nav-updated" style="color:var(--text-dim);font-size:0.55rem;">{{ last_updated[:19] if last_updated else '' }}</span>
+            <span data-tip="Last full refresh" id="nav-updated" style="color:var(--text-dim);font-size:0.65rem;">{{ last_updated[:19] if last_updated else '' }}</span>
             <a href="/logout">Logout</a>
         </div>
     </nav>
