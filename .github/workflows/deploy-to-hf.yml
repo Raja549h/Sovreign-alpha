@@ -1,5 +1,8 @@
 name: Deploy to Hugging Face Spaces
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -14,19 +17,24 @@ jobs:
           fetch-depth: 0
           lfs: true
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Deploy to Hugging Face Spaces
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          pip install huggingface_hub
+          pip install huggingface_hub -q
           python - <<'PYEOF'
           from huggingface_hub import HfApi
           import os
 
           token = os.environ.get('HF_TOKEN')
           if not token:
-              print("HF_TOKEN not set — skipping deploy")
-              exit(0)
+              print("::error::HF_TOKEN secret not set — add it to GitHub repo secrets")
+              exit(1)
 
           api = HfApi(token=token)
 
@@ -45,7 +53,9 @@ jobs:
                   "logs/",
                   "*.log",
                   "exports/",
-                  ".env"
+                  ".env",
+                  "SUMMARY.md",
+                  "*.md"
               ]
           )
           print("Deployed to HF Spaces successfully")
