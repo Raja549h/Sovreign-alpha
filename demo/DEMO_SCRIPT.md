@@ -160,7 +160,7 @@ Before starting the demo, ensure:
 | No data on page | Run `py data/market_feed.py` first |
 | Crew fails | Uses fallback mode - still works |
 | No proofs | Run `py zkml/proof_generator.py` |
-| Cloud deployment | See DEPLOYMENT.md |
+| Cloud deployment | See README.md for HF Spaces setup |
 
 ---
 
