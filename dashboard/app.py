@@ -700,12 +700,28 @@ SAMPLE_SIGNALS = {
     ]
 }
 
+SAMPLE_COMPANIES = [
+    {'ticker': 'NVDA', 'company_name': 'NVIDIA Corporation', 'sector': 'Technology'},
+    {'ticker': 'LLY', 'company_name': 'Eli Lilly & Co.', 'sector': 'Healthcare'},
+    {'ticker': 'JPM', 'company_name': 'JPMorgan Chase & Co.', 'sector': 'Financial'},
+    {'ticker': 'XOM', 'company_name': 'ExxonMobil Corporation', 'sector': 'Energy'},
+    {'ticker': 'AVGO', 'company_name': 'Broadcom Inc.', 'sector': 'Technology'},
+    {'ticker': 'TSM', 'company_name': 'Taiwan Semiconductor', 'sector': 'Technology'},
+    {'ticker': 'UNH', 'company_name': 'UnitedHealth Group', 'sector': 'Healthcare'},
+]
+
+SAMPLE_NOTES = [
+    {'note_reference': 'SA-RES-2026-0428', 'title': 'NVIDIA — AI Infrastructure Capex Cycle Acceleration: H100/B200 Backlog Analysis and Revenue Sensitivity', 'generated_at': '2026-05-16T08:45:00Z'},
+    {'note_reference': 'SA-RES-2026-0427', 'title': 'LLY — GLP-1 Franchise Expansion: Market Sizing Competitor Response and Manufacturing Scale-Up Trajectory', 'generated_at': '2026-05-15T10:30:00Z'},
+    {'note_reference': 'SA-RES-2026-0426', 'title': 'XOM — LNG Export Capacity and FCF Yield Analysis Under OPEC+ Supply Scenarios', 'generated_at': '2026-05-14T14:00:00Z'},
+    {'note_reference': 'SA-RES-2026-0425', 'title': 'AVGO — Custom ASIC Revenue Inflection Point: Hyperscaler Design Win Analysis', 'generated_at': '2026-05-13T09:15:00Z'},
+]
+
 def is_demo_mode():
-    """Check if we should show demo data."""
+    """Check if we should show demo data (no real outcomes yet)."""
     try:
-        decisions = get_predictions(1)
-        proofs = count_proof_files()
-        return len(decisions) == 0 and proofs == 0
+        ledger = calculate_ledger_stats()
+        return ledger['with_outcome'] == 0 or ledger['total_predictions'] == 0
     except Exception:
         return True
 
@@ -1044,7 +1060,7 @@ def decisions():
         stats = get_dashboard_stats()
         has_data = len(decisions_list) > 0
         
-        if not has_data and is_demo_mode():
+        if is_demo_mode() or not has_data:
             decisions_list = SAMPLE_ALL_DECISIONS
             has_data = True
             stats = {'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328}
@@ -1071,7 +1087,7 @@ def predictions():
         ledger_stats = calculate_ledger_stats()
         demo = is_demo_mode()
         
-        if not predictions_list and demo:
+        if demo:
             predictions_list = SAMPLE_PREDICTIONS
             ledger_stats = SAMPLE_LEDGER_STATS
         
@@ -1095,7 +1111,7 @@ def veto_archive():
         ledger_stats = calculate_ledger_stats()
         demo = is_demo_mode()
         
-        if not veto_list and demo:
+        if demo:
             veto_list = SAMPLE_VETOES
             ledger_stats = SAMPLE_LEDGER_STATS
         
@@ -1136,7 +1152,7 @@ def proofs():
         stats = get_dashboard_stats()
         demo = is_demo_mode()
         
-        if not has_proofs and demo:
+        if demo or not has_proofs:
             formatted_proofs = SAMPLE_PROOFS
             has_proofs = True
         
@@ -1338,9 +1354,8 @@ def api_refresh():
         vetoes = get_veto_archive(6)
         demo = is_demo_mode()
         
-        if not predictions and demo:
+        if demo:
             predictions = SAMPLE_PREDICTIONS[:8]
-        if not vetoes and demo:
             vetoes = SAMPLE_VETOES[:6]
         
         return jsonify({
@@ -2153,12 +2168,18 @@ def research_home():
         companies = get_all_companies()
         notes = get_notes()
         total_flags = sum(get_flags_count(c['id']) for c in companies)
+        demo = is_demo_mode()
+        if demo or (not companies and not notes):
+            companies = SAMPLE_COMPANIES
+            notes = SAMPLE_NOTES
+            total_flags = 3
         return render_template('research_home.html',
                              companies=companies, notes=notes[:10],
-                             total_flags=total_flags)
+                             total_flags=total_flags, is_demo=demo)
     except Exception as e:
         return render_template('research_home.html',
-                             companies=[], notes=[], total_flags=0, error=str(e))
+                             companies=SAMPLE_COMPANIES, notes=SAMPLE_NOTES,
+                             total_flags=3, error=str(e), is_demo=True)
 
 
 @app.route('/research/<ticker>')
