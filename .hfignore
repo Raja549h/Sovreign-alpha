@@ -1,0 +1,15 @@
+.venv/
+venv/
+env/
+.git/
+research/data/filings/
+research/data/transcripts/
+logs/
+*.log
+__pycache__/
+*.pyc
+*.pyo
+.env
+exports/
+*.db-journal
+*.db-wal
