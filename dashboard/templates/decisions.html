@@ -7,23 +7,23 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Approval Rate</label>
-            <div class="value">{{ stats.approval_rate | default(0) | round(1) }}%</div>
+            <div class="value">{{ (stats.approval_rate | default(0)) | round(1) }}%</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Approved</label>
             <div class="value">{{ stats.approved | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box danger">
             <label>Vetoed</label>
             <div class="value danger">{{ stats.vetoed | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Total Alpha</label>
-            <div class="value">${{ (stats.total_alpha | default(0)) | round(0) | int }}</div>
+            <div class="value info">${{ (stats.total_alpha | default(0)) | round(0) | int }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box warning">
             <label>Performance Fees</label>
             <div class="value warning">${{ (stats.total_fees | default(0)) | round(0) | int }}</div>
         </div>
@@ -32,10 +32,15 @@
     <div class="panel">
         <div class="panel-header">
             <h2>All Decisions</h2>
+            <span class="timestamp" id="decisions-table-count">0</span>
         </div>
         <div class="panel-body">
             {% if decisions and decisions|length > 0 %}
-            <table>
+            <div class="filter-bar">
+                <input type="text" id="dec-filter" placeholder="Filter by symbol/action/status..." style="flex:1;">
+                <span class="count" id="decisions-table-count">{{ decisions|length }} decisions</span>
+            </div>
+            <table id="decisions-table">
                 <thead>
                     <tr>
                         <th>Decision ID</th>
@@ -52,7 +57,7 @@
                 <tbody>
                     {% for d in decisions %}
                     <tr>
-                        <td class="mono" style="font-size:0.65rem;">{{ d.decision_id }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ d.decision_id }}</td>
                         <td class="ticker-cell">{{ d.symbol }}</td>
                         <td><span class="signal-badge {{ d.action }}">{{ d.action }}</span></td>
                         <td>
@@ -63,10 +68,10 @@
                             {% endif %}
                         </td>
                         <td>{{ d.confidence | pct }}</td>
-                        <td>${{ (d.potential_return or d.alpha_generated or 0) | round(0) | int }}</td>
-                        <td>${{ (d.fee or d.fee_calculated or 0) | round(0) | int }}</td>
-                        <td class="hash">{{ d.zk_proof_hash[:20] if d.zk_proof_hash else '—' }}...</td>
-                        <td class="mono" style="font-size:0.65rem;">{{ (d.timestamp or '')[:16] }}</td>
+                        <td>${{ ((d.potential_return or d.alpha_generated or 0)) | round(0) | int }}</td>
+                        <td>${{ ((d.fee or d.fee_calculated or 0)) | round(0) | int }}</td>
+                        <td class="hash" data-full="{{ d.zk_proof_hash }}">{{ (d.zk_proof_hash[:20] if d.zk_proof_hash else '—') }}...</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ (d.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -80,4 +85,8 @@
         </div>
     </div>
 </div>
+
+<script>
+filterTable('dec-filter', 'decisions-table');
+</script>
 {% endblock %}

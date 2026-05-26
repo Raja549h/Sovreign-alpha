@@ -7,42 +7,42 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Market Regime</label>
             <div class="value">
                 <span class="regime-badge {{ regime or 'NEUTRAL' }}" id="regime-badge">{{ regime or 'NEUTRAL' }}</span>
             </div>
             <div class="sub" id="regime-confidence">Confidence: {{ regime_confidence | default('—') }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Total Predictions</label>
             <div class="value stat-refresh" data-key="total_predictions">{{ total_predictions | default(0) }}</div>
             <div class="sub">{{ approved | default(0) }} approved / {{ vetoed_count | default(0) }} rejected</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box {% if approval_rate and approval_rate < 50 %}danger{% elif approval_rate and approval_rate >= 65 %}accent{% else %}warning{% endif %}">
             <label>Approval Rate</label>
-            <div class="value stat-refresh {% if approval_rate and approval_rate < 50 %}danger{% elif approval_rate and approval_rate >= 65 %}{% else %}warning{% endif %}" data-key="approval_rate">{{ approval_rate | default(0) | round(1) }}%</div>
-            <div class="sub stat-refresh" data-key="with_outcome">Veto saved</div>
+            <div class="value stat-refresh" data-key="approval_rate">{{ approval_rate | default(0) | round(1) }}%</div>
+            <div class="sub">Veto saved</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Veto Efficiency</label>
             <div class="value info stat-refresh" data-key="veto_efficiency">{{ veto_efficiency | default(0) | round(1) }}%</div>
             <div class="sub stat-refresh" data-key="veto_correct_count">{{ correct_vetoes | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box warning">
             <label>Avoided Drawdown</label>
             <div class="value">${{ (total_avoided_drawdown | default(0)) | round(0) | int }}</div>
             <div class="sub">Cumulative risk avoided</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Audit Chain</label>
-            <div class="value" style="font-size:0.9rem;">{{ certificates | default(0) }}</div>
+            <div class="value" style="font-size:0.85rem;">{{ certificates | default(0) }}</div>
             <div class="sub">Cryptographic certificates</div>
         </div>
     </div>
 
     {% if regime_data and regime_data.indicators %}
-    <div class="grid-4" style="margin-bottom:0.85rem;">
+    <div class="grid-4" style="margin-bottom:0.75rem;">
         <div class="intel-card">
             <div class="label">VIX (Volatility)</div>
             <div class="stat accent">{{ regime_data.indicators.vix | default('—') }}</div>
@@ -72,7 +72,7 @@
             <h2>Regime Intelligence Summary</h2>
             <span class="timestamp">{{ last_verified }}</span>
         </div>
-        <div class="panel-body padded" style="font-size:0.75rem;color:var(--text-secondary);">
+        <div class="panel-body padded" style="font-size:0.7rem;color:var(--text-secondary);">
             {{ regime_data.summary }}
         </div>
     </div>
@@ -82,19 +82,13 @@
         <div class="panel">
             <div class="panel-header">
                 <h2>Recent Predictions</h2>
-                <a href="/predictions" class="btn outline">View All</a>
+                <a href="/predictions" class="btn outline small">View All</a>
             </div>
             <div class="panel-body">
                 {% if predictions and predictions|length > 0 %}
                 <table>
                     <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th>Signal</th>
-                            <th>Confidence</th>
-                            <th>Outcome</th>
-                            <th>Date</th>
-                        </tr>
+                        <tr><th>Ticker</th><th>Signal</th><th>Confidence</th><th>Outcome</th><th>Date</th></tr>
                     </thead>
                     <tbody id="prediction-table-body">
                         {% for p in predictions[:8] %}
@@ -120,26 +114,20 @@
         <div class="panel">
             <div class="panel-header">
                 <h2>Recent Vetoes</h2>
-                <a href="/veto-archive" class="btn outline">View All</a>
+                <a href="/veto-archive" class="btn outline small">View All</a>
             </div>
             <div class="panel-body">
                 {% if vetoes and vetoes|length > 0 %}
                 <table>
                     <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th>Rejected Conf</th>
-                            <th>Reason</th>
-                            <th>Avoided DD</th>
-                            <th>Correct</th>
-                        </tr>
+                        <tr><th>Ticker</th><th>Risk</th><th>Reason</th><th>Avoided DD</th><th>Correct</th></tr>
                     </thead>
                     <tbody id="veto-table-body">
                         {% for v in vetoes[:6] %}
                         <tr>
                             <td class="ticker-cell">{{ v.asset }}</td>
                             <td>{{ (v.risk_score or 0) | pct }}</td>
-                            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
+                            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-tip="{{ v.rejection_reason }}">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
                             <td>{{ v.avoided_drawdown or '—' }}</td>
                             <td>{{ 'Yes' if v.veto_correct else 'No' if v.veto_correct == False else 'Pending' }}</td>
                         </tr>
@@ -160,12 +148,12 @@
         <div class="panel-header">
             <h2>Quick Actions</h2>
         </div>
-        <div class="panel-body padded" style="display:flex;gap:0.65rem;flex-wrap:wrap;">
+        <div class="panel-body padded" style="display:flex;gap:0.55rem;flex-wrap:wrap;">
             <form action="/run" method="POST" style="display:inline;">
                 <button type="submit" class="btn">Run Analysis</button>
             </form>
             <a href="/upload" class="btn outline">Upload Fund Data</a>
-            <a href="/api/export-predictions" class="btn outline">Export Predictions CSV</a>
+            <a href="/api/export-predictions" class="btn outline">Export CSV</a>
             <a href="/live_market" class="btn outline">Live Market</a>
         </div>
     </div>

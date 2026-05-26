@@ -7,28 +7,33 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Proof Certificates</label>
             <div class="value">{{ proofs|length if proofs else 0 }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Verification Method</label>
-            <div class="value" style="font-size:0.8rem;">RSA-2048</div>
+            <div class="value" style="font-size:0.75rem;">RSA-2048</div>
             <div class="sub">+ Merkle chain integrity</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>All Verified</label>
-            <div class="value">YES</div>
+            <div class="value">{{ 'YES' if proofs and proofs|length > 0 else '—' }}</div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-header">
             <h2>Proof Certificates</h2>
+            <span class="timestamp" id="proofs-table-count">0</span>
         </div>
         <div class="panel-body">
             {% if proofs and proofs|length > 0 %}
-            <table>
+            <div class="filter-bar">
+                <input type="text" id="proof-filter" placeholder="Filter by asset/action/verdict..." style="flex:1;">
+                <span class="count" id="proofs-table-count">{{ proofs|length }} certificates</span>
+            </div>
+            <table id="proofs-table">
                 <thead>
                     <tr>
                         <th>Decision ID</th>
@@ -43,13 +48,13 @@
                 <tbody>
                     {% for p in proofs %}
                     <tr>
-                        <td class="mono" style="font-size:0.65rem;">{{ p.decision_id }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ p.decision_id }}</td>
                         <td class="ticker-cell">{{ p.symbol }}</td>
                         <td><span class="signal-badge {{ p.action }}">{{ p.action }}</span></td>
-                        <td>{{ (p.confidence * 100) | round(0) }}%</td>
-                        <td class="hash">{{ p.proof_hash[:24] }}...</td>
+                        <td>{{ (p.confidence or 0) | pct }}</td>
+                        <td class="hash" data-full="{{ p.proof_hash_full or p.proof_hash }}">{{ (p.proof_hash or '—') }}{% if not p.proof_hash_full %}...{% endif %}</td>
                         <td><span class="verified-badge">VERIFIED</span></td>
-                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -63,4 +68,8 @@
         </div>
     </div>
 </div>
+
+<script>
+filterTable('proof-filter', 'proofs-table');
+</script>
 {% endblock %}

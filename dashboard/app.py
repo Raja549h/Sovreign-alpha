@@ -1369,6 +1369,17 @@ def api_refresh():
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/api/ticker-refresh', methods=['POST'])
+@login_required
+def api_ticker_refresh():
+    """API endpoint to refresh macro ticker strip in-place."""
+    try:
+        tickers = get_macro_tickers()
+        return jsonify({'success': True, 'tickers': tickers})
+    except Exception:
+        return jsonify({'success': False})
+
+
 def normalize_market_data(data):
     """Normalize flat or nested market data into {tickers: {...}, fetched_at: ...}."""
     if 'tickers' in data and isinstance(data['tickers'], dict):

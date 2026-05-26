@@ -7,19 +7,19 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box danger">
             <label>Total Vetoes</label>
             <div class="value danger">{{ ledger_stats.total_vetoes | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Correct Vetoes</label>
             <div class="value">{{ ledger_stats.veto_correct_count | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Veto Accuracy</label>
-            <div class="value info">{{ ledger_stats.veto_efficiency | default(0) | round(1) }}%</div>
+            <div class="value info">{{ (ledger_stats.veto_efficiency | default(0)) | round(1) }}%</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box warning">
             <label>Total Avoided Drawdown</label>
             <div class="value">${{ (ledger_stats.total_avoided_drawdown | default(0)) | round(0) | int }}</div>
             <div class="sub">Cumulative risk avoided through veto filtering</div>
@@ -29,10 +29,15 @@
     <div class="panel">
         <div class="panel-header">
             <h2>All Vetoes</h2>
+            <span class="timestamp" id="vetoes-table-count">0</span>
         </div>
         <div class="panel-body">
             {% if vetoes and vetoes|length > 0 %}
-            <table>
+            <div class="filter-bar">
+                <input type="text" id="veto-filter" placeholder="Filter by asset/sector/reason..." style="flex:1;">
+                <span class="count" id="vetoes-table-count">{{ vetoes|length }} vetoes</span>
+            </div>
+            <table id="vetoes-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -49,23 +54,23 @@
                 <tbody>
                     {% for v in vetoes %}
                     <tr>
-                        <td class="mono" style="font-size:0.65rem;">{{ v.veto_id }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ v.veto_id }}</td>
                         <td class="ticker-cell">{{ v.asset }}</td>
-                        <td>{{ v.sector }}</td>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ v.rejection_reason }}">{{ v.rejection_reason[:100] }}...</td>
-                        <td class="value danger">{{ v.expected_loss_pct | default('—') }}%</td>
-                        <td>{{ v.actual_return_pct | default('—') }}%</td>
-                        <td>{{ v.avoided_drawdown | default('—') }}</td>
+                        <td style="font-size:0.6rem;">{{ v.sector }}</td>
+                        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-tip="{{ v.rejection_reason }}">{{ (v.rejection_reason[:80] if v.rejection_reason else '—') }}{{ '...' if v.rejection_reason and v.rejection_reason|length > 80 }}</td>
+                        <td class="value-negative">{{ v.expected_loss_pct | default('—') }}%</td>
+                        <td class="{% if v.actual_return_pct and v.actual_return_pct > 0 %}value-positive{% elif v.actual_return_pct and v.actual_return_pct < 0 %}value-negative{% endif %}">{{ v.actual_return_pct | default('—') }}%</td>
+                        <td class="value-positive">{{ v.avoided_drawdown | default('—') }}</td>
                         <td>
                             {% if v.veto_correct == True %}
                             <span class="signal-badge BUY">YES</span>
                             {% elif v.veto_correct == False %}
                             <span class="signal-badge SELL">NO</span>
                             {% else %}
-                            <span class="signal-badge HOLD">PENDING</span>
+                            <span class="signal-badge PENDING">PENDING</span>
                             {% endif %}
                         </td>
-                        <td class="mono" style="font-size:0.65rem;">{{ (v.timestamp or '')[:16] }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ (v.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -79,4 +84,8 @@
         </div>
     </div>
 </div>
+
+<script>
+filterTable('veto-filter', 'vetoes-table');
+</script>
 {% endblock %}

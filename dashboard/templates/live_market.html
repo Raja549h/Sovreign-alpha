@@ -30,7 +30,7 @@
                     <tr>
                         <td class="ticker-cell">{{ ticker }}</td>
                         <td>{{ data.price }}</td>
-                        <td class="{% if data.change_pct >= 0 %}value{% else %}value danger{% endif %}">{{ data.change_pct }}%</td>
+                        <td class="{% if data.change_pct >= 0 %}value-positive{% else %}value-negative{% endif %}">{{ data.change_pct }}%</td>
                         <td>{{ data.volume }}</td>
                         <td>{{ data.market_cap }}</td>
                         <td>{{ data.pe_ratio }}</td>
@@ -49,32 +49,32 @@
     {% endif %}
 
     {% if signals %}
-    <div class="grid-3" style="margin-top:0.65rem;">
+    <div class="grid-3" style="margin-top:0.55rem;">
         <div class="panel">
             <div class="panel-header"><h2>Oversold</h2><span class="severity-tag info">{{ signals.oversold|length if signals.oversold else 0 }}</span></div>
             <div class="panel-body padded">
                 {% for s in signals.oversold or [] %}
-                <div class="signal-card"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
+                <div class="signal-card accent"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
                 {% endfor %}
-                {% if not signals.oversold %}<div style="color:var(--text-dim);font-size:0.7rem;">No oversold signals</div>{% endif %}
+                {% if not signals.oversold %}<div style="color:var(--text-dim);font-size:0.65rem;">No oversold signals</div>{% endif %}
             </div>
         </div>
         <div class="panel">
             <div class="panel-header"><h2>Overbought</h2><span class="severity-tag warning">{{ signals.overbought|length if signals.overbought else 0 }}</span></div>
             <div class="panel-body padded">
                 {% for s in signals.overbought or [] %}
-                <div class="signal-card"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
+                <div class="signal-card warning"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
                 {% endfor %}
-                {% if not signals.overbought %}<div style="color:var(--text-dim);font-size:0.7rem;">No overbought signals</div>{% endif %}
+                {% if not signals.overbought %}<div style="color:var(--text-dim);font-size:0.65rem;">No overbought signals</div>{% endif %}
             </div>
         </div>
         <div class="panel">
             <div class="panel-header"><h2>Unusual Volume</h2><span class="severity-tag high">{{ signals.unusual_volume|length if signals.unusual_volume else 0 }}</span></div>
             <div class="panel-body padded">
                 {% for s in signals.unusual_volume or [] %}
-                <div class="signal-card"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
+                <div class="signal-card danger"><span class="sym">{{ s.symbol }}</span> <span class="reason">{{ s.reason }}</span></div>
                 {% endfor %}
-                {% if not signals.unusual_volume %}<div style="color:var(--text-dim);font-size:0.7rem;">No unusual volume detected</div>{% endif %}
+                {% if not signals.unusual_volume %}<div style="color:var(--text-dim);font-size:0.65rem;">No unusual volume detected</div>{% endif %}
             </div>
         </div>
     </div>
