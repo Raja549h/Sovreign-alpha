@@ -152,7 +152,7 @@ Talisman(app, force_https=False, strict_transport_security=True,
 CORS(app, origins=['http://localhost:5000', 'http://localhost:7860', 'https://demonsatan-soverignalpha.hf.space'], supports_credentials=True)
 
 limiter = Limiter(app=app, key_func=get_remote_address,
-                  default_limits=["200 per day", "50 per hour"],
+                  default_limits=["2000 per day", "500 per hour"],
                   storage_uri="memory://")
 
 csrf = CSRFProtect(app)
@@ -1458,8 +1458,8 @@ def api_public_key():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per 15 minutes")
-@limiter.limit("20 per day")
+@limiter.limit("20 per 15 minutes")
+@limiter.limit("100 per day")
 @csrf.exempt
 def login_page():
     """Login page - no auth required."""
