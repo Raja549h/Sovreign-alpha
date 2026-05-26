@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '15 3 * * 1-5'  # 08:45 IST Mon-Fri (03:15 UTC)
   workflow_dispatch:  # Manual trigger button
+  push:
+    branches: [main]
 
 jobs:
   run-pipeline:
@@ -56,3 +58,45 @@ jobs:
             automation/logs/
             results/
           retention-days: 30
+
+  deploy-to-hf:
+    needs: run-pipeline
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Deploy to Hugging Face Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub
+          python - <<'PYEOF'
+          from huggingface_hub import HfApi
+          import os
+
+          api = HfApi(token=os.environ['HF_TOKEN'])
+
+          api.upload_folder(
+              folder_path=".",
+              repo_id="Demonsatan/soverignalpha",
+              repo_type="space",
+              ignore_patterns=[
+                  ".git*",
+                  ".venv/",
+                  "venv/",
+                  "__pycache__/",
+                  "*.pyc",
+                  "research/data/filings/",
+                  "research/data/transcripts/",
+                  "logs/",
+                  "*.log",
+                  "exports/",
+                  ".env"
+              ]
+          )
+          print("Deployed to HF Spaces successfully")
+          PYEOF
