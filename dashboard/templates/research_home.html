@@ -1,113 +1,106 @@
 {% extends "base.html" %}
-{% block title %}Research — Sovereign Alpha{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <h2 class="terminal-title">RESEARCH ENGINE</h2>
-            <p class="text-muted">Forensic intelligence pipeline — cryptographically verified analytical research</p>
-        </div>
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Research Engine</h1>
+        <span class="timestamp">Forensic intelligence pipeline — cryptographically verified analytical research</span>
     </div>
 
     {% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
+    <div class="panel" style="border-color:var(--danger);">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.75rem;">{{ error }}</div>
+    </div>
     {% endif %}
 
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-value">{{ companies|length }}</div>
-                <div class="stat-label">Companies Tracked</div>
-            </div>
+    <div class="stats-row">
+        <div class="stat-box accent">
+            <label>Companies Tracked</label>
+            <div class="value">{{ companies|length }}</div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-value">{{ notes|length }}</div>
-                <div class="stat-label">Research Notes</div>
-            </div>
+        <div class="stat-box accent">
+            <label>Research Notes</label>
+            <div class="value">{{ notes|length }}</div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-value">{{ total_flags }}</div>
-                <div class="stat-label">Forensic Flags</div>
-            </div>
+        <div class="stat-box info">
+            <label>Forensic Flags</label>
+            <div class="value info">{{ total_flags }}</div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-value">ACTIVE</div>
-                <div class="stat-label">Veto Engine</div>
-            </div>
+        <div class="stat-box accent">
+            <label>Veto Engine</label>
+            <div class="value" style="font-size:0.75rem;">ACTIVE</div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary">
-                    <h5 class="mb-0">Companies Under Coverage</h5>
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Companies Under Coverage</h2>
+            </div>
+            <div class="panel-body">
+                {% if companies %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Company</th>
+                            <th>Sector</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in companies %}
+                        <tr>
+                            <td class="ticker-cell">{{ c.ticker }}</td>
+                            <td>{{ c.company_name }}</td>
+                            <td style="font-size:0.6rem;">{{ c.sector or '—' }}</td>
+                            <td><a href="/research/{{ c.ticker }}" class="btn outline small">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">—</div>
+                    <div>No company data available. Add a company to begin research analysis.</div>
                 </div>
-                <div class="card-body">
-                    {% if companies %}
-                    <table class="table table-dark table-sm">
-                        <thead>
-                            <tr>
-                                <th>Ticker</th>
-                                <th>Company</th>
-                                <th>Sector</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for c in companies %}
-                            <tr>
-                                <td><code>{{ c.ticker }}</code></td>
-                                <td>{{ c.company_name }}</td>
-                                <td>{{ c.sector or '—' }}</td>
-                                <td><a href="/research/{{ c.ticker }}" class="btn btn-sm btn-outline-info">View</a></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-muted">No company data available. Add a company to begin research analysis.</p>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary">
-                    <h5 class="mb-0">Latest Research Notes</h5>
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Latest Research Notes</h2>
+            </div>
+            <div class="panel-body">
+                {% if notes %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Title</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notes %}
+                        <tr>
+                            <td class="mono" style="font-size:0.6rem;">{{ n.note_reference }}</td>
+                            <td>{{ (n.title[:50] if n.title else '') }}{{ '...' if n.title and n.title|length > 50 }}</td>
+                            <td class="mono" style="font-size:0.6rem;">{{ (n.generated_at or '')[:10] }}</td>
+                            <td>
+                                <a href="/research/note/{{ n.note_reference }}" class="btn outline small">View</a>
+                                <a href="/research/export/{{ n.note_reference }}" class="btn outline small">PDF</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">—</div>
+                    <div>No research notes generated yet.</div>
                 </div>
-                <div class="card-body">
-                    {% if notes %}
-                    <table class="table table-dark table-sm">
-                        <thead>
-                            <tr>
-                                <th>Reference</th>
-                                <th>Title</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for n in notes %}
-                            <tr>
-                                <td><code>{{ n.note_reference }}</code></td>
-                                <td>{{ n.title[:50] }}...</td>
-                                <td>{{ n.generated_at[:10] }}</td>
-                                <td>
-                                    <a href="/research/note/{{ n.note_reference }}" class="btn btn-sm btn-outline-info">View</a>
-                                    <a href="/research/export/{{ n.note_reference }}" class="btn btn-sm btn-outline-secondary">PDF</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p class="text-muted">No research notes generated yet.</p>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -7,29 +7,29 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Sessions Run</label>
             <div class="value">{{ total_sessions | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Avg Confidence</label>
-            <div class="value">{{ (avg_confidence | default(0) * 100) | round(0) }}%</div>
+            <div class="value">{{ (avg_confidence | default(0)) | pct }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Total Alpha</label>
             <div class="value">${{ (total_alpha | default(0)) | round(0) | int }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box warning">
             <label>Performance Fees</label>
             <div class="value warning">${{ (total_fees | default(0)) | round(0) | int }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box {% if ledger_stats.success_rate and ledger_stats.success_rate < 50 %}danger{% else %}accent{% endif %}">
             <label>Hit Rate</label>
-            <div class="value {% if ledger_stats.success_rate and ledger_stats.success_rate < 50 %}danger{% endif %}">{{ ledger_stats.success_rate | default(0) | round(1) }}%</div>
+            <div class="value">{{ (ledger_stats.success_rate | default(0)) | round(1) }}%</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box info">
             <label>Veto Efficiency</label>
-            <div class="value info">{{ ledger_stats.veto_efficiency | default(0) | round(1) }}%</div>
+            <div class="value info">{{ (ledger_stats.veto_efficiency | default(0)) | round(1) }}%</div>
         </div>
     </div>
 
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <div class="grid-2" style="margin-top:0.75rem;">
+    <div class="grid-2" style="margin-top:0.65rem;">
         <div class="chart-container">
             <canvas id="returnChart"></canvas>
         </div>
@@ -51,26 +51,22 @@
                 <h2>Key Metrics</h2>
             </div>
             <div class="panel-body padded">
-                <table>
-                    <tbody>
-                        <tr><td style="color:var(--text-dim);">Total Predictions</td><td class="mono">{{ ledger_stats.total_predictions | default(0) }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Cleared</td><td class="mono">{{ ledger_stats.cleared | default(0) }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Risk Rejected</td><td class="mono danger" style="color:var(--danger);">{{ ledger_stats.risk_rejected | default(0) }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Total Vetoes</td><td class="mono">{{ ledger_stats.total_vetoes | default(0) }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Correct Vetoes</td><td class="mono">{{ ledger_stats.veto_correct_count | default(0) }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Avoided Drawdown</td><td class="mono">${{ (ledger_stats.total_avoided_drawdown | default(0)) | round(0) | int }}</td></tr>
-                        <tr><td style="color:var(--text-dim);">Outcome Fill Rate</td><td class="mono">{{ ledger_stats.outcome_fill_rate | default(0) | round(1) }}%</td></tr>
-                    </tbody>
-                </table>
+                <div class="key-val"><span class="key">Total Predictions</span><span class="val">{{ ledger_stats.total_predictions | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Cleared</span><span class="val accent">{{ ledger_stats.cleared | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Risk Rejected</span><span class="val danger">{{ ledger_stats.risk_rejected | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Total Vetoes</span><span class="val">{{ ledger_stats.total_vetoes | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Correct Vetoes</span><span class="val">{{ ledger_stats.veto_correct_count | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Avoided Drawdown</span><span class="val accent">${{ (ledger_stats.total_avoided_drawdown | default(0)) | round(0) | int }}</span></div>
+                <div class="key-val"><span class="key">Outcome Fill Rate</span><span class="val">{{ (ledger_stats.outcome_fill_rate | default(0)) | round(1) }}%</span></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const confidenceData = {{ confidence_history | safe }};
-const sectorData = {{ sector_data | safe }};
-const returnData = {{ return_distribution | safe }};
+var confidenceData = {{ confidence_history | safe }};
+var sectorData = {{ sector_data | safe }};
+var returnData = {{ return_distribution | safe }};
 
 new Chart(document.getElementById('confidenceChart'), {
     type: 'line',

@@ -13,13 +13,13 @@
                 {% if has_positions %}<span class="signal-badge BUY">LOADED</span>{% endif %}
             </div>
             <div class="panel-body padded">
-                <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Upload fund positions as CSV or Excel.</p>
+                <p style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:1rem;">Upload fund positions as CSV or Excel.</p>
                 <form id="positions-form" enctype="multipart/form-data">
                     <input type="file" id="positions-file" accept=".csv,.xlsx,.xls" style="display:none;">
                     <button type="button" class="btn" onclick="document.getElementById('positions-file').click()">Select File</button>
-                    <div id="positions-status" style="margin-top:0.75rem;font-size:0.7rem;color:var(--text-dim);"></div>
+                    <div id="positions-status" style="margin-top:0.65rem;font-size:0.65rem;color:var(--text-dim);"></div>
                 </form>
-                <a href="/download/positions-template" class="btn outline" style="margin-top:0.75rem;">Download Template</a>
+                <a href="/download/positions-template" class="btn outline" style="margin-top:0.65rem;">Download Template</a>
             </div>
         </div>
 
@@ -30,28 +30,28 @@
             </div>
             <div class="panel-body padded">
                 <form id="params-form">
-                    <div style="margin-bottom:0.5rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Position Size (%)</label>
-                        <input type="number" name="max_position" value="{{ params.max_position_size_pct or '5.0' }}" step="0.1" style="width:100%;padding:0.4rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.8rem;border-radius:2px;font-family:var(--font-mono);">
+                    <div style="margin-bottom:0.45rem;">
+                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Position Size (%)</label>
+                        <input type="number" name="max_position" value="{{ params.max_position_size_pct or '5.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <div style="margin-bottom:0.5rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Sector Exposure (%)</label>
-                        <input type="number" name="max_sector" value="{{ params.sector_limits or '20.0' }}" step="0.1" style="width:100%;padding:0.4rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.8rem;border-radius:2px;font-family:var(--font-mono);">
+                    <div style="margin-bottom:0.45rem;">
+                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Sector Exposure (%)</label>
+                        <input type="number" name="max_sector" value="{{ params.sector_limits or '20.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <div style="margin-bottom:0.5rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Drawdown (%)</label>
-                        <input type="number" name="max_drawdown" value="{{ params.max_drawdown_pct or '15.0' }}" step="0.1" style="width:100%;padding:0.4rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.8rem;border-radius:2px;font-family:var(--font-mono);">
+                    <div style="margin-bottom:0.45rem;">
+                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Max Drawdown (%)</label>
+                        <input type="number" name="max_drawdown" value="{{ params.max_drawdown_pct or '15.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <div style="margin-bottom:0.5rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Min Confidence (%)</label>
-                        <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:0.4rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.8rem;border-radius:2px;font-family:var(--font-mono);">
+                    <div style="margin-bottom:0.45rem;">
+                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">Min Confidence (%)</label>
+                        <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <div style="margin-bottom:0.5rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">AUM ($)</label>
-                        <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:0.4rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.8rem;border-radius:2px;font-family:var(--font-mono);">
+                    <div style="margin-bottom:0.45rem;">
+                        <label style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;">AUM ($)</label>
+                        <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <button type="submit" class="btn" style="margin-top:0.5rem;">Save Parameters</button>
-                    <div id="params-status" style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-dim);"></div>
+                    <button type="submit" class="btn" style="margin-top:0.45rem;">Save Parameters</button>
+                    <div id="params-status" style="margin-top:0.45rem;font-size:0.65rem;color:var(--text-dim);"></div>
                 </form>
             </div>
         </div>
@@ -63,105 +63,81 @@
             </div>
             <div class="panel-body padded">
                 <form id="research-form">
-                    <textarea name="research_text" rows="6" placeholder="Paste internal research notes..." style="width:100%;padding:0.5rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;border-radius:2px;font-family:var(--font-sans);resize:vertical;"></textarea>
-                    <button type="submit" class="btn" style="margin-top:0.5rem;">Save Notes</button>
-                    <div id="research-status" style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-dim);"></div>
+                    <textarea name="research_text" rows="6" placeholder="Paste internal research notes..." style="width:100%;padding:0.45rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.7rem;font-family:var(--font-mono);resize:vertical;outline:none;"></textarea>
+                    <button type="submit" class="btn" style="margin-top:0.45rem;">Save Notes</button>
+                    <div id="research-status" style="margin-top:0.45rem;font-size:0.65rem;color:var(--text-dim);"></div>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="panel" style="margin-top:0.75rem;">
+    <div class="panel" style="margin-top:0.65rem;">
         <div class="panel-header">
             <h2>Setup Progress</h2>
         </div>
         <div class="panel-body padded">
-            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <span style="color:var(--accent);">[OK]</span>
-                    <span style="font-size:0.75rem;">System Initialized</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <span style="color:{% if progress.step2_done %}var(--accent){% else %}var(--text-dim){% endif %};">[{% if progress.step2_done %}OK{% else %}--{% endif %}]</span>
-                    <span style="font-size:0.75rem;">Positions Uploaded</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <span style="color:{% if progress.step3_done %}var(--accent){% else %}var(--text-dim){% endif %};">[{% if progress.step3_done %}OK{% else %}--{% endif %}]</span>
-                    <span style="font-size:0.75rem;">Parameters Set</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <span style="color:{% if progress.step4_done %}var(--accent){% else %}var(--text-dim){% endif %};">[{% if progress.step4_done %}OK{% else %}--{% endif %}]</span>
-                    <span style="font-size:0.75rem;">Research Notes</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <span style="color:{% if progress.step5_done %}var(--accent){% else %}var(--text-dim){% endif %};">[{% if progress.step5_done %}OK{% else %}--{% endif %}]</span>
-                    <span style="font-size:0.75rem;">Analysis Run</span>
-                </div>
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:var(--accent);font-family:var(--font-mono);">[OK]</span><span style="font-size:0.7rem;">System Initialized</span></div>
+                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step2_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step2_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Positions Uploaded</span></div>
+                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step3_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step3_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Parameters Set</span></div>
+                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step4_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step4_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Research Notes</span></div>
+                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step5_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step5_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Analysis Run</span></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const csrfToken = '{{ csrf_token() }}';
+var csrfToken = '{{ csrf_token() }}';
 function csrfFetch(url, opts) {
     opts = opts || {};
     opts.headers = opts.headers || {};
-    if (!(opts.body instanceof FormData)) {
-        opts.headers['X-CSRFToken'] = csrfToken;
-    }
+    if (!(opts.body instanceof FormData)) opts.headers['X-CSRFToken'] = csrfToken;
     return fetch(url, opts);
 }
 document.getElementById('positions-file').addEventListener('change', function() {
-    const file = this.files[0];
+    var file = this.files[0];
     if (!file) return;
-    const formData = new FormData();
+    var formData = new FormData();
     formData.append('file', file);
     formData.append('csrf_token', csrfToken);
-    const status = document.getElementById('positions-status');
+    var status = document.getElementById('positions-status');
     status.textContent = 'Uploading...';
     fetch('/upload/positions', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                status.textContent = data.message;
-                status.style.color = 'var(--accent)';
-            } else {
-                status.textContent = data.error;
-                status.style.color = 'var(--danger)';
-            }
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) { status.textContent = data.message; status.style.color = 'var(--accent)'; }
+            else { status.textContent = data.error; status.style.color = 'var(--danger)'; }
         })
-        .catch(err => { status.textContent = 'Upload failed'; status.style.color = 'var(--danger)'; });
+        .catch(function() { status.textContent = 'Upload failed'; status.style.color = 'var(--danger)'; });
 });
-
 document.getElementById('params-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
+    var formData = new FormData(this);
     formData.append('csrf_token', csrfToken);
-    const status = document.getElementById('params-status');
+    var status = document.getElementById('params-status');
     status.textContent = 'Saving...';
     fetch('/upload/params', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.success) { status.textContent = data.message; status.style.color = 'var(--accent)'; }
             else { status.textContent = data.error; status.style.color = 'var(--danger)'; }
         })
-        .catch(err => { status.textContent = 'Save failed'; status.style.color = 'var(--danger)'; });
+        .catch(function() { status.textContent = 'Save failed'; status.style.color = 'var(--danger)'; });
 });
-
 document.getElementById('research-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
+    var formData = new FormData(this);
     formData.append('csrf_token', csrfToken);
-    const status = document.getElementById('research-status');
+    var status = document.getElementById('research-status');
     status.textContent = 'Saving...';
     fetch('/upload/research', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.success) { status.textContent = data.message; status.style.color = 'var(--accent)'; }
             else { status.textContent = data.error; status.style.color = 'var(--danger)'; }
         })
-        .catch(err => { status.textContent = 'Save failed'; status.style.color = 'var(--danger)'; });
+        .catch(function() { status.textContent = 'Save failed'; status.style.color = 'var(--danger)'; });
 });
 </script>
 {% endblock %}

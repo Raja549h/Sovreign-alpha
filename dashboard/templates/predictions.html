@@ -7,37 +7,49 @@
     </div>
 
     <div class="stats-row">
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Total Predictions</label>
             <div class="value">{{ ledger_stats.total_predictions | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box accent">
             <label>Cleared</label>
             <div class="value">{{ ledger_stats.cleared | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box danger">
             <label>Risk Rejected</label>
             <div class="value danger">{{ ledger_stats.risk_rejected | default(0) }}</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box {% if ledger_stats.success_rate and ledger_stats.success_rate < 50 %}danger{% else %}accent{% endif %}">
             <label>Hit Rate</label>
-            <div class="value {% if ledger_stats.success_rate < 50 %}danger{% else %}{% endif %}">{{ ledger_stats.success_rate | default(0) | round(1) }}%</div>
+            <div class="value stat-refresh" data-key="success_rate">{{ (ledger_stats.success_rate | default(0)) | round(1) }}%</div>
             <div class="sub">{{ ledger_stats.with_outcome | default(0) }} outcomes / {{ ledger_stats.total_predictions | default(0) }} total</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box warning">
             <label>Outcome Fill Rate</label>
-            <div class="value warning">{{ ledger_stats.outcome_fill_rate | default(0) | round(1) }}%</div>
+            <div class="value warning">{{ (ledger_stats.outcome_fill_rate | default(0)) | round(1) }}%</div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-header">
             <h2>All Predictions</h2>
-            <a href="/api/export-predictions" class="btn outline">Export CSV</a>
+            <div class="actions">
+                <a href="/api/export-predictions" class="btn outline small">Export CSV</a>
+            </div>
         </div>
         <div class="panel-body">
             {% if predictions and predictions|length > 0 %}
-            <table>
+            <div class="filter-bar">
+                <input type="text" id="pred-filter" placeholder="Filter by ticker/sector/status..." style="flex:1;">
+                <select id="pred-status-filter" style="width:auto;">
+                    <option value="">All Status</option>
+                    <option value="cleared">Cleared</option>
+                    <option value="risk-rejected">Risk Rejected</option>
+                    <option value="pending">Pending</option>
+                </select>
+                <span class="count" id="predictions-table-count">{{ predictions|length }} predictions</span>
+            </div>
+            <table id="predictions-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -55,22 +67,24 @@
                 <tbody>
                     {% for p in predictions %}
                     <tr>
-                        <td class="mono" style="font-size:0.65rem;">{{ p.prediction_id }}</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ p.prediction_id }}</td>
                         <td class="ticker-cell">{{ p.asset }}</td>
-                        <td>{{ p.sector }}</td>
-                        <td>{{ p.confidence_score | pct }}</td>
+                        <td style="font-size:0.6rem;">{{ p.sector }}</td>
                         <td>
-                            {% if p.status == 'cleared' %}
-                            <span class="signal-badge BUY">CLEARED</span>
-                            {% else %}
-                            <span class="signal-badge SELL">REJECTED</span>
-                            {% endif %}
+                            <div class="conf-label">
+                                <span>{{ p.confidence_score | pct }}</span>
+                            </div>
+                            <div class="conf-bar">
+                                {% set conf_pct = (p.confidence_score * 100) if p.confidence_score and p.confidence_score <= 1 else (p.confidence_score or 0) %}
+                                <div class="fill {{ 'high' if conf_pct >= 70 else 'med' if conf_pct >= 50 else 'low' }}" style="width:{{ conf_pct }}%;"></div>
+                            </div>
                         </td>
+                        <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' }}">{{ p.status }}</span></td>
                         <td>{{ p.expected_timeline_days }}d</td>
                         <td>{{ p.actual_outcome or 'Pending' }}</td>
-                        <td class="{% if p.actual_return_pct and p.actual_return_pct > 0 %}value{% elif p.actual_return_pct and p.actual_return_pct < 0 %}value danger{% endif %}">{{ p.actual_return_pct | default('—') }}%</td>
-                        <td class="hash">{{ p.proof_hash[:20] if p.proof_hash else '—' }}...</td>
-                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
+                        <td class="{% if p.actual_return_pct and p.actual_return_pct > 0 %}value-positive{% elif p.actual_return_pct and p.actual_return_pct < 0 %}value-negative{% endif %}">{{ p.actual_return_pct | default('—') }}%</td>
+                        <td class="hash" data-full="{{ p.proof_hash }}">{{ (p.proof_hash[:20] if p.proof_hash else '—') }}...</td>
+                        <td class="mono" style="font-size:0.6rem;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,4 +98,8 @@
         </div>
     </div>
 </div>
+
+<script>
+filterTable('pred-filter', 'predictions-table');
+</script>
 {% endblock %}
