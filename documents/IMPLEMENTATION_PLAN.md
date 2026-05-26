@@ -60,7 +60,7 @@
 | CSRF on upload endpoints | ✓ | Token in FormData fetch requests |
 | Failed login tracking | ✓ | 5 attempts → 15-min IP lockout |
 | Timing-safe password compare | ✓ | hmac.compare_digest() |
-| Session cookie hardening | ✓ | httponly, samesite=Lax, secure on Render |
+| Session cookie hardening | ✓ | httponly, samesite=Lax, secure on cloud |
 | Debug mode disabled | ✓ | app.run(debug=False) |
 
 ### PHASE 4: Enhancement Pipeline (NEXT)
@@ -68,7 +68,7 @@
 | Task | Priority | Effort | Dependencies |
 |------|----------|--------|--------------|
 | Websocket push for real-time market data | P2 | Medium | WebSocket library |
-| Redis rate-limit storage (persistent) | P2 | Low | Upgraded Render plan |
+| Redis rate-limit storage (persistent) | P2 | Low | Upgraded cloud plan |
 | Research note edit history | P2 | Medium | research_db migration |
 | Multi-user support (role-based) | P2 | High | Auth system rewrite |
 | PDF report generation (dashboard) | P2 | Medium | WeasyPrint |
@@ -144,7 +144,7 @@ sovereign-alpha/
 
 | Item | Impact | Resolution Plan |
 |------|--------|----------------|
-| In-memory rate limit storage | Resets on server restart (Render) | Migrate to Redis when off free tier |
+| In-memory rate limit storage | Resets on server restart | Migrate to Redis when off free tier |
 | SQLite concurrent writes | May block on heavy load | Migrate to PostgreSQL when scaled |
 | Single-threaded Flask | Blocks on LLM calls | Async workers or Celery for background tasks |
 | All logic in app.py (2297 lines) | Hard to maintain | Split into blueprints (dashboard, api, research) |
@@ -162,7 +162,7 @@ sovereign-alpha/
 - [x] `requirements-docker.txt` includes all 5 security packages
 - [x] `Dockerfile` / HF Spaces configured
 - [x] CSP allows `cdnjs.cloudflare.com`, `fonts.googleapis.com`
-- [x] `RENDER=true` set in Render environment
+- [x] `IS_CLOUD` set in environment
 
 ### Post-Deploy Verification
 - [ ] Dashboard returns 200 at `https://demonsatan-soverignalpha.hf.space`
@@ -176,7 +176,7 @@ sovereign-alpha/
 - [ ] Upload portal accepts CSV and saves to fund_data.db
 
 ### Monitor
-- [ ] Render build logs for package install errors
+- [ ] HF Spaces build logs for package install errors
 - [ ] Flask error logs for unhandled exceptions
 - [ ] Rate limit hit counts (track via failed_attempts dict)
 - [ ] Database file growth (billing.db, fund_data.db, research.db)

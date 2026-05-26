@@ -134,8 +134,8 @@ app.config['WTF_CSRF_SECRET_KEY'] = os.environ.get('JWT_SECRET', app.config['SEC
 
 csp = {
     'default-src': "'self'",
-    'script-src': ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
-    'style-src': ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+    'script-src': ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"],
+    'style-src': ["'self'", "'unsafe-inline'", "fonts.googleapis.com", "cdn.jsdelivr.net"],
     'font-src': ["'self'", "fonts.gstatic.com"],
     'img-src': "'self' data:",
     'connect-src': "'self'",
@@ -147,7 +147,7 @@ Talisman(app, force_https=False, strict_transport_security=True,
          referrer_policy='strict-origin-when-cross-origin',
          frame_options='DENY',
          x_xss_protection=True,
-         session_cookie_secure=False,
+         session_cookie_secure=True,
          permissions_policy={'geolocation': "()", 'camera': "()", 'microphone': "()"})
 CORS(app, origins=['http://localhost:5000', 'http://localhost:7860', 'https://demonsatan-soverignalpha.hf.space'], supports_credentials=True)
 
