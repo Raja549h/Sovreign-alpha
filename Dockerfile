@@ -17,13 +17,17 @@ WORKDIR $HOME/app
 
 COPY --chown=user requirements-render.txt .
 
-RUN pip install --no-cache-dir --user -r requirements-render.txt
+RUN pip install --no-cache-dir -r requirements-render.txt
 
 COPY --chown=user . .
 
 RUN mkdir -p billing research/data/filings research/data/transcripts research/data/notes logs
 
 RUN python dashboard/seed_db.py
+
+RUN chown -R user:user /home/user
+
+USER user
 
 EXPOSE 7860
 
