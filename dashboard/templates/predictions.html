@@ -39,15 +39,12 @@
         </div>
         <div class="panel-body">
             {% if predictions and predictions|length > 0 %}
-            <div class="filter-bar">
-                <input type="text" id="pred-filter" placeholder="Filter by ticker/sector/status..." style="flex:1;">
-                <select id="pred-status-filter" style="width:auto;">
-                    <option value="">All Status</option>
-                    <option value="cleared">Cleared</option>
-                    <option value="risk-rejected">Risk Rejected</option>
-                    <option value="pending">Pending</option>
-                </select>
-                <span class="count" id="predictions-table-count">{{ predictions|length }} predictions</span>
+            <div class="filter-bar" style="margin-bottom:0.75rem;display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="filter-btn active" data-filter="ALL">ALL</button>
+                <button class="filter-btn" data-filter="cleared">CLEARED</button>
+                <button class="filter-btn" data-filter="risk-rejected">REJECTED</button>
+                <button class="filter-btn" data-filter="pending">PENDING</button>
+                <span class="count" style="margin-left:auto;font-size:9px;color:#555;font-family:var(--font-mono);">{{ predictions|length }} predictions</span>
             </div>
             <table id="predictions-table">
                 <thead>
@@ -66,25 +63,23 @@
                 </thead>
                 <tbody>
                     {% for p in predictions %}
-                    <tr>
-                        <td class="mono" style="font-size:0.65rem;">{{ p.prediction_id }}</td>
-                        <td class="ticker-cell">{{ p.asset }}</td>
-                        <td style="font-size:0.65rem;">{{ p.sector }}</td>
+                    <tr data-status="{{ p.status }}">
+                        <td class="mono" style="font-size:9px;">{{ p.prediction_id }}</td>
+                        <td class="ticker-cell" style="color:var(--accent);font-weight:700;font-size:12px;">{{ p.asset }}</td>
+                        <td style="font-size:9px;">{{ p.sector }}</td>
                         <td>
-                            <div class="conf-label">
-                                <span>{{ p.confidence_score | pct }}</span>
-                            </div>
+                            <div style="font-family:var(--font-mono);font-size:11px;">{{ p.confidence_score | pct }}</div>
                             <div class="conf-bar">
                                 {% set conf_pct = (p.confidence_score * 100) if p.confidence_score and p.confidence_score <= 1 else (p.confidence_score or 0) %}
                                 <div class="fill {{ 'high' if conf_pct >= 70 else 'med' if conf_pct >= 50 else 'low' }}" style="width:{{ conf_pct }}%;"></div>
                             </div>
                         </td>
-                        <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' }}">{{ p.status }}</span></td>
-                        <td>{{ p.expected_timeline_days }}d</td>
+                        <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' if p.status == 'risk-rejected' else 'PENDING' }}">{{ p.status }}</span></td>
+                        <td style="color:#555;">{{ p.expected_timeline_days }}d</td>
                         <td>{{ p.actual_outcome or 'Pending' }}</td>
                         <td class="{% if p.actual_return_pct and p.actual_return_pct > 0 %}value-positive{% elif p.actual_return_pct and p.actual_return_pct < 0 %}value-negative{% endif %}">{{ p.actual_return_pct | default('—') }}%</td>
-                        <td class="hash" data-full="{{ p.proof_hash }}">{{ (p.proof_hash[:20] if p.proof_hash else '—') }}...</td>
-                        <td class="mono" style="font-size:0.65rem;">{{ (p.timestamp or '')[:16] }}</td>
+                        <td class="hash copy-hash" data-hash="{{ p.proof_hash }}" data-short="{{ (p.proof_hash[:8] if p.proof_hash else '—') }}..." style="color:var(--warning);cursor:pointer;">{{ (p.proof_hash[:8] if p.proof_hash else '—') }}...</td>
+                        <td class="mono" style="font-size:9px;">{{ (p.timestamp or '')[:16] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

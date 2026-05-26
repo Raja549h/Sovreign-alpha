@@ -13,13 +13,18 @@
                 {% if has_positions %}<span class="signal-badge BUY">LOADED</span>{% endif %}
             </div>
             <div class="panel-body padded">
-                <p style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:1rem;">Upload fund positions as CSV or Excel.</p>
-                <form id="positions-form" enctype="multipart/form-data">
-                    <input type="file" id="positions-file" accept=".csv,.xlsx,.xls" style="display:none;">
-                    <button type="button" class="btn" onclick="document.getElementById('positions-file').click()">Select File</button>
-                    <div id="positions-status" style="margin-top:0.65rem;font-size:0.65rem;color:var(--text-dim);"></div>
+                <p style="font-size:10px;color:#555;font-family:var(--font-mono);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.05em;">Upload fund positions as CSV or Excel.</p>
+                <div class="drag-zone" id="positions-drag">
+                    <div>Drop CSV / Excel Here</div>
+                    <div style="margin-top:8px;font-size:9px;color:#333;">or</div>
+                    <button type="button" class="btn outline" style="margin-top:8px;background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;padding:6px 12px;cursor:pointer;" onclick="document.getElementById('positions-file').click()">Select File</button>
+                    <div id="positions-filename" class="filename" style="display:none;"></div>
+                </div>
+                <form id="positions-form" enctype="multipart/form-data" style="display:none;">
+                    <input type="file" id="positions-file" accept=".csv,.xlsx,.xls">
                 </form>
-                <a href="/download/positions-template" class="btn outline" style="margin-top:0.65rem;">Download Template</a>
+                <div id="positions-status" style="margin-top:8px;font-size:9px;color:#555;font-family:var(--font-mono);"></div>
+                <a href="/download/positions-template" class="btn outline" style="margin-top:8px;background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;padding:6px 12px;display:inline-block;">Download Template</a>
             </div>
         </div>
 
@@ -31,24 +36,24 @@
             <div class="panel-body padded">
                 <form id="params-form">
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Position Size (%)</label>
-                        <input type="number" name="max_position" value="{{ params.max_position_size_pct or '5.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">Max Position Size (%)</label>
+                        <input type="number" name="max_position" value="{{ params.max_position_size_pct or '5.0' }}" step="0.1" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Sector Exposure (%)</label>
-                        <input type="number" name="max_sector" value="{{ params.sector_limits or '20.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">Max Sector Exposure (%)</label>
+                        <input type="number" name="max_sector" value="{{ params.sector_limits or '20.0' }}" step="0.1" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Max Drawdown (%)</label>
-                        <input type="number" name="max_drawdown" value="{{ params.max_drawdown_pct or '15.0' }}" step="0.1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">Max Drawdown (%)</label>
+                        <input type="number" name="max_drawdown" value="{{ params.max_drawdown_pct or '15.0' }}" step="0.1" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">Min Confidence (%)</label>
-                        <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">Min Confidence (%)</label>
+                        <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;">AUM ($)</label>
-                        <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:0.35rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">AUM ($)</label>
+                        <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <button type="submit" class="btn" style="margin-top:0.45rem;">Save Parameters</button>
                     <div id="params-status" style="margin-top:0.45rem;font-size:0.65rem;color:var(--text-dim);"></div>
@@ -63,8 +68,8 @@
             </div>
             <div class="panel-body padded">
                 <form id="research-form">
-                    <textarea name="research_text" rows="6" placeholder="Paste internal research notes..." style="width:100%;padding:0.45rem;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);font-size:0.7rem;font-family:var(--font-mono);resize:vertical;outline:none;"></textarea>
-                    <button type="submit" class="btn" style="margin-top:0.45rem;">Save Notes</button>
+                    <textarea name="research_text" rows="6" placeholder="Paste internal research notes..." style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);resize:vertical;outline:none;"></textarea>
+                    <button type="submit" class="btn outline" style="margin-top:8px;background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;padding:6px 12px;cursor:pointer;">Save Notes</button>
                     <div id="research-status" style="margin-top:0.45rem;font-size:0.65rem;color:var(--text-dim);"></div>
                 </form>
             </div>
@@ -76,12 +81,16 @@
             <h2>Setup Progress</h2>
         </div>
         <div class="panel-body padded">
-            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:var(--accent);font-family:var(--font-mono);">[OK]</span><span style="font-size:0.7rem;">System Initialized</span></div>
-                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step2_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step2_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Positions Uploaded</span></div>
-                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step3_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step3_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Parameters Set</span></div>
-                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step4_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step4_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Research Notes</span></div>
-                <div style="display:flex;align-items:center;gap:0.45rem;"><span style="color:{% if progress.step5_done %}var(--accent){% else %}var(--text-dim){% endif %};font-family:var(--font-mono);">[{% if progress.step5_done %}OK{% else %}--{% endif %}]</span><span style="font-size:0.7rem;">Analysis Run</span></div>
+            <div class="pipeline-progress">
+                <div class="pipeline-step"><span class="dot done"></span><span class="label done">System Init</span></div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-step"><span class="dot {% if progress.step3_done %}done{% else %}pending{% endif %}"></span><span class="label {% if progress.step3_done %}done{% endif %}">Parameters</span></div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-step"><span class="dot {% if progress.step2_done %}done{% else %}pending{% endif %}"></span><span class="label {% if progress.step2_done %}done{% endif %}">Positions</span></div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-step"><span class="dot {% if progress.step4_done %}done{% else %}pending{% endif %}"></span><span class="label {% if progress.step4_done %}done{% endif %}">Research Notes</span></div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-step"><span class="dot {% if progress.step5_done %}done{% else %}pending{% endif %}"></span><span class="label {% if progress.step5_done %}done{% endif %}">Analysis Run</span></div>
             </div>
         </div>
     </div>
@@ -95,9 +104,22 @@ function csrfFetch(url, opts) {
     if (!(opts.body instanceof FormData)) opts.headers['X-CSRFToken'] = csrfToken;
     return fetch(url, opts);
 }
+var dragZone = document.getElementById('positions-drag');
+var dragFile = document.getElementById('positions-file');
+dragZone.addEventListener('click', function() { dragFile.click(); });
+dragZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+dragZone.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+dragZone.addEventListener('drop', function(e) {
+    e.preventDefault(); this.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) { dragFile.files = e.dataTransfer.files; dragFile.dispatchEvent(new Event('change')); }
+});
+
 document.getElementById('positions-file').addEventListener('change', function() {
     var file = this.files[0];
     if (!file) return;
+    var fnEl = document.getElementById('positions-filename');
+    fnEl.textContent = '\u2713 ' + file.name;
+    fnEl.style.display = 'block';
     var formData = new FormData();
     formData.append('file', file);
     formData.append('csrf_token', csrfToken);
