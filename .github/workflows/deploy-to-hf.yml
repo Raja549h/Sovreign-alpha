@@ -55,7 +55,10 @@ jobs:
                   "exports/",
                   ".env",
                   "SUMMARY.md",
-                  "*.md",
+                  "backtesting/",
+                  "documents/",
+                  "demo/",
+                  "security/",
                   "requirements-pipeline.txt"
               ]
           )
