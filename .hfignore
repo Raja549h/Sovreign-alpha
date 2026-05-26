@@ -13,3 +13,5 @@ __pycache__/
 exports/
 *.db-journal
 *.db-wal
+SUMMARY.md
+requirements-pipeline.txt
