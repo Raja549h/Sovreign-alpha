@@ -159,13 +159,13 @@ sovereign-alpha/
 
 ### Pre-Deploy
 - [x] `.env` configured with `FUND_PASSWORD`, `JWT_SECRET`, `GROQ_API_KEY`
-- [x] `requirements-render.txt` includes all 5 security packages
+- [x] `requirements-docker.txt` includes all 5 security packages
 - [x] `render.yaml` / Render Dashboard configured
 - [x] CSP allows `cdnjs.cloudflare.com`, `fonts.googleapis.com`
 - [x] `RENDER=true` set in Render environment
 
 ### Post-Deploy Verification
-- [ ] Dashboard returns 200 at `https://sovereign-alpha.onrender.com`
+- [ ] Dashboard returns 200 at `https://demonsatan-soverignalpha.hf.space`
 - [ ] Login with correct `FUND_PASSWORD` works
 - [ ] All 8 nav pages return 200 after login
 - [ ] Health check returns `{"status": "healthy"}`

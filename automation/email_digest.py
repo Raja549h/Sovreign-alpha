@@ -130,7 +130,7 @@ Overall BUY accuracy: {stats['accuracy']:.1f}%
 Avoided drawdown to date: ${stats['avoided']:,.0f}
 Live days running: {(datetime.now() - datetime(2026, 1, 2)).days}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-Dashboard: sovereign-alpha.onrender.com
+Dashboard: https://demonsatan-soverignalpha.hf.space
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
     

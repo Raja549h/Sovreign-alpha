@@ -139,7 +139,7 @@ Third parties verify without accessing private data.
 
 ## Dashboard
 
-Access at: sovereign-alpha.onrender.com
+Access at: https://demonsatan-soverignalpha.hf.space
 Login required. All data stored locally.
 
 ---

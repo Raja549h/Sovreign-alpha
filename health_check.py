@@ -273,10 +273,12 @@ def main():
         
         print("\n[10/10] Checking Cloud Deploy Files...")
         deploy_files = [
-            BASE_DIR / "render.yaml",
-            BASE_DIR / "Procfile",
-            BASE_DIR / "runtime.txt",
-            BASE_DIR / "DEPLOYMENT.md"
+            BASE_DIR / "Dockerfile",
+            BASE_DIR / "requirements-docker.txt",
+            BASE_DIR / "README.md",
+            BASE_DIR / ".hfignore"
+
+            ]
         ]
         missing = [f for f in deploy_files if not f.exists()]
         if not missing:

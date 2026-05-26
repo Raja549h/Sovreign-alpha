@@ -1,6 +1,6 @@
 """
-Seed Database — Run on every Render deploy to populate essential tables.
-========================================================================
+Seed Database — Run on deploy to populate essential tables.
+===========================================================
 1. Creates all required tables if they don't exist
 2. Runs research/test_run.py to populate Bajaj Finance data
 3. Falls back gracefully if Groq API or other dependencies fail
@@ -192,10 +192,10 @@ if __name__ == "__main__":
     seed_sample_predictions()
     seed_sample_vetoes()
 
-    if os.environ.get("RENDER", "false").lower() == "true":
+    if os.environ.get("SPACE_ID") or os.environ.get("RENDER", "false").lower() == "true":
         run_full_seed()
     else:
-        print("[seed] Not on Render, skipping full pipeline seed")
+        print("[seed] Not on cloud, skipping full pipeline seed")
 
     print("=" * 60)
     print("[seed] Database seeding complete")
