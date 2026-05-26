@@ -56,6 +56,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 FLASK_AVAILABLE = True
+IS_CLOUD = os.environ.get("RENDER", "false").lower() == "true" or bool(os.environ.get("SPACE_ID"))
 
 BASE_DIR = project_dir
 DATA_DIR = BASE_DIR / "data"
@@ -119,7 +120,7 @@ def get_macro_tickers():
         }
 
 app = Flask(__name__, template_folder='templates')
-if os.environ.get("RENDER", "false").lower() == "true":
+if IS_CLOUD:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET', os.environ.get('SECRET_KEY', 'change-this-secret-in-production'))
@@ -148,7 +149,7 @@ Talisman(app, force_https=False, strict_transport_security=True,
          x_xss_protection=True,
          session_cookie_secure=False,
          permissions_policy={'geolocation': "()", 'camera': "()", 'microphone': "()"})
-CORS(app, origins=['https://sovereign-alpha.onrender.com', 'http://localhost:5000'], supports_credentials=True)
+CORS(app, origins=['https://sovereign-alpha.onrender.com', 'http://localhost:5000', 'http://localhost:7860', 'https://demonsatan-soverignalpha.hf.space'], supports_credentials=True)
 
 limiter = Limiter(app=app, key_func=get_remote_address,
                   default_limits=["200 per day", "50 per hour"],
@@ -1492,10 +1493,9 @@ def login_page():
             if hmac.compare_digest(password.encode('utf-8'), FUND_PASSWORD.encode('utf-8')):
                 from privacy import create_session_token
                 token = create_session_token(username)
-                is_secure = os.environ.get("RENDER", "false").lower() == "true"
                 resp = make_response(redirect(url_for('index')))
-                resp.set_cookie('session_token', token, httponly=True, max_age=86400, secure=is_secure, samesite='Lax')
-                resp.set_cookie('session_user', username, max_age=86400, secure=is_secure, samesite='Lax')
+                resp.set_cookie('session_token', token, httponly=True, max_age=86400, secure=IS_CLOUD, samesite='Lax')
+                resp.set_cookie('session_user', username, max_age=86400, secure=IS_CLOUD, samesite='Lax')
                 # Clear failed attempts on success
                 failed_attempts.pop(client_ip, None)
                 return resp
@@ -1925,9 +1925,7 @@ def run_analysis_page():
         session_user = request.cookies.get('session_user', 'fund_manager')
         progress = check_setup_progress()
         
-        is_cloud = os.environ.get("RENDER", "false").lower() == "true"
-        
-        if is_cloud:
+        if IS_CLOUD:
             stats = calculate_dashboard_stats()
             return render_template('index.html',
                                approval_rate=stats['approval_rate'],
@@ -2048,11 +2046,9 @@ def health():
         'proofs_dir': PROOFS_DIR.exists()
     }
 
-    is_cloud = os.environ.get("RENDER", "false").lower() == "true"
-
     return jsonify({
         'status': 'healthy' if all(checks.values()) else 'degraded',
-        'is_cloud': is_cloud,
+        'is_cloud': IS_CLOUD,
         'checks': checks
     })
 
@@ -2243,9 +2239,7 @@ def seed_database_on_startup():
     import uuid
     from datetime import datetime, timedelta
     try:
-        # Force recreate DB on Render to ensure clean schema
-        is_render = os.environ.get("RENDER", "false").lower() == "true"
-        if is_render and DB_PATH.exists():
+        if os.environ.get("RENDER", "false").lower() == "true" and DB_PATH.exists():
             print("[seed] Render detected - removing old DB for clean schema")
             DB_PATH.unlink()
 
@@ -2395,13 +2389,12 @@ except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    is_cloud = os.environ.get("RENDER", "false").lower() == "true"
+    port = int(os.environ.get("PORT", 7860))
     
     print("=== SOVEREIGN ALPHA - Dashboard v1.3 ===")
     print(f"Database: {DB_PATH} (exists: {DB_PATH.exists()})")
     print(f"Proofs: {PROOFS_DIR} (count: {count_proof_files()})")
     print(f"Starting dashboard at http://localhost:{port}")
-    print(f"Cloud mode: {is_cloud}")
+    print(f"Cloud mode: {IS_CLOUD}")
     
     app.run(host='0.0.0.0', port=port, debug=False)
