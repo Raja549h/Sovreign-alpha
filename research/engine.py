@@ -9,6 +9,7 @@ import sys
 import io
 from pathlib import Path
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
 
 # Fix Windows console encoding
 if sys.platform == 'win32':
@@ -48,6 +49,7 @@ class SovereignAlphaResearch:
     
     def __init__(self):
         """Initialize all modules and database."""
+        load_dotenv()
         init_db()
         self.groq_key = os.environ.get('GROQ_API_KEY', '')
         console.print(Panel(

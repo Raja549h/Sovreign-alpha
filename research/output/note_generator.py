@@ -11,6 +11,7 @@ import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
 
 from research.storage.research_db import (
     get_company, get_company_by_id, get_financial_series, get_flags, get_latest_scores,
@@ -21,6 +22,9 @@ from research.intelligence.regime_connector import get_regime_context
 
 BASE_DIR = Path(__file__).parent.parent.parent
 NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
+
+# Load environment at module level so dotenv works
+load_dotenv(BASE_DIR / ".env")
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
 NOTE_COUNTER_FILE = BASE_DIR / "research" / "data" / ".note_counter"
@@ -271,7 +275,7 @@ def _format_html_note(reference: str, company_name: str, ticker: str, sector: st
         <tr><td>Confidence</td><td>{_fmt(scores.get('confidence'))}/10</td></tr>
         <tr><td>Regime Sensitivity</td><td>{_fmt(scores.get('regime_sensitivity'))}/10</td></tr>
         <tr><td>Structural Quality</td><td>{_fmt(scores.get('structural_quality'))}/10</td></tr>
-        <tr><td><strong>Composite</strong></td><td><strong>{_fmt(scores.get('composite'))}/10</strong></td></tr>
+        <tr><td><strong>Composite</strong></td><td><strong>{_fmt(scores.get('composite_score') or scores.get('composite'))}/10</strong></td></tr>
     </table>
 </div>"""
     
