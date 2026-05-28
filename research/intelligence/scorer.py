@@ -278,7 +278,8 @@ def format_scorecard(scores: Dict) -> str:
     conf_label = labels.get('confidence', _confidence_label(scores.get('confidence', 0)))
     regime_label = labels.get('regime', _sensitivity_label(scores.get('regime_sensitivity', 0)))
     quality_label = labels.get('quality', _quality_label(scores.get('structural_quality', 0)))
-    comp_label = labels.get('composite', _composite_label(scores.get('composite', 0)))
+    composite_val = scores.get('composite_score') or scores.get('composite', 0)
+    comp_label = labels.get('composite', _composite_label(composite_val))
     
     return f"""INSTITUTIONAL SCORECARD
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -287,7 +288,7 @@ Confidence:           {scores.get('confidence', 0):.1f} / 10  [{conf_label}]
 Regime Sensitivity:   {scores.get('regime_sensitivity', 0):.1f} / 10  [{regime_label}]
 Structural Quality:   {scores.get('structural_quality', 0):.1f} / 10  [{quality_label}]
 ━━━━━━━━━━━━━━━━━━━━━━
-Composite:            {scores.get('composite', 0):.1f} / 10  [{comp_label}]"""
+Composite:            {composite_val:.1f} / 10  [{comp_label}]"""
 
 
 def _risk_label(score: float) -> str:
