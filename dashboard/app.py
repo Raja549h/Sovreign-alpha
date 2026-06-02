@@ -2672,6 +2672,189 @@ def api_heatmap_data():
         return jsonify({'success': False, 'error': str(e)})
 
 
+# ---------------------------------------------------------------------------
+# Macro & Currency Intelligence Routes
+# ---------------------------------------------------------------------------
+
+@app.route('/macro')
+@login_required
+def macro_page():
+    try:
+        from research.macro.macro_engine import init_macro_tables, get_macro_overview
+        init_macro_tables()
+        overview = get_macro_overview()
+        return render_template('macro_health.html', overview=overview)
+    except Exception as e:
+        return render_template('macro_health.html', overview=None, error=str(e))
+
+@app.route('/api/macro/overview')
+@login_required
+def api_macro_overview():
+    try:
+        from research.macro.macro_engine import get_macro_overview
+        overview = get_macro_overview()
+        return jsonify({'success': True, 'overview': overview})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/macro/fii-flow')
+@login_required
+def macro_fii_flow():
+    try:
+        from research.macro.fii_flow import build_flow_intelligence_report
+        report = build_flow_intelligence_report()
+        return render_template('fii_flow.html', report=report)
+    except Exception as e:
+        return render_template('fii_flow.html', report=None, error=str(e))
+
+@app.route('/api/macro/fii-flow/record', methods=['POST'])
+@login_required
+def api_macro_fii_record():
+    try:
+        from research.macro.fii_flow import record_flow_entry
+        date = request.form.get('date', '')
+        flow_type = request.form.get('flow_type', 'EQUITY')
+        category = request.form.get('category', 'EQUITY_FII')
+        amount = request.form.get('amount_cr', type=float)
+        if not date or amount is None:
+            return jsonify({'success': False, 'error': 'Date and amount required'})
+        record_flow_entry(date, flow_type, category, amount)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/macro/fii-flow/data')
+@login_required
+def api_macro_fii_data():
+    try:
+        from research.macro.fii_flow import build_flow_intelligence_report
+        report = build_flow_intelligence_report()
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/macro/currency-cards')
+@login_required
+def macro_currency_cards():
+    try:
+        from research.portfolio_intelligence import get_portfolios, get_positions
+        from research.storage.research_db import get_company_by_id
+        from research.macro.currency_sensitivity import build_portfolio_currency_view
+
+        portfolios = get_portfolios()
+        selected = request.args.get('portfolio_id', type=int)
+        positions_data = []
+        if selected and any(p['id'] == selected for p in portfolios):
+            raw_positions = get_positions(selected)
+            for pos in raw_positions:
+                company = get_company_by_id(pos.get('company_id'))
+                if company:
+                    positions_data.append({
+                        'company_id': pos['company_id'],
+                        'company_name': company['company_name'],
+                        'ticker': company['ticker'],
+                        'sector': company.get('sector', ''),
+                        'weight_pct': pos.get('weight_pct'),
+                    })
+
+        report = build_portfolio_currency_view(positions_data)
+        if selected:
+            report['portfolio_name'] = next((p['name'] for p in portfolios if p['id'] == selected), None)
+        report['portfolios'] = portfolios
+        report['selected_id'] = selected
+        return render_template('currency_cards.html', report=report)
+    except Exception as e:
+        return render_template('currency_cards.html', report=None, error=str(e))
+
+@app.route('/api/macro/currency-sensitivity')
+@login_required
+def api_macro_currency():
+    try:
+        from research.portfolio_intelligence import get_portfolios, get_positions
+        from research.storage.research_db import get_company_by_id
+        from research.macro.currency_sensitivity import build_portfolio_currency_view
+
+        pid = request.args.get('portfolio_id', type=int)
+        positions_data = []
+        if pid:
+            raw_positions = get_positions(pid)
+            for pos in raw_positions:
+                company = get_company_by_id(pos.get('company_id'))
+                if company:
+                    positions_data.append({
+                        'company_id': pos['company_id'],
+                        'company_name': company['company_name'],
+                        'ticker': company['ticker'],
+                        'sector': company.get('sector', ''),
+                        'weight_pct': pos.get('weight_pct'),
+                    })
+        report = build_portfolio_currency_view(positions_data)
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/macro/macro-health')
+@login_required
+def api_macro_health():
+    try:
+        from research.macro.macro_health import build_macro_health_report
+        report = build_macro_health_report()
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/macro/import-sensitivity')
+@login_required
+def api_macro_import_sensitivity():
+    try:
+        from research.portfolio_intelligence import get_portfolios, get_positions
+        from research.storage.research_db import get_company_by_id
+        from research.macro.import_sensitivity import build_import_sensitivity_overlay
+
+        pid = request.args.get('portfolio_id', type=int)
+        positions_data = []
+        if pid:
+            raw_positions = get_positions(pid)
+            for pos in raw_positions:
+                company = get_company_by_id(pos.get('company_id'))
+                if company:
+                    positions_data.append({
+                        'company_id': pos['company_id'],
+                        'company_name': company['company_name'],
+                        'ticker': company['ticker'],
+                        'sector': company.get('sector', ''),
+                        'weight_pct': pos.get('weight_pct'),
+                    })
+        report = build_import_sensitivity_overlay(positions_data)
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/macro/reserve-stress')
+@login_required
+def api_macro_reserve_stress():
+    try:
+        from research.macro.reserve_stress import build_reserve_stress_report
+        report = build_reserve_stress_report(
+            reserve_usd_bn=request.args.get('reserve', type=float),
+            import_cover_months=request.args.get('import_cover', type=float),
+            st_debt_coverage=request.args.get('debt_coverage', type=float),
+        )
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/macro/init-db', methods=['POST'])
+@login_required
+def api_macro_init_db():
+    try:
+        from research.macro.macro_engine import init_macro_tables
+        init_macro_tables()
+        return jsonify({'success': True, 'message': 'Macro tables initialized'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 def seed_database_on_startup():
     """Create essential tables and seed sample data on first startup."""
     import uuid

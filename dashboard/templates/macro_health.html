@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Macro &amp; Currency Intelligence</h1>
+        <span class="timestamp" id="header-timestamp">{{ overview.timestamp if overview else '' }}</span>
+    </div>
+
+    {% if error %}
+    <div class="panel" style="border-color:var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.75rem;">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    {% if overview %}
+    <div class="stats-row">
+        <div class="stat-box {% if overview.macro_health.status == 'GREEN' %}accent{% elif overview.macro_health.status == 'AMBER' %}warning{% else %}danger{% endif %}">
+            <label>Macro Health</label>
+            <div class="value">{{ overview.macro_health.composite_score }}</div>
+            <div class="sub">{{ overview.macro_health.status }} &middot; {{ overview.macro_health.active_indicators }}/{{ overview.macro_health.total_indicators }} indicators</div>
+        </div>
+        <div class="stat-box {% if overview.fii_flow.vulnerability.vulnerability_level == 'HIGH' %}danger{% elif overview.fii_flow.vulnerability.vulnerability_level == 'MEDIUM' %}warning{% else %}accent{% endif %}">
+            <label>FII Flow Regime</label>
+            <div class="value" style="font-size:1.1rem;">{{ overview.fii_flow.regime.label }}</div>
+            <div class="sub">Risk: {{ overview.fii_flow.regime.risk }} &middot; Vulnerability: {{ overview.fii_flow.vulnerability.vulnerability_score }}/10</div>
+        </div>
+        <div class="stat-box {% if overview.reserve_stress.stress_level == 'HIGH' or overview.reserve_stress.stress_level == 'ELEVATED' %}danger{% elif overview.reserve_stress.stress_level == 'WATCH' %}warning{% else %}accent{% endif %}">
+            <label>Reserve Stress</label>
+            <div class="value" style="font-size:1.1rem;">{{ overview.reserve_stress.stress_level }}</div>
+            <div class="sub">Score: {{ overview.reserve_stress.stress_score }}/100</div>
+        </div>
+        <div class="stat-box">
+            <label>FII Monthly Net</label>
+            <div class="value {% if overview.fii_flow.monthly_net_cr is not none and overview.fii_flow.monthly_net_cr < 0 %}danger{% elif overview.fii_flow.monthly_net_cr is not none and overview.fii_flow.monthly_net_cr > 0 %}accent{% endif %}">
+                {% if overview.fii_flow.monthly_net_cr is not none %}
+                {{ '%.0f'|format(overview.fii_flow.monthly_net_cr) }}
+                {% else %}--{% endif %}
+            </div>
+            <div class="sub">₹ Cr</div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header"><h2>Composite Observation</h2></div>
+        <div class="panel-body padded" style="font-size:0.75rem;line-height:1.6;">
+            {% for obs in overview.observations %}
+            <div style="margin-bottom:0.3rem;">&gt; {{ obs }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid-2" style="margin-bottom:0.75rem;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>FII Flow Intelligence</h2>
+                <a href="/macro/fii-flow" class="btn small outline">Details &rarr;</a>
+            </div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                {% if overview and overview.fii_flow %}
+                <div style="margin-bottom:0.5rem;">
+                    <span class="severity-tag {% if overview.fii_flow.regime.risk == 'HIGH' %}critical{% elif overview.fii_flow.regime.risk == 'MEDIUM' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent){% endif %}">{{ overview.fii_flow.regime.label }}</span>
+                </div>
+                <div class="grid-2" style="margin-bottom:0.3rem;">
+                    <div><span style="color:var(--text-dim);">Monthly Net:</span> 
+                        {% if overview.fii_flow.monthly_net_cr is not none %}
+                        <span style="color:{% if overview.fii_flow.monthly_net_cr < 0 %}var(--danger){% else %}var(--accent){% endif %};">₹{{ '%.0f'|format(overview.fii_flow.monthly_net_cr) }} Cr</span>
+                        {% else %}<span style="color:var(--text-dim);">No data</span>{% endif %}
+                    </div>
+                    <div><span style="color:var(--text-dim);">Vulnerability:</span> {{ overview.fii_flow.vulnerability.vulnerability_score }}/10</div>
+                </div>
+                <div style="color:var(--text-dim);">{{ overview.fii_flow.observation }}</div>
+                {% else %}
+                <div style="color:var(--text-dim);">No FII flow data available.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>India Macro Health</h2>
+            </div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                {% if overview and overview.macro_health %}
+                <div class="grid-2" style="margin-bottom:0.3rem;">
+                    <div><span style="color:var(--text-dim);">Composite Score:</span> 
+                        <span class="{% if overview.macro_health.status == 'GREEN' %}updated-now{% elif overview.macro_health.status == 'AMBER' %}updated-stale{% else %}" style="color:var(--danger){% endif %}">{{ overview.macro_health.composite_score }}/100</span>
+                    </div>
+                    <div><span style="color:var(--text-dim);">Status:</span> 
+                        <span class="severity-tag {% if overview.macro_health.status == 'RED' %}critical{% elif overview.macro_health.status == 'AMBER' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent){% endif %}">{{ overview.macro_health.status }}</span>
+                    </div>
+                </div>
+                <div style="color:var(--text-dim);margin-bottom:0.3rem;">
+                    Indicators: {{ overview.macro_health.active_indicators }} of {{ overview.macro_health.total_indicators }} tracked
+                </div>
+                <div style="color:var(--text-dim);">{{ overview.macro_health.observation }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Currency Sensitivity</h2>
+                <a href="/macro/currency-cards" class="btn small outline">Details &rarr;</a>
+            </div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                <div style="color:var(--text-dim);">Map portfolio positions to currency exposure profiles. Assess INR sensitivity by sector and position.</div>
+                <div style="margin-top:0.5rem;"><a href="/macro/currency-cards" class="btn outline small">View Currency Exposure Cards &rarr;</a></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Import Sensitivity</h2>
+            </div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                <div style="color:var(--text-dim);">Import dependency overlay for portfolio positions. Identify currency headwind risk concentration.</div>
+                <div style="margin-top:0.5rem;color:var(--text-dim);">Create a portfolio to view import sensitivity analysis.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:0.75rem;">
+        <div class="panel-header">
+            <h2>Reserve Stress Framework</h2>
+        </div>
+        <div class="panel-body padded" style="font-size:0.7rem;">
+            {% if overview and overview.reserve_stress %}
+            <div class="grid-3" style="margin-bottom:0.3rem;">
+                <div><span style="color:var(--text-dim);">Stress Level:</span> 
+                    <span class="severity-tag {% if overview.reserve_stress.stress_level == 'HIGH' %}critical{% elif overview.reserve_stress.stress_level == 'ELEVATED' %}high{% elif overview.reserve_stress.stress_level == 'WATCH' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent){% endif %}">{{ overview.reserve_stress.stress_level }}</span>
+                </div>
+                <div><span style="color:var(--text-dim);">Stress Score:</span> {{ overview.reserve_stress.stress_score }}/100</div>
+                <div><span style="color:var(--text-dim);">Reserves:</span> 
+                    {% if overview.reserve_stress.reserve_level_usd_bn %}
+                    ${{ '%.0f'|format(overview.reserve_stress.reserve_level_usd_bn) }}B
+                    {% else %}--{% endif %}
+                </div>
+            </div>
+            <div style="color:var(--text-dim);">{{ overview.reserve_stress.observation }}</div>
+            {% else %}
+            <div style="color:var(--text-dim);">Enter reserve data to enable stress monitoring.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<style>
+.panel { background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 0.5rem; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-primary); }
+.panel-body { font-family: var(--font-mono); }
+.panel-body.padded { padding: 0.6rem 0.75rem; }
+</style>
+
+<script>
+setInterval(function(){
+    fetch('/api/macro/overview').then(function(r){return r.json()}).then(function(d){
+        if(d.success && d.overview){
+            var ts = document.getElementById('header-timestamp');
+            if(ts) ts.textContent = d.overview.timestamp;
+        }
+    }).catch(function(){});
+}, 60000);
+</script>
+{% endblock %}
