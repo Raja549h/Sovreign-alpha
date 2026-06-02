@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>FII Flow Intelligence</h1>
+        <span class="timestamp" id="header-ts">{{ report.timestamp if report else '' }}</span>
+    </div>
+
+    {% if error %}
+    <div class="panel" style="border-color:var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.75rem;">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    {% if report %}
+    <div class="stats-row">
+        <div class="stat-box {% if report.flow_regime.risk == 'HIGH' %}danger{% elif report.flow_regime.risk == 'MEDIUM' %}warning{% else %}accent{% endif %}">
+            <label>Flow Regime</label>
+            <div class="value" style="font-size:1.2rem;">{{ report.flow_regime.label }}</div>
+            <div class="sub">{{ report.flow_regime.regime }}</div>
+        </div>
+        <div class="stat-box {% if report.monthly.monthly_net_cr is not none and report.monthly.monthly_net_cr < 0 %}danger{% elif report.monthly.monthly_net_cr is not none and report.monthly.monthly_net_cr > 0 %}accent{% endif %}">
+            <label>Monthly Net</label>
+            <div class="value">
+                {% if report.monthly.monthly_net_cr is not none %}
+                ₹{{ '%.0f'|format(report.monthly.monthly_net_cr) }}
+                {% else %}--{% endif %}
+            </div>
+            <div class="sub">₹ Cr</div>
+        </div>
+        <div class="stat-box {% if report.vulnerability.vulnerability_level == 'HIGH' %}danger{% elif report.vulnerability.vulnerability_level == 'MEDIUM' %}warning{% else %}accent{% endif %}">
+            <label>Vulnerability</label>
+            <div class="value">{{ report.vulnerability.vulnerability_score }}</div>
+            <div class="sub">{{ report.vulnerability.vulnerability_level }}</div>
+        </div>
+        <div class="stat-box">
+            <label>Data Quality</label>
+            <div class="value" style="font-size:0.8rem;">{{ report.data_quality }}</div>
+            <div class="sub">{{ report.monthly.num_entries }} entries</div>
+        </div>
+    </div>
+
+    {% if report.monthly %}
+    <div class="grid-3" style="margin-bottom:0.75rem;">
+        <div class="intel-card">
+            <div class="label">Daily Net</div>
+            <div class="stat {% if report.monthly.daily_net_cr is not none and report.monthly.daily_net_cr < 0 %}danger{% elif report.monthly.daily_net_cr is not none and report.monthly.daily_net_cr > 0 %}accent{% else %}{% endif %}">
+                {% if report.monthly.daily_net_cr is not none %}₹{{ '%.0f'|format(report.monthly.daily_net_cr) }} Cr{% else %}--{% endif %}
+            </div>
+        </div>
+        <div class="intel-card">
+            <div class="label">Weekly Net</div>
+            <div class="stat {% if report.weekly.weekly_net_cr is not none and report.weekly.weekly_net_cr < 0 %}danger{% elif report.weekly.weekly_net_cr is not none and report.weekly.weekly_net_cr > 0 %}accent{% else %}{% endif %}">
+                {% if report.weekly.weekly_net_cr is not none %}₹{{ '%.0f'|format(report.weekly.weekly_net_cr) }} Cr{% else %}--{% endif %}
+            </div>
+        </div>
+        <div class="intel-card">
+            <div class="label">Monthly Net</div>
+            <div class="stat {% if report.monthly.monthly_net_cr is not none and report.monthly.monthly_net_cr < 0 %}danger{% elif report.monthly.monthly_net_cr is not none and report.monthly.monthly_net_cr > 0 %}accent{% else %}{% endif %}">
+                {% if report.monthly.monthly_net_cr is not none %}₹{{ '%.0f'|format(report.monthly.monthly_net_cr) }} Cr{% else %}--{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid-2" style="margin-bottom:0.75rem;">
+        <div class="panel">
+            <div class="panel-header"><h2>Flow Regime Assessment</h2></div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                <div style="margin-bottom:0.4rem;"><span style="color:var(--text-dim);">Classification:</span> <span class="severity-tag {% if report.flow_regime.risk == 'HIGH' %}critical{% elif report.flow_regime.risk == 'MEDIUM' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent){% endif %}">{{ report.flow_regime.label }}</span></div>
+                <div style="margin-bottom:0.4rem;"><span style="color:var(--text-dim);">Risk Level:</span> {{ report.flow_regime.risk }}</div>
+                <div style="color:var(--text-dim);">{{ report.flow_regime.observation }}</div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header"><h2>Portfolio Vulnerability</h2></div>
+            <div class="panel-body padded" style="font-size:0.7rem;">
+                <div style="margin-bottom:0.4rem;">
+                    <span style="color:var(--text-dim);">Score:</span> 
+                    <span class="{% if report.vulnerability.vulnerability_level == 'HIGH' %}" style="color:var(--danger){% elif report.vulnerability.vulnerability_level == 'MEDIUM' %}" style="color:var(--warning){% else %}" style="color:var(--accent){% endif %}">{{ report.vulnerability.vulnerability_score }}/10</span>
+                </div>
+                {% if report.vulnerability.factors %}
+                <div style="margin-bottom:0.3rem;color:var(--text-dim);">Contributing factors:</div>
+                <ul style="margin:0;padding-left:1rem;color:var(--text-dim);">
+                    {% for f in report.vulnerability.factors %}
+                    <li>{{ f }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header"><h2>Institutional Observation</h2></div>
+        <div class="panel-body padded" style="font-size:0.75rem;line-height:1.6;">
+            <div style="margin-bottom:0.3rem;">&gt; {{ report.observation }}</div>
+            {% if report.vulnerability.portfolio_exposure_note %}
+            <div style="color:var(--text-dim);margin-top:0.3rem;">&gt; {{ report.vulnerability.portfolio_exposure_note }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if report.recent_flows %}
+    <div class="panel" style="margin-top:0.75rem;">
+        <div class="panel-header"><h2>Recent Flow Entries ({{ report.recent_flows|length }})</h2></div>
+        <div class="panel-body" style="font-size:0.65rem;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border);color:var(--text-dim);">
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Date</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Type</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Category</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:right;">Amount (₹ Cr)</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in report.recent_flows %}
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.3rem 0.5rem;">{{ f.date }}</td>
+                        <td style="padding:0.3rem 0.5rem;">{{ f.flow_type }}</td>
+                        <td style="padding:0.3rem 0.5rem;">{{ f.category }}</td>
+                        <td style="padding:0.3rem 0.5rem;text-align:right;{% if f.amount_cr and f.amount_cr < 0 %}color:var(--danger){% elif f.amount_cr and f.amount_cr > 0 %}color:var(--accent){% endif %}">
+                            {% if f.amount_cr %}₹{{ '%.0f'|format(f.amount_cr) }}{% else %}--{% endif %}
+                        </td>
+                        <td style="padding:0.3rem 0.5rem;">{{ f.source }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="panel" style="margin-top:0.75rem;">
+        <div class="panel-header"><h2>Enter FII Flow Data</h2></div>
+        <div class="panel-body padded" style="font-size:0.7rem;">
+            <p style="color:var(--text-dim);margin-bottom:0.5rem;">Record FII flow entries to populate the intelligence engine. Data can be sourced from NSDL, SEBI, or Bloomberg.</p>
+            <form id="flow-entry-form" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.15rem;">Date</label>
+                    <input type="date" id="flow-date" required style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.15rem;">Type</label>
+                    <select id="flow-type" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;">
+                        <option value="EQUITY">Equity</option>
+                        <option value="DEBT">Debt</option>
+                        <option value="DERIVATIVE">Derivative</option>
+                        <option value="HYBRID">Hybrid</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.15rem;">Amount (₹ Cr)</label>
+                    <input type="number" step="0.01" id="flow-amount" required placeholder="e.g. 1250 or -830" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                    <button type="submit" class="btn small" style="width:100%;background:var(--accent);color:#000;border:none;padding:0.35rem;font-weight:600;cursor:pointer;">RECORD</button>
+                </div>
+                <input type="hidden" id="flow-category" value="EQUITY_FII">
+            </form>
+            <div id="flow-feedback" style="margin-top:0.4rem;color:var(--accent);font-size:0.65rem;display:none;"></div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#9881;</div>
+        <div>No FII flow data available. Enter data using the form above.</div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.panel { background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 0.5rem; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-primary); }
+.panel-body { font-family: var(--font-mono); }
+.panel-body.padded { padding: 0.6rem 0.75rem; }
+</style>
+
+<script>
+document.getElementById('flow-entry-form')?.addEventListener('submit', function(e){
+    e.preventDefault();
+    var fd = new FormData();
+    fd.append('date', document.getElementById('flow-date').value);
+    fd.append('flow_type', document.getElementById('flow-type').value);
+    fd.append('amount_cr', document.getElementById('flow-amount').value);
+    fetch('/api/macro/fii-flow/record', {method:'POST', body:fd})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        var fb = document.getElementById('flow-feedback');
+        if(d.success){
+            fb.style.color = 'var(--accent)';
+            fb.textContent = 'Flow entry recorded. Refresh page to update.';
+        } else {
+            fb.style.color = 'var(--danger)';
+            fb.textContent = 'Error: ' + (d.error || 'Unknown');
+        }
+        fb.style.display = 'block';
+        setTimeout(function(){fb.style.display='none'}, 5000);
+    }).catch(function(){
+        var fb = document.getElementById('flow-feedback');
+        fb.style.color = 'var(--danger)';
+        fb.textContent = 'Request failed.';
+        fb.style.display = 'block';
+    });
+});
+</script>
+{% endblock %}

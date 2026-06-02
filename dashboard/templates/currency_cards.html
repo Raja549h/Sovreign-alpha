@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Currency Sensitivity Mapping</h1>
+        <span class="timestamp" id="header-ts">{{ report.timestamp if report else '' }}</span>
+    </div>
+
+    {% if error %}
+    <div class="panel" style="border-color:var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.75rem;">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    {% if report %}
+    {% if report.high_exposure_count > 0 %}
+    <div class="panel" style="border-color:var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.7rem;">
+            {{ report.high_exposure_count }} position(s) with HIGH currency sensitivity detected. Review below.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <label>Portfolio Sensitivity Score</label>
+            <div class="value {% if report.portfolio_sensitivity_score > 5 %}warning{% else %}accent{% endif %}">{{ report.portfolio_sensitivity_score }}</div>
+            <div class="sub">Weighted average (0-10)</div>
+        </div>
+        <div class="stat-box">
+            <label>Bias: INR Weak</label>
+            <div class="value" style="color:var(--warning);">{{ report.direction_summary.INR_WEAK_BEARISH }}</div>
+            <div class="sub">Positions benefiting from weak INR</div>
+        </div>
+        <div class="stat-box">
+            <label>Bias: INR Strong</label>
+            <div class="value" style="color:var(--info);">{{ report.direction_summary.INR_STRONG_BULLISH }}</div>
+            <div class="sub">Positions benefiting from strong INR</div>
+        </div>
+        <div class="stat-box">
+            <label>High Risk</label>
+            <div class="value danger">{{ report.risk_summary.HIGH }}</div>
+            <div class="sub">Positions with score ≥ 7</div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header"><h2>Institutional Observation</h2></div>
+        <div class="panel-body padded" style="font-size:0.75rem;line-height:1.6;color:var(--text-dim);">
+            &gt; {{ report.observation }}
+        </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:0.75rem;">
+        <div class="intel-card accent">
+            <div class="label">Risk Level Summary</div>
+            {% for level, count in report.risk_summary.items() %}
+            <div style="display:flex;justify-content:space-between;margin-top:0.2rem;">
+                <span>{{ level }}</span>
+                <span class="{% if level == 'HIGH' %}danger{% elif level == 'MEDIUM' %}warning{% else %}accent{% endif %}">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="intel-card info">
+            <div class="label">Direction Bias</div>
+            {% for dir, count in report.direction_summary.items() %}
+            <div style="display:flex;justify-content:space-between;margin-top:0.2rem;">
+                <span>{{ dir.replace('_', ' ').title() }}</span>
+                <span>{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if report.exposures %}
+    <div class="panel">
+        <div class="panel-header"><h2>Position-Level Currency Exposure</h2></div>
+        <div class="panel-body" style="font-size:0.65rem;">
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border);color:var(--text-dim);">
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Ticker</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Sector</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Rev Exp</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Cost Exp</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Debt Exp</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:left;">Direction</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:center;">Sensitivity</th>
+                        <th style="padding:0.4rem 0.5rem;text-align:center;">Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in report.exposures %}
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:0.3rem 0.5rem;font-weight:600;">{{ e.ticker }}</td>
+                        <td style="padding:0.3rem 0.5rem;color:var(--text-dim);">{{ e.sector }}</td>
+                        <td style="padding:0.3rem 0.5rem;">{{ e.revenue_exposure }}</td>
+                        <td style="padding:0.3rem 0.5rem;">{{ e.cost_exposure }}</td>
+                        <td style="padding:0.3rem 0.5rem;">{{ e.debt_exposure }}</td>
+                        <td style="padding:0.3rem 0.5rem;color:{% if e.direction == 'INR_STRONG_BULLISH' %}var(--info){% elif e.direction == 'INR_WEAK_BEARISH' %}var(--warning){% else %}var(--text-dim){% endif %};">{{ e.direction.replace('_', ' ').title() }}</td>
+                        <td style="padding:0.3rem 0.5rem;text-align:center;{% if e.sensitivity_score >= 7 %}color:var(--danger){% elif e.sensitivity_score >= 4 %}color:var(--warning){% else %}color:var(--accent){% endif %}">{{ e.sensitivity_score }}</td>
+                        <td style="padding:0.3rem 0.5rem;text-align:center;">
+                            <span class="severity-tag {% if e.risk_level == 'HIGH' %}critical{% elif e.risk_level == 'MEDIUM' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent){% endif %}">{{ e.risk_level }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.exposures %}
+    <div style="margin-top:0.75rem;">
+        {% for e in report.exposures %}
+        <div class="intel-card" style="margin-bottom:0.4rem;{% if e.risk_level == 'HIGH' %}border-left-color:var(--danger);{% elif e.risk_level == 'MEDIUM' %}border-left-color:var(--warning);{% endif %}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;">
+                <div><span style="font-weight:700;">{{ e.ticker }}</span> <span style="color:var(--text-dim);font-size:0.6rem;">{{ e.sector }}</span></div>
+                <span class="severity-tag {% if e.risk_level == 'HIGH' %}critical{% elif e.risk_level == 'MEDIUM' %}medium{% else %}" style="background:var(--accent-dim);color:var(--accent);font-size:0.6rem{% endif %}">{{ e.risk_level }}</span>
+            </div>
+            <div style="font-size:0.65rem;color:var(--text-dim);">{{ e.observation }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#9881;</div>
+        <div>No currency exposure data. Create a portfolio with positions to view currency sensitivity mapping.</div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.panel { background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 0.5rem; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-primary); }
+.panel-body { font-family: var(--font-mono); }
+.panel-body.padded { padding: 0.6rem 0.75rem; }
+</style>
+{% endblock %}
