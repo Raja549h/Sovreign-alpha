@@ -65,6 +65,55 @@
     </div>
     {% endif %}
 
+    {% if macro_alerts %}
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Macro Regime Alerts</h2>
+            <span class="timestamp">Automated observations</span>
+        </div>
+        <div class="panel-body padded" style="padding:0;">
+            {% for alert in macro_alerts %}
+            <div class="signal-card {{ 'danger' if alert.severity == 'HIGH' else 'warning' }}">
+                <span class="severity-tag {{ alert.severity|lower }}">{{ alert.severity }}</span>
+                <span class="reason" style="margin-left:0.5rem;">{{ alert.headline }}</span>
+                {% if alert.regime %}<span class="regime-badge {{ alert.regime }}" style="float:right;">{{ alert.regime }}</span>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if observations %}
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Forensic Intelligence Feed ({{ observations|length }})</h2>
+            <span class="timestamp">{{ high_severity_7d }} high-severity in 7d</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+            {% for obs in observations %}
+            <div class="signal-card {{ 'danger' if obs.severity in ('HIGH','CRITICAL') else 'warning' if obs.severity == 'MEDIUM' else '' }}">
+                <div style="display:flex;gap:0.5rem;align-items:flex-start;">
+                    <span class="regime-badge NEUTRAL" style="font-size:9px;min-width:50px;">{{ obs.ticker }}</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.75rem;">{{ obs.headline }}</div>
+                        <div style="color:var(--text-dim);font-size:0.65rem;margin-top:0.15rem;">
+                            {{ obs.type }} — {{ (obs.timestamp or '')[:19] }}
+                            {% if obs.supporting_data %}&middot; {{ obs.supporting_data[:120] }}{% endif %}
+                        </div>
+                    </div>
+                    <span class="severity-tag {{ obs.severity|lower }}">{{ obs.severity }}</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No forensic observations in current feed.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="grid-2">
         <div class="panel">
             <div class="panel-header">

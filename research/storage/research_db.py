@@ -367,3 +367,100 @@ def delete_company(company_id: int):
         c.execute("DELETE FROM filings WHERE company_id = ?", (company_id,))
         c.execute("DELETE FROM companies WHERE id = ?", (company_id,))
         conn.commit()
+
+
+EXTENDED_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS portfolios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    strategy TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_positions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
+    company_id INTEGER REFERENCES companies(id),
+    weight_pct REAL,
+    cost_basis REAL,
+    notes TEXT DEFAULT '',
+    added_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_stress_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
+    scenario TEXT NOT NULL,
+    impact_pct REAL,
+    impact_value REAL,
+    max_position_impact TEXT,
+    num_positions_affected INTEGER,
+    total_positions INTEGER,
+    tested_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
+    diversification_score REAL,
+    concentration_penalty REAL,
+    sector_concentration_penalty REAL,
+    correlation_penalty REAL,
+    stress_impact_score REAL,
+    composite_score REAL,
+    scored_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS theses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    title TEXT NOT NULL,
+    thesis_text TEXT,
+    key_variables TEXT,
+    timeframe_days INTEGER DEFAULT 90,
+    conviction REAL DEFAULT 0.0,
+    status TEXT DEFAULT 'INTACT',
+    notes TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS thesis_checks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thesis_id INTEGER REFERENCES theses(id) ON DELETE CASCADE,
+    variable TEXT,
+    expected_range TEXT,
+    actual_value TEXT,
+    flag_severity TEXT,
+    notes TEXT DEFAULT '',
+    checked_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id) UNIQUE,
+    alert_threshold TEXT DEFAULT 'MEDIUM',
+    notes TEXT DEFAULT '',
+    added_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS observations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT,
+    company TEXT,
+    type TEXT,
+    headline TEXT,
+    severity TEXT,
+    supporting_data TEXT DEFAULT '',
+    regime_relevance TEXT DEFAULT '',
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+def init_extended_tables():
+    """Initialize new extended tables."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(EXTENDED_TABLES_SQL)
