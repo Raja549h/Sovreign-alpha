@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Portfolio Command Centre</h1>
+        <span class="timestamp">{{ timestamp }}</span>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box accent">
+            <label>Portfolios</label>
+            <div class="value">{{ portfolios_count | default(0) }}</div>
+        </div>
+        <div class="stat-box accent">
+            <label>Positions</label>
+            <div class="value">{{ positions_count | default(0) }}</div>
+        </div>
+        <div class="stat-box info">
+            <label>Avg Score</label>
+            <div class="value info">{{ avg_score | default('—') }}</div>
+        </div>
+        <div class="stat-box {% if stress_impact and stress_impact > 15 %}danger{% else %}warning{% endif %}">
+            <label>Stress Impact</label>
+            <div class="value">{{ stress_impact | default('—') }}</div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="panel" style="border-left:2px solid var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-header"><h2 style="color:var(--danger);">Error</h2></div>
+        <div class="panel-body padded" style="color:var(--danger);font-family:var(--font-mono);font-size:0.75rem;">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>New Portfolio</h2>
+        </div>
+        <div class="panel-body padded">
+            <form action="/api/portfolio/create" method="POST" style="display:flex;flex-wrap:wrap;gap:0.55rem;align-items:flex-end;">
+                <div><label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Name</label><input type="text" name="name" required style="background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem 0.6rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;min-width:180px;"></div>
+                <div><label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Description</label><input type="text" name="description" style="background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem 0.6rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;min-width:180px;"></div>
+                <div><label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Strategy</label><input type="text" name="strategy" style="background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.35rem 0.6rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;min-width:180px;"></div>
+                <button type="submit" class="btn">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Portfolios</h2>
+        </div>
+        <div class="panel-body">
+            {% if portfolios and portfolios|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Strategy</th>
+                        <th>Positions</th>
+                        <th>Last Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in portfolios %}
+                    <tr>
+                        <td class="mono" style="font-size:0.65rem;">{{ p.id }}</td>
+                        <td><a href="?portfolio_id={{ p.id }}" style="color:var(--accent);font-weight:700;">{{ p.name }}</a></td>
+                        <td>{{ p.strategy or '—' }}</td>
+                        <td>{{ p.position_count | default(0) }}</td>
+                        <td>{{ p.last_score or '—' }}</td>
+                        <td>
+                            <a href="?portfolio_id={{ p.id }}" class="btn outline small">View</a>
+                            <form action="/api/portfolio/delete" method="POST" style="display:inline;">
+                                <input type="hidden" name="portfolio_id" value="{{ p.id }}">
+                                <button type="submit" class="btn danger small" onclick="return confirm('Delete portfolio?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No portfolios created yet. Use the form above to create one.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if portfolio_id and portfolio %}
+    <div class="panel" style="margin-top:0.65rem;">
+        <div class="panel-header">
+            <h2>{{ portfolio.name }}</h2>
+            <span class="timestamp">Strategy: {{ portfolio.strategy or 'Not set' }}</span>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Concentration Analysis</h2>
+            </div>
+            <div class="panel-body padded">
+                {% if concentration %}
+                <div class="key-val"><span class="key">HHI</span><span class="val">{{ concentration.hhi }}</span></div>
+                <div class="key-val"><span class="key">Top 5 Weight</span><span class="val">{{ concentration.top_5_weight }}%</span></div>
+                {% if concentration.sector_exposure %}
+                {% for sector, weight in concentration.sector_exposure.items() %}
+                <div class="key-val"><span class="key">{{ sector }}</span><span class="val">{{ weight }}%</span></div>
+                {% endfor %}
+                {% endif %}
+                <div class="key-val" style="border-bottom:none;padding-top:0.55rem;">
+                    <span class="key">Concentration Risk</span>
+                    <span class="val"><span class="regime-badge {% if concentration.concentration_risk == 'LOW' %}RISK_ON{% elif concentration.concentration_risk == 'MEDIUM' %}NEUTRAL{% else %}RISK_OFF{% endif %}">{{ concentration.concentration_risk }}</span></span>
+                </div>
+                {% else %}
+                <div style="color:var(--text-dim);font-size:0.75rem;">No concentration data available.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Hidden Correlations</h2>
+                <span class="timestamp">{{ correlations|length if correlations else 0 }} flags</span>
+            </div>
+            <div class="panel-body padded">
+                {% if correlations and correlations|length > 0 %}
+                {% for c in correlations %}
+                <div class="signal-card {% if c.risk_level == 'HIGH' %}danger{% else %}warning{% endif %}">
+                    <div class="sym">{{ c.pair }}</div>
+                    <div class="reason">Score: {{ c.correlation_score }} | Risk: {{ c.risk_level }}</div>
+                    <div class="reason" style="margin-top:0.2rem;font-size:0.65rem;">
+                        {% for r in c.reasons %}{{ r }}{% if not loop.last %}; {% endif %}{% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="color:var(--text-dim);font-size:0.75rem;">No hidden correlations detected.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:0.65rem;">
+        <div class="panel-header">
+            <h2>Stress Test Results</h2>
+        </div>
+        <div class="panel-body">
+            {% if stress_results and stress_results|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Impact %</th>
+                        <th>Max Position</th>
+                        <th>Affected Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in stress_results %}
+                    <tr>
+                        <td>{{ s.scenario | replace('_', ' ') | title }}</td>
+                        <td class="{% if s.impact_pct > 10 %}value-negative{% else %}value-positive{% endif %}">{{ s.impact_pct }}%</td>
+                        <td>{{ s.max_position_impact }}</td>
+                        <td>{{ s.num_positions_affected }} / {{ s.total_positions }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>Run stress tests to see results.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Portfolio Score</h2>
+        </div>
+        <div class="panel-body padded">
+            {% if portfolio_score %}
+            <div class="key-val"><span class="key">Diversification</span><span class="val">{{ portfolio_score.diversification_score }}</span></div>
+            <div class="key-val"><span class="key">Concentration Penalty</span><span class="val danger">-{{ portfolio_score.concentration_penalty }}</span></div>
+            <div class="key-val"><span class="key">Sector Penalty</span><span class="val danger">-{{ portfolio_score.sector_concentration_penalty }}</span></div>
+            <div class="key-val"><span class="key">Correlation Penalty</span><span class="val danger">-{{ portfolio_score.correlation_penalty }}</span></div>
+            <div class="key-val"><span class="key">Stress Impact</span><span class="val danger">-{{ portfolio_score.stress_impact_score }}</span></div>
+            <div class="key-val" style="border-bottom:none;padding-top:0.4rem;">
+                <span class="key">Composite Score</span>
+                <span class="val accent" style="font-size:1.1rem;">{{ portfolio_score.composite_score }}</span>
+            </div>
+            {% else %}
+            <div style="color:var(--text-dim);font-size:0.75rem;">Score not yet calculated.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Positions</h2>
+            <span class="timestamp">{{ positions|length if positions else 0 }} holdings</span>
+        </div>
+        <div class="panel-body">
+            {% if positions and positions|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Company</th>
+                        <th>Sector</th>
+                        <th>Weight %</th>
+                        <th>Cost Basis</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pos in positions %}
+                    <tr>
+                        <td class="ticker-cell">{{ pos.ticker }}</td>
+                        <td>{{ pos.company_name }}</td>
+                        <td>{{ pos.sector }}</td>
+                        <td>{{ pos.weight_pct }}%</td>
+                        <td>{{ pos.cost_basis or '—' }}</td>
+                        <td>
+                            <form action="/api/portfolio/position/delete" method="POST" style="display:inline;">
+                                <input type="hidden" name="position_id" value="{{ pos.id }}">
+                                <input type="hidden" name="portfolio_id" value="{{ portfolio_id }}">
+                                <button type="submit" class="btn danger small" onclick="return confirm('Remove position?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No positions in this portfolio.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

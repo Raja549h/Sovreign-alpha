@@ -992,6 +992,18 @@ def index():
     try:
         demo = is_demo_mode()
 
+        observations = []
+        macro_alerts = []
+        high_severity_7d = 0
+        try:
+            from research.observation_stream import build_live_feed
+            feed = build_live_feed(20)
+            observations = feed.get('observations', [])
+            macro_alerts = feed.get('macro_alerts', [])
+            high_severity_7d = feed.get('high_severity_7d', 0)
+        except Exception:
+            pass
+
         if demo:
             return render_template('index.html',
                                total_predictions=SAMPLE_STATS['total_decisions'],
@@ -1009,7 +1021,8 @@ def index():
                                regime_confidence='78%',
                                last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                                progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
-                               is_demo=True)
+                               is_demo=True,
+                               observations=observations, macro_alerts=macro_alerts, high_severity_7d=high_severity_7d)
 
         progress = check_setup_progress()
         regime = get_regime_data()
@@ -1033,7 +1046,8 @@ def index():
                            regime_confidence=regime['confidence'],
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                            progress=progress,
-                           is_demo=demo)
+                           is_demo=demo,
+                           observations=observations, macro_alerts=macro_alerts, high_severity_7d=high_severity_7d)
     except Exception as e:
         return render_template('index.html',
                            total_predictions=SAMPLE_STATS['total_decisions'],
@@ -1051,7 +1065,8 @@ def index():
                            regime_confidence='78%',
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
                            progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
-                           is_demo=True)
+                           is_demo=True,
+                           observations=[], macro_alerts=[], high_severity_7d=0)
 
 
 @app.route('/decisions')
@@ -2185,18 +2200,39 @@ def api_intelligence():
 def research_home():
     """Research home page showing companies and latest notes."""
     try:
-        from research.storage.research_db import get_all_companies, get_notes, get_flags_count
+        from research.storage.research_db import get_all_companies, get_notes, get_flags_count, get_flags
+        from research.thesis_tracker import get_watchlist_companies
         companies = get_all_companies()
         notes = get_notes()
         total_flags = sum(get_flags_count(c['id']) for c in companies)
         demo = is_demo_mode()
+        heatmap = []
+        for c in companies:
+            flags = get_flags(c['id'])
+            if flags:
+                high = sum(1 for f in flags if f.get('severity') in ('HIGH', 'CRITICAL'))
+                med = sum(1 for f in flags if f.get('severity') == 'MEDIUM')
+                if high > 0:
+                    severity = 'HIGH'
+                    label = f'{high} HIGH, {med} MEDIUM'
+                elif med > 0:
+                    severity = 'MEDIUM'
+                    label = f'{med} MEDIUM'
+                else:
+                    severity = 'LOW'
+                    label = f'{len(flags)} total'
+                heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': len(flags), 'severity': severity, 'severity_label': label})
+            else:
+                heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': 0, 'severity': 'NONE', 'severity_label': 'No flags'})
+        watchlist = get_watchlist_companies() if not demo else []
         if demo or (not companies and not notes):
             companies = SAMPLE_COMPANIES
             notes = SAMPLE_NOTES
             total_flags = 3
         return render_template('research_home.html',
                              companies=companies, notes=notes[:10],
-                             total_flags=total_flags, is_demo=demo)
+                             total_flags=total_flags, is_demo=demo,
+                             heatmap=heatmap, watchlist_companies=watchlist)
     except Exception as e:
         return render_template('research_home.html',
                              companies=SAMPLE_COMPANIES, notes=SAMPLE_NOTES,
@@ -2302,6 +2338,248 @@ def research_export(reference):
         return "PDF not available", 404
     except Exception as e:
         return f"Error: {e}", 500
+
+
+@app.route('/portfolio')
+@login_required
+def portfolio_page():
+    try:
+        from research.portfolio_intelligence import get_portfolios, get_positions, calculate_concentration, calculate_portfolio_score, run_all_stress_tests, get_portfolio_scores, grade_from_score, detect_hidden_correlations
+        all_portfolios = get_portfolios()
+        selected = request.args.get('portfolio_id', type=int)
+        portfolio_detail = None
+        conc_data = {}
+        corr_data = []
+        stress_results = []
+        score_data = None
+        positions_data = []
+        if selected and any(p['id'] == selected for p in all_portfolios):
+            from research.portfolio_intelligence import get_portfolio
+            portfolio_detail = get_portfolio(selected)
+            positions_data = get_positions(selected)
+            conc_data = calculate_concentration(selected)
+            corr_data = detect_hidden_correlations(selected)
+            stress_results = run_all_stress_tests(selected)
+            score_data = calculate_portfolio_score(selected)
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        return render_template('portfolio.html', portfolios=all_portfolios, portfolio=portfolio_detail, portfolio_id=selected,
+                             portfolios_count=len(all_portfolios), positions_count=sum(len(get_positions(p['id'])) for p in all_portfolios) if all_portfolios else 0,
+                             concentration=conc_data, correlations=corr_data, stress_results=stress_results, positions=positions_data, portfolio_score=score_data, avg_score=score_data['composite_score'] if score_data else '—',
+                             stress_impact=max(r['impact_pct'] for r in stress_results) if stress_results else 0, timestamp=now_str)
+    except Exception as e:
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        return render_template('portfolio.html', portfolios=[], portfolio=None, portfolio_id=None, error=str(e), portfolios_count=0, positions_count=0, timestamp=now_str)
+
+@app.route('/api/portfolio/delete', methods=['POST'])
+@login_required
+def api_portfolio_delete():
+    try:
+        from research.portfolio_intelligence import get_connection
+        pid = int(request.form.get('portfolio_id', 0))
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM portfolio_scores WHERE portfolio_id = ?", (pid,))
+            c.execute("DELETE FROM portfolio_stress_results WHERE portfolio_id = ?", (pid,))
+            c.execute("DELETE FROM portfolio_positions WHERE portfolio_id = ?", (pid,))
+            c.execute("DELETE FROM portfolios WHERE id = ?", (pid,))
+            conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/portfolio/create', methods=['POST'])
+@login_required
+def api_portfolio_create():
+    try:
+        from research.portfolio_intelligence import create_portfolio
+        name = request.form.get('name', 'Unnamed Portfolio')
+        description = request.form.get('description', '')
+        strategy = request.form.get('strategy', '')
+        pid = create_portfolio(name, description, strategy)
+        return jsonify({'success': True, 'portfolio_id': pid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/portfolio/<int:pid>/add', methods=['POST'])
+@login_required
+def api_portfolio_add(pid):
+    try:
+        from research.portfolio_intelligence import add_position
+        company_id = int(request.form.get('company_id', 0))
+        weight = float(request.form.get('weight_pct', 0))
+        cost = request.form.get('cost_basis', type=float)
+        notes = request.form.get('notes', '')
+        pos_id = add_position(pid, company_id, weight, cost, notes)
+        return jsonify({'success': True, 'position_id': pos_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/portfolio/position/delete', methods=['POST'])
+@login_required
+def api_portfolio_delete_position():
+    try:
+        from research.portfolio_intelligence import delete_position
+        pos_id = int(request.form.get('position_id', 0))
+        delete_position(pos_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/portfolio/<int:pid>/stress-test', methods=['POST'])
+@login_required
+def api_portfolio_stress_test(pid):
+    try:
+        from research.portfolio_intelligence import run_all_stress_tests, save_stress_results
+        results = run_all_stress_tests(pid)
+        save_stress_results(pid, results)
+        return jsonify({'success': True, 'results': results})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/portfolio/<int:pid>/score', methods=['POST'])
+@login_required
+def api_portfolio_score(pid):
+    try:
+        from research.portfolio_intelligence import calculate_portfolio_score
+        score = calculate_portfolio_score(pid)
+        return jsonify({'success': True, 'score': score})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/watchlist')
+@login_required
+def watchlist_page():
+    try:
+        from research.thesis_tracker import get_watchlist_companies
+        from research.storage.research_db import get_all_companies
+        companies = get_all_companies()
+        watchlist = get_watchlist_companies()
+        from research.thesis_tracker import get_theses
+        theses = get_theses()
+        active = [t for t in theses if t.get('status') == 'INTACT']
+        weakening = [t for t in theses if t.get('status') == 'WEAKENING']
+        broken = [t for t in theses if t.get('status') == 'BROKEN']
+        thesis_id = request.args.get('thesis_id', type=int)
+        thesis_detail = None
+        thesis_checks = []
+        if thesis_id:
+            from research.thesis_tracker import get_thesis, get_checks
+            thesis_detail = get_thesis(thesis_id)
+            thesis_checks = get_checks(thesis_id) if thesis_detail else []
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        return render_template('watchlist.html', companies=companies, watchlist=watchlist, theses=theses,
+                             active_theses=len(active), weakening_count=len(weakening), broken_count=len(broken),
+                             thesis=thesis_detail, thesis_checks=thesis_checks, thesis_id=thesis_id,
+                             watchlist_count=len(watchlist), timestamp=now_str)
+    except Exception as e:
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+        return render_template('watchlist.html', companies=[], watchlist=[], theses=[], error=str(e),
+                             active_theses=0, weakening_count=0, broken_count=0, watchlist_count=0, timestamp=now_str)
+
+@app.route('/api/watchlist/add/<int:company_id>', methods=['POST'])
+@login_required
+def api_watchlist_add(company_id):
+    try:
+        from research.thesis_tracker import add_to_watchlist
+        threshold = request.form.get('alert_threshold', 'MEDIUM')
+        notes = request.form.get('notes', '')
+        wid = add_to_watchlist(company_id, threshold, notes)
+        return jsonify({'success': True, 'watchlist_id': wid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/watchlist/remove', methods=['POST'])
+@login_required
+def api_watchlist_remove():
+    try:
+        from research.thesis_tracker import remove_from_watchlist
+        company_id = int(request.form.get('company_id', 0))
+        remove_from_watchlist(company_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/thesis/create', methods=['POST'])
+@login_required
+def api_thesis_create():
+    try:
+        from research.thesis_tracker import create_thesis
+        company_id = int(request.form.get('company_id', 0))
+        title = request.form.get('title', '')
+        thesis_text = request.form.get('thesis_text', '')
+        key_vars = request.form.get('key_variables', '')
+        timeframe = int(request.form.get('timeframe_days', 90))
+        conviction = float(request.form.get('conviction', 0))
+        tid = create_thesis(company_id, title, thesis_text, key_vars, timeframe, conviction)
+        return jsonify({'success': True, 'thesis_id': tid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/thesis/check', methods=['POST'])
+@login_required
+def api_thesis_check():
+    try:
+        from research.thesis_tracker import add_check, assess_thesis_status
+        tid = int(request.form.get('thesis_id', 0))
+        variable = request.form.get('variable', '')
+        expected = request.form.get('expected_range', '')
+        actual = request.form.get('actual_value', '')
+        severity = request.form.get('flag_severity', None)
+        notes = request.form.get('notes', '')
+        add_check(tid, variable, expected, actual, severity, notes)
+        assessment = assess_thesis_status(tid)
+        return jsonify({'success': True, 'assessment': assessment})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/thesis/<int:tid>/assess', methods=['POST'])
+@login_required
+def api_thesis_assess(tid):
+    try:
+        from research.thesis_tracker import assess_thesis_status
+        assessment = assess_thesis_status(tid)
+        return jsonify({'success': True, 'assessment': assessment})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/observations/feed')
+@login_required
+def api_observations_feed():
+    try:
+        from research.observation_stream import build_live_feed
+        limit = request.args.get('limit', 30, type=int)
+        feed = build_live_feed(limit)
+        return jsonify({'success': True, **feed})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/heatmap/data')
+@login_required
+def api_heatmap_data():
+    try:
+        from research.storage.research_db import get_all_companies, get_flags
+        companies = get_all_companies()
+        heatmap = []
+        for c in companies:
+            flags = get_flags(c['id'])
+            if flags:
+                high = sum(1 for f in flags if f.get('severity') in ('HIGH', 'CRITICAL'))
+                med = sum(1 for f in flags if f.get('severity') == 'MEDIUM')
+                if high > 0:
+                    severity = 'HIGH'
+                    label = f'{high} HIGH, {med} MEDIUM'
+                elif med > 0:
+                    severity = 'MEDIUM'
+                    label = f'{med} MEDIUM'
+                else:
+                    severity = 'LOW'
+                    label = f'{len(flags)} total'
+                heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': len(flags), 'severity': severity, 'severity_label': label})
+            else:
+                heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': 0, 'severity': 'NONE', 'severity_label': 'No flags'})
+        return jsonify({'success': True, 'heatmap': heatmap})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 def seed_database_on_startup():
@@ -2491,6 +2769,12 @@ try:
     init_research_db()
 except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
+
+try:
+    from research.storage.research_db import init_extended_tables
+    init_extended_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize extended tables: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))

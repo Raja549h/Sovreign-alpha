@@ -13,6 +13,60 @@
     </div>
     {% endif %}
 
+    {% if watchlist_companies %}
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Watchlist Summary</h2>
+            <a href="/watchlist" class="btn outline small">Manage</a>
+        </div>
+        <div class="panel-body" style="padding:0;">
+            <table>
+                <thead>
+                    <tr><th>Ticker</th><th>Company</th><th>Sector</th><th>Threshold</th></tr>
+                </thead>
+                <tbody>
+                    {% for w in watchlist_companies %}
+                    <tr>
+                        <td class="ticker-cell">{{ w.ticker }}</td>
+                        <td>{{ w.company_name }}</td>
+                        <td style="font-size:0.65rem;">{{ w.sector or '—' }}</td>
+                        <td><span class="severity-tag {{ w.alert_threshold|lower }}">{{ w.alert_threshold }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if heatmap %}
+    <div class="panel" style="margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Signal Heatmap</h2>
+            <span class="timestamp">Hover for details, click to open research</span>
+        </div>
+        <div class="panel-body padded" style="padding:0.6rem;">
+            <div style="display:grid;grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));gap:4px;">
+                {% for cell in heatmap %}
+                <a href="/research/{{ cell.ticker }}" style="display:block;text-decoration:none;" data-tip="{{ cell.ticker }}: {{ cell.flag_count }} flags, {{ cell.severity_label }}">
+                    <div style="background:{% if cell.severity == 'HIGH' %}#1a0000{% elif cell.severity == 'MEDIUM' %}#1a1400{% else %}#0d0d0d{% endif %};
+                                border:1px solid {% if cell.severity == 'HIGH' %}#ff4444{% elif cell.severity == 'MEDIUM' %}#ffb800{% else %}#1e1e1e{% endif %};
+                                padding:0.5rem;text-align:center;font-family:var(--font-mono);font-size:0.65rem;
+                                transition:all 0.1s ease;">
+                        <div style="font-weight:700;color:{% if cell.severity == 'HIGH' %}var(--danger){% elif cell.severity == 'MEDIUM' %}var(--warning){% else %}var(--text-dim){% endif %};">
+                            {{ cell.ticker }}
+                        </div>
+                        <div style="color:var(--text-dim);font-size:0.6rem;margin-top:0.15rem;">
+                            {{ cell.flag_count }} flag{{ 's' if cell.flag_count != 1 }}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="stats-row">
         <div class="stat-box accent">
             <label>Companies Tracked</label>
