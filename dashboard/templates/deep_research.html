@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Deep Research Intelligence</h1>
+        <span class="timestamp">Generate institutional forensic reports on demand</span>
+    </div>
+
+    {% if error %}
+    <div class="panel" style="border-color:var(--danger);margin-bottom:0.75rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.75rem;">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Generate Institutional Report</h2>
+        </div>
+        <div class="panel-body padded">
+            <form id="research-form" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="grid-column:1/-1;">
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Company Name</label>
+                    <input type="text" id="company_name" name="company_name" required placeholder="e.g. Bajaj Finance" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Ticker</label>
+                    <input type="text" id="ticker" name="ticker" required placeholder="e.g. BAJFINANCE" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Exchange</label>
+                    <select id="exchange" name="exchange" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.7rem;font-family:var(--font-mono);outline:none;">
+                        <option value="NSE">NSE</option>
+                        <option value="BSE">BSE</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Sector</label>
+                    <input type="text" id="sector" name="sector" placeholder="e.g. NBFC" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">Current P/E</label>
+                    <input type="number" step="0.01" id="pe" name="pe" placeholder="Optional" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:0.2rem;">P/BV</label>
+                    <input type="number" step="0.01" id="pbv" name="pbv" placeholder="Optional" style="width:100%;background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.45rem 0.6rem;font-size:0.75rem;font-family:var(--font-mono);outline:none;">
+                </div>
+                <div style="grid-column:1/-1;margin-top:0.3rem;">
+                    <button type="submit" class="btn" style="width:100%;padding:0.7rem;font-size:0.8rem;background:var(--accent);color:#000;border:none;font-weight:700;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:1px;cursor:pointer;">GENERATE INSTITUTIONAL REPORT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="progress-panel" class="panel" style="display:none;margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Sovereign Alpha Research Engine</h2>
+            <span class="timestamp" id="progress-status">Running...</span>
+        </div>
+        <div class="panel-body padded" style="font-family:var(--font-mono);font-size:0.7rem;line-height:1.8;background:#080808;">
+            <div id="progress-bar" style="height:3px;background:#1a1a1a;margin-bottom:0.75rem;overflow:hidden;">
+                <div id="progress-fill" style="height:100%;width:0%;background:var(--accent);transition:width 0.5s ease;"></div>
+            </div>
+            <div id="progress-steps"></div>
+        </div>
+    </div>
+
+    <div id="result-panel" class="panel" style="display:none;margin-bottom:0.75rem;">
+        <div class="panel-header">
+            <h2>Report Generated</h2>
+        </div>
+        <div class="panel-body padded" style="text-align:center;padding:1.5rem;">
+            <div style="font-size:1rem;color:var(--accent);font-weight:700;font-family:var(--font-mono);margin-bottom:0.5rem;" id="result-reference"></div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;" id="result-company"></div>
+            <div style="display:flex;gap:0.5rem;justify-content:center;">
+                <a id="result-view-link" href="#" class="btn">VIEW REPORT</a>
+                <a id="result-pdf-link" href="#" class="btn outline">DOWNLOAD PDF</a>
+                <button onclick="location.reload()" class="btn outline">GENERATE ANOTHER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Research Archive</h2>
+            <span class="timestamp">{{ notes|length if notes else 0 }} reports</span>
+        </div>
+        <div class="panel-body">
+            {% if notes and notes|length > 0 %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Company</th>
+                        <th>Date</th>
+                        <th>Flags</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in notes %}
+                    <tr>
+                        <td class="mono" style="font-size:0.65rem;color:var(--accent);">{{ n.note_reference }}</td>
+                        <td>
+                            {% set ticker_from_ref = n.note_reference.split('-')[2] if n.note_reference and n.note_reference.split('-')|length > 2 else '' %}
+                            {{ n.title|replace('Forensic Research Note — ','')|replace('Deep Research — ','') }}
+                        </td>
+                        <td class="mono" style="font-size:0.65rem;">{{ (n.generated_at or '')[:10] }}</td>
+                        <td>{{ n.forensic_flags_count or '—' }}</td>
+                        <td>
+                            {% set comp = n.composite_score or 0 %}
+                            <span style="color:{% if comp >= 7 %}var(--accent){% elif comp >= 4 %}var(--warning){% else %}var(--danger){% endif %};">{{ '%.1f'|format(comp) if comp else '—' }}</span>
+                        </td>
+                        <td>
+                            <a href="/research/report/{{ n.note_reference }}" class="btn outline small">View</a>
+                            {% if n.pdf_path %}<a href="/research/download/{{ n.note_reference }}" class="btn outline small">PDF</a>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">—</div>
+                <div>No research reports yet. Generate your first report above.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('research-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = this;
+    var formData = new FormData(form);
+    var progressPanel = document.getElementById('progress-panel');
+    var progressSteps = document.getElementById('progress-steps');
+    var progressFill = document.getElementById('progress-fill');
+    var resultPanel = document.getElementById('result-panel');
+    progressPanel.style.display = '';
+    resultPanel.style.display = 'none';
+    progressSteps.innerHTML = '';
+    progressFill.style.width = '0%';
+    fetch('/api/research/generate', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                progressSteps.innerHTML = '<div style="color:var(--danger);">ERROR: ' + (data.error || 'Generation failed') + '</div>';
+                return;
+            }
+            var jobId = data.job_id;
+            var poll = setInterval(function() {
+                fetch('/api/research/status/' + jobId)
+                    .then(function(r) { return r.json(); })
+                    .then(function(status) {
+                        if (status.status === 'not_found') return;
+                        var html = '';
+                        if (status.steps) {
+                            status.steps.forEach(function(step) {
+                                var icon = step.status === 'done' ? '<span style="color:var(--accent);">OK</span>' :
+                                          step.status === 'error' ? '<span style="color:var(--danger);">FAIL</span>' :
+                                          step.status === 'warning' ? '<span style="color:var(--warning);">WARN</span>' :
+                                          '<span style="color:var(--info);">..</span>';
+                                html += '<div style="display:flex;gap:0.5rem;">' + icon + '<span>' + step.text + '</span></div>';
+                            });
+                        }
+                        progressSteps.innerHTML = html;
+                        if (status.progress) progressFill.style.width = status.progress + '%';
+                        document.getElementById('progress-status').textContent = (status.progress || 0) + '%';
+                        if (status.status === 'complete' || status.status === 'error') {
+                            clearInterval(poll);
+                            if (status.status === 'complete') {
+                                progressFill.style.width = '100%';
+                                document.getElementById('progress-status').textContent = 'COMPLETE';
+                                fetch('/api/research/result/' + jobId)
+                                    .then(function(r) { return r.json(); })
+                                    .then(function(res) {
+                                        if (res.success && res.result) {
+                                            document.getElementById('result-reference').textContent = res.result.reference || '';
+                                            document.getElementById('result-company').textContent = (res.result.scores ? 'Score: ' + (res.result.scores.composite_score || res.result.scores.composite || 'N/A') + '/10' : '');
+                                            document.getElementById('result-view-link').href = '/research/report/' + res.result.reference;
+                                            document.getElementById('result-pdf-link').href = res.result.pdf_path ? '/research/download/' + res.result.reference : '#';
+                                            resultPanel.style.display = '';
+                                            resultPanel.scrollIntoView();
+                                        }
+                                    });
+                            } else {
+                                document.getElementById('progress-status').textContent = 'FAILED';
+                            }
+                        }
+                    });
+            }, 2000);
+        })
+        .catch(function(err) {
+            progressSteps.innerHTML = '<div style="color:var(--danger);">Network error: ' + err.message + '</div>';
+        });
+});
+</script>
+{% endblock %}

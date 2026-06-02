@@ -510,7 +510,8 @@
             <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Veto Archive</a>
             <a href="/proofs" class="{% if request.path == '/proofs' %}active{% endif %}">Proofs</a>
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Performance</a>
-            <a href="/research" class="{% if request.path.startswith('/research') %}active{% endif %}">Research</a>
+            <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
+            <a href="/research/generate" class="{% if request.path == '/research/generate' or request.path.startswith('/research/report/') %}active{% endif %}">Deep Research</a>
             <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a>
             <a href="/watchlist" class="{% if request.path == '/watchlist' %}active{% endif %}">Watchlist</a>
             <a href="/upload" class="{% if request.path == '/upload' %}active{% endif %}">Upload</a>
