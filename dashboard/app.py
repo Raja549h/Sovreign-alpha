@@ -2340,6 +2340,96 @@ def research_export(reference):
         return f"Error: {e}", 500
 
 
+@app.route('/research/generate')
+@login_required
+def deep_research_page():
+    try:
+        from research.storage.research_db import get_notes
+        notes = get_notes()
+        return render_template('deep_research.html', notes=notes)
+    except Exception as e:
+        return render_template('deep_research.html', notes=[], error=str(e))
+
+@app.route('/api/research/generate', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def api_deep_research_generate():
+    try:
+        from dashboard.security import InputValidator
+        company_name = request.form.get('company_name', '').strip()
+        ticker = request.form.get('ticker', '').strip().upper()
+        sector = request.form.get('sector', '').strip()
+        exchange = request.form.get('exchange', 'NSE').strip().upper()
+        pe = request.form.get('pe', type=float)
+        pbv = request.form.get('pbv', type=float)
+        if not company_name or not ticker:
+            return jsonify({'success': False, 'error': 'Company name and ticker required'})
+        ticker = InputValidator.validate_ticker(ticker)
+        from research.deep_research_engine import start_generation
+        job_id = start_generation(company_name, ticker, sector, exchange, pe, pbv)
+        return jsonify({'success': True, 'job_id': job_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/research/status/<job_id>')
+@login_required
+def api_deep_research_status(job_id):
+    try:
+        from research.deep_research_engine import get_status
+        status = get_status(job_id)
+        return jsonify(status)
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+@app.route('/api/research/result/<job_id>')
+@login_required
+def api_deep_research_result(job_id):
+    try:
+        from research.deep_research_engine import get_result
+        result = get_result(job_id)
+        if result:
+            return jsonify({'success': True, 'result': result})
+        return jsonify({'success': False, 'error': 'Result not found'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/research/report/<reference>')
+@login_required
+def deep_research_report(reference):
+    try:
+        from research.deep_research_engine import get_report, get_report_meta
+        html_content = get_report(reference)
+        if not html_content:
+            return "Report not found", 404
+        meta = get_report_meta(reference)
+        return render_template('deep_report.html', html_content=html_content, meta=meta)
+    except Exception as e:
+        return render_template('deep_report.html', error=str(e))
+
+@app.route('/research/download/<reference>')
+@login_required
+def deep_research_download(reference):
+    try:
+        from research.storage.research_db import get_note_by_reference
+        note = get_note_by_reference(reference)
+        if not note:
+            return "Report not found", 404
+        pdf_path = note.get('pdf_path')
+        if pdf_path and Path(pdf_path).exists():
+            return send_file(pdf_path, as_attachment=True, download_name=f"{reference}.pdf")
+        html_path = note.get('full_content')
+        if html_path:
+            from research.output.pdf_exporter import generate_deep_report_pdf
+            from pathlib import Path as _P
+            notes_dir = _P(__file__).parent.parent / "research" / "data" / "notes"
+            pdf_result = generate_deep_report_pdf(reference, html_path, str(notes_dir))
+            if pdf_result and _P(pdf_result).exists():
+                return send_file(pdf_result, as_attachment=True, download_name=f"{reference}.pdf")
+        return "PDF not available", 404
+    except Exception as e:
+        return f"Error: {e}", 500
+
+
 @app.route('/portfolio')
 @login_required
 def portfolio_page():

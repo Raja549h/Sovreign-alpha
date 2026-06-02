@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+{% if error %}
+<div class="container fade-in">
+    <div class="panel" style="border-color:var(--danger);margin:1rem;">
+        <div class="panel-body padded" style="color:var(--danger);font-size:0.85rem;">{{ error }}</div>
+    </div>
+</div>
+{% elif html_content %}
+<div style="background:#0a0b0e;min-height:100vh;">
+    {{ html_content | safe }}
+</div>
+{% endif %}
+{% endblock %}

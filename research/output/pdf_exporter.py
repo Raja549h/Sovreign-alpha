@@ -202,3 +202,31 @@ def export_note_to_pdf(note_reference: str) -> Optional[str]:
         print(f"  [OK] PDF exported: {pdf_path}")
     
     return result
+
+
+def generate_deep_report_pdf(reference: str, html_content: str, output_dir: str) -> Optional[str]:
+    """
+    Generate PDF for deep research report from HTML content directly.
+    
+    Args:
+        reference: Report reference number
+        html_content: Full HTML content of the report
+        output_dir: Directory to save PDF
+    
+    Returns:
+        PDF path or None
+    """
+    try:
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        html_path = out / f"{reference}.html"
+        pdf_path = out / f"{reference}.pdf"
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        result = export_to_pdf(str(html_path), str(pdf_path))
+        if result:
+            print(f"  [OK] Deep report PDF exported: {pdf_path}")
+        return result
+    except Exception as e:
+        print(f"  [ERROR] Deep report PDF failed: {e}")
+        return None
