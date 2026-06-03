@@ -516,3 +516,62 @@ def init_evolution_tables():
     """Initialize thesis evolution tracking tables."""
     with sqlite3.connect(str(RESEARCH_DB)) as conn:
         conn.executescript(EVOLUTION_TABLES_SQL)
+
+
+VALIDATION_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS observation_validations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    validation_date TEXT,
+    review_type TEXT,
+    prior_status TEXT,
+    new_status TEXT,
+    validation_method TEXT,
+    supporting_data TEXT,
+    groq_reasoning TEXT,
+    accuracy_contribution REAL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS edge_scorecard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    calculated_at TEXT,
+    total_observations INTEGER,
+    confirmed INTEGER,
+    partially_confirmed INTEGER,
+    invalidated INTEGER,
+    active INTEGER,
+    monitoring INTEGER,
+    accuracy_rate REAL,
+    weighted_accuracy REAL,
+    avg_confidence REAL,
+    top_categories TEXT,
+    worst_categories TEXT,
+    edge_score REAL
+);
+"""
+
+VALIDATION_MIGRATIONS = [
+    "ALTER TABLE observation_memory ADD COLUMN validation_status TEXT DEFAULT 'ACTIVE'",
+    "ALTER TABLE observation_memory ADD COLUMN expected_implication TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN review_date_30 TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN review_date_90 TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN review_date_180 TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN validation_evidence TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN validated_at TEXT",
+    "ALTER TABLE observation_memory ADD COLUMN validated_by TEXT DEFAULT 'auto_engine'",
+]
+
+
+def init_validation_tables():
+    """Initialize validation tracking tables and migrate observation_memory."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(VALIDATION_TABLES_SQL)
+        for migration in VALIDATION_MIGRATIONS:
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                pass
+        conn.commit()

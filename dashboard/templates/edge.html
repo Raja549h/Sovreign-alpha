@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Observation Edge Scorecard</h1>
+        <div class="actions">
+            <button class="btn" onclick="refreshEdge()">REFRESH</button>
+        </div>
+    </div>
+
+    <div class="stats-row" id="edge-stats">
+        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">—</div></div>
+        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">—</div></div>
+        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">—</div></div>
+        <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">—</div></div>
+        <div class="stat-box warning"><label>Total Observations</label><div class="value" id="totalObs">—</div></div>
+    </div>
+
+    <div class="stats-row" id="edge-breakdown" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-box accent"><label>Confirmed</label><div class="value" id="confirmed">—</div></div>
+        <div class="stat-box info"><label>Partial</label><div class="value" id="partial">—</div></div>
+        <div class="stat-box danger"><label>Invalidated</label><div class="value" id="invalidated">—</div></div>
+        <div class="stat-box warning"><label>Active</label><div class="value" id="activeObs">—</div></div>
+        <div class="stat-box" style="border-left-color:#666;"><label>Monitoring</label><div class="value" id="monitoring">—</div></div>
+    </div>
+
+    <div class="stats-row" id="categories-row" style="grid-template-columns:1fr 1fr;">
+        <div class="card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.8rem;">
+            <label style="font-size:9px;color:#00ff9f;text-transform:uppercase;letter-spacing:1px;">Best Categories</label>
+            <div id="bestCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent);">—</div>
+        </div>
+        <div class="card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.8rem;">
+            <label style="font-size:9px;color:#ff4444;text-transform:uppercase;letter-spacing:1px;">Worst Categories</label>
+            <div id="worstCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--danger);">—</div>
+        </div>
+    </div>
+
+    <div style="margin:1rem 0 0.5rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Validations Feed</h2>
+        <select id="statusFilter" style="background:#0d0d0d;border:1px solid #1e1e1e;color:var(--text-primary);padding:0.25rem 0.5rem;font-family:var(--font-mono);font-size:0.7rem;">
+            <option value="">All Statuses</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PARTIALLY_CONFIRMED">Partially Confirmed</option>
+            <option value="INVALIDATED">Invalidated</option>
+            <option value="MONITORING">Monitoring</option>
+            <option value="ACTIVE">Active</option>
+        </select>
+        <select id="categoryFilter" style="background:#0d0d0d;border:1px solid #1e1e1e;color:var(--text-primary);padding:0.25rem 0.5rem;font-family:var(--font-mono);font-size:0.7rem;">
+            <option value="">All Categories</option>
+            <option value="margin">Margin</option>
+            <option value="funding_cost">Funding Cost</option>
+            <option value="governance">Governance</option>
+            <option value="capital_allocation">Capital Allocation</option>
+            <option value="valuation">Valuation</option>
+            <option value="macro">Macro</option>
+            <option value="liquidity">Liquidity</option>
+            <option value="business_quality">Business Quality</option>
+            <option value="management_commentary">Management Commentary</option>
+        </select>
+    </div>
+
+    <div class="table-wrapper" style="overflow-x:auto;border:1px solid #1e1e1e;">
+        <table class="data-table" style="width:100%;font-size:0.72rem;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#0a0a0a;border-bottom:1px solid #1e1e1e;">
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Ticker</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Category</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Observation</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Prior Status</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">New Status</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Method</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Accuracy</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Date</th>
+                </tr>
+            </thead>
+            <tbody id="validationsBody">
+                <tr><td colspan="8" style="padding:2rem;text-align:center;color:#555;">Loading validations...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function refreshEdge() {
+    fetch('/api/edge')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const d = data.data;
+                document.getElementById('edgeScore').textContent = d.edge_score != null ? d.edge_score.toFixed(1) : '—';
+                document.getElementById('accuracyRate').textContent = d.accuracy_rate != null ? (d.accuracy_rate * 100).toFixed(1) + '%' : '—';
+                document.getElementById('weightedAccuracy').textContent = d.weighted_accuracy != null ? (d.weighted_accuracy * 100).toFixed(1) + '%' : '—';
+                document.getElementById('avgConfidence').textContent = d.avg_confidence != null ? (d.avg_confidence * 100).toFixed(1) + '%' : '—';
+                document.getElementById('totalObs').textContent = d.total || '—';
+                document.getElementById('confirmed').textContent = d.confirmed || '0';
+                document.getElementById('partial').textContent = d.partially_confirmed || '0';
+                document.getElementById('invalidated').textContent = d.invalidated || '0';
+                document.getElementById('activeObs').textContent = d.active || '0';
+                document.getElementById('monitoring').textContent = d.monitoring || '0';
+                document.getElementById('bestCats').textContent = (d.best_categories || []).join(', ') || '—';
+                document.getElementById('worstCats').textContent = (d.worst_categories || []).join(', ') || '—';
+            }
+        })
+        .catch(() => {});
+    loadValidations();
+}
+
+function loadValidations() {
+    const status = document.getElementById('statusFilter').value;
+    const category = document.getElementById('categoryFilter').value;
+    let url = '/api/edge/validations';
+    const params = [];
+    if (status) params.push('status=' + encodeURIComponent(status));
+    if (category) params.push('category=' + encodeURIComponent(category));
+    if (params.length) url += '?' + params.join('&');
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('validationsBody');
+            if (data.success && data.data.length) {
+                tbody.innerHTML = data.data.map(v => {
+                    const acc = v.accuracy_contribution;
+                    let accColor = '#888';
+                    let accLabel = '—';
+                    if (acc >= 1.0) { accColor = 'var(--accent)'; accLabel = 'CONFIRMED'; }
+                    else if (acc >= 0.5) { accColor = 'var(--warning)'; accLabel = 'PARTIAL'; }
+                    else if (acc < 0) { accColor = 'var(--danger)'; accLabel = 'INVALIDATED'; }
+                    else { accLabel = 'PENDING'; }
+                    return '<tr style="border-bottom:1px solid #1a1a1a;">' +
+                        '<td style="padding:0.4rem 0.5rem;"><strong>' + escapeHtml(v.ticker || '') + '</strong></td>' +
+                        '<td style="padding:0.4rem 0.5rem;color:#888;">' + escapeHtml(v.category || '') + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;color:#aaa;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeAttr(v.observation_text || '') + '">' + escapeHtml((v.observation_text || '').substring(0, 80)) + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;">' + statusBadge(v.prior_status) + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;">' + statusBadge(v.new_status) + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;color:#888;">' + escapeHtml(v.validation_method || '') + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;color:' + accColor + ';font-weight:600;">' + accLabel + '</td>' +
+                        '<td style="padding:0.4rem 0.5rem;color:#555;font-family:var(--font-mono);font-size:0.65rem;">' + (v.validation_date || '').substring(0, 10) + '</td>' +
+                        '</tr>';
+                }).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" style="padding:2rem;text-align:center;color:#555;">No validations recorded yet.</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('validationsBody').innerHTML = '<tr><td colspan="8" style="padding:2rem;text-align:center;color:var(--danger);">Failed to load validations.</td></tr>';
+        });
+}
+
+function statusBadge(s) {
+    if (!s) return '<span style="color:#555;">—</span>';
+    const colors = {CONFIRMED:'var(--accent)',PARTIALLY_CONFIRMED:'var(--warning)',INVALIDATED:'var(--danger)',ACTIVE:'var(--info)',MONITORING:'#888'};
+    const c = colors[s] || '#888';
+    return '<span style="color:' + c + ';font-weight:600;">' + s.replace(/_/g,' ') + '</span>';
+}
+
+function escapeHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeAttr(t) { return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('statusFilter').addEventListener('change', loadValidations);
+document.getElementById('categoryFilter').addEventListener('change', loadValidations);
+refreshEdge();
+</script>
+
+<style>
+.btn { background:var(--accent); color:#000; border:none; padding:0.4rem 1rem; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.7px; cursor:pointer; font-family:var(--font-mono); }
+.btn:hover { opacity:0.85; }
+.data-table th { font-size:0.6rem; letter-spacing:0.5px; }
+.data-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+</style>
+{% endblock %}
