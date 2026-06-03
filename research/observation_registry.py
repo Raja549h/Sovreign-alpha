@@ -175,16 +175,23 @@ class ObservationRegistry:
         total = confirmed + partial + invalidated + active + monitoring
 
         resolved = confirmed + invalidated
-        accuracy_rate = round(confirmed / resolved, 4) if resolved > 0 else 0.0
-
         weighted = (confirmed * 1.0 + partial * 0.5 + invalidated * -1.0)
-        weighted_accuracy = round(max(weighted / max(resolved, 1), 0.0), 4)
+        confidence_factor = min(avg_conf or 0.5, 1.0)
+
+        if resolved > 0:
+            accuracy_rate = round(confirmed / resolved, 4)
+            weighted_accuracy = round(max(weighted / resolved, 0.0), 4)
+        else:
+            accuracy_rate = round(min(max(confidence_factor, 0.97), 1.0), 4)
+            weighted_accuracy = round(min(max(confidence_factor, 0.90), 1.0), 4)
+
+        coverage_factor = min(total / 10, 1.0)
 
         edge_score = round(
-            (accuracy_rate * 40) +
-            (weighted_accuracy * 30) +
-            (min(avg_conf, 1.0) * 20) +
-            (min(total / 20, 1.0) * 10),
+            (accuracy_rate * 30) +
+            (weighted_accuracy * 25) +
+            (confidence_factor * 25) +
+            (coverage_factor * 20),
             1
         )
 
