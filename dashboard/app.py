@@ -272,6 +272,13 @@ def init_fund_db():
 
 init_fund_db()
 
+# Ensure validation tracking tables exist for the Edge Scorecard
+try:
+    from research.storage.research_db import init_validation_tables
+    init_validation_tables()
+except Exception as e:
+    print(f"[startup] Validation tables init skipped: {e}")
+
 def get_db_connection():
     """Get a database connection."""
     conn = sqlite3.connect(str(FUND_DATA_DB))

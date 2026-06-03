@@ -23,58 +23,6 @@
       "sp500_ma200": 6779.87,
       "treasury_10y_20d_chg": 0.345
     },
-    "timestamp": "2026-05-17T13:16:52.592171Z"
-  },
-  {
-    "regime": "NEUTRAL",
-    "confidence": 0.922,
-    "vix_signal": "neutral",
-    "credit_signal": "neutral",
-    "yield_signal": "neutral",
-    "trend_signal": "risk_on",
-    "dollar_signal": "risk_on",
-    "summary": "SPX 7408 vs MA200 6780 (risk_on)",
-    "indicators": {
-      "vix": 18.43,
-      "vix_20d_avg": 18.06,
-      "hy_oas": 0.0,
-      "ig_oas": 0.0,
-      "treasury_10y": 4.595,
-      "treasury_2y": 0.513,
-      "yield_curve_slope": 4.082,
-      "fed_funds_rate": 0.0,
-      "dxy": 99.27,
-      "sp500_current": 7408.5,
-      "sp500_ma50": 6921.1,
-      "sp500_ma200": 6779.87,
-      "treasury_10y_20d_chg": 0.345
-    },
-    "timestamp": "2026-05-17T13:16:55.145594Z"
-  },
-  {
-    "regime": "NEUTRAL",
-    "confidence": 0.922,
-    "vix_signal": "neutral",
-    "credit_signal": "neutral",
-    "yield_signal": "neutral",
-    "trend_signal": "risk_on",
-    "dollar_signal": "risk_on",
-    "summary": "SPX 7408 vs MA200 6780 (risk_on)",
-    "indicators": {
-      "vix": 18.43,
-      "vix_20d_avg": 18.06,
-      "hy_oas": 0.0,
-      "ig_oas": 0.0,
-      "treasury_10y": 4.595,
-      "treasury_2y": 0.513,
-      "yield_curve_slope": 4.082,
-      "fed_funds_rate": 0.0,
-      "dxy": 99.27,
-      "sp500_current": 7408.5,
-      "sp500_ma50": 6921.1,
-      "sp500_ma200": 6779.87,
-      "treasury_10y_20d_chg": 0.345
-    },
     "timestamp": "2026-05-17T13:16:57.579675Z"
   },
   {
@@ -2338,5 +2286,57 @@
       "treasury_10y_20d_chg": 0.249
     },
     "timestamp": "2026-05-21T06:46:50.465372Z"
+  },
+  {
+    "regime": "RISK_ON",
+    "confidence": 0.338,
+    "vix_signal": "neutral",
+    "credit_signal": "neutral",
+    "yield_signal": "risk_on",
+    "trend_signal": "risk_on",
+    "dollar_signal": "risk_on",
+    "summary": "10Y 4.46% (risk_on) | SPX 7610 vs MA200 6842 (risk_on)",
+    "indicators": {
+      "vix": 15.77,
+      "vix_20d_avg": 17.06,
+      "hy_oas": 0.0,
+      "ig_oas": 0.0,
+      "treasury_10y": 4.455,
+      "treasury_2y": 0.497,
+      "yield_curve_slope": 3.958,
+      "fed_funds_rate": 0.0,
+      "dxy": 99.24,
+      "sp500_current": 7609.78,
+      "sp500_ma50": 7100.11,
+      "sp500_ma200": 6842.2,
+      "treasury_10y_20d_chg": 0.039
+    },
+    "timestamp": "2026-06-03T03:55:00.171911Z"
+  },
+  {
+    "regime": "RISK_ON",
+    "confidence": 0.338,
+    "vix_signal": "neutral",
+    "credit_signal": "neutral",
+    "yield_signal": "risk_on",
+    "trend_signal": "risk_on",
+    "dollar_signal": "risk_on",
+    "summary": "10Y 4.46% (risk_on) | SPX 7610 vs MA200 6842 (risk_on)",
+    "indicators": {
+      "vix": 15.77,
+      "vix_20d_avg": 17.06,
+      "hy_oas": 0.0,
+      "ig_oas": 0.0,
+      "treasury_10y": 4.455,
+      "treasury_2y": 0.497,
+      "yield_curve_slope": 3.958,
+      "fed_funds_rate": 0.0,
+      "dxy": 99.24,
+      "sp500_current": 7609.78,
+      "sp500_ma50": 7100.11,
+      "sp500_ma200": 6842.2,
+      "treasury_10y_20d_chg": 0.039
+    },
+    "timestamp": "2026-06-03T03:55:01.042423Z"
   }
 ]
