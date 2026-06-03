@@ -17,6 +17,19 @@ NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 load_dotenv(BASE_DIR / ".env")
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
+EVOLUTION_SYSTEM_PROMPT = """You are a senior institutional equity analyst tracking changes in a company's business quality, governance, and financial trajectory over time.
+
+Compare the current observation against the prior observation for the same category.
+Classify the evolution as exactly one of:
+STRENGTHENING — the situation has improved
+STABLE — no material change
+WEAKENING — the situation has deteriorated
+REVERSING — complete directional change (e.g., improving to deteriorating)
+CONTRADICTING — new data contradicts the prior observation
+NEW_FINDING — no prior observation exists
+
+Output JSON only: {"status": "...", "evidence": "...one sentence explanation..."}"""
+
 SYSTEM_PROMPT = """You are a senior institutional equity analyst at a concentrated hedge fund specialising in forensic research. You produce deep research reports for sophisticated institutional investors.
 
 Your writing style:
@@ -53,6 +66,7 @@ SECTION_PROMPTS = {
     "17_scenario_stress_testing": "Run three scenarios for {company}: Base case (current trajectory continues), Bear case (macro deterioration + sector stress), Bull case (operational improvement + re-rating). For each describe key assumptions and impact on earnings quality.",
     "18_competitive_positioning": "Assess {company}'s competitive position relative to sector peers. Market share trend, pricing power, switching costs, and entry barrier analysis. Data: {competitive_position}",
     "19_final_institutional_verdict": "Produce the final institutional verdict for {company}. Not a buy/sell recommendation. A structured assessment of: analytical confidence level, key variables to monitor, what would change the assessment positively, what would change it negatively, and the central institutional question this analysis leaves unresolved for a concentrated holder.",
+    "20_thesis_evolution": "Generate the Thesis Evolution Analysis section for {company} ({ticker}). Evaluate whether each observation category is strengthening, stable, weakening, or reversing. Categorize: margin, funding_cost, governance, capital_allocation, valuation, macro, management_commentary, liquidity, business_quality. Provide an overall directional assessment and highlight key changes, confirmed observations, invalidated observations, and new findings.",
 }
 
 SECTION_LABELS = {
@@ -75,6 +89,7 @@ SECTION_LABELS = {
     "17_scenario_stress_testing": "Scenario Stress Testing",
     "18_competitive_positioning": "Competitive Positioning",
     "19_final_institutional_verdict": "Final Institutional Verdict",
+    "20_thesis_evolution": "Thesis Evolution Analysis",
 }
 
 def _generate_section(section_key: str, company: str, ticker: str, context: Dict) -> str:
@@ -158,7 +173,7 @@ def format_sections_to_html(reference: str, company_name: str, ticker: str, sect
         </div>"""
         section_num += 1
     nav_links = ""
-    for i in range(1, 20):
+    for i in range(1, 21):
         nav_links += f"<a href='#section-{i:02d}' class='nav-section'>{i:02d}</a>"
     now = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
     return f"""<!DOCTYPE html>

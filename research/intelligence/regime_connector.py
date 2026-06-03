@@ -2,7 +2,7 @@
 Regime Connector — Macro context integrator
 ============================================
 Connects macro regime data to company-specific analysis.
-Reuses existing engine.regime module.
+Reuses existing engine.regime module and FII flow intelligence.
 """
 
 import sys
@@ -95,6 +95,21 @@ def get_regime_context() -> Dict:
     except Exception as e:
         context['error'] = f'Regime engine unavailable: {e}'
     
+    try:
+        from research.macro.fii_flow import calculate_flow_aggregates, classify_flow_regime
+        flow_agg = calculate_flow_aggregates(7)
+        weekly_net = flow_agg.get('weekly_net_cr')
+        if weekly_net is not None:
+            context['fii_flow_5d'] = round(weekly_net, 2)
+        monthly_net = flow_agg.get('monthly_net_cr')
+        if monthly_net is not None:
+            regime_info = classify_flow_regime(monthly_net)
+            context['fii_regime'] = regime_info.get('regime', 'UNKNOWN')
+            context['fii_regime_label'] = regime_info.get('label', 'Unknown')
+            context['fii_regime_risk'] = regime_info.get('risk', 'MEDIUM')
+    except Exception as e:
+        context['fii_error'] = str(e)
+
     return context
 
 

@@ -2259,14 +2259,77 @@ def research_company(ticker):
         notes = get_notes(company_id) or []
         filings = get_filings(company_id) or []
         
+        try:
+            from research.thesis_evolution_engine import ThesisEvolutionEngine
+            tee = ThesisEvolutionEngine()
+            evo_report = tee.generate_evolution_report(company_id)
+            scorecard = tee.update_thesis_scorecard(company_id)
+            timeline = tee.get_observation_timeline(company_id, limit=50)
+        except Exception:
+            evo_report = {}
+            scorecard = {}
+            timeline = []
+
         return render_template('research_company.html',
                              company=company, scores=scores,
                              metrics=metrics, flags=flags,
-                             notes=notes, filings=filings)
+                             notes=notes, filings=filings,
+                             evo_report=evo_report,
+                             scorecard=scorecard,
+                             timeline=timeline)
     except Exception as e:
         import traceback
         traceback.print_exc()
         return render_template('error.html', error_code=500, error_message=str(e)), 500
+
+
+@app.route('/api/research/<ticker>/evolution')
+@login_required
+def api_research_evolution(ticker):
+    try:
+        from research.storage.research_db import get_company
+        from research.thesis_evolution_engine import ThesisEvolutionEngine
+        company = get_company(ticker)
+        if not company:
+            return jsonify({'success': False, 'error': 'Company not found'})
+        tee = ThesisEvolutionEngine()
+        evo = tee.generate_evolution_report(company['id'])
+        return jsonify({'success': True, 'evolution': evo})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/research/<ticker>/observations')
+@login_required
+def api_research_observations(ticker):
+    category = request.args.get('category')
+    try:
+        from research.storage.research_db import get_company
+        from research.thesis_evolution_engine import ThesisEvolutionEngine
+        company = get_company(ticker)
+        if not company:
+            return jsonify({'success': False, 'error': 'Company not found'})
+        tee = ThesisEvolutionEngine()
+        obs = tee.get_observation_timeline(company['id'], category=category, limit=50)
+        return jsonify({'success': True, 'observations': obs})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/research/<ticker>/scorecard')
+@login_required
+def api_research_scorecard(ticker):
+    try:
+        from research.storage.research_db import get_company
+        from research.thesis_evolution_engine import ThesisEvolutionEngine
+        company = get_company(ticker)
+        if not company:
+            return jsonify({'success': False, 'error': 'Company not found'})
+        tee = ThesisEvolutionEngine()
+        sc = tee.update_thesis_scorecard(company['id'])
+        return jsonify({'success': True, 'scorecard': sc})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @app.route('/research/note/<reference>')

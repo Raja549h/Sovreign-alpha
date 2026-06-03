@@ -170,7 +170,31 @@ Analyst Context: {analyst_context or 'General institutional analysis'}
 Generate a forensic institutional research note."""
     
     note_content = ""
-    
+
+    thesis_evolution_html = ""
+    try:
+        from research.thesis_evolution_engine import ThesisEvolutionEngine
+        tee = ThesisEvolutionEngine()
+        evo = tee.generate_evolution_report(company_id)
+        scorecard = tee.update_thesis_scorecard(company_id)
+        evo_lines = ["<div class='evolution'>", "<h3>━━━ THESIS EVOLUTION ANALYSIS ━━━</h3>",
+                     f"<p>Prior Review: {evo.get('prior_analysis_date', 'N/A')} → Current: {evo.get('analysis_date', 'N/A')}</p>"]
+        if evo.get('key_changes'):
+            evo_lines.append("<p><strong>WHAT CHANGED:</strong></p><ul>")
+            for c in evo['key_changes']:
+                evo_lines.append(f"<li>{c}</li>")
+            evo_lines.append("</ul>")
+        if evo.get('confirmed_observations'):
+            evo_lines.append("<p><strong>CONFIRMED OBSERVATIONS:</strong></p><ul>")
+            for c in evo['confirmed_observations']:
+                evo_lines.append(f"<li>{c}</li>")
+            evo_lines.append("</ul>")
+        evo_lines.append(f"<p><strong>Overall Direction: {evo.get('overall_direction', 'STABLE')}</strong></p>")
+        evo_lines.append("</div>")
+        thesis_evolution_html = "\n".join(evo_lines)
+    except Exception:
+        pass
+
     if GROQ_API_KEY:
         try:
             from groq import Groq
@@ -191,12 +215,13 @@ Generate a forensic institutional research note."""
         except Exception as e:
             note_content = f"[Groq API Error: {e}]\n\nNote generation failed. Manual analysis required."
     else:
-        note_content = _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime)
+        note_content = _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime) + "\n\n" + thesis_evolution_html if thesis_evolution_html else _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime)
     
     reference = _get_next_reference(ticker)
     
+    combined_content = note_content + "\n\n" + thesis_evolution_html if thesis_evolution_html else note_content
     html_content = _format_html_note(
-        reference, company_name, ticker, sector, note_content, scores, flags, regime
+        reference, company_name, ticker, sector, combined_content, scores, flags, regime
     )
     
     NOTES_DIR.mkdir(parents=True, exist_ok=True)

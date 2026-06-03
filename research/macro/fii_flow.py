@@ -6,11 +6,13 @@ vulnerability to FII-driven dislocations. Provides flow regime classification
 and risk alerts for concentrated Indian equity portfolios.
 
 Design principle: institutional risk awareness, NOT trading signals.
+Flow data must be entered manually (NSDL, SEBI, Bloomberg sources) or
+collected via automation master_daily step.
 """
 
 import sqlite3
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -58,7 +60,16 @@ FLOW_REGIMES = {
 }
 
 
+VALID_SOURCES = {'NSDL', 'SEBI', 'BLOOMBERG', 'EXTERNAL', 'MANUAL'}
+
+_INIT_DONE = False
+
+
 def init_fii_tables():
+    global _INIT_DONE
+    if _INIT_DONE:
+        return
+    _INIT_DONE = True
     with sqlite3.connect(str(RESEARCH_DB)) as conn:
         conn.executescript(FII_FLOW_TABLES_SQL)
 
@@ -70,18 +81,21 @@ def _get_db():
 
 
 def record_flow_entry(date: str, flow_type: str, category: str,
-                      amount_cr: float, source: str = 'external',
+                      amount_cr: float, source: str = 'EXTERNAL',
                       notes: str = ''):
+    source_upper = source.upper()
+    if source_upper not in VALID_SOURCES:
+        source_upper = 'EXTERNAL'
     with _get_db() as conn:
         conn.execute(
             "INSERT INTO fii_flows (date, flow_type, category, amount_cr, source, notes) VALUES (?, ?, ?, ?, ?, ?)",
-            (date, flow_type, category, amount_cr, source, notes)
+            (date, flow_type, category, amount_cr, source_upper, notes)
         )
         conn.commit()
 
 
 def get_recent_flows(days: int = 30) -> List[Dict]:
-    cutoff = (datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d')
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
     with _get_db() as conn:
         cur = conn.execute(
             "SELECT * FROM fii_flows WHERE date >= ? ORDER BY date DESC", (cutoff,)
@@ -99,8 +113,8 @@ def calculate_flow_aggregates(days: int = 30) -> Dict:
     total_outflow = sum(f['amount_cr'] for f in flows if f['amount_cr'] and f['amount_cr'] < 0)
     net = total_inflow + total_outflow
 
-    today = datetime.utcnow().strftime('%Y-%m-%d')
-    week_ago = (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d')
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime('%Y-%m-%d')
 
     daily_flows = [f for f in flows if f['date'] == today]
     weekly_flows = [f for f in flows if f['date'] >= week_ago]
@@ -118,6 +132,15 @@ def calculate_flow_aggregates(days: int = 30) -> Dict:
     }
 
 
+FLOW_COLOR_MAP = {
+    'HEAVY_INFLOW': 'var(--accent)',
+    'MODERATE_INFLOW': 'var(--accent)',
+    'NEUTRAL': 'var(--warning)',
+    'MODERATE_OUTFLOW': 'var(--warning)',
+    'HEAVY_OUTFLOW': 'var(--danger)',
+}
+
+
 def classify_flow_regime(net_flow_cr: float) -> Dict:
     if net_flow_cr is None:
         return {'regime': 'UNKNOWN', 'label': 'Unknown', 'risk': 'MEDIUM',
@@ -125,25 +148,18 @@ def classify_flow_regime(net_flow_cr: float) -> Dict:
 
     for regime, config in sorted(FLOW_REGIMES.items(), key=lambda x: -x[1]['threshold_cr']):
         if net_flow_cr >= config['threshold_cr']:
-            color_map = {
-                'HEAVY_INFLOW': 'var(--accent)',
-                'MODERATE_INFLOW': 'var(--accent)',
-                'NEUTRAL': 'var(--warning)',
-                'MODERATE_OUTFLOW': 'var(--warning)',
-                'HEAVY_OUTFLOW': 'var(--danger)',
-            }
             return {
                 'regime': regime,
                 'label': config['label'],
                 'risk': config['risk'],
                 'observation': config['observation'],
-                'color': color_map.get(regime, 'var(--text-dim)'),
+                'color': FLOW_COLOR_MAP.get(regime, 'var(--text-dim)'),
             }
     return {'regime': 'UNKNOWN', 'label': 'Unknown', 'risk': 'MEDIUM',
             'observation': 'Unable to classify', 'color': 'var(--warning)'}
 
 
-def assess_portfolio_vulnerability(portfolio_weights: Dict[int, float] = None) -> Dict:
+def assess_portfolio_vulnerability() -> Dict:
     aggregates = calculate_flow_aggregates(30)
     regime = classify_flow_regime(aggregates.get('monthly_net_cr'))
 
@@ -210,7 +226,7 @@ def build_flow_intelligence_report() -> Dict:
     recent = get_recent_flows(7)
 
     return {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'flow_regime': regime,
         'monthly': aggregates,
         'weekly': weekly_agg,

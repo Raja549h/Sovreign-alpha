@@ -41,6 +41,93 @@
     </div>
     {% endif %}
 
+    {% if scorecard and scorecard.get('scorecard') %}
+    <div class="panel" style="border-color:var(--info);">
+        <div class="panel-header">
+            <h2>Thesis Health Scorecard</h2>
+            <span class="severity-tag {% if scorecard.overall_direction == 'WEAKENING' %}critical{% elif scorecard.overall_direction == 'STRENGTHENING' %}low{% else %}medium{% endif %}">{{ scorecard.overall_direction }}</span>
+        </div>
+        <div class="panel-body padded" style="font-size:0.7rem;">
+            <table style="width:100%;border-collapse:collapse;">
+                {% set field_labels = {
+                    'business_quality': 'Business Quality',
+                    'capital_allocation': 'Capital Allocation',
+                    'governance': 'Governance',
+                    'liquidity': 'Liquidity',
+                    'funding_structure': 'Funding Structure',
+                    'macro_exposure': 'Macro Exposure',
+                    'valuation': 'Valuation'
+                } %}
+                {% set field_icons = {
+                    'IMPROVING': '▲',
+                    'STABLE': '──',
+                    'DETERIORATING': '▼',
+                    'INSUFFICIENT_DATA': '?'
+                } %}
+                {% set field_colors = {
+                    'IMPROVING': 'var(--accent)',
+                    'STABLE': 'var(--text-dim)',
+                    'DETERIORATING': 'var(--warning)',
+                    'INSUFFICIENT_DATA': 'var(--text-dim)'
+                } %}
+                {% for field_key, field_label in field_labels.items() %}
+                {% set val = scorecard.scorecard.get(field_key, 'INSUFFICIENT_DATA') %}
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:0.4rem 0.5rem;color:var(--text-secondary);">{{ field_label }}</td>
+                    <td style="padding:0.4rem 0.5rem;text-align:right;color:{{ field_colors[val] }};font-family:var(--font-mono);">
+                        {{ field_icons[val] }} {{ val }}
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr style="border-top:2px solid var(--info);">
+                    <td style="padding:0.4rem 0.5rem;font-weight:700;color:var(--text-primary);">Overall Direction</td>
+                    <td style="padding:0.4rem 0.5rem;text-align:right;font-weight:700;font-family:var(--font-mono);color:{% if scorecard.overall_direction == 'WEAKENING' %}var(--warning){% elif scorecard.overall_direction == 'STRENGTHENING' %}var(--accent){% else %}var(--text-dim){% endif %};">{{ scorecard.overall_direction }}</td>
+                </tr>
+            </table>
+            {% if scorecard.summary %}
+            <div style="margin-top:0.5rem;color:var(--text-dim);font-size:0.65rem;">{{ scorecard.summary }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if timeline %}
+    <div class="panel" style="margin-bottom:0.55rem;">
+        <div class="panel-header">
+            <h2>Observation Timeline</h2>
+        </div>
+        <div class="panel-body padded">
+            <div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.6rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);">
+                <button class="timeline-filter active" data-category="" style="background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);padding:0.2rem 0.5rem;font-size:0.6rem;cursor:pointer;font-family:var(--font-mono);">ALL</button>
+                {% for cat in ['margin', 'valuation', 'governance', 'macro', 'management_commentary', 'capital_allocation', 'liquidity', 'business_quality', 'funding_cost'] %}
+                <button class="timeline-filter" data-category="{{ cat }}" style="background:var(--bg-primary);border:1px solid var(--border);color:var(--text-dim);padding:0.2rem 0.5rem;font-size:0.6rem;cursor:pointer;font-family:var(--font-mono);text-transform:uppercase;">{{ cat.replace('_', ' ') }}</button>
+                {% endfor %}
+            </div>
+            <div id="timeline-entries" style="max-height:500px;overflow-y:auto;">
+                {% for obs in timeline %}
+                {% set border_color = 'var(--accent)' if obs.direction == 'improving' else 'var(--text-dim)' if obs.direction == 'stable' else 'var(--warning)' if obs.direction == 'deteriorating' else 'var(--text-dim)' %}
+                <div class="timeline-entry" data-category="{{ obs.category }}" style="border-left:3px solid {{ border_color }};padding-left:0.6rem;padding-bottom:0.6rem;margin-bottom:0.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.15rem;">
+                        <span style="font-size:0.6rem;color:var(--text-dim);font-family:var(--font-mono);">{{ (obs.observation_date or '')[:10] }}</span>
+                        <span class="severity-tag" style="background:var(--bg-primary);color:var(--text-dim);font-size:0.55rem;">{{ obs.category.replace('_', ' ') }}</span>
+                    </div>
+                    <div style="font-size:0.7rem;color:var(--text-primary);line-height:1.5;">{{ obs.observation_text }}</div>
+                    <div style="display:flex;gap:0.75rem;margin-top:0.2rem;font-size:0.6rem;color:var(--text-dim);">
+                        <span>Confidence: {{ '%.0f'|format((obs.confidence or 0) * 100) }}%</span>
+                        {% if obs.direction %}
+                        <span style="color:{{ border_color }};">Direction: {{ obs.direction|upper }}</span>
+                        {% endif %}
+                        {% if obs.source %}
+                        <span>Source: {{ obs.source }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="grid-2">
         <div class="panel">
             <div class="panel-header">
@@ -111,4 +198,23 @@
         </div>
     </div>
 </div>
+
+<style>
+.timeline-filter.active { border-color: var(--accent) !important; color: var(--accent) !important; }
+.timeline-entry:last-child { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+</style>
+
+<script>
+document.querySelectorAll('.timeline-filter').forEach(function(btn){
+    btn.addEventListener('click', function(){
+        document.querySelectorAll('.timeline-filter').forEach(function(b){ b.classList.remove('active'); b.style.color = 'var(--text-dim)'; b.style.borderColor = 'var(--border)'; });
+        this.classList.add('active'); this.style.color = 'var(--accent)'; this.style.borderColor = 'var(--accent)';
+        var cat = this.getAttribute('data-category');
+        document.querySelectorAll('.timeline-entry').forEach(function(entry){
+            if(!cat || entry.getAttribute('data-category') === cat){ entry.style.display = ''; }
+            else { entry.style.display = 'none'; }
+        });
+    });
+});
+</script>
 {% endblock %}

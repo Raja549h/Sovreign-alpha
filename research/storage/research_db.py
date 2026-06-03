@@ -464,3 +464,55 @@ def init_extended_tables():
     """Initialize new extended tables."""
     with sqlite3.connect(str(RESEARCH_DB)) as conn:
         conn.executescript(EXTENDED_TABLES_SQL)
+
+
+EVOLUTION_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS observation_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    observation_date TEXT,
+    category TEXT,
+    observation_text TEXT,
+    confidence REAL,
+    source TEXT,
+    metric_name TEXT,
+    metric_value REAL,
+    direction TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS thesis_evolution (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    analysis_date TEXT,
+    prior_analysis_date TEXT,
+    category TEXT,
+    prior_observation TEXT,
+    current_observation TEXT,
+    evolution_status TEXT,
+    magnitude TEXT,
+    evidence TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS thesis_scorecard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    scored_at TEXT,
+    business_quality TEXT,
+    capital_allocation TEXT,
+    governance TEXT,
+    liquidity TEXT,
+    funding_structure TEXT,
+    macro_exposure TEXT,
+    valuation TEXT,
+    overall_direction TEXT,
+    scorecard_summary TEXT
+);
+"""
+
+
+def init_evolution_tables():
+    """Initialize thesis evolution tracking tables."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(EVOLUTION_TABLES_SQL)
