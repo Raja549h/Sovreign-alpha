@@ -67,6 +67,7 @@ SECTION_PROMPTS = {
     "18_competitive_positioning": "Assess {company}'s competitive position relative to sector peers. Market share trend, pricing power, switching costs, and entry barrier analysis. Data: {competitive_position}",
     "19_final_institutional_verdict": "Produce the final institutional verdict for {company}. Not a buy/sell recommendation. A structured assessment of: analytical confidence level, key variables to monitor, what would change the assessment positively, what would change it negatively, and the central institutional question this analysis leaves unresolved for a concentrated holder.",
     "20_thesis_evolution": "Generate the Thesis Evolution Analysis section for {company} ({ticker}). Evaluate whether each observation category is strengthening, stable, weakening, or reversing. Categorize: margin, funding_cost, governance, capital_allocation, valuation, macro, management_commentary, liquidity, business_quality. Provide an overall directional assessment and highlight key changes, confirmed observations, invalidated observations, and new findings.",
+    "21_observation_validation_audit": "Generate the Observation Validation & Edge Tracking Audit for {company} ({ticker}). This section retroactively scores every prior observation against actual outcomes. For each observation category (margin, funding_cost, governance, capital_allocation, valuation, macro, management_commentary, liquidity, business_quality), state: (a) the original observation, (b) whether it was CONFIRMED, PARTIALLY_CONFIRMED, MONITORING, or INVALIDATED, (c) the accuracy contribution (+1, +0.5, 0, -1), (d) institutional lesson for future analysis. Provide the overall edge accuracy rate as a percentage and edge score out of 100. Highlight the institution's strongest and weakest predictive categories. Use data: {observation_data}",
 }
 
 SECTION_LABELS = {
@@ -90,6 +91,7 @@ SECTION_LABELS = {
     "18_competitive_positioning": "Competitive Positioning",
     "19_final_institutional_verdict": "Final Institutional Verdict",
     "20_thesis_evolution": "Thesis Evolution Analysis",
+    "21_observation_validation_audit": "Observation Validation & Edge Tracking Audit",
 }
 
 def _generate_section(section_key: str, company: str, ticker: str, context: Dict) -> str:
@@ -103,6 +105,7 @@ def _generate_section(section_key: str, company: str, ticker: str, context: Dict
         competitive_position=(context.get("competitive_position") or "")[:1500],
         macro_context=json.dumps(context.get("macro_context", {}), indent=2)[:1000],
         pe=context.get("pe", "N/A"), pbv=context.get("pbv", "N/A"),
+        observation_data=json.dumps(context.get("observation_data", {}), indent=2)[:2000],
     )
     try:
         from groq import Groq
@@ -173,7 +176,7 @@ def format_sections_to_html(reference: str, company_name: str, ticker: str, sect
         </div>"""
         section_num += 1
     nav_links = ""
-    for i in range(1, 21):
+    for i in range(1, 22):
         nav_links += f"<a href='#section-{i:02d}' class='nav-section'>{i:02d}</a>"
     now = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
     return f"""<!DOCTYPE html>

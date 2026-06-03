@@ -2195,6 +2195,45 @@ def api_intelligence():
 # RESEARCH ENGINE ROUTES
 # ============================================================
 
+@app.route('/edge')
+@login_required
+def edge():
+    """Observation Edge Scorecard page."""
+    return render_template('edge.html')
+
+
+@app.route('/api/edge')
+@login_required
+def api_edge():
+    """Return edge scorecard data."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        scorecard = reg.calculate_edge_score()
+        return jsonify({'success': True, 'data': scorecard or {}})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/edge/validations')
+@login_required
+def api_edge_validations():
+    """Return validation feed with optional filtering."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        validations = reg.get_validations_feed(limit=100)
+        status_filter = request.args.get('status', '')
+        if status_filter:
+            validations = [v for v in validations if v.get('new_status', '').upper() == status_filter.upper()]
+        category_filter = request.args.get('category', '')
+        if category_filter:
+            validations = [v for v in validations if v.get('category', '') == category_filter]
+        return jsonify({'success': True, 'data': validations})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/research')
 @login_required
 def research_home():
