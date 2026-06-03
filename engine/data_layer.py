@@ -25,7 +25,7 @@ import hashlib
 import time
 import pandas as pd
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -377,8 +377,19 @@ class DataLayer:
             "fii_flow": {},
             "dii_flow": {},
             "sector_performance": [],
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         }
+
+        try:
+            from research.macro.fii_flow import calculate_flow_aggregates
+            flow_agg = calculate_flow_aggregates(7)
+            result["fii_flow"] = {
+                "weekly_net_cr": flow_agg.get("weekly_net_cr"),
+                "monthly_net_cr": flow_agg.get("monthly_net_cr"),
+                "num_entries": flow_agg.get("num_entries", 0),
+            }
+        except Exception:
+            result["fii_flow"] = {"error": "FII module unavailable"}
 
         try:
             import yfinance as yf

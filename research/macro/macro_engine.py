@@ -6,7 +6,7 @@ Provides the single entry point for the dashboard routes.
 """
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -40,6 +40,10 @@ def init_macro_tables():
 
 
 def get_macro_overview() -> Dict:
+    """
+    Dashboard overview — returns FII flow, macro health, and reserve stress.
+    For full intelligence including currency and import sensitivity, use get_full_intelligence().
+    """
     fii_report = fii_flow.build_flow_intelligence_report()
     macro_report = macro_health.build_macro_health_report()
     reserve_report = reserve_stress.build_reserve_stress_report()
@@ -47,7 +51,7 @@ def get_macro_overview() -> Dict:
     latest_macro = macro_health.get_latest_snapshot()
 
     return {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'fii_flow': {
             'regime': fii_report['flow_regime'],
             'monthly_net_cr': fii_report['monthly'].get('monthly_net_cr'),
@@ -73,6 +77,11 @@ def get_macro_overview() -> Dict:
             macro_report['observation'],
             reserve_report['observation'],
         ],
+        'composite_observation': _composite_observation(
+            macro_report.get('status', 'NO_DATA'),
+            fii_report.get('flow_regime', {}),
+            reserve_report.get('stress_level', 'NORMAL'),
+        ),
     }
 
 
@@ -88,6 +97,9 @@ def get_full_intelligence(positions: List[Dict] = None,
     if reserve_data is None:
         reserve_data = {}
 
+    expected_keys = {'reserve_level_usd_bn', 'import_cover_months', 'forex_swap_book_usd_bn', 'short_term_debt_pct'}
+    reserve_data = {k: v for k, v in reserve_data.items() if k in expected_keys}
+
     fii_flow_report = fii_flow.build_flow_intelligence_report()
     macro_health_report = macro_health.build_macro_health_report(macro_indicators)
     currency_view = currency_sensitivity.build_portfolio_currency_view(positions)
@@ -95,7 +107,7 @@ def get_full_intelligence(positions: List[Dict] = None,
     reserve_report = reserve_stress.build_reserve_stress_report(**reserve_data)
 
     return {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'fii_flow': fii_flow_report,
         'macro_health': macro_health_report,
         'currency_intelligence': currency_view,
@@ -103,22 +115,24 @@ def get_full_intelligence(positions: List[Dict] = None,
         'reserve_stress': reserve_report,
         'composite_observation': _composite_observation(
             macro_health_report.get('status', 'NO_DATA'),
-            fii_flow_report.get('flow_regime', {}).get('risk', 'MEDIUM'),
+            fii_flow_report.get('flow_regime', {}),
             reserve_report.get('stress_level', 'NORMAL'),
         ),
     }
 
 
-def _composite_observation(macro_status: str, fii_risk: str, reserve_level: str) -> str:
+def _composite_observation(macro_status: str, fii_flow_regime: Dict, reserve_level: str) -> str:
     signals = []
     if macro_status == 'RED':
         signals.append('Macro health: RED')
     elif macro_status == 'AMBER':
         signals.append('Macro health: AMBER')
 
+    fii_risk = fii_flow_regime.get('risk', 'MEDIUM')
+    fii_code = fii_flow_regime.get('regime', '')
     if fii_risk == 'HIGH':
         signals.append('FII flow risk: HIGH')
-    elif fii_risk == 'MEDIUM' and 'OUTFLOW' in str(fii_risk):
+    elif fii_code in ('HEAVY_OUTFLOW', 'MODERATE_OUTFLOW'):
         signals.append('FII outflows ongoing')
 
     if reserve_level == 'ELEVATED':

@@ -91,9 +91,60 @@ class DeepResearchEngine:
                 report_status[job_id]["steps"].append({"text": "Institutional scores calculated", "status": "done"})
                 report_status[job_id]["progress"] = 50
             if job_id:
-                report_status[job_id]["steps"].append({"text": "Generating 19-section deep research report...", "status": "running"})
+                report_status[job_id]["steps"].append({"text": "Generating sections 1-19 deep research report...", "status": "running"})
             from research.deep_note_generator import generate_all_sections, format_sections_to_html
             sections = generate_all_sections(company_name, ticker, research_data)
+            if job_id:
+                report_status[job_id]["steps"].append({"text": "Generating thesis evolution analysis (section 20)...", "status": "running"})
+            try:
+                from research.thesis_evolution_engine import ThesisEvolutionEngine
+                tee = ThesisEvolutionEngine()
+                evo_report = tee.generate_evolution_report(company_id)
+                evo_lines = []
+                evo_lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                evo_lines.append(f"THESIS EVOLUTION ANALYSIS")
+                evo_lines.append(f"Prior Review: {evo_report.get('prior_analysis_date', 'N/A')} → Current: {evo_report.get('analysis_date', 'N/A')}")
+                evo_lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                if not evo_report.get('key_changes') and not evo_report.get('new_findings'):
+                    evo_lines.append("")
+                    evo_lines.append("First analysis — baseline established. Evolution tracking begins from this review.")
+                else:
+                    if evo_report.get('key_changes'):
+                        evo_lines.append("")
+                        evo_lines.append("WHAT CHANGED:")
+                        for c in evo_report['key_changes']:
+                            evo_lines.append(f"- {c}")
+                    if evo_report.get('confirmed_observations'):
+                        evo_lines.append("")
+                        evo_lines.append("CONFIRMED OBSERVATIONS:")
+                        for c in evo_report['confirmed_observations']:
+                            evo_lines.append(f"- {c}")
+                    if evo_report.get('invalidated_observations'):
+                        evo_lines.append("")
+                        evo_lines.append("INVALIDATED:")
+                        for i in evo_report['invalidated_observations']:
+                            evo_lines.append(f"- {i}")
+                    det = [v for v in evo_report.get('categories', {}).values() if v.get('status') == 'WEAKENING']
+                    if det:
+                        evo_lines.append("")
+                        evo_lines.append("DETERIORATING:")
+                        for d in det:
+                            evo_lines.append(f"- {d.get('current', '')}")
+                    imp = [v for v in evo_report.get('categories', {}).values() if v.get('status') == 'STRENGTHENING']
+                    if imp:
+                        evo_lines.append("")
+                        evo_lines.append("IMPROVING:")
+                        for i in imp:
+                            evo_lines.append(f"- {i.get('current', '')}")
+                    if evo_report.get('new_findings'):
+                        evo_lines.append("")
+                        evo_lines.append("NEW FINDINGS:")
+                        for n in evo_report['new_findings']:
+                            evo_lines.append(f"- {n}")
+                sections["20_thesis_evolution"] = "\n".join(evo_lines)
+                tee.update_thesis_scorecard(company_id)
+            except Exception as evo_err:
+                sections["20_thesis_evolution"] = f"Thesis evolution analysis unavailable: {str(evo_err)[:100]}"
             context = {
                 "company_name": company_name,
                 "ticker": ticker,

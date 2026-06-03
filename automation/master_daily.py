@@ -5,6 +5,7 @@ Runs every weekday at 08:45 IST.
 
 Orchestrates:
 1. Fetch live market data (yfinance, FRED, NSE India)
+1b. Collect FII flow intelligence (flow regime, vulnerability)
 2. Classify market regime
 3. Run analyst predictions across watchlist
 4. Apply risk governance (veto filtering)
@@ -79,6 +80,18 @@ def run_pipeline():
     except Exception as e:
         results["steps"]["market_data"] = f"FAIL: {str(e)}"
         results["errors"].append(f"market_data: {str(e)}")
+        log(f"      ERROR: {e}")
+
+    # Step 1b: Collect FII flow data
+    log("[1b/8] Collecting FII flow intelligence...")
+    try:
+        from research.macro.fii_flow import build_flow_intelligence_report
+        fii_report = build_flow_intelligence_report()
+        results["steps"]["fii_flow"] = fii_report.get("data_quality", "NO_DATA")
+        log(f"      Regime: {fii_report.get('flow_regime', {}).get('label', 'N/A')} | Net: {fii_report.get('monthly', {}).get('monthly_net_cr')}")
+    except Exception as e:
+        results["steps"]["fii_flow"] = f"FAIL: {str(e)}"
+        results["errors"].append(f"fii_flow: {str(e)}")
         log(f"      ERROR: {e}")
 
     # Step 2: Classify regime
