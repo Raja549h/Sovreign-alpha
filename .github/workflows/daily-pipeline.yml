@@ -48,23 +48,32 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           FUND_PASSWORD: ${{ secrets.FUND_PASSWORD }}
 
+      - name: Init validation tables
+        run: |
+          python -c "
+          from research.storage.research_db import init_validation_tables
+          init_validation_tables()
+          "
+
       - name: Run observation validation (30/90/180-day reviews)
-        run: python -c "
-from research.auto_review_engine import AutoReviewEngine
-engine = AutoReviewEngine()
-results = engine.run_scheduled_reviews()
-import json; print(json.dumps(results, indent=2))
-"
+        run: |
+          python -c '
+          from research.auto_review_engine import AutoReviewEngine
+          engine = AutoReviewEngine()
+          results = engine.run_scheduled_reviews()
+          import json; print(json.dumps(results, indent=2))
+          '
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
       - name: Run edge scorecard calculation
-        run: python -c "
-from research.observation_registry import ObservationRegistry
-reg = ObservationRegistry()
-score = reg.calculate_edge_score()
-import json; print(json.dumps(score, indent=2))
-"
+        run: |
+          python -c '
+          from research.observation_registry import ObservationRegistry
+          reg = ObservationRegistry()
+          score = reg.calculate_edge_score()
+          import json; print(json.dumps(score, indent=2))
+          '
 
       - name: Upload results
         if: always()
