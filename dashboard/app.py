@@ -2788,13 +2788,19 @@ def api_heatmap_data():
 @app.route('/macro')
 @login_required
 def macro_page():
+    return redirect('/macro-health')
+
+
+@app.route('/macro-health')
+@login_required
+def macro_health_page():
     try:
-        from research.macro.macro_engine import init_macro_tables, get_macro_overview
+        from research.macro.macro_health import build_macro_health_report, init_macro_tables
         init_macro_tables()
-        overview = get_macro_overview()
-        return render_template('macro_health.html', overview=overview)
+        report = build_macro_health_report()
+        return render_template('macro_health.html', report=report)
     except Exception as e:
-        return render_template('macro_health.html', overview=None, error=str(e))
+        return render_template('macro_health.html', report=None, error=str(e))
 
 @app.route('/api/macro/overview')
 @login_required

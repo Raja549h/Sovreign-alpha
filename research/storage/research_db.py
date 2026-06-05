@@ -95,6 +95,40 @@ CREATE TABLE IF NOT EXISTS institutional_scores (
 """
 
 
+FII_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS fii_flows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    flow_type TEXT NOT NULL,
+    category TEXT NOT NULL,
+    amount_cr REAL,
+    source TEXT DEFAULT 'external',
+    notes TEXT DEFAULT '',
+    recorded_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    snapshot_date TEXT NOT NULL,
+    daily_net_cr REAL,
+    weekly_net_cr REAL,
+    monthly_net_cr REAL,
+    regime TEXT,
+    risk_level TEXT,
+    portfolio_vulnerability REAL,
+    details TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+def init_fii_tables():
+    """Initialize FII flow tracking tables."""
+    BILLING_DIR.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(FII_TABLES_SQL)
+
+
 def init_db():
     """Initialize database tables."""
     BILLING_DIR.mkdir(parents=True, exist_ok=True)
