@@ -75,6 +75,15 @@ jobs:
           import json; print(json.dumps(score, indent=2))
           '
 
+      - name: Fetch FII flow data
+        run: |
+          python -c '
+          from research.fii_intelligence import FIIIntelligence
+          fii = FIIIntelligence()
+          result = fii.fetch_daily_fii_flows()
+          import json; print(json.dumps(result, indent=2, default=str))
+          '
+
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
