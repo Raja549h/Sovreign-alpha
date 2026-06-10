@@ -40,7 +40,7 @@ jobs:
 
           api.upload_folder(
               folder_path=".",
-              repo_id="Demonsatan/soverignalpha",
+              repo_id="svrn-alpha/sovereignalpha",
               repo_type="space",
               ignore_patterns=[
                   ".git*",

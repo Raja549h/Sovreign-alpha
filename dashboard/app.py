@@ -2206,7 +2206,13 @@ def api_intelligence():
 @login_required
 def edge():
     """Observation Edge Scorecard page."""
-    return render_template('edge.html')
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        scorecard = reg.calculate_edge_score()
+        return render_template('edge.html', edge_data=scorecard or {})
+    except Exception:
+        return render_template('edge.html', edge_data={})
 
 
 @app.route('/api/edge')

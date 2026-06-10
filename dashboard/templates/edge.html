@@ -9,29 +9,29 @@
     </div>
 
     <div class="stats-row" id="edge-stats">
-        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">—</div></div>
-        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">—</div></div>
-        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">—</div></div>
-        <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">—</div></div>
-        <div class="stat-box warning"><label>Total Observations</label><div class="value" id="totalObs">—</div></div>
+        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">{% if edge_data.edge_score is not none %}{{ "%.1f"|format(edge_data.edge_score) }}{% else %}—{% endif %}</div></div>
+        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">{% if edge_data.accuracy_rate is not none %}{{ "%.1f"|format(edge_data.accuracy_rate * 100) }}%{% else %}—{% endif %}</div></div>
+        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">{% if edge_data.weighted_accuracy is not none %}{{ "%.1f"|format(edge_data.weighted_accuracy * 100) }}%{% else %}—{% endif %}</div></div>
+        <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">{% if edge_data.avg_confidence is not none %}{{ "%.1f"|format(edge_data.avg_confidence * 100) }}%{% else %}—{% endif %}</div></div>
+        <div class="stat-box warning"><label>Total Observations</label><div class="value" id="totalObs">{{ edge_data.total | default('—') }}</div></div>
     </div>
 
     <div class="stats-row" id="edge-breakdown" style="grid-template-columns:repeat(5,1fr);">
-        <div class="stat-box accent"><label>Confirmed</label><div class="value" id="confirmed">—</div></div>
-        <div class="stat-box info"><label>Partial</label><div class="value" id="partial">—</div></div>
-        <div class="stat-box danger"><label>Invalidated</label><div class="value" id="invalidated">—</div></div>
-        <div class="stat-box warning"><label>Active</label><div class="value" id="activeObs">—</div></div>
-        <div class="stat-box" style="border-left-color:#666;"><label>Monitoring</label><div class="value" id="monitoring">—</div></div>
+        <div class="stat-box accent"><label>Confirmed</label><div class="value" id="confirmed">{{ edge_data.confirmed | default('0') }}</div></div>
+        <div class="stat-box info"><label>Partial</label><div class="value" id="partial">{{ edge_data.partially_confirmed | default('0') }}</div></div>
+        <div class="stat-box danger"><label>Invalidated</label><div class="value" id="invalidated">{{ edge_data.invalidated | default('0') }}</div></div>
+        <div class="stat-box warning"><label>Active</label><div class="value" id="activeObs">{{ edge_data.active | default('0') }}</div></div>
+        <div class="stat-box" style="border-left-color:#666;"><label>Monitoring</label><div class="value" id="monitoring">{{ edge_data.monitoring | default('0') }}</div></div>
     </div>
 
     <div class="stats-row" id="categories-row" style="grid-template-columns:1fr 1fr;">
         <div class="card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.8rem;">
             <label style="font-size:9px;color:#00ff9f;text-transform:uppercase;letter-spacing:1px;">Best Categories</label>
-            <div id="bestCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent);">—</div>
+            <div id="bestCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--accent);">{% if edge_data.best_categories %}{{ edge_data.best_categories | join(', ') }}{% else %}—{% endif %}</div>
         </div>
         <div class="card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.8rem;">
             <label style="font-size:9px;color:#ff4444;text-transform:uppercase;letter-spacing:1px;">Worst Categories</label>
-            <div id="worstCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--danger);">—</div>
+            <div id="worstCats" style="margin-top:0.4rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--danger);">{% if edge_data.worst_categories %}{{ edge_data.worst_categories | join(', ') }}{% else %}—{% endif %}</div>
         </div>
     </div>
 
