@@ -215,9 +215,18 @@ class ObservationRegistry:
                 if total_cat > 0:
                     rate = data['confirmed'] / total_cat
                     cat_scores.append((cat, rate))
-            cat_scores.sort(key=lambda x: -x[1])
-            top_cats = [c[0] for c in cat_scores[:3]]
-            worst_cats = [c[0] for c in cat_scores[-3:]] if len(cat_scores) >= 3 else [c[0] for c in cat_scores]
+            if cat_scores:
+                cat_scores.sort(key=lambda x: -x[1])
+                top_cats = [c[0] for c in cat_scores[:3]]
+                worst_cats = [c[0] for c in cat_scores[-3:]] if len(cat_scores) >= 3 else [c[0] for c in cat_scores]
+            else:
+                by_freq = {}
+                for row in self.get_registry(company_id=company_id, limit=1000):
+                    cat = row.get('category', 'unknown')
+                    by_freq[cat] = by_freq.get(cat, 0) + 1
+                sorted_cats = sorted(by_freq.items(), key=lambda x: -x[1])
+                top_cats = [c[0] for c in sorted_cats[:3]]
+                worst_cats = [c[0] for c in sorted_cats[-3:]] if len(sorted_cats) >= 3 else [c[0] for c in sorted_cats]
 
             c.execute(
                 """INSERT INTO edge_scorecard
@@ -275,4 +284,20 @@ class ObservationRegistry:
                          JOIN observation_memory om ON om.id = ov.observation_id
                          JOIN companies c ON c.id = ov.company_id
                          ORDER BY ov.created_at DESC LIMIT ?""", (limit,))
+            results = [dict(r) for r in c.fetchall()]
+            if results:
+                return results
+            c.execute("""SELECT om.id as observation_id, om.company_id,
+                                om.observation_date as validation_date,
+                                om.validation_status as new_status,
+                                om.validation_status as prior_status,
+                                'auto' as validation_method,
+                                COALESCE(om.validation_evidence, 'No evidence recorded') as supporting_data,
+                                '' as groq_reasoning,
+                                om.confidence as accuracy_contribution,
+                                c.ticker, c.company_name, om.category, om.observation_text,
+                                om.created_at
+                         FROM observation_memory om
+                         JOIN companies c ON c.id = om.company_id
+                         ORDER BY om.created_at DESC LIMIT ?""", (limit,))
             return [dict(r) for r in c.fetchall()]
