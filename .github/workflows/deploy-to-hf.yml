@@ -22,6 +22,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Validate requirements
+        run: |
+          echo "Checking critical dependencies..."
+          for pkg in beautifulsoup4 flask yfinance pandas requests; do
+            grep -q "$pkg" requirements-docker.txt && echo "  OK: $pkg" || echo "  MISSING: $pkg not in requirements-docker.txt"
+          done
+
       - name: Deploy to Hugging Face Spaces
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -29,38 +36,51 @@ jobs:
           pip install huggingface_hub -q
           python - <<'PYEOF'
           from huggingface_hub import HfApi
-          import os
+          import os, sys
 
           token = os.environ.get('HF_TOKEN')
           if not token:
               print("::error::HF_TOKEN secret not set — add it to GitHub repo secrets")
-              exit(1)
+              sys.exit(1)
 
           api = HfApi(token=token)
 
-          api.upload_folder(
-              folder_path=".",
-              repo_id="svrn-alpha/sovereignalpha",
-              repo_type="space",
-              ignore_patterns=[
-                  ".git*",
-                  ".venv/",
-                  "venv/",
-                  "__pycache__/",
-                  "*.pyc",
-                  "research/data/filings/",
-                  "research/data/transcripts/",
-                  "logs/",
-                  "*.log",
-                  "exports/",
-                  ".env",
-                  "SUMMARY.md",
-                  "backtesting/",
-                  "documents/",
-                  "demo/",
-                  "security/",
-                  "requirements-pipeline.txt"
-              ]
-          )
-          print("Deployed to HF Spaces successfully")
+          print(f"Verifying HF token access...")
+          try:
+              who = api.whoami()
+              print(f"  Authenticated as: {who.get('name', 'unknown')}")
+          except Exception as e:
+              print(f"::error::HF token validation failed: {e}")
+              sys.exit(1)
+
+          print(f"Uploading to svrn-alpha/sovereignalpha...")
+          try:
+              api.upload_folder(
+                  folder_path=".",
+                  repo_id="svrn-alpha/sovereignalpha",
+                  repo_type="space",
+                  ignore_patterns=[
+                      ".git*",
+                      ".venv/",
+                      "venv/",
+                      "__pycache__/",
+                      "*.pyc",
+                      "research/data/filings/",
+                      "research/data/transcripts/",
+                      "logs/",
+                      "*.log",
+                      "exports/",
+                      ".env",
+                      "SUMMARY.md",
+                      "backtesting/",
+                      "documents/",
+                      "demo/",
+                      "security/",
+                      "requirements-pipeline.txt"
+                  ]
+              )
+              print("Deployed to HF Spaces successfully")
+          except Exception as e:
+              print(f"::error::HF upload failed: {e}")
+              sys.exit(1)
           PYEOF
