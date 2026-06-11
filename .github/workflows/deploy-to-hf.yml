@@ -53,11 +53,25 @@ jobs:
               print(f"::error::HF token validation failed: {e}")
               sys.exit(1)
 
-          print(f"Uploading to svrn-alpha/sovereignalpha...")
+          repo_id = "svrn-alpha/sovereignalpha"
+
+          print(f"Ensuring HF Space exists: {repo_id}...")
+          try:
+              api.create_repo(
+                  repo_id=repo_id,
+                  repo_type="space",
+                  space_sdk="docker",
+                  exist_ok=True,
+              )
+              print(f"  Space ready")
+          except Exception as e:
+              print(f"::warning::Could not create space (may already exist): {e}")
+
+          print(f"Uploading to {repo_id}...")
           try:
               api.upload_folder(
                   folder_path=".",
-                  repo_id="svrn-alpha/sovereignalpha",
+                  repo_id=repo_id,
                   repo_type="space",
                   ignore_patterns=[
                       ".git*",
