@@ -272,12 +272,7 @@ def init_fund_db():
 
 init_fund_db()
 
-# Ensure validation tracking tables exist for the Edge Scorecard
-try:
-    from research.storage.research_db import init_validation_tables
-    init_validation_tables()
-except Exception as e:
-    print(f"[startup] Validation tables init skipped: {e}")
+# Validation tables init moved to late-startup block after evolution_tables
 
 def get_db_connection():
     """Get a database connection."""
@@ -3165,10 +3160,30 @@ except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
 
 try:
+    from research.storage.research_db import init_evolution_tables
+    init_evolution_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize evolution tables: {e}")
+
+try:
+    from research.storage.research_db import init_validation_tables
+    init_validation_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize validation tables: {e}")
+
+try:
     from research.storage.research_db import init_extended_tables
     init_extended_tables()
 except Exception as e:
     print(f"Warning: Could not initialize extended tables: {e}")
+
+try:
+    from research.backfill_memory import backfill
+    inserted = backfill()
+    if inserted:
+        print(f"[startup] Backfilled {inserted} observations into memory")
+except Exception as e:
+    print(f"Warning: Could not backfill observations: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
