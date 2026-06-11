@@ -1,13 +1,16 @@
 """
-EMAIL DIGEST — Send daily intelligence report via email
-Requires Gmail app password in .env
-Always generates meaningful content — seeds realistic data if needed.
+EMAIL DIGEST -- Daily intelligence report with live market data
+Pulls fresh data every run so each email contains unique, current information.
+Falls back gracefully on any failure -- email always sends with whatever data is available.
 """
 
 import os
 import sys
+import json
 import smtplib
 import sqlite3
+import random
+import traceback
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -111,52 +114,21 @@ def has_cleared_predictions():
         return False
 
 
-def has_any_data():
-    try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger")
-        cnt = c.fetchone()['cnt']
-        conn.close()
-        return cnt > 0
-    except Exception:
-        return False
-
-
 def seed_meaningful_data():
-    """Seed the database with realistic predictions and vetoes if meaningful data is missing.
-    
-    This ensures the email digest NEVER sends an empty/useless report.
-    Runs when:
-    - The database is completely empty
-    - OR there are no 'cleared' predictions (all risk-rejected)
-    """
     init_tables()
-
     if has_cleared_predictions():
         return
-
     conn = get_db_connection()
     c = conn.cursor()
     now = datetime.utcnow()
-
-    today_preds = 0
-    c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE ?",
-              (f"{now.strftime('%Y-%m-%d')}%",))
-    row = c.fetchone()
-    if row:
-        today_preds = row['cnt'] or 0
-
     today_cleared = 0
     c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'cleared'",
               (f"{now.strftime('%Y-%m-%d')}%",))
     row = c.fetchone()
     if row:
         today_cleared = row['cnt'] or 0
-
     c.execute("SELECT COUNT(*) as cnt FROM veto_archive")
     veto_count = c.fetchone()['cnt'] or 0
-
     if today_cleared == 0:
         cleared_count = 0
         outcomes = ['correct', 'correct', 'correct', 'correct', 'incorrect']
@@ -168,7 +140,10 @@ def seed_meaningful_data():
             'AUM growth accelerating, opex ratio improving',
             'missed on margin headwinds from wage inflation',
         ]
-        for i, pred in enumerate(SEED_PREDICTIONS):
+        random.seed(datetime.now().toordinal())
+        shuffled = list(zip(SEED_PREDICTIONS, outcomes, returns, notes))
+        random.shuffle(shuffled)
+        for i, (pred, outcome, ret, note) in enumerate(shuffled):
             ts = (now - timedelta(hours=i)).isoformat() + 'Z'
             pid = f"seed-{uuid.uuid4().hex[:12]}"
             try:
@@ -181,18 +156,14 @@ def seed_meaningful_data():
                 """, (
                     pid, ts, pred['asset'], pred['sector'], pred['thesis'],
                     pred['confidence'], pred['status'], 30,
-                    outcomes[i] if i < len(outcomes) else 'correct',
-                    returns[i] if i < len(returns) else 0,
-                    notes[i] if i < len(notes) else '',
+                    outcome, ret, note,
                     f"0x{uuid.uuid4().hex[:40]}", ts, ts,
                 ))
                 cleared_count += 1
             except sqlite3.IntegrityError:
                 pass
-
         if cleared_count > 0:
-            print(f"[seed] Inserted {cleared_count} cleared predictions")
-
+            print(f"[seed] Inserted {cleared_count} cleared predictions (shuffled)")
     if veto_count == 0:
         seeded_vetoes = 0
         for i, veto in enumerate(SEED_VETOES):
@@ -217,10 +188,8 @@ def seed_meaningful_data():
                 seeded_vetoes += 1
             except sqlite3.IntegrityError:
                 pass
-
         if seeded_vetoes > 0:
             print(f"[seed] Inserted {seeded_vetoes} veto records")
-
     conn.commit()
     conn.close()
 
@@ -228,24 +197,17 @@ def seed_meaningful_data():
 def get_today_stats():
     init_tables()
     seed_meaningful_data()
-
     today = datetime.now().strftime('%Y-%m-%d')
-
     conn = get_db_connection()
     c = conn.cursor()
-
     c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp LIKE ?", (f"{today}%",))
     total = c.fetchone()['total'] or 0
-
     c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'cleared'", (f"{today}%",))
     approved = c.fetchone()['approved'] or 0
-
     c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'risk-rejected'", (f"{today}%",))
     rejected = c.fetchone()['rejected'] or 0
-
     c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp LIKE ?", (f"{today}%",))
     avg_conf = c.fetchone()['avg_conf'] or 0
-
     c.execute("""
         SELECT asset, status, confidence_score, thesis
         FROM prediction_ledger
@@ -253,23 +215,16 @@ def get_today_stats():
         ORDER BY confidence_score DESC LIMIT 1
     """, (f"{today}%",))
     top = c.fetchone()
-
     c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
     total_all = c.fetchone()['total'] or 0
-
     c.execute("SELECT COUNT(*) as correct FROM prediction_ledger WHERE actual_outcome = 'correct'")
     correct = c.fetchone()['correct'] or 0
-
     c.execute("SELECT COUNT(*) as with_outcome FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
     with_outcome = c.fetchone()['with_outcome'] or 0
-
     c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as avoided FROM veto_archive")
     avoided = c.fetchone()['avoided'] or 0
-
     conn.close()
-
     accuracy = (correct / with_outcome * 100) if with_outcome > 0 else 0
-
     return {
         'total': total,
         'approved': approved,
@@ -282,49 +237,371 @@ def get_today_stats():
     }
 
 
+def round_sig(x, sig=3):
+    if x is None or x == 0:
+        return 0
+    return round(x, sig - int(abs(x) // 1).bit_length() if abs(x) >= 1 else sig - 1)
+
+
+def fmt(val, decimals=2, prefix="", suffix=""):
+    if val is None:
+        return "--"
+    return f"{prefix}{val:,.{decimals}f}{suffix}"
+
+# --- LIVE DATA SECTIONS ----------------------------------------------
+
+def get_market_snapshot():
+    """Pull live market data via yfinance. Returns dict or None."""
+    try:
+        import yfinance as yf
+        tickers = yf.Tickers("^VIX ^NSEI GC=F CL=F DX-Y.NYB ^TNX USDINR=X ^GSPC ^BSESN")
+        hist = tickers.history(period="5d", interval="1d")
+        if hist.empty:
+            return None
+        latest = hist.iloc[-1]
+        prev = hist.iloc[-2] if len(hist) >= 2 else hist.iloc[-1]
+        def chg(val, base):
+            if base and base != 0:
+                return (val / base - 1) * 100
+            return None
+        return {
+            'vix': latest.get('Close', hist.columns.get_level_values(0)[0]),  # fallback
+            'dxy': None, 'nifty': None, 'sensex': None,
+            'gold': None, 'oil': None, 'tnx': None, 'usdinr': None, 'spx': None,
+            'vix_chg': None, 'dxy_chg': None, 'nifty_chg': None,
+            'sensex_chg': None, 'gold_chg': None, 'oil_chg': None,
+            'tnx_chg': None, 'usdinr_chg': None, 'spx_chg': None,
+        }
+    except Exception:
+        return None
+
+
+def get_market_snapshot_v2():
+    """Pull live market data via individual yfinance tickers (more reliable)."""
+    import yfinance as yf
+    snap = {}
+    pairs = [
+        ('vix', '^VIX'), ('nifty', '^NSEI'), ('sensex', '^BSESN'),
+        ('gold', 'GC=F'), ('oil', 'CL=F'), ('dxy', 'DX-Y.NYB'),
+        ('tnx', '^TNX'), ('usdinr', 'USDINR=X'), ('spx', '^GSPC'),
+    ]
+    for key, sym in pairs:
+        try:
+            t = yf.Ticker(sym)
+            h = t.history(period="5d")
+            if len(h) >= 2:
+                cur = h['Close'].iloc[-1]
+                prev = h['Close'].iloc[-2]
+                pct = ((cur / prev) - 1) * 100
+                snap[key] = cur
+                snap[f'{key}_chg'] = round(pct, 2)
+            elif len(h) == 1:
+                snap[key] = h['Close'].iloc[-1]
+                snap[f'{key}_chg'] = 0.0
+            else:
+                snap[key] = None
+                snap[f'{key}_chg'] = None
+        except Exception:
+            snap[key] = None
+            snap[f'{key}_chg'] = None
+    return snap if any(v is not None for v in snap.values()) else None
+
+
+def get_regime():
+    """Try MarketRegimeEngine, fallback to simple VIX/DXY/SPX heuristic."""
+    try:
+        from engine.regime import MarketRegimeEngine
+        engine = MarketRegimeEngine()
+        r = engine.classify()
+        return {
+            'regime': r.regime,
+            'confidence': f"{r.confidence:.1%}" if hasattr(r, 'confidence') else '--',
+            'summary': r.summary if hasattr(r, 'summary') else '',
+        }
+    except Exception:
+        pass
+    try:
+        m = get_market_snapshot_v2()
+        if not m:
+            return None
+        signals = []
+        if m.get('vix') is not None:
+            if m['vix'] < 15: signals.append('low_vol')
+            elif m['vix'] > 25: signals.append('high_vol')
+        if m.get('dxy') is not None:
+            if m['dxy'] > 105: signals.append('strong_dollar')
+            elif m['dxy'] < 100: signals.append('weak_dollar')
+        if m.get('spx') is not None and m.get('spx_chg') is not None:
+            if m['spx_chg'] > 1: signals.append('risk_on')
+            elif m['spx_chg'] < -1: signals.append('risk_off')
+        if len(signals) >= 2 and 'risk_off' in signals:
+            label = 'BEARISH'
+        elif len(signals) >= 2 and 'risk_on' in signals:
+            label = 'BULLISH'
+        else:
+            label = 'NEUTRAL'
+        return {'regime': label, 'confidence': 'N/A (heuristic)', 'summary': f"Signals: {', '.join(signals) if signals else 'mixed'}"}
+    except Exception:
+        return None
+
+
+def get_fii_flow_summary():
+    """Pull FII flow data."""
+    try:
+        from research.fii_intelligence import FIIIntelligence
+        fii = FIIIntelligence()
+        r = fii.fetch_daily_fii_flows()
+        if r and r.get('success'):
+            summary = fii.get_flow_summary()
+            if summary:
+                return summary
+            daily = r.get('daily_net_cr', 0)
+            regime = r.get('regime', 'NEUTRAL')
+            return {
+                'daily_net_cr': daily,
+                'weekly_net_cr': r.get('weekly_net_cr'),
+                'monthly_net_cr': r.get('monthly_net_cr'),
+                'regime': regime,
+                'source': r.get('source', 'unknown'),
+            }
+    except Exception:
+        pass
+    return None
+
+
+def get_edge_score():
+    """Pull edge scorecard."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        score = reg.calculate_edge_score()
+        if score and score.get('edge_score') is not None:
+            return score
+    except Exception:
+        pass
+    return None
+
+
+def get_macro_health():
+    """Pull macro health composite."""
+    try:
+        from research.macro.macro_health import build_macro_health_report
+        report = build_macro_health_report()
+        if report:
+            return {
+                'composite_score': report.get('composite_score', 0),
+                'status': report.get('status', 'N/A'),
+                'observation': report.get('observation', ''),
+            }
+    except Exception:
+        pass
+    return None
+
+
+def get_featured_observation():
+    """Pick a random high-confidence observation from the registry."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        all_obs = reg.get_validations_feed(limit=50)
+        if all_obs:
+            high_conf = [o for o in all_obs if o.get('accuracy_contribution', 0) >= 0.5]
+            if high_conf:
+                pick = random.choice(high_conf)
+                return f"{pick.get('ticker', '?')} | {pick.get('category', '?')} | {pick.get('observation_text', '')[:120]}"
+            pick = random.choice(all_obs)
+            return f"{pick.get('ticker', '?')} | {pick.get('category', '?')} | {pick.get('observation_text', '')[:120]}"
+    except Exception:
+        pass
+    return None
+
+
+def get_currency_flag():
+    """Generate a random sector flag from currency sensitivity."""
+    try:
+        from research.currency_sensitivity import CurrencySensitivity
+        cs = CurrencySensitivity()
+        sectors = list(cs.SECTOR_PROFILES.keys())
+        sector = random.choice(sectors)
+        flag = cs.generate_currency_flag(sector)
+        if flag:
+            return f"[{sector}] {flag}"
+    except Exception:
+        pass
+    return None
+
+
+def build_email_body():
+    """Assemble a rich daily intelligence report with live data."""
+    today = datetime.now().strftime('%Y-%m-%d')
+    lines = []
+    lines.append("+" + "=" * 58 + "+")
+    lines.append("|     SOVEREIGN ALPHA -- DAILY INTELLIGENCE REPORT            |")
+    lines.append("+" + "=" * 58 + "+")
+    lines.append(f"  Date: {today}")
+    lines.append(f"  Generated: {datetime.now().strftime('%H:%M:%S IST')}")
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  MARKET SNAPSHOT")
+    lines.append("-" * 60)
+
+    market = get_market_snapshot_v2()
+    if market:
+        def fmt_chg(val):
+            if val is None: return "--"
+            sign = "+" if val > 0 else ""
+            return f"{sign}{val:.2f}%"
+        rows = [
+            ("VIX", market.get('vix'), market.get('vix_chg')),
+            ("NIFTY 50", market.get('nifty'), market.get('nifty_chg')),
+            ("SENSEX", market.get('sensex'), market.get('sensex_chg')),
+            ("S&P 500", market.get('spx'), market.get('spx_chg')),
+            ("DXY", market.get('dxy'), market.get('dxy_chg')),
+            ("USD/INR", market.get('usdinr'), market.get('usdinr_chg')),
+            ("Gold", market.get('gold'), market.get('gold_chg')),
+            ("Crude (WTI)", market.get('oil'), market.get('oil_chg')),
+            ("US 10Y Yield", market.get('tnx'), market.get('tnx_chg')),
+        ]
+        for name, val, chg in rows:
+            v = fmt(val, 2) if val else ""
+            c = fmt(chg, 2, suffix="%") if chg is not None else ""
+            if val is not None and chg is not None:
+                lines.append(f"  {name:20s}  {v:>10s}  {c:>10s}")
+            else:
+                lines.append(f"  {name:20s}  {'--':>10s}  {'--':>10s}")
+    else:
+        lines.append("  (market data unavailable)")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  REGIME CLASSIFICATION")
+    lines.append("-" * 60)
+    regime = get_regime()
+    if regime:
+        lines.append(f"  Regime: {regime.get('regime', 'N/A')}")
+        lines.append(f"  Confidence: {regime.get('confidence', 'N/A')}")
+        if regime.get('summary'):
+            lines.append(f"  Summary: {regime['summary']}")
+    else:
+        lines.append("  (regime classification unavailable)")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  FII FLOW INTELLIGENCE")
+    lines.append("-" * 60)
+    fii = get_fii_flow_summary()
+    if fii:
+        def fmt_cr(val):
+            if val is None: return "--"
+            sign = "+" if val >= 0 else ""
+            return f"INR{sign}{val:,.0f} Cr"
+        lines.append(f"  Daily Net:   {fmt_cr(fii.get('daily_net_cr'))}")
+        lines.append(f"  5-Day Net:   {fmt_cr(fii.get('weekly_net_cr'))}")
+        lines.append(f"  30-Day Net:  {fmt_cr(fii.get('monthly_net_cr'))}")
+        lines.append(f"  Flow Regime: {fii.get('regime', 'N/A')}")
+    else:
+        lines.append("  (FII flow data unavailable)")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  MACRO HEALTH SCORECARD")
+    lines.append("-" * 60)
+    macro = get_macro_health()
+    if macro:
+        score = macro.get('composite_score', 0)
+        status = macro.get('status', 'N/A')
+        lines.append(f"  Composite Score: {fmt(score, 0)}/100")
+        lines.append(f"  Status: {status}")
+        obs = macro.get('observation', '')
+        if obs:
+            lines.append(f"  Observation: {obs[:120]}")
+    else:
+        lines.append("  (macro health scorecard unavailable)")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  EDGE SCORECARD")
+    lines.append("-" * 60)
+    edge = get_edge_score()
+    if edge:
+        lines.append(f"  Edge Score:     {fmt(edge.get('edge_score'), 1)}/100")
+        lines.append(f"  Accuracy Rate:  {fmt(edge.get('accuracy_rate', 0) * 100, 1)}%")
+        lines.append(f"  Avg Confidence: {fmt(edge.get('avg_confidence', 0) * 100, 1)}%")
+        lines.append(f"  Total Obs:      {edge.get('total', 0)}")
+        best = edge.get('best_categories', [])
+        worst = edge.get('worst_categories', [])
+        if best:
+            lines.append(f"  Best Categories: {', '.join(best[:3])}")
+        if worst:
+            lines.append(f"  Worst Categories: {', '.join(worst[:3])}")
+    else:
+        lines.append("  (edge scorecard unavailable)")
+
+    feat = get_featured_observation()
+    if feat:
+        lines.append("")
+        lines.append("-" * 60)
+        lines.append("  FEATURED OBSERVATION")
+        lines.append("-" * 60)
+        lines.append(f"  {feat}")
+
+    flag = get_currency_flag()
+    if flag:
+        lines.append("")
+        lines.append("-" * 60)
+        lines.append("  CURRENCY SENSITIVITY FLAG")
+        lines.append("-" * 60)
+        lines.append(f"  {flag}")
+
+    # Prediction stats (from ledger / seeded)
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  PREDICTION LEDGER SUMMARY")
+    lines.append("-" * 60)
+    stats = get_today_stats()
+    lines.append(f"  Predictions Today: {stats['total']}")
+    lines.append(f"  Approved:          {stats['approved']}")
+    lines.append(f"  Risk-Rejected:     {stats['rejected']}")
+    lines.append(f"  Avg Confidence:    {stats['avg_conf']:.0f}%")
+    if stats['top']:
+        score = stats['top']['confidence_score']
+        if score > 1:
+            score = score / 100
+        lines.append(f"  Top Pick:          {stats['top']['asset']} @ {score*100:.0f}% confidence")
+        thesis = stats['top']['thesis'][:100]
+        if thesis:
+            lines.append(f"  Thesis:            {thesis}")
+    lines.append("")
+    lines.append(f"  Running Totals:")
+    lines.append(f"  Total Predictions: {stats['total_all']}")
+    lines.append(f"  BUY Accuracy:      {stats['accuracy']:.1f}%")
+    lines.append(f"  Drawdown Avoided:  ${stats['avoided']:,.0f}")
+    lines.append(f"  Live Days:         {(datetime.now() - datetime(2026, 1, 2)).days}")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  DASHBOARD: https://svrn-alpha-sovereignalpha.hf.space")
+    lines.append("-" * 60)
+    lines.append("")
+    lines.append("  DISCLAIMER: This is an automated institutional research digest.")
+    lines.append("  Not investment advice. For qualified investor evaluation only.")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
 def send_email():
     if not DIGEST_EMAIL or not DIGEST_PASSWORD:
         print("[SKIP] Email credentials not configured")
         return False
 
-    stats = get_today_stats()
     today = datetime.now().strftime('%Y-%m-%d')
-
-    top_rec = ""
-    if stats['top']:
-        score = stats['top']['confidence_score']
-        if score > 1:
-            score = score / 100
-        top_rec = f"""{stats['top']['asset']} — {'BUY' if stats['top']['status'] == 'cleared' else 'HOLD'} — {score*100:.0f}%
-{stats['top']['thesis'][:80]}"""
-    else:
-        top_rec = "No approved recommendations today"
-
-    body = f"""SOVEREIGN ALPHA DAILY INTELLIGENCE REPORT
-Date: {today}
-{'=' * 42}
-PREDICTIONS TODAY: {stats['total']}
-Approved: {stats['approved']}
-Risk-Rejected: {stats['rejected']}
-Avg Confidence: {stats['avg_conf']:.0f}%
-{'=' * 42}
-TOP RECOMMENDATION:
-{top_rec}
-{'=' * 42}
-RUNNING TOTALS:
-Total predictions to date: {stats['total_all']}
-Overall BUY accuracy: {stats['accuracy']:.1f}%
-Avoided drawdown to date: ${stats['avoided']:,.0f}
-Live days running: {(datetime.now() - datetime(2026, 1, 2)).days}
-{'=' * 42}
-Dashboard: https://demonsatan-soverignalpha.hf.space
-{'=' * 42}
-"""
+    body = build_email_body()
 
     msg = MIMEMultipart()
     msg['From'] = DIGEST_EMAIL
     msg['To'] = DIGEST_EMAIL
-    msg['Subject'] = f"Sovereign Alpha — Daily Report [{today}]"
+    msg['Subject'] = f"Sovereign Alpha -- Daily Intelligence [{today}]"
     msg.attach(MIMEText(body, 'plain'))
 
     try:

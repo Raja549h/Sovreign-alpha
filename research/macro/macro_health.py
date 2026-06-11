@@ -1,5 +1,5 @@
 """
-India Macro Health Scorecard — Institutional-grade macro environment assessment
+India Macro Health Scorecard -- Institutional-grade macro environment assessment
 =================================================================================
 Tracks 10 key macro indicators to produce a composite India macro health score
 (0-100) with GREEN/AMBER/RED status classification. Purpose: inform portfolio
@@ -21,6 +21,7 @@ Indicators tracked:
 import os
 import sqlite3
 import json
+import pandas as pd
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -192,17 +193,30 @@ def fetch_live_indicators() -> Dict:
         usdinr = yf.download('USDINR=X', period='1mo', interval='1d', progress=False)
         if not usdinr.empty:
             yr_ago = yf.download('USDINR=X', period='1y', interval='1mo', progress=False)
+            close_col = 'Close'
+            if isinstance(usdinr.columns, pd.MultiIndex):
+                ticker = usdinr.columns.get_level_values(1)[0]
+                inr_now = float(usdinr[(close_col, ticker)].iloc[-1])
+            else:
+                inr_now = float(usdinr[close_col].iloc[-1])
             if not yr_ago.empty:
-                inr_now = float(usdinr['Close'].iloc[-1])
-                inr_yr = float(yr_ago['Close'].iloc[0])
+                if isinstance(yr_ago.columns, pd.MultiIndex):
+                    inr_yr = float(yr_ago[(close_col, ticker)].iloc[0])
+                else:
+                    inr_yr = float(yr_ago[close_col].iloc[0])
                 indicators['inr_change_pct'] = round((inr_now - inr_yr) / inr_yr * 100, 2)
     except Exception:
         pass
 
     try:
-        gsec = yf.download('^TNX', period='1mo', interval='1d', progress=False)
-        if not gsec.empty:
-            indicators['gsec_10y'] = round(float(gsec['Close'].iloc[-1]), 2)
+        import requests
+        r = requests.get('https://tradingeconomics.com/india/government-bond-yield',
+                         headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+        if r.status_code == 200:
+            import re
+            m = re.search(r'India\s*10Y[^<]*?([\d.]+)%', r.text, re.IGNORECASE)
+            if m:
+                indicators['gsec_10y'] = round(float(m.group(1)), 2)
     except Exception:
         pass
 
@@ -296,8 +310,8 @@ def get_snapshot_history(limit: int = 12) -> List[Dict]:
 
 def _macro_observation(score: float, status: str) -> str:
     if status == 'GREEN':
-        return f'India macro health score: {score:.1f}/100 — GREEN. Macro environment supportive for Indian equities. Monitor for deterioration in inflation or fiscal metrics.'
+        return f'India macro health score: {score:.1f}/100 -- GREEN. Macro environment supportive for Indian equities. Monitor for deterioration in inflation or fiscal metrics.'
     elif status == 'AMBER':
-        return f'India macro health score: {score:.1f}/100 — AMBER. Select macro indicators warrant attention. Review portfolio exposure to rate-sensitive and import-heavy sectors.'
+        return f'India macro health score: {score:.1f}/100 -- AMBER. Select macro indicators warrant attention. Review portfolio exposure to rate-sensitive and import-heavy sectors.'
     else:
-        return f'India macro health score: {score:.1f}/100 — RED. Elevated macro stress. Consider reducing exposure to cyclical/import-heavy names and increasing quality bias.'
+        return f'India macro health score: {score:.1f}/100 -- RED. Elevated macro stress. Consider reducing exposure to cyclical/import-heavy names and increasing quality bias.'

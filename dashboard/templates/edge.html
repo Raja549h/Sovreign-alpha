@@ -4,6 +4,7 @@
     <div class="page-header">
         <h1>Observation Edge Scorecard</h1>
         <div class="actions">
+            <span id="edge-last-updated" style="font-size:0.6rem;color:#555;font-family:var(--font-mono);margin-right:1rem;"></span>
             <button class="btn" onclick="refreshEdge()">REFRESH</button>
         </div>
     </div>
@@ -99,6 +100,7 @@ function refreshEdge() {
                 document.getElementById('monitoring').textContent = d.monitoring || '0';
                 document.getElementById('bestCats').textContent = (d.best_categories || []).join(', ') || '—';
                 document.getElementById('worstCats').textContent = (d.worst_categories || []).join(', ') || '—';
+                document.getElementById('edge-last-updated').textContent = 'LAST UPDATED: ' + new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata',hour12:false}) + ' IST';
             }
         })
         .catch(() => {});
@@ -160,6 +162,7 @@ function escapeAttr(t) { return String(t).replace(/&/g,'&amp;').replace(/"/g,'&q
 document.getElementById('statusFilter').addEventListener('change', loadValidations);
 document.getElementById('categoryFilter').addEventListener('change', loadValidations);
 refreshEdge();
+setInterval(refreshEdge, 60000);
 </script>
 
 <style>
