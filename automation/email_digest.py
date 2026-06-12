@@ -431,8 +431,23 @@ def get_currency_flag():
     return None
 
 
+def init_research_tables():
+    """Ensure research.db tables exist and backfill observation memory."""
+    try:
+        from research.storage.research_db import init_db as init_research_db, init_evolution_tables, init_validation_tables, init_extended_tables
+        init_research_db()
+        init_evolution_tables()
+        init_validation_tables()
+        init_extended_tables()
+        from research.backfill_memory import backfill
+        backfill()
+    except Exception:
+        pass
+
+
 def build_email_body():
     """Assemble a rich daily intelligence report with live data."""
+    init_research_tables()
     today = datetime.now().strftime('%Y-%m-%d')
     lines = []
     lines.append("+" + "=" * 58 + "+")
