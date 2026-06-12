@@ -26,6 +26,11 @@ FUND_DB = BILLING_DIR / "fund_data.db"
 def seed_research_db():
     """Create research tables and seed Bajaj Finance data."""
     print("[seed] Initializing research.db...")
+
+    from research.storage.research_db import init_evolution_tables, init_validation_tables
+    init_evolution_tables()
+    init_validation_tables()
+
     conn = sqlite3.connect(str(RESEARCH_DB))
     c = conn.cursor()
 
@@ -193,6 +198,35 @@ def seed_research_db():
             VALUES (?, ?, ?, ?, ?, ?)
         """, (company_id, flag_type, severity, desc, evidence, period))
     print(f"  [ok] {len(flags)} forensic flags inserted")
+
+    # Seed observation_memory from forensic flags
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+    d30 = (datetime.utcnow() + timedelta(days=30)).strftime('%Y-%m-%d')
+    d90 = (datetime.utcnow() + timedelta(days=90)).strftime('%Y-%m-%d')
+    d180 = (datetime.utcnow() + timedelta(days=180)).strftime('%Y-%m-%d')
+    c.execute("SELECT COUNT(*) FROM observation_memory WHERE company_id = ?", (company_id,))
+    if c.fetchone()[0] == 0:
+        obs_list = [
+            ('credit_cost_acceleration', 'margin', 0.85,
+             'Credit cost acceleration: 64% increase FY23->FY25, CREDIT_COST 1.25%->2.05%'),
+            ('margin_compression', 'margin', 0.75,
+             'NIM compressed 70bps FY23-FY25 on rising cost of funds (COF 7.04%->7.99%)'),
+            ('valuation_fragility', 'valuation', 0.85,
+             '29x PE on 17.4% ROE vs prior-cycle 22.5% ROE — premium priced for recovery'),
+        ]
+        expected = 'Monitor for deterioration in trend'
+        for source_type, cat, conf, obs_text in obs_list:
+            c.execute(
+                """INSERT INTO observation_memory
+                   (company_id, observation_date, category, observation_text,
+                    confidence, source, expected_implication, review_date_30,
+                    review_date_90, review_date_180, validation_status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')""",
+                (company_id, today, cat, obs_text, conf, 'filing',
+                 expected, d30, d90, d180)
+            )
+        print("  [ok] 3 observations seeded into observation_memory")
 
     # Research note
     c.execute("""
