@@ -23,7 +23,7 @@ COPY --chown=user . .
 
 RUN mkdir -p billing research/data/filings research/data/transcripts research/data/notes logs
 
-RUN python dashboard/seed_db.py
+RUN echo "seed: $(date +%s)" && python dashboard/seed_db.py
 
 RUN chown -R user:user /home/user
 
