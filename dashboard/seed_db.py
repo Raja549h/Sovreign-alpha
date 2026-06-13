@@ -10,12 +10,14 @@ and initializes fund parameters. Safe to run multiple times.
 """
 
 import os
+import sys
 import sqlite3
 import json
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(BASE_DIR))
 BILLING_DIR = BASE_DIR / "billing"
 BILLING_DIR.mkdir(exist_ok=True)
 
@@ -299,4 +301,6 @@ if __name__ == "__main__":
         print("=" * 60)
     except Exception as e:
         print(f"[seed] ERROR: {e}")
-        print("SEED COMPLETE — Dashboard will show live data")
+        import traceback
+        traceback.print_exc()
+        print("SEED FAILED — Dashboard may show incomplete data")
