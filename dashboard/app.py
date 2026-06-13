@@ -2232,6 +2232,16 @@ def debug_research_db():
         'sys_path_head': __import__('sys').path[:3],
     })
 
+@app.route('/_debug/edge')
+def debug_edge():
+    from research.observation_registry import ObservationRegistry
+    from research.storage.research_db import init_evolution_tables, init_validation_tables
+    init_evolution_tables()
+    init_validation_tables()
+    reg = ObservationRegistry()
+    scorecard = reg.calculate_edge_score()
+    return render_template('edge.html', edge_data=scorecard or {})
+
 @app.route('/edge')
 @login_required
 def edge():
