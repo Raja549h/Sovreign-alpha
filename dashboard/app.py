@@ -2213,11 +2213,21 @@ def debug_research_db():
         cnt = c.execute(f"SELECT COUNT(*) FROM \"{t[0]}\"").fetchone()[0]
         tinfo[t[0]] = cnt
     conn.close()
+    try:
+        from research.observation_registry import ObservationRegistry
+        from research.storage.research_db import init_evolution_tables, init_validation_tables
+        init_evolution_tables()
+        init_validation_tables()
+        reg = ObservationRegistry()
+        edge = reg.calculate_edge_score()
+    except Exception as e:
+        edge = f"ERROR: {e}"
     return jsonify({
         'exists': True,
         'path': str(rd),
         'size_bytes': rd.stat().st_size,
         'tables': tinfo,
+        'edge_scorecard': edge,
         'cwd': str(Path.cwd()),
         'sys_path_head': __import__('sys').path[:3],
     })
