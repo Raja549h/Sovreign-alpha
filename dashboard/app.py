@@ -2198,7 +2198,7 @@ def api_intelligence():
 # ============================================================
 
 @app.route('/_debug/db')
-def debug_db():
+def debug_research_db():
     import sqlite3
     from pathlib import Path
     billing = Path(__file__).parent.parent / 'billing'
