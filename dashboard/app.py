@@ -2197,6 +2197,31 @@ def api_intelligence():
 # RESEARCH ENGINE ROUTES
 # ============================================================
 
+@app.route('/_debug/db')
+def debug_db():
+    import sqlite3
+    from pathlib import Path
+    billing = Path(__file__).parent.parent / 'billing'
+    rd = billing / 'research.db'
+    if not rd.exists():
+        return jsonify({'exists': False, 'path': str(rd), 'error': 'research.db not found'})
+    conn = sqlite3.connect(str(rd))
+    c = conn.cursor()
+    tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    tinfo = {}
+    for t in tables:
+        cnt = c.execute(f"SELECT COUNT(*) FROM \"{t[0]}\"").fetchone()[0]
+        tinfo[t[0]] = cnt
+    conn.close()
+    return jsonify({
+        'exists': True,
+        'path': str(rd),
+        'size_bytes': rd.stat().st_size,
+        'tables': tinfo,
+        'cwd': str(Path.cwd()),
+        'sys_path_head': __import__('sys').path[:3],
+    })
+
 @app.route('/edge')
 @login_required
 def edge():
