@@ -53,7 +53,7 @@ jobs:
               print(f"::error::HF token validation failed: {e}")
               sys.exit(1)
 
-          repo_id = "svrn-alpha/sovereignalpha"
+          repo_id = "svrn-alpha/soverignalpha"
 
           print(f"Ensuring HF Space exists: {repo_id}...")
           try:
