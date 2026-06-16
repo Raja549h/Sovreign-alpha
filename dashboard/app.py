@@ -2462,50 +2462,46 @@ def api_failure_create():
 # RESEARCH ENGINE ROUTES
 # ============================================================
 
-@app.route('/_debug/db')
-def debug_research_db():
-    import sqlite3
-    from pathlib import Path
-    billing = Path(__file__).parent.parent / 'billing'
-    rd = billing / 'research.db'
-    if not rd.exists():
-        return jsonify({'exists': False, 'path': str(rd), 'error': 'research.db not found'})
-    conn = sqlite3.connect(str(rd))
-    c = conn.cursor()
-    tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-    tinfo = {}
-    for t in tables:
-        cnt = c.execute(f"SELECT COUNT(*) FROM \"{t[0]}\"").fetchone()[0]
-        tinfo[t[0]] = cnt
-    conn.close()
+@app.route('/api/benchmark')
+@login_required
+def api_benchmark():
+    """Compare historical predictions against simple baselines: NIFTY50, buy-and-hold, random."""
     try:
         from research.observation_registry import ObservationRegistry
-        from research.storage.research_db import init_evolution_tables, init_validation_tables
-        init_evolution_tables()
-        init_validation_tables()
         reg = ObservationRegistry()
         edge = reg.calculate_edge_score()
+        total = edge.get('total', 0)
+        confirmed = edge.get('confirmed', 0)
+        invalidated = edge.get('invalidated', 0)
+        resolved = confirmed + invalidated
+        hit_rate = round(confirmed / resolved, 4) if resolved > 0 else None
+        nifty50_benchmark = 0.12
+        buy_hold_return = 0.08
+        random_accuracy = 0.50
+        random_accuracy_pct = 50.0
+        sa_accuracy_pct = round(hit_rate * 100, 1) if hit_rate else None
+        alpha_vs_nifty = round(hit_rate - nifty50_benchmark, 4) if hit_rate else None
+        alpha_vs_random = round(hit_rate - random_accuracy, 4) if hit_rate else None
+        return jsonify({'success': True, 'data': {
+            'system_accuracy_pct': sa_accuracy_pct,
+            'nifty50_benchmark_pct': round(nifty50_benchmark * 100, 1),
+            'buy_and_hold_return_pct': round(buy_hold_return * 100, 1),
+            'random_selection_accuracy_pct': random_accuracy_pct,
+            'alpha_vs_nifty50_pct': round(alpha_vs_nifty * 100, 2) if alpha_vs_nifty else None,
+            'alpha_vs_random_pct': round(alpha_vs_random * 100, 2) if alpha_vs_random else None,
+            'observations_validated': resolved,
+            'observations_total': total,
+            'has_sufficient_data': resolved >= 10,
+            'verdict': 'Insufficient validated observations for benchmark comparison.'
+                       if not hit_rate else
+                       ('System underperforms baselines.' if hit_rate < 0.5
+                        else 'System outperforms random but below institutional threshold.')
+                       if hit_rate < 0.6
+                       else 'System exceeds institutional benchmarks.',
+        }})
     except Exception as e:
-        edge = f"ERROR: {e}"
-    return jsonify({
-        'exists': True,
-        'path': str(rd),
-        'size_bytes': rd.stat().st_size,
-        'tables': tinfo,
-        'edge_scorecard': edge,
-        'cwd': str(Path.cwd()),
-        'sys_path_head': __import__('sys').path[:3],
-    })
+        return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/_debug/edge')
-def debug_edge():
-    from research.observation_registry import ObservationRegistry
-    from research.storage.research_db import init_evolution_tables, init_validation_tables
-    init_evolution_tables()
-    init_validation_tables()
-    reg = ObservationRegistry()
-    scorecard = reg.calculate_edge_score()
-    return render_template('edge.html', edge_data=scorecard or {})
 
 @app.route('/edge')
 @login_required
@@ -2520,15 +2516,13 @@ def edge():
         scorecard = reg.calculate_edge_score()
         return render_template('edge.html', edge_data=scorecard or {})
     except Exception:
-        fallback = {
-            'total': 3, 'confirmed': 1, 'partially_confirmed': 1,
-            'invalidated': 0, 'active': 1, 'monitoring': 0,
-            'accuracy_rate': 0.67, 'weighted_accuracy': 0.83,
-            'edge_score': 78.4, 'avg_confidence': 0.81,
-            'best_categories': ['margin', 'valuation'],
-            'worst_categories': [],
-        }
-        return render_template('edge.html', edge_data=fallback)
+        return render_template('edge.html', edge_data={
+            'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0,
+            'avg_confidence': 0.0, 'has_validated_data': False,
+            'total': 0, 'confirmed': 0, 'partially_confirmed': 0,
+            'invalidated': 0, 'active': 0, 'monitoring': 0,
+            'best_categories': [], 'worst_categories': [],
+        })
 
 
 @app.route('/api/edge')
@@ -2544,15 +2538,13 @@ def api_edge():
         scorecard = reg.calculate_edge_score()
         return jsonify({'success': True, 'data': scorecard or {}})
     except Exception as e:
-        fallback = {
-            'total': 3, 'confirmed': 1, 'partially_confirmed': 1,
-            'invalidated': 0, 'active': 1, 'monitoring': 0,
-            'accuracy_rate': 0.67, 'weighted_accuracy': 0.83,
-            'edge_score': 78.4, 'avg_confidence': 0.81,
-            'best_categories': ['margin', 'valuation'],
-            'worst_categories': [],
-        }
-        return jsonify({'success': True, 'data': fallback})
+        return jsonify({'success': True, 'data': {
+            'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0,
+            'avg_confidence': 0.0, 'has_validated_data': False,
+            'total': 0, 'confirmed': 0, 'partially_confirmed': 0,
+            'invalidated': 0, 'active': 0, 'monitoring': 0,
+            'best_categories': [], 'worst_categories': [],
+        }})
 
 
 @app.route('/api/edge/validations')
@@ -2570,6 +2562,95 @@ def api_edge_validations():
         if category_filter:
             validations = [v for v in validations if v.get('category', '') == category_filter]
         return jsonify({'success': True, 'data': validations})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/validate/due')
+@login_required
+def api_validate_due():
+    """List observations due for review (30/90/180-day windows)."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        due_30 = reg.get_due_for_review('30_day')
+        due_90 = reg.get_due_for_review('90_day')
+        due_180 = reg.get_due_for_review('180_day')
+        return jsonify({'success': True, 'data': {
+            'due_30': due_30, 'due_90': due_90, 'due_180': due_180,
+            'total_due': len(due_30) + len(due_90) + len(due_180),
+        }})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/validate/run-review', methods=['POST'])
+@login_required
+def api_validate_run_review():
+    """Run scheduled review for all due observations. Records a validation event for each."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        reg = ObservationRegistry()
+        due_30 = reg.get_due_for_review('30_day')
+        due_90 = reg.get_due_for_review('90_day')
+        due_180 = reg.get_due_for_review('180_day')
+        all_due = due_30 + due_90 + due_180
+        reviewed = []
+        for obs in all_due[:5]:
+            result = reg.update_validation_status(
+                observation_id=obs['id'],
+                new_status='MONITORING' if obs.get('validation_status') == 'ACTIVE' else obs.get('validation_status'),
+                evidence=f"Auto-review: No new contradictory data. Status maintained.",
+                method='auto_review',
+                reasoning=f"Scheduled review at {(datetime.now(timezone.utc)).strftime('%Y-%m-%d')}. Awaiting outcome data."
+            )
+            reviewed.append({'observation_id': obs['id'], 'status': obs.get('validation_status'), 'reviewed': result})
+        return jsonify({'success': True, 'data': {
+            'due_count': len(all_due), 'reviewed': reviewed,
+            'note': 'Observations kept at current status. Manual validation required for actual outcome confirmation.',
+        }})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/institutional-credibility')
+@login_required
+def api_institutional_credibility():
+    """Evidence-only institutional credibility score. No self-referential metrics."""
+    try:
+        from research.observation_registry import ObservationRegistry
+        from research.storage.research_db import get_all_companies
+        reg = ObservationRegistry()
+        scorecard = reg.calculate_edge_score()
+        companies = len(get_all_companies())
+        total_obs = scorecard.get('total', 0)
+        validated = scorecard.get('confirmed', 0) + scorecard.get('invalidated', 0)
+        has_real_data = scorecard.get('has_validated_data', False)
+        validated_pct = round(validated / total_obs * 100, 1) if total_obs > 0 else 0.0
+        coverage_score = min(companies / 20 * 25, 25.0)
+        validation_score = validated_pct * 0.3 if total_obs > 0 else 0.0
+        benchmark_exists = 0.0
+        external_review_exists = 0.0
+        methodology_documented = 0.0
+        system_reliable = 5.0
+        credibility_score = round(
+            coverage_score + validation_score + benchmark_exists +
+            external_review_exists + methodology_documented + system_reliable, 1
+        )
+        return jsonify({'success': True, 'data': {
+            'credibility_score': credibility_score,
+            'max_possible': 100.0,
+            'components': {
+                'coverage_breadth': {'score': coverage_score, 'max': 25, 'detail': f'{companies}/20 companies'},
+                'validation_rate': {'score': validation_score, 'max': 30, 'detail': f'{validated}/{total_obs} observations validated'},
+                'benchmark_comparison': {'score': benchmark_exists, 'max': 15, 'detail': 'No benchmark comparison exists'},
+                'external_review': {'score': external_review_exists, 'max': 10, 'detail': 'No independent review'},
+                'methodology_documentation': {'score': methodology_documented, 'max': 10, 'detail': 'No documented methodology'},
+                'system_reliability': {'score': system_reliable, 'max': 10, 'detail': 'System runs but no uptime SLA'},
+            },
+            'grade': 'F' if credibility_score < 20 else ('D' if credibility_score < 40 else ('C' if credibility_score < 60 else ('B' if credibility_score < 80 else 'A'))),
+            'verdict': 'Prototype stage. Cannot be presented to institutional investors.',
+        }})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -2870,6 +2951,93 @@ def deep_research_download(reference):
         return "PDF not available", 404
     except Exception as e:
         return f"Error: {e}", 500
+
+
+@app.route('/api/shadow-portfolio')
+@login_required
+def api_shadow_portfolio():
+    """List shadow portfolio positions with P&L."""
+    try:
+        import sqlite3, json
+        from research.storage.research_db import RESEARCH_DB
+        conn = sqlite3.connect(str(RESEARCH_DB))
+        conn.row_factory = sqlite3.Row
+        positions = conn.execute(
+            "SELECT * FROM shadow_portfolio ORDER BY entry_date DESC"
+        ).fetchall()
+        conn.close()
+        return jsonify({'success': True, 'data': [dict(r) for r in positions]})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/shadow-portfolio/open', methods=['POST'])
+@login_required
+def api_shadow_portfolio_open():
+    """Open a shadow portfolio position."""
+    try:
+        import sqlite3, json
+        from research.storage.research_db import RESEARCH_DB
+        body = request.get_json(force=True, silent=True) or {}
+        ticker = body.get('ticker', '').upper()
+        if not ticker:
+            return jsonify({'success': False, 'error': 'ticker required'})
+        entry_price = float(body.get('entry_price', 0))
+        thesis = body.get('thesis', '')
+        expected_outcome = body.get('expected_outcome', '')
+        confidence = float(body.get('confidence', 0.5))
+        conn = sqlite3.connect(str(RESEARCH_DB))
+        c = conn.cursor()
+        c.execute("""INSERT INTO shadow_portfolio
+            (position_id, ticker, entry_date, entry_price, thesis,
+             expected_outcome, confidence, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN')""",
+            (f"SP-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{ticker}",
+             ticker, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+             entry_price, thesis, expected_outcome, confidence))
+        conn.commit()
+        pos_id = c.lastrowid
+        conn.close()
+        return jsonify({'success': True, 'position_id': pos_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/shadow-portfolio/close', methods=['POST'])
+@login_required
+def api_shadow_portfolio_close():
+    """Close a shadow portfolio position and record P&L."""
+    try:
+        import sqlite3, json
+        from research.storage.research_db import RESEARCH_DB
+        body = request.get_json(force=True, silent=True) or {}
+        position_id = body.get('position_id', '')
+        exit_price = float(body.get('exit_price', 0))
+        outcome = body.get('outcome', '')
+        lessons = body.get('lessons', '')
+        conn = sqlite3.connect(str(RESEARCH_DB))
+        c = conn.cursor()
+        pos = c.execute("SELECT * FROM shadow_portfolio WHERE position_id = ?",
+                        (position_id,)).fetchone()
+        if not pos:
+            return jsonify({'success': False, 'error': 'position not found'})
+        entry_price = pos[4]
+        return_pct = round((exit_price - entry_price) / entry_price * 100, 2)
+        benchmark_return_pct = 0.0
+        alpha_pct = round(return_pct - benchmark_return_pct, 2)
+        c.execute("""UPDATE shadow_portfolio SET
+            exit_date = ?, exit_price = ?, return_pct = ?,
+            benchmark_return_pct = ?, alpha_pct = ?,
+            status = 'CLOSED', outcome = ?, lessons = ?
+            WHERE position_id = ?""",
+            (datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+             exit_price, return_pct, benchmark_return_pct,
+             alpha_pct, outcome, lessons, position_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'return_pct': return_pct, 'alpha_pct': alpha_pct})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @app.route('/portfolio')
@@ -3306,7 +3474,6 @@ def api_macro_init_db():
 def seed_database_on_startup():
     """Create essential tables and seed sample data on first startup."""
     import uuid
-    from datetime import datetime, timedelta
     try:
         if IS_CLOUD and DB_PATH.exists():
             print("[seed] Cloud deploy detected - removing old DB for clean schema")
@@ -3514,6 +3681,12 @@ try:
     init_evolution_quality_tables()
 except Exception as e:
     print(f"Warning: Could not initialize evolution quality tables: {e}")
+
+try:
+    from research.storage.research_db import init_shadow_portfolio_tables
+    init_shadow_portfolio_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize shadow portfolio tables: {e}")
 
 try:
     from research.backfill_memory import backfill

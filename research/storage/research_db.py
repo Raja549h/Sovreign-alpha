@@ -695,6 +695,54 @@ CREATE TABLE IF NOT EXISTS edge_scorecard (
 );
 """
 
+SHADOW_PORTFOLIO_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS shadow_portfolio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    position_id TEXT UNIQUE,
+    ticker TEXT NOT NULL,
+    company_name TEXT,
+    sector TEXT,
+    entry_date TEXT NOT NULL,
+    entry_price REAL,
+    position_size INTEGER DEFAULT 1,
+    thesis TEXT,
+    expected_outcome TEXT,
+    confidence REAL,
+    benchmark_ticker TEXT DEFAULT 'NIFTY50',
+    exit_date TEXT,
+    exit_price REAL,
+    return_pct REAL,
+    benchmark_return_pct REAL,
+    alpha_pct REAL,
+    status TEXT DEFAULT 'OPEN',
+    outcome TEXT,
+    lessons TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shadow_trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    portfolio_id INTEGER REFERENCES shadow_portfolio(id),
+    trade_date TEXT NOT NULL,
+    trade_type TEXT CHECK(trade_type IN ('BUY','SELL')),
+    ticker TEXT NOT NULL,
+    price REAL,
+    quantity INTEGER,
+    reason TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS credibility_evidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    evidence_type TEXT NOT NULL,
+    description TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    source_url TEXT,
+    completed_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
 VALIDATION_MIGRATIONS = [
     "ALTER TABLE observation_memory ADD COLUMN validation_status TEXT DEFAULT 'ACTIVE'",
     "ALTER TABLE observation_memory ADD COLUMN expected_implication TEXT",
@@ -716,4 +764,11 @@ def init_validation_tables():
                 conn.execute(migration)
             except sqlite3.OperationalError:
                 pass
+        conn.commit()
+
+
+def init_shadow_portfolio_tables():
+    """Initialize shadow portfolio and credibility evidence tables."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(SHADOW_PORTFOLIO_TABLES_SQL)
         conn.commit()

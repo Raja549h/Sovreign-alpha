@@ -10,16 +10,27 @@
     </div>
 
     {% set ed = edge_data if edge_data and edge_data.get('edge_score') is not none else {
-        'edge_score': 78.0, 'accuracy_rate': 0.97, 'weighted_accuracy': 0.90,
-        'avg_confidence': 0.82, 'total': 3, 'confirmed': 0, 'partially_confirmed': 0,
-        'invalidated': 0, 'active': 3, 'monitoring': 0,
-        'best_categories': ['margin', 'valuation'], 'worst_categories': []
+        'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0,
+        'avg_confidence': 0.0, 'has_validated_data': False,
+        'total': 0, 'confirmed': 0, 'partially_confirmed': 0,
+        'invalidated': 0, 'active': 0, 'monitoring': 0,
+        'best_categories': [], 'worst_categories': []
     } %}
 
+    {% if not ed.get('has_validated_data') %}
+    <div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);padding:1rem;margin-bottom:1rem;text-align:center;">
+        <span style="color:#ff4444;font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;">⚠ INSUFFICIENT DATA</span>
+        <p style="color:#aa6666;font-size:0.7rem;margin-top:0.4rem;font-family:var(--font-mono);">
+        Zero observations have been validated against outcomes. The scores below are <strong>not based on any outcome data</strong>.
+        Observations must be reviewed and validated before any accuracy claims can be made.
+        </p>
+    </div>
+    {% endif %}
+
     <div class="stats-row" id="edge-stats">
-        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">{{ "%.1f"|format(ed.edge_score) }}</div></div>
-        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">{{ "%.1f"|format(ed.accuracy_rate * 100) }}%</div></div>
-        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">{{ "%.1f"|format(ed.weighted_accuracy * 100) }}%</div></div>
+        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.edge_score) }}{% else %}<span style="color:#ff4444;font-size:0.6rem;">NO DATA</span>{% endif %}</div></div>
+        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.accuracy_rate * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
+        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.weighted_accuracy * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
         <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">{{ "%.1f"|format(ed.avg_confidence * 100) }}%</div></div>
         <div class="stat-box warning"><label>Total Observations</label><div class="value" id="totalObs">{{ ed.total }}</div></div>
     </div>
@@ -95,9 +106,10 @@ function refreshEdge() {
         .then(data => {
             if (data.success) {
                 const d = data.data;
-                document.getElementById('edgeScore').textContent = d.edge_score != null ? d.edge_score.toFixed(1) : '—';
-                document.getElementById('accuracyRate').textContent = d.accuracy_rate != null ? (d.accuracy_rate * 100).toFixed(1) + '%' : '—';
-                document.getElementById('weightedAccuracy').textContent = d.weighted_accuracy != null ? (d.weighted_accuracy * 100).toFixed(1) + '%' : '—';
+                const hasData = d.has_validated_data === true;
+                document.getElementById('edgeScore').innerHTML = hasData && d.edge_score != null ? d.edge_score.toFixed(1) : '<span style="color:#ff4444;font-size:0.6rem;">NO DATA</span>';
+                document.getElementById('accuracyRate').textContent = hasData && d.accuracy_rate != null ? (d.accuracy_rate * 100).toFixed(1) + '%' : '—';
+                document.getElementById('weightedAccuracy').textContent = hasData && d.weighted_accuracy != null ? (d.weighted_accuracy * 100).toFixed(1) + '%' : '—';
                 document.getElementById('avgConfidence').textContent = d.avg_confidence != null ? (d.avg_confidence * 100).toFixed(1) + '%' : '—';
                 document.getElementById('totalObs').textContent = d.total || '—';
                 document.getElementById('confirmed').textContent = d.confirmed || '0';

@@ -251,12 +251,14 @@ class ObservationRegistry:
             accuracy_rate = round(confirmed / resolved, 4)
             weighted_accuracy = round(max(weighted / resolved, 0.0), 4)
         else:
-            accuracy_rate = round(min(max(confidence_factor, 0.97), 1.0), 4)
-            weighted_accuracy = round(min(max(confidence_factor, 0.90), 1.0), 4)
+            accuracy_rate = 0.0
+            weighted_accuracy = 0.0
 
-        coverage_factor = min(total / 10, 1.0)
+        has_validated_data = resolved > 0
 
-        edge_score = round(
+        coverage_factor = min(total / 10, 1.0) if has_validated_data else 0.0
+
+        edge_score = None if not has_validated_data else round(
             (accuracy_rate * 30) +
             (weighted_accuracy * 25) +
             (confidence_factor * 25) +
@@ -312,16 +314,17 @@ class ObservationRegistry:
             conn.commit()
 
         return {
+            'edge_score': edge_score,
+            'accuracy_rate': accuracy_rate,
+            'weighted_accuracy': weighted_accuracy,
+            'avg_confidence': round(avg_conf, 4) if avg_conf else 0,
+            'has_validated_data': has_validated_data,
             'total': total,
             'confirmed': confirmed,
             'partially_confirmed': partial,
             'invalidated': invalidated,
             'active': active,
             'monitoring': monitoring,
-            'accuracy_rate': accuracy_rate,
-            'weighted_accuracy': weighted_accuracy,
-            'edge_score': edge_score,
-            'avg_confidence': round(avg_conf, 4),
             'best_categories': top_cats,
             'worst_categories': worst_cats,
         }
