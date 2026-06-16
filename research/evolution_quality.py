@@ -485,3 +485,347 @@ class ResearchQualityAggregator:
             'calibration': calibration,
             'edge_rankings': rankings,
         }
+
+
+class EvidenceTimeline:
+    """Module 7: Permanent chronological timeline for every observation."""
+
+    def record_event(self, observation_id: int, company_id: int, event_type: str,
+                     event_label: str = "", event_detail: str = "",
+                     old_status: str = "", new_status: str = "",
+                     source: str = "system") -> int:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO evidence_timeline
+                (observation_id, company_id, event_type, event_label, event_detail,
+                 old_status, new_status, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (observation_id, company_id, event_type, event_label, event_detail,
+                  old_status, new_status, source))
+            conn.commit()
+            return c.lastrowid
+
+    def get_timeline(self, company_id: int = None, observation_id: int = None,
+                     event_type: str = None, limit: int = 100) -> List[Dict]:
+        with _get_db() as conn:
+            c = conn.cursor()
+            parts = ["SELECT et.*, om.observation_text, c.ticker FROM evidence_timeline et"]
+            parts.append("LEFT JOIN observation_memory om ON om.id = et.observation_id")
+            parts.append("LEFT JOIN companies c ON c.id = et.company_id")
+            where = []
+            params = []
+            if company_id:
+                where.append("et.company_id = ?")
+                params.append(company_id)
+            if observation_id:
+                where.append("et.observation_id = ?")
+                params.append(observation_id)
+            if event_type:
+                where.append("et.event_type = ?")
+                params.append(event_type)
+            if where:
+                parts.append("WHERE " + " AND ".join(where))
+            parts.append("ORDER BY et.created_at DESC LIMIT ?")
+            params.append(limit)
+            c.execute(" ".join(parts), params)
+            return [dict(r) for r in c.fetchall()]
+
+
+class FrameworkPerformance:
+    """Module 4: Ranked framework performance by evidence."""
+
+    def update_performance(self, framework_name: str, category: str,
+                           confirmed: bool, confidence: float = 0.5) -> None:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT id, observation_count, confirmed_count, invalidated_count
+                         FROM framework_performance
+                         WHERE framework_name = ? AND category = ?""",
+                      (framework_name, category))
+            row = c.fetchone()
+            if row:
+                fid = row['id']
+                obs_count = row['observation_count'] + 1
+                conf_count = row['confirmed_count'] + (1 if confirmed else 0)
+                inv_count = row['invalidated_count'] + (0 if confirmed else 1)
+            else:
+                fid = None
+                obs_count = 1
+                conf_count = 1 if confirmed else 0
+                inv_count = 0 if confirmed else 1
+            conf_rate = round(conf_count / (conf_count + inv_count), 4) if (conf_count + inv_count) > 0 else 0
+            if fid:
+                c.execute("""UPDATE framework_performance SET observation_count = ?,
+                             confirmed_count = ?, invalidated_count = ?,
+                             confirmation_rate = ?, last_observation_date = ?
+                             WHERE id = ?""",
+                          (obs_count, conf_count, inv_count, conf_rate,
+                           datetime.now(timezone.utc).strftime('%Y-%m-%d'), fid))
+            else:
+                c.execute("""INSERT INTO framework_performance
+                             (framework_name, category, observation_count, confirmed_count,
+                              invalidated_count, confirmation_rate, avg_confidence,
+                              last_observation_date)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                          (framework_name, category, obs_count, conf_count, inv_count,
+                           conf_rate, confidence, datetime.now(timezone.utc).strftime('%Y-%m-%d')))
+            conn.commit()
+            self._recalc_alpha(framework_name, category)
+
+    def _recalc_alpha(self, framework: str, category: str) -> None:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT confirmation_rate FROM framework_performance
+                         WHERE framework_name = ? AND category = ?""", (framework, category))
+            row = c.fetchone()
+            if row and row['confirmation_rate']:
+                alpha = round((row['confirmation_rate'] - 0.5) * 100, 2)
+                c.execute("""UPDATE framework_performance SET total_alpha_pct = ?
+                             WHERE framework_name = ? AND category = ?""",
+                          (alpha, framework, category))
+                conn.commit()
+
+    def get_performance_rankings(self, min_observations: int = 2) -> Dict:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT * FROM framework_performance
+                         WHERE observation_count >= ?
+                         ORDER BY confirmation_rate DESC""", (min_observations,))
+            rows = [dict(r) for r in c.fetchall()]
+            c.execute("""SELECT category, COUNT(*) as cnt,
+                                AVG(confirmation_rate) as avg_conf_rate,
+                                SUM(total_alpha_pct) as total_alpha
+                         FROM framework_performance
+                         WHERE observation_count >= ?
+                         GROUP BY category ORDER BY avg_conf_rate DESC""", (min_observations,))
+            by_category = [dict(r) for r in c.fetchall()]
+            return {
+                'total_frameworks': len(rows),
+                'rankings': rows,
+                'by_category': by_category,
+            }
+
+
+class ReproducibilityTracker:
+    """Module 6: Store model version, agent version, data sources per observation."""
+
+    def log_reproducibility(self, observation_id: int, company_id: int,
+                            filing_sources: str = "", earnings_call_sources: str = "",
+                            financial_inputs: str = "", calculations_used: str = "",
+                            model_version: str = "1.0", agent_version: str = "analyst-1.0") -> int:
+        with _get_db() as conn:
+            c = conn.cursor()
+            import hashlib
+            raw = f"{observation_id}|{filing_sources}|{financial_inputs}|{model_version}|{agent_version}"
+            data_signature = hashlib.sha256(raw.encode()).hexdigest()[:16]
+            c.execute("""UPDATE observation_memory SET model_version = ?, agent_version = ?,
+                         data_sources = ?, filings_used = ?, calculations_used = ?
+                         WHERE id = ?""",
+                      (model_version, agent_version,
+                       json.dumps(filing_sources.split(",") if filing_sources else []),
+                       json.dumps(earnings_call_sources.split(",") if earnings_call_sources else []),
+                       calculations_used, observation_id))
+            c.execute("""INSERT INTO reproducibility_log
+                         (observation_id, company_id, filing_sources, earnings_call_sources,
+                          financial_inputs, calculations_used, model_version, agent_version,
+                          data_signature)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (observation_id, company_id, filing_sources, earnings_call_sources,
+                       financial_inputs, calculations_used, model_version, agent_version,
+                       data_signature))
+            conn.commit()
+            return c.lastrowid
+
+    def get_reproducibility(self, observation_id: int) -> Optional[Dict]:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT * FROM reproducibility_log
+                         WHERE observation_id = ? ORDER BY logged_at DESC LIMIT 1""",
+                      (observation_id,))
+            row = c.fetchone()
+            return dict(row) if row else None
+
+
+class MemoEvolutionEngine:
+    """Module 5: Research evolution memos that learn from past failures."""
+
+    def generate_memo(self, company_id: int, memo_reference: str,
+                      memo_type: str = "evolution",
+                      prior_memo_reference: str = "") -> Dict:
+        with _get_db() as conn:
+            c = conn.cursor()
+            failures = c.execute("""SELECT failure_category, root_cause, missed_signals,
+                                           incorrect_assumption, lessons_learned
+                                    FROM failure_analysis WHERE company_id = ?
+                                    ORDER BY analyzed_at DESC LIMIT 5""",
+                                 (company_id,)).fetchall()
+            lessons_applied = 0
+            lessons_ignored = 0
+            new_insights = 0
+            applied_lessons_list = []
+            ignored_lessons_list = []
+            for f in failures:
+                f = dict(f)
+                if f.get('lessons_learned'):
+                    lessons_applied += 1
+                    applied_lessons_list.append(f['lessons_learned'])
+                else:
+                    lessons_ignored += 1
+                    ignored_lessons_list.append(f.get('failure_category', 'unknown'))
+            quality_delta = round((lessons_applied * 0.2) - (lessons_ignored * 0.1), 4)
+            c.execute("""INSERT INTO memo_evolution
+                         (company_id, memo_reference, memo_type, prior_memo_reference,
+                          quality_delta, new_insights_count, lessons_applied_count,
+                          lessons_ignored_count, overall_quality_score)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                      (company_id, memo_reference, memo_type, prior_memo_reference,
+                       quality_delta, new_insights, lessons_applied, lessons_ignored,
+                       round(0.5 + quality_delta, 4)))
+            conn.commit()
+            return {
+                'memo_reference': memo_reference,
+                'company_id': company_id,
+                'quality_delta': quality_delta,
+                'lessons_applied': lessons_applied,
+                'lessons_ignored': lessons_ignored,
+                'applied_lessons': applied_lessons_list,
+                'ignored_lessons': ignored_lessons_list,
+            }
+
+    def get_memos(self, company_id: int = None, limit: int = 20) -> List[Dict]:
+        with _get_db() as conn:
+            c = conn.cursor()
+            if company_id:
+                c.execute("""SELECT me.*, c.ticker FROM memo_evolution me
+                             JOIN companies c ON c.id = me.company_id
+                             WHERE me.company_id = ? ORDER BY me.generated_at DESC LIMIT ?""",
+                          (company_id, limit))
+            else:
+                c.execute("""SELECT me.*, c.ticker FROM memo_evolution me
+                             JOIN companies c ON c.id = me.company_id
+                             ORDER BY me.generated_at DESC LIMIT ?""", (limit,))
+            return [dict(r) for r in c.fetchall()]
+
+
+class AntiVanityFilter:
+    """Module 9: Reject unsupported metrics with INSUFFICIENT DATA tag."""
+
+    def audit_metrics(self, min_validations: int = 10) -> Dict:
+        with _get_db() as conn:
+            c = conn.cursor()
+            results = {}
+            c.execute("SELECT COUNT(*) as total FROM observation_memory")
+            total_obs = c.fetchone()['total']
+            c.execute("SELECT COUNT(*) as cnt FROM observation_validations")
+            total_validations = c.fetchone()['cnt']
+            has_sufficient_validations = total_validations >= min_validations
+            results['total_observations'] = total_obs
+            results['total_validations'] = total_validations
+            results['min_validations_required'] = min_validations
+            results['has_sufficient_validations'] = has_sufficient_validations
+            c.execute("""SELECT metric_name, COUNT(*) as cnt FROM financial_series
+                         GROUP BY metric_name ORDER BY cnt DESC LIMIT 20""")
+            metrics = [dict(r) for r in c.fetchall()]
+            results['metrics'] = []
+            for m in metrics:
+                results['metrics'].append({
+                    'metric': m['metric_name'],
+                    'count': m['cnt'],
+                    'status': 'SUFFICIENT' if m['cnt'] >= 3 else 'INSUFFICIENT_DATA',
+                })
+            c.execute("SELECT COUNT(*) as cnt FROM observation_memory WHERE confidence > 0.8")
+            high_conf = c.fetchone()['cnt']
+            if not has_sufficient_validations and total_obs > 0:
+                results['verdict'] = 'INSUFFICIENT_DATA: Less than {} validated observations. All accuracy/edge metrics are unsubstantiated.'.format(min_validations)
+                results['high_confidence_count'] = high_conf
+                results['high_conf_flag'] = ('VANITY_FLAG' if high_conf > 0 and not has_sufficient_validations
+                                              else 'OK')
+            else:
+                results['verdict'] = 'SUFFICIENT_DATA: Validation threshold met. Metrics are credible.'
+                results['high_confidence_count'] = high_conf
+                results['high_conf_flag'] = 'OK'
+            return results
+
+    def check_metric(self, metric_name: str, min_data_points: int = 3) -> Dict:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE metric_name = ?",
+                      (metric_name,))
+            cnt = c.fetchone()['cnt']
+            return {
+                'metric': metric_name,
+                'data_points': cnt,
+                'status': 'SUFFICIENT' if cnt >= min_data_points else 'INSUFFICIENT_DATA',
+                'verdict': '' if cnt >= min_data_points else f'Only {cnt} data points (need {min_data_points}). Do not cite this metric.',
+            }
+
+
+class WeeklyICReport:
+    """Module 10: Weekly Investment Committee report generator."""
+
+    def generate_report(self) -> Dict:
+        from research.storage.research_db import get_all_companies
+        report = {
+            'generated_at': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+            'period': 'Weekly IC Report',
+            'sections': {},
+        }
+        companies = get_all_companies()
+        report['sections']['coverage'] = {
+            'companies_tracked': len(companies),
+            'tickers': [c.get('ticker', '?') for c in companies[:50]],
+        }
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) as cnt FROM failure_analysis")
+            report['sections']['failures'] = {'total_failures': c.fetchone()['cnt']}
+            c.execute("SELECT COUNT(*) as cnt FROM observation_memory")
+            report['sections']['observations'] = {'total_observations': c.fetchone()['cnt']}
+            c.execute("""SELECT failure_category, COUNT(*) as cnt
+                         FROM failure_analysis GROUP BY failure_category ORDER BY cnt DESC""")
+            report['sections']['failure_patterns'] = [dict(r) for r in c.fetchall()]
+            c.execute("""SELECT COUNT(*) as cnt FROM observation_validations
+                         WHERE validated_at >= date('now', '-7 days')""")
+            report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()['cnt']}
+            c.execute("""SELECT COUNT(*) as cnt FROM shadow_trades
+                         WHERE closed_at >= date('now', '-7 days')""")
+            report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()['cnt']}
+            reg = ObservationRegistry()
+            score = reg.calculate_edge_score()
+            report['sections']['edge_scorecard'] = {
+                'edge_score': score.get('edge_score'),
+                'accuracy_rate': score.get('accuracy_rate'),
+                'confirmed': score.get('confirmed', 0),
+                'invalidated': score.get('invalidated', 0),
+                'total': score.get('total', 0),
+            }
+            c.execute("""SELECT SUM(CASE WHEN actual_outcome > predicted_confidence THEN 1 ELSE 0 END) as overconfident,
+                                COUNT(*) as total_calibrated
+                         FROM confidence_calibration""")
+            cal = dict(c.fetchone())
+            cal['overconfidence_rate'] = round(cal.get('overconfident', 0) / cal.get('total_calibrated', 1), 4)
+            report['sections']['calibration'] = cal
+            try:
+                from research.observation_registry import ObservationRegistry
+                observations_module = __import__('research.observation_registry', fromlist=[''])
+            except ImportError:
+                observations_module = None
+            report['recommendations'] = self._generate_recommendations(report['sections'])
+        return report
+
+    def _generate_recommendations(self, sections: Dict) -> List[str]:
+        recs = []
+        failures = sections.get('failures', {}).get('total_failures', 0)
+        if failures > 5:
+            recs.append("HIGH FAILURE COUNT: Review top failure patterns and adjust research methodology.")
+        edge = sections.get('edge_scorecard', {})
+        if edge.get('accuracy_rate', 0) and edge['accuracy_rate'] < 0.5:
+            recs.append("ACCURACY BELOW 50%: System underperforms random. Reconsider research frameworks.")
+        cal = sections.get('calibration', {})
+        if cal.get('overconfidence_rate', 0) > 0.3:
+            recs.append("OVERCONFIDENCE BIAS: System overconfident >30% of the time. Apply calibration penalty.")
+        trades = sections.get('weekly_trades', {}).get('closed_last_7d', 0)
+        if trades == 0:
+            recs.append("NO TRADES THIS WEEK: Portfolio may be inactive. Consider reviewing watchlist.")
+        return recs
