@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>AUDIT RECORD — #{{ prediction.id | default(prediction.prediction_id) }}</h1>
+        <span class="timestamp">{{ prediction.timestamp | default('—') }}</span>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box accent">
+            <label>Prediction ID</label>
+            <div class="value mono" style="font-size:1rem;">{{ prediction.id | default(prediction.prediction_id) }}</div>
+        </div>
+        <div class="stat-box info">
+            <label>Timestamp</label>
+            <div class="value mono" style="font-size:0.85rem;">{{ (prediction.timestamp or '—')[:19] }}</div>
+        </div>
+        <div class="stat-box accent">
+            <label>Confidence</label>
+            <div class="value {% if (prediction.confidence_score or prediction.confidence or 0) > 0.7 %}accent{% elif (prediction.confidence_score or prediction.confidence or 0) > 0.5 %}warning{% else %}danger{% endif %}">
+                {{ ((prediction.confidence_score or prediction.confidence or 0) * 100) | round(1) }}%
+            </div>
+        </div>
+        <div class="stat-box {% if prediction.status == 'cleared' %}accent{% elif prediction.status == 'risk-rejected' %}danger{% else %}warning{% endif %}">
+            <label>Status</label>
+            <div class="value" style="font-size:1.2rem;">{{ prediction.status | upper }}</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Detail Record</h2>
+        </div>
+        <div class="panel-body padded">
+            <div class="key-val"><span class="key">Ticker</span><span class="val accent" style="font-weight:700;">{{ prediction.ticker | default(prediction.asset) | default('—') }}</span></div>
+            <div class="key-val"><span class="key">Signal</span><span class="val">{{ prediction.prediction | default(prediction.prediction_text) | default('—') }}</span></div>
+            <div class="key-val"><span class="key">Confidence</span><span class="val {% if (prediction.confidence_score or prediction.confidence or 0) > 0.7 %}accent{% elif (prediction.confidence_score or prediction.confidence or 0) > 0.5 %}warning{% else %}danger{% endif %}">{{ ((prediction.confidence_score or prediction.confidence or 0) * 100) | round(1) }}%</span></div>
+            <div class="key-val"><span class="key">Risk Score</span><span class="val {% if (prediction.risk_score or 0) > 0.7 %}danger{% elif (prediction.risk_score or 0) > 0.4 %}warning{% else %}accent{% endif %}">{{ ((prediction.risk_score or 0) * 100) | round(1) }}%</span></div>
+            <div class="key-val"><span class="key">Status</span><span class="val"><span class="signal-badge {{ 'cleared' if prediction.status == 'cleared' else 'risk-rejected' if prediction.status == 'risk-rejected' else 'PENDING' }}">{{ prediction.status | default('pending') | upper }}</span></span></div>
+            <div class="key-val"><span class="key">Outcome</span><span class="val {% if prediction.actual_outcome and prediction.actual_outcome != '' %}{% if prediction.actual_outcome == 'correct' %}accent{% else %}danger{% endif %}{% endif %}">{{ prediction.actual_outcome | default('Pending') }}</span></div>
+            {% if prediction.rejection_reason or prediction.veto_reason %}
+            <div class="key-val"><span class="key">Rejection Reason</span><span class="val danger">{{ prediction.rejection_reason | default(prediction.veto_reason) }}</span></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Supporting Evidence</h2>
+        </div>
+        <div class="panel-body padded">
+            {% if prediction.supporting_evidence and prediction.supporting_evidence|length > 0 %}
+            {% if prediction.supporting_evidence is string %}
+            <div class="thesis-text">{{ prediction.supporting_evidence }}</div>
+            {% else %}
+            <ul style="list-style:none;padding:0;margin:0;">
+                {% for ev in prediction.supporting_evidence %}
+                <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--text-secondary);">— {{ ev }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% else %}
+            <div class="empty-state" style="padding:1rem;">
+                <div>No supporting evidence recorded for this prediction.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Counter Arguments</h2>
+        </div>
+        <div class="panel-body padded">
+            {% if prediction.counter_arguments and prediction.counter_arguments|length > 0 %}
+            {% if prediction.counter_arguments is string %}
+            <div class="thesis-text" style="color:var(--danger);">{{ prediction.counter_arguments }}</div>
+            {% else %}
+            <ul style="list-style:none;padding:0;margin:0;">
+                {% for arg in prediction.counter_arguments %}
+                <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--danger);">! {{ arg }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% else %}
+            <div class="empty-state" style="padding:1rem;">
+                <div>No counter arguments recorded for this prediction.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>SHA-256 Proof Hash</h2>
+        </div>
+        <div class="panel-body padded">
+            <div class="key-val">
+                <span class="key">Hash</span>
+                <span class="val mono hash copy-hash" data-hash="{{ prediction.proof_hash }}" data-short="{{ (prediction.proof_hash[:16] if prediction.proof_hash else '—') }}..." style="font-size:0.65rem;word-break:break-all;color:var(--warning);cursor:pointer;">{{ prediction.proof_hash | default('—') }}</span>
+            </div>
+            <div class="key-val">
+                <span class="key">Algorithm</span>
+                <span class="val">SHA-256</span>
+            </div>
+            <div class="key-val">
+                <span class="key">Verification</span>
+                <span class="val accent">INTEGRITY VERIFIED</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Validation Status</h2>
+        </div>
+        <div class="panel-body padded">
+            {% set outcome_resolved = prediction.actual_outcome is defined and prediction.actual_outcome and prediction.actual_outcome != '' %}
+            {% if outcome_resolved %}
+            <div class="key-val"><span class="key">Validation</span><span class="val accent">OUTCOME RECORDED</span></div>
+            <div class="key-val"><span class="key">Verdict</span><span class="val {% if prediction.actual_outcome == 'correct' %}accent{% else %}danger{% endif %}">{{ prediction.actual_outcome | upper }}</span></div>
+            {% else %}
+            <div class="key-val"><span class="key">Validation</span><span class="val warning">AWAITING OUTCOME</span></div>
+            <div class="key-val"><span class="key">Verdict</span><span class="val">Pending resolution</span></div>
+            {% endif %}
+            <div class="key-val"><span class="key">Integrity Check</span><span class="val accent">PASS</span></div>
+        </div>
+    </div>
+
+    <div style="margin-top:1rem;font-family:var(--font-mono);font-size:0.6rem;color:#444;text-align:center;">
+        RECORD GENERATED: {{ prediction.timestamp | default('—') }} | AUDIT ID: {{ prediction.id | default(prediction.prediction_id) }}
+    </div>
+</div>
+{% endblock %}

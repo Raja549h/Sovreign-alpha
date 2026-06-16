@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Audit Trail</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);">Section 9 — Immutable Timeline (Append Only)</span>
+        </div>
+    </div>
+
+    <div style="background:rgba(255,68,68,0.05);border:1px solid rgba(255,68,68,0.2);padding:0.8rem;margin-bottom:1rem;text-align:center;">
+        <span style="color:#ff4444;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">⚠ IMMUTABLE — APPEND ONLY</span>
+        <p style="color:#aa6666;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
+        This audit trail is a permanent, append-only record. No editing, no deletion, no backdating. Every event is preserved for institutional accountability and regulatory compliance.
+        </p>
+    </div>
+
+    {% if error %}
+    <div class="empty-state">
+        <div style="color:var(--danger);margin-bottom:0.5rem;">⚠ ERROR</div>
+        <div style="font-size:0.7rem;font-family:var(--font-mono);color:#888;">{{ error }}</div>
+    </div>
+    {% elif events|length == 0 %}
+    <div class="empty-state">
+        <div style="font-size:0.85rem;color:#555;font-family:var(--font-mono);">No audit events recorded</div>
+        <div style="font-size:0.7rem;color:#444;margin-top:0.5rem;">Events will appear here as observations are created, validated, challenged, and resolved.</div>
+    </div>
+    {% else %}
+
+    <div style="overflow-x:auto;">
+        <table style="width:100%;font-family:var(--font-mono);font-size:0.65rem;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #1e1e1e;">
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Timestamp</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Type</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Label</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Detail</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Status Change</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in events %}
+                <tr style="border-bottom:1px solid #0d0d0d;">
+                    <td style="padding:0.4rem;color:#555;white-space:nowrap;">{{ e.created_at[:19] if e.created_at else '—' }}</td>
+                    <td style="padding:0.4rem;">
+                        {% if e.event_type == 'observation_created' %}
+                        <span style="color:#00ff9f;">{{ e.event_type }}</span>
+                        {% elif e.event_type == 'observation_validated' %}
+                        <span style="color:#3399ff;">{{ e.event_type }}</span>
+                        {% elif e.event_type == 'observation_invalidated' %}
+                        <span style="color:#ff4444;">{{ e.event_type }}</span>
+                        {% elif e.event_type == 'challenge_created' %}
+                        <span style="color:#aa66ff;">{{ e.event_type }}</span>
+                        {% elif e.event_type == 'challenge_resolved' %}
+                        <span style="color:#ffaa00;">{{ e.event_type }}</span>
+                        {% else %}
+                        <span style="color:#888;">{{ e.event_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:0.4rem;color:var(--text-primary);max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ e.event_label or '—' }}</td>
+                    <td style="padding:0.4rem;color:#888;max-width:250px;overflow:hidden;text-overflow:ellipsis;">{{ e.event_detail[:100] if e.event_detail else '—' }}</td>
+                    <td style="padding:0.4rem;text-align:center;">
+                        {% if e.old_status and e.new_status %}
+                        <span style="color:#888;">{{ e.old_status }}</span>
+                        <span style="color:#555;margin:0 0.2rem;">→</span>
+                        <span style="color:#00ff9f;">{{ e.new_status }}</span>
+                        {% else %}
+                        <span style="color:#444;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:0.4rem;color:#555;">{{ e.source or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:1rem;font-size:0.65rem;color:#444;font-family:var(--font-mono);text-align:right;">
+        {{ events|length }} event(s) recorded
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

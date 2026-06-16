@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>System Health Dashboard</h1>
+        <span class="timestamp" id="health-timestamp">Loading...</span>
+    </div>
+
+    <div id="health-content">
+        <div class="stats-row" id="health-skeleton">
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+            <div class="stat-box"><div class="skeleton skeleton-label"></div><div class="skeleton skeleton-value" style="width:40%;margin-top:0.3rem;"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    function fmt(val, suffix) {
+        if (val == null) return '—';
+        return val + (suffix || '');
+    }
+
+    function statusBadge(ok, label) {
+        if (ok) return '<span class="signal-badge" style="background:#001a0d;color:#00ff9f;border-color:#00ff9f;">' + (label || 'PASS') + '</span>';
+        return '<span class="signal-badge" style="background:#1a0000;color:#ff4444;border-color:#ff4444;">' + (label || 'FAIL') + '</span>';
+    }
+
+    function render(data) {
+        var html = '';
+
+        // MODEL STATUS
+        html += '<div class="panel"><div class="panel-header"><h2>MODEL STATUS</h2><span class="timestamp">' + statusBadge(data.model_status === 'OPERATIONAL', data.model_status) + '</span></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Observations</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.observations) + '</span></div>';
+        html += '<div><span style="color:#555;">Validations</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.validations) + '</span></div>';
+        html += '</div></div></div>';
+
+        // API STATUS
+        html += '<div class="panel"><div class="panel-header"><h2>API STATUS</h2><span class="timestamp">' + statusBadge(data.api_status === 'ALL PASS', data.api_status) + '</span></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">System API</span><br>' + statusBadge(true) + '</div>';
+        html += '<div><span style="color:#555;">Database API</span><br>' + statusBadge(data.db_research_healthy && data.db_fund_healthy) + '</div>';
+        html += '<div><span style="color:#555;">Research DB</span><br>' + statusBadge(data.db_research_healthy) + '</div>';
+        html += '<div><span style="color:#555;">Fund Data DB</span><br>' + statusBadge(data.db_fund_healthy) + '</div>';
+        html += '</div></div></div>';
+
+        // VALIDATION COVERAGE
+        var vc = data.validation_coverage_pct;
+        var vcClass = 'var(--accent)';
+        if (vc < 10) vcClass = 'var(--danger)';
+        else if (vc < 50) vcClass = 'var(--warning)';
+        html += '<div class="panel"><div class="panel-header"><h2>VALIDATION COVERAGE</h2><span class="timestamp" style="color:' + vcClass + ';font-weight:700;">' + fmt(vc, '%') + '</span></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.resolved_observations) + '</span></div>';
+        html += '<div><span style="color:#555;">Total Obs</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.observations) + '</span></div>';
+        html += '<div><span style="color:#555;">Coverage</span><br><span style="font-size:1.1rem;font-weight:700;color:' + vcClass + ';">' + fmt(vc, '%') + '</span></div>';
+        html += '</div></div></div>';
+
+        // RESEARCH COVERAGE
+        html += '<div class="panel"><div class="panel-header"><h2>RESEARCH COVERAGE</h2></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Companies Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.companies) + '</span></div>';
+        html += '<div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.research_notes) + '</span></div>';
+        html += '</div></div></div>';
+
+        // PREDICTION COVERAGE
+        html += '<div class="panel"><div class="panel-header"><h2>PREDICTION COVERAGE</h2></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Total Predictions</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.total_predictions) + '</span></div>';
+        html += '<div><span style="color:#555;">Resolved</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--accent);">' + fmt(data.resolved_predictions) + '</span></div>';
+        html += '<div><span style="color:#555;">Pending</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--warning);">' + fmt(data.pending_predictions) + '</span></div>';
+        html += '</div></div></div>';
+
+        // DATABASE HEALTH
+        html += '<div class="panel"><div class="panel-header"><h2>DATABASE HEALTH</h2></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">research.db</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.db_research_size_kb, ' KB') + '</span></div>';
+        html += '<div><span style="color:#555;">fund_data.db</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.db_fund_size_kb, ' KB') + '</span></div>';
+        html += '<div><span style="color:#555;">Table Count</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.table_count) + '</span></div>';
+        html += '</div></div></div>';
+
+        // EVIDENCE INTEGRITY
+        var eqClass = 'var(--danger)';
+        var eqLabels = {'INSUFFICIENT_DATA':'var(--danger)','LOW':'var(--warning)','DEVELOPING':'var(--warning)','ADEQUATE':'var(--accent)','SUBSTANTIAL':'var(--accent)'};
+        if (eqLabels[data.evidence_quality]) eqClass = eqLabels[data.evidence_quality];
+        html += '<div class="panel"><div class="panel-header"><h2>EVIDENCE INTEGRITY</h2><span class="timestamp" style="color:' + eqClass + ';font-weight:700;">' + (data.evidence_quality || '—') + '</span></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Timeline Events</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.timeline_events) + '</span></div>';
+        html += '<div><span style="color:#555;">Reproducibility Logs</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.reproducibility_logs) + '</span></div>';
+        html += '<div><span style="color:#555;">Failure Records</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--danger);">' + fmt(data.failures) + '</span></div>';
+        html += '<div><span style="color:#555;">Credibility Evidence</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.credibility_evidence) + '</span></div>';
+        html += '</div></div></div>';
+
+        // PROOF VERIFICATION STATUS
+        html += '<div class="panel"><div class="panel-header"><h2>PROOF VERIFICATION STATUS</h2></div><div class="panel-body padded"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">';
+        html += '<div><span style="color:#555;">Proof Files</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.proof_files) + '</span></div>';
+        html += '<div><span style="color:#555;">Certificates</span><br><span style="font-size:1.1rem;font-weight:700;">' + fmt(data.certificates) + '</span></div>';
+        html += '</div></div></div>';
+
+        // Show errors if any
+        if (data._error) {
+            html += '<div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);padding:0.8rem;margin-bottom:0.75rem;"><span style="color:#ff4444;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">ERROR</span><pre style="color:#aa6666;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);white-space:pre-wrap;">' + escapeHtml(data._error) + '</pre></div>';
+        }
+
+        document.getElementById('health-content').innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    fetch('/api/system-health')
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp.success && resp.data) {
+                render(resp.data);
+                var ts = document.getElementById('health-timestamp');
+                if (ts) ts.textContent = new Date().toISOString().replace('T',' ').substring(0,19) + ' UTC';
+            } else {
+                render({_error: resp.error || 'Unknown error', observations:0, validations:0, validation_coverage_pct:0, companies:0, research_notes:0, failures:0, certificates:0, proof_files:0, timeline_events:0, reproducibility_logs:0, db_research_size_kb:0, db_fund_size_kb:0, table_count:0, total_predictions:0, resolved_predictions:0, pending_predictions:0, evidence_quality:'NO_DATA', db_research_healthy:false, db_fund_healthy:false, model_status:'UNKNOWN', api_status:'FAIL', credibility_evidence:0, resolved_observations:0});
+            }
+        })
+        .catch(function(err) {
+            render({_error: err.toString(), observations:0, validations:0, validation_coverage_pct:0, companies:0, research_notes:0, failures:0, certificates:0, proof_files:0, timeline_events:0, reproducibility_logs:0, db_research_size_kb:0, db_fund_size_kb:0, table_count:0, total_predictions:0, resolved_predictions:0, pending_predictions:0, evidence_quality:'NO_DATA', db_research_healthy:false, db_fund_healthy:false, model_status:'UNKNOWN', api_status:'FAIL', credibility_evidence:0, resolved_observations:0});
+        });
+})();
+</script>
+{% endblock %}

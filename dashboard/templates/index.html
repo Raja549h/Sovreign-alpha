@@ -2,68 +2,106 @@
 {% block content %}
 <div class="container fade-in">
     <div class="page-header">
-        <h1>Market Intelligence Dashboard</h1>
-        <span class="timestamp">Last updated: {{ last_verified }}</span>
+        <h1>System Dashboard</h1>
+        <span class="timestamp">Last verified: {{ last_verified }}</span>
     </div>
 
-    <div class="stats-row">
-        <div class="stat-box accent">
-            <label>Market Regime</label>
-            <div class="value">
-                <span class="regime-badge {{ regime or 'NEUTRAL' }}" id="regime-badge">{{ regime or 'NEUTRAL' }}</span>
-            </div>
-            <div class="sub" id="regime-confidence">Confidence: {{ regime_confidence | default('—') }}</div>
-        </div>
-        <div class="stat-box accent">
-            <label>Total Predictions</label>
-            <div class="value stat-refresh" data-key="total_predictions">{{ total_predictions | default(0) }}</div>
-            <div class="sub">{{ approved | default(0) }} approved / {{ vetoed_count | default(0) }} rejected</div>
-        </div>
-        <div class="stat-box {% if approval_rate and approval_rate < 50 %}danger{% elif approval_rate and approval_rate >= 65 %}accent{% else %}warning{% endif %}">
-            <label>Approval Rate</label>
-            <div class="value stat-refresh" data-key="approval_rate">{{ approval_rate | default(0) | round(1) }}%</div>
-            <div class="sub">Veto saved</div>
-        </div>
-        <div class="stat-box info">
-            <label>Veto Efficiency</label>
-            <div class="value info stat-refresh" data-key="veto_efficiency">{{ veto_efficiency | default(0) | round(1) }}%</div>
-            <div class="sub stat-refresh" data-key="veto_correct_count">{{ correct_vetoes | default(0) }} / {{ total_vetoes | default(0) }} correct</div>
-        </div>
-        <div class="stat-box warning">
-            <label>Avoided Drawdown</label>
-            <div class="value">${{ (total_avoided_drawdown | default(0)) | round(0) | int }}</div>
-            <div class="sub">Cumulative risk avoided</div>
-        </div>
-        <div class="stat-box info">
-            <label>Audit Chain</label>
-            <div class="value" style="font-size:0.85rem;">{{ certificates | default(0) }}</div>
-            <div class="sub">Cryptographic certificates</div>
-        </div>
-    </div>
-
-    {% if regime_data and regime_data.indicators %}
-    <div class="panel" style="margin-bottom:0.75rem;">
+    <!-- Section 2: Trust Panel — always visible, shows system maturity -->
+    <div class="panel" style="margin-bottom:0.75rem;border-color:#1e1e1e;">
         <div class="panel-header">
-            <h2>Regime Intelligence</h2>
-            <span class="timestamp">{{ last_verified }}</span>
+            <h2>Trust Panel — System Maturity</h2>
+            <span class="timestamp">Evidence Quality: <strong>{{ trust.evidence_quality if trust.evidence_quality != 'INSUFFICIENT_DATA' else '<span style="color:#ff4444;">INSUFFICIENT DATA</span>'|safe }}</strong></span>
         </div>
         <div class="panel-body padded">
-            <div style="font-family:var(--font-mono);font-size:11px;line-height:1.8;">
-                <div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">Market Regime</span><span class="regime-badge {{ regime or 'NEUTRAL' }}" id="regime-badge" style="font-size:10px;">{{ regime or 'NEUTRAL' }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #1a1a1a;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">Confidence</span><span style="color:var(--accent);" id="regime-confidence">{{ regime_confidence | default('—') }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #1a1a1a;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">VIX Signal</span><span style="color:{% if (regime_data.indicators.vix|default(0)) < 20 %}var(--accent){% elif (regime_data.indicators.vix|default(0)) < 30 %}var(--warning){% else %}var(--danger){% endif %};">{{ regime_data.indicators.vix | default('—') }}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #1a1a1a;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">10Y Treasury</span><span style="color:var(--warning);">{{ regime_data.indicators.treasury_10y | default('—') }}%</span></div>
-                <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #1a1a1a;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">DXY</span><span style="color:var(--info);">{{ regime_data.indicators.dxy | default('—') }}</span></div>
-                {% if regime_data.indicators.india_vix is defined %}<div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid #1a1a1a;"><span style="color:#555;text-transform:uppercase;letter-spacing:0.05em;">India VIX</span><span style="color:var(--text-dim);">{{ regime_data.indicators.india_vix }}</span></div>{% endif %}
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
+                <div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.research_notes }}</span></div>
+                <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions if stats.total_predictions > 0 else stats.get('total_predictions', 0) }}</span></div>
+                <div><span style="color:#555;">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
+                <div><span style="color:#555;">Observations Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.total_observations }}</span></div>
+                <div><span style="color:#555;">Validated Outcomes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.resolved_observations }}</span></div>
+                <div>
+                    <span style="color:#555;">Validation Coverage</span><br>
+                    <span style="font-size:1.1rem;font-weight:700;
+                    {% if trust.validation_coverage_pct < 10 %}color:#ff4444;
+                    {% elif trust.validation_coverage_pct < 50 %}color:#ffaa00;
+                    {% else %}color:#00ff9f;{% endif %}">
+                    {{ trust.validation_coverage_pct }}%</span>
+                </div>
+                <div><span style="color:#555;">Calibration Events</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.calibration_events }}</span></div>
+                <div><span style="color:#555;">Failure Records</span><br><span style="font-size:1.1rem;font-weight:700;color:#ff4444;">{{ trust.failure_records }}</span></div>
+                <div><span style="color:#555;">Avg Research Quality</span><br><span style="font-size:1.1rem;font-weight:700;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</span></div>
+                <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
             </div>
-            {% if regime_data.summary %}
-            <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #1a1a1a;font-family:var(--font-mono);font-size:10px;color:#666;">
-                {{ regime_data.summary }}
+            {% if trust.total_validations < 10 %}
+            <div style="margin-top:0.5rem;padding:0.4rem;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);text-align:center;font-family:var(--font-mono);font-size:0.65rem;color:#ff4444;">
+                ⚠ LOW CONFIDENCE — Only {{ trust.total_validations }} validations recorded. All accuracy metrics are preliminary.
             </div>
             {% endif %}
         </div>
     </div>
+
+    <!-- Section 13: Honest hero metrics — system status only -->
+    <div class="stats-row">
+        <div class="stat-box info">
+            <label>System Status</label>
+            <div class="value" style="font-size:0.8rem;color:var(--accent);">
+                {{ 'LEARNING PHASE' if trust.total_validations < 10 else 'OPERATIONAL' if trust.total_validations < 50 else 'MATURE' }}
+            </div>
+            <div class="sub">{{ trust.total_validations }} validations</div>
+        </div>
+        <div class="stat-box accent">
+            <label>Predictions Issued</label>
+            <div class="value">{{ stats.total_predictions }}</div>
+            <div class="sub">{{ stats.resolved_predictions }} resolved</div>
+        </div>
+        <div class="stat-box warning">
+            <label>Validation Coverage</label>
+            <div class="value {% if trust.validation_coverage_pct >= 50 %}accent{% elif trust.validation_coverage_pct >= 10 %}warning{% else %}danger{% endif %}">
+                {{ trust.validation_coverage_pct }}%
+            </div>
+            <div class="sub">{{ trust.resolved_observations }}/{{ trust.total_observations }} obs</div>
+        </div>
+        <div class="stat-box info">
+            <label>Calibration Score</label>
+            <div class="value" style="font-size:0.8rem;">{{ trust.calibration_events if trust.calibration_events > 0 else '—' }}</div>
+            <div class="sub">{{ 'Not yet calculable' if trust.calibration_events < 3 else 'Tracking' }}</div>
+        </div>
+        <div class="stat-box accent">
+            <label>Research Quality</label>
+            <div class="value" style="font-size:0.8rem;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</div>
+            <div class="sub">{{ trust.autopsied_observations }} autopsied</div>
+        </div>
+        <div class="stat-box info">
+            <label>Market Regime</label>
+            <div class="value">
+                <span class="regime-badge {{ regime or 'NEUTRAL' }}" style="font-size:10px;">{{ regime or 'NEUTRAL' }}</span>
+            </div>
+            <div class="sub">{{ regime_confidence }}</div>
+        </div>
+    </div>
+
+    {% if trust.total_validations < 10 %}
+    <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);padding:0.8rem;margin-bottom:0.75rem;text-align:center;">
+        <span style="color:#ff4444;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">⚠ INSUFFICIENT DATA</span>
+        <p style="color:#aa6666;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
+        This system is in learning phase. Only {{ trust.total_validations }} validated observations exist.
+        No performance claims are statistically supported. Do not use for investment decisions.
+        </p>
+    </div>
     {% endif %}
+
+    <!-- Macro Health Quick View -->
+    <div class="panel" style="margin-bottom:0.5rem;">
+        <div class="panel-header">
+            <h2>Macro Health Quick View</h2>
+            <a href="/macro-health" class="btn outline small">Full Report</a>
+        </div>
+        <div class="panel-body padded" id="macro-health-strip" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
+            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Status</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
+            <div class="intel-card" style="flex:2;min-width:200px;"><div class="label">Observation</div><div class="skeleton skeleton-value" style="width:70%;"></div></div>
+        </div>
+    </div>
 
     <div class="panel" style="margin-bottom:0.5rem;">
         <div class="panel-header">
@@ -77,18 +115,6 @@
                 <div class="intel-card"><div class="label">30-Day Net (₹ Cr)</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
                 <div class="intel-card"><div class="label">Flow Regime</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
             </div>
-        </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:0.5rem;">
-        <div class="panel-header">
-            <h2>Macro Health Quick View</h2>
-            <a href="/macro-health" class="btn outline small">Full Report</a>
-        </div>
-        <div class="panel-body padded" id="macro-health-strip" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
-            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Status</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
-            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Observation</div><div class="skeleton skeleton-value" style="width:70%;"></div></div>
         </div>
     </div>
 
@@ -183,7 +209,7 @@
                 {% if vetoes and vetoes|length > 0 %}
                 <table>
                     <thead>
-                        <tr><th>Ticker</th><th>Risk</th><th>Reason</th><th>Avoided DD</th><th>Correct</th></tr>
+                        <tr><th>Ticker</th><th>Risk</th><th>Reason</th><th>Correct</th></tr>
                     </thead>
                     <tbody id="veto-table-body">
                         {% for v in vetoes[:6] %}
@@ -191,7 +217,6 @@
                             <td class="ticker-cell">{{ v.asset }}</td>
                             <td>{{ (v.risk_score or 0) | pct }}</td>
                             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-tip="{{ v.rejection_reason }}">{{ v.rejection_reason or v.veto_reason or '—' }}</td>
-                            <td style="color:var(--danger);">{{ v.avoided_drawdown or '—' }}</td>
                             <td>{{ 'Yes' if v.veto_correct else 'No' if v.veto_correct == False else 'Pending' }}</td>
                         </tr>
                         {% endfor %}
@@ -218,6 +243,8 @@
             <a href="/upload" class="btn outline" style="background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 16px;">Upload Fund Data</a>
             <a href="/api/export-predictions" class="btn outline" style="background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 16px;">Export CSV</a>
             <a href="/live_market" class="btn outline" style="background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 16px;">Live Market</a>
+            <a href="/system-health" class="btn outline" style="background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 16px;">System Health</a>
+            <a href="/audit" class="btn outline" style="background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 16px;">Audit Trail</a>
         </div>
     </div>
 </div>
@@ -240,9 +267,9 @@ function loadFiiFlow() {
             var ts = document.getElementById('fii-timestamp');
             if (r.timestamp) ts.textContent = r.timestamp.substring(0, 19);
             strip.innerHTML =
-                '<div class="intel-card"><div class="label">Daily Net (' + '\u20B9' + ' Cr)</div><div class="stat ' + (r.daily_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.daily_net_cr) + '</div></div>' +
-                '<div class="intel-card"><div class="label">5-Day Net (' + '\u20B9' + ' Cr)</div><div class="stat ' + (r.weekly_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.weekly_net_cr) + '</div></div>' +
-                '<div class="intel-card"><div class="label">30-Day Net (' + '\u20B9' + ' Cr)</div><div class="stat ' + (r.monthly_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.monthly_net_cr) + '</div></div>' +
+                '<div class="intel-card"><div class="label">Daily Net (\u20B9 Cr)</div><div class="stat ' + (r.daily_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.daily_net_cr) + '</div></div>' +
+                '<div class="intel-card"><div class="label">5-Day Net (\u20B9 Cr)</div><div class="stat ' + (r.weekly_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.weekly_net_cr) + '</div></div>' +
+                '<div class="intel-card"><div class="label">30-Day Net (\u20B9 Cr)</div><div class="stat ' + (r.monthly_net_cr >= 0 ? 'accent' : 'danger') + '">' + formatCr(r.monthly_net_cr) + '</div></div>' +
                 '<div class="intel-card"><div class="label">Flow Regime</div><div class="regime-badge ' + (r.regime || 'NEUTRAL') + '" style="font-size:10px;">' + (r.regime_label || r.regime || '—') + '</div></div>';
         })
         .catch(function() {});
