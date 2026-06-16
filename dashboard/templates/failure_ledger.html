@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Failure Ledger</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);">Module 2 — Permanent Failure Records</span>
+        </div>
+    </div>
+
+    <div style="background:rgba(255,68,68,0.05);border:1px solid rgba(255,68,68,0.2);padding:0.8rem;margin-bottom:1rem;text-align:center;">
+        <span style="color:#ff4444;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">⚠ IMMUTABLE RECORDS</span>
+        <p style="color:#aa6666;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
+        Failure records are permanent. No editing, no deletion. Every invalidated observation is preserved for institutional accountability.
+        </p>
+    </div>
+
+    {% if summary %}
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem;">
+        <div class="stat-box danger"><label>Total Failures</label><div class="value">{{ summary.total_failures }}</div></div>
+        <div class="stat-box warning"><label>Categories</label><div class="value">{{ summary.by_category.keys()|list|length }}</div></div>
+        <div class="stat-box info"><label>Top Category</label><div class="value">{{ summary.by_category.keys()|first if summary.by_category else '—' }}</div></div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+        <h2 style="font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.5rem;">Failure Pattern Breakdown</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.5rem;">
+            {% for cat, cnt in summary.by_category.items() %}
+            <div class="card" style="padding:0.5rem 0.8rem;border:1px solid #1e1e1e;">
+                <div style="font-size:0.65rem;color:#888;font-family:var(--font-mono);">{{ cat }}</div>
+                <div style="font-size:1.2rem;font-weight:700;color:#ff4444;">{{ cnt }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 style="font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.5rem;">
+        All Failure Records ({{ failures|length }})
+    </h2>
+    <div style="overflow-x:auto;">
+        <table style="width:100%;font-family:var(--font-mono);font-size:0.65rem;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #1e1e1e;">
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Date</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Ticker</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Category</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Root Cause</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Missed Signals</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Wrong Assumption</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Lessons</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fa in failures %}
+                <tr style="border-bottom:1px solid #0d0d0d;">
+                    <td style="padding:0.4rem;color:#555;">{{ fa.invalidated_at or fa.analyzed_at[:10] }}</td>
+                    <td style="padding:0.4rem;color:#00ff9f;">{{ fa.ticker }}</td>
+                    <td style="padding:0.4rem;">
+                        <span style="background:rgba(255,68,68,0.15);padding:0.1rem 0.4rem;border-radius:2px;color:#ff4444;">{{ fa.failure_category }}</span>
+                    </td>
+                    <td style="padding:0.4rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ fa.root_cause[:80] if fa.root_cause else '—' }}</td>
+                    <td style="padding:0.4rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;color:#ffaa00;">{{ fa.missed_signals[:60] if fa.missed_signals else '—' }}</td>
+                    <td style="padding:0.4rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;color:#ff6699;">{{ fa.incorrect_assumption[:60] if fa.incorrect_assumption else '—' }}</td>
+                    <td style="padding:0.4rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;color:#3399ff;">{{ fa.lessons_learned[:80] if fa.lessons_learned else '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:#555;">No failure records yet. Every invalidated observation should be recorded here.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

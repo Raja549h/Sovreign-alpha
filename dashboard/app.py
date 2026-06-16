@@ -2459,6 +2459,329 @@ def api_failure_create():
 
 
 # ============================================================
+# EVIDENCE CREDIBILITY ENGINE ROUTES — Modules 1-10
+# ============================================================
+
+
+@app.route('/evidence')
+@login_required
+def evidence_hub():
+    """Evidence hub overview — links to all evidence modules."""
+    try:
+        from research.storage.research_db import get_all_companies
+        companies = get_all_companies()
+        return render_template('evidence.html', companies=companies)
+    except Exception as e:
+        return render_template('evidence.html', companies=[], error=str(e))
+
+
+@app.route('/api/evidence/timeline')
+@login_required
+def api_evidence_timeline():
+    """Return evidence timeline."""
+    try:
+        from research.evolution_quality import EvidenceTimeline
+        et = EvidenceTimeline()
+        company_id = request.args.get('company_id', type=int)
+        obs_id = request.args.get('observation_id', type=int)
+        event_type = request.args.get('event_type')
+        timeline = et.get_timeline(company_id=company_id, observation_id=obs_id,
+                                   event_type=event_type, limit=200)
+        return jsonify({'success': True, 'timeline': timeline})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/timeline/record', methods=['POST'])
+@login_required
+def api_evidence_timeline_record():
+    """Record an evidence timeline event."""
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id', 'company_id', 'event_type'],
+            ['event_label', 'event_detail', 'old_status', 'new_status', 'source'])
+        from research.evolution_quality import EvidenceTimeline
+        et = EvidenceTimeline()
+        eid = et.record_event(
+            observation_id=data['observation_id'],
+            company_id=data['company_id'],
+            event_type=data['event_type'],
+            event_label=data.get('event_label', ''),
+            event_detail=data.get('event_detail', ''),
+            old_status=data.get('old_status', ''),
+            new_status=data.get('new_status', ''),
+            source=data.get('source', 'user'),
+        )
+        return jsonify({'success': True, 'event_id': eid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/failure-ledger')
+@login_required
+def failure_ledger_page():
+    """Failure Ledger — permanent failure records with pattern analysis."""
+    try:
+        from research.evolution_quality import FailureAnalysis
+        fa = FailureAnalysis()
+        failures = fa.get_failures(limit=100)
+        summary = fa.get_pattern_summary()
+        return render_template('failure_ledger.html', failures=failures, summary=summary)
+    except Exception as e:
+        return render_template('failure_ledger.html', failures=[], summary={}, error=str(e))
+
+
+@app.route('/api/evidence/reproducibility')
+@login_required
+def api_reproducibility():
+    """Return reproducibility data for an observation."""
+    try:
+        from research.evolution_quality import ReproducibilityTracker
+        rt = ReproducibilityTracker()
+        obs_id = request.args.get('observation_id', type=int)
+        if not obs_id:
+            return jsonify({'success': False, 'error': 'observation_id required'})
+        data = rt.get_reproducibility(obs_id)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/reproducibility/log', methods=['POST'])
+@login_required
+def api_reproducibility_log():
+    """Log reproducibility data for an observation."""
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id', 'company_id'], [])
+        from research.evolution_quality import ReproducibilityTracker
+        rt = ReproducibilityTracker()
+        lid = rt.log_reproducibility(
+            observation_id=data['observation_id'],
+            company_id=data['company_id'],
+            filing_sources=data.get('filing_sources', ''),
+            earnings_call_sources=data.get('earnings_call_sources', ''),
+            financial_inputs=data.get('financial_inputs', ''),
+            calculations_used=data.get('calculations_used', ''),
+            model_version=data.get('model_version', '1.0'),
+            agent_version=data.get('agent_version', 'analyst-1.0'),
+        )
+        return jsonify({'success': True, 'log_id': lid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/framework-performance')
+@login_required
+def api_framework_performance():
+    """Return framework performance rankings."""
+    try:
+        from research.evolution_quality import FrameworkPerformance
+        fp = FrameworkPerformance()
+        min_obs = request.args.get('min_observations', 2, type=int)
+        rankings = fp.get_performance_rankings(min_observations=min_obs)
+        return jsonify({'success': True, 'data': rankings})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/framework-performance/update', methods=['POST'])
+@login_required
+def api_framework_performance_update():
+    """Update framework performance record."""
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['framework_name', 'category', 'confirmed'], ['confidence'])
+        from research.evolution_quality import FrameworkPerformance
+        fp = FrameworkPerformance()
+        fp.update_performance(data['framework_name'], data['category'],
+                              bool(data['confirmed']),
+                              float(data.get('confidence', 0.5)))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/memos')
+@login_required
+def api_evidence_memos():
+    """Return research evolution memos."""
+    try:
+        from research.evolution_quality import MemoEvolutionEngine
+        me = MemoEvolutionEngine()
+        company_id = request.args.get('company_id', type=int)
+        memos = me.get_memos(company_id=company_id, limit=20)
+        return jsonify({'success': True, 'memos': memos})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/memos/generate', methods=['POST'])
+@login_required
+def api_evidence_memo_generate():
+    """Generate a new evolution memo for a company."""
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['company_id', 'memo_reference'], ['memo_type', 'prior_memo_reference'])
+        from research.evolution_quality import MemoEvolutionEngine
+        me = MemoEvolutionEngine()
+        memo = me.generate_memo(
+            company_id=data['company_id'],
+            memo_reference=data['memo_reference'],
+            memo_type=data.get('memo_type', 'evolution'),
+            prior_memo_reference=data.get('prior_memo_reference', ''),
+        )
+        return jsonify({'success': True, 'memo': memo})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/anti-vanity')
+@login_required
+def api_anti_vanity():
+    """Anti-Vanity Filter: audit all metrics and flag unsupported claims."""
+    try:
+        from research.evolution_quality import AntiVanityFilter
+        av = AntiVanityFilter()
+        min_validations = request.args.get('min_validations', 10, type=int)
+        audit = av.audit_metrics(min_validations=min_validations)
+        metric_filter = request.args.get('metric')
+        if metric_filter:
+            audit['metric_check'] = av.check_metric(metric_filter)
+        return jsonify({'success': True, 'audit': audit})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/weekly-ic-report')
+@login_required
+def api_weekly_ic_report():
+    """Generate Weekly IC report."""
+    try:
+        from research.evolution_quality import WeeklyICReport
+        ic = WeeklyICReport()
+        report = ic.generate_report()
+        return jsonify({'success': True, 'report': report})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/calibration-dashboard')
+@login_required
+def api_calibration_dashboard():
+    """Return calibration summary for dashboard."""
+    try:
+        from research.evolution_quality import ConfidenceCalibrator
+        cc = ConfidenceCalibrator()
+        summary = cc.get_calibration_summary()
+        from research.storage.research_db import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT cc.*, om.observation_text, c2.ticker
+                         FROM confidence_calibration cc
+                         JOIN observation_memory om ON om.id = cc.observation_id
+                         JOIN companies c2 ON c2.id = cc.company_id
+                         ORDER BY cc.created_at DESC LIMIT 50""")
+            records = [dict(r) for r in c.fetchall()]
+        return jsonify({'success': True, 'summary': summary, 'records': records})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/evidence/institutional-credibility')
+@login_required
+def api_evidence_institutional_credibility():
+    """Module 8: Evidence-only institutional credibility scoring.
+    No self-referential metrics. Every point must cite evidence."""
+    try:
+        from research.storage.research_db import get_all_companies, get_financial_series
+        companies = get_all_companies()
+        total_companies = len(companies)
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) as cnt FROM observation_memory")
+            total_obs = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM observation_validations")
+            total_validations = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM evidence_timeline")
+            timeline_events = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM reproducibility_log")
+            reproducible_obs = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM failure_analysis")
+            total_failures = c.fetchone()['cnt']
+            c.execute("""SELECT COUNT(DISTINCT framework_name) as cnt FROM framework_performance
+                         WHERE observation_count >= 2""")
+            frameworks_ranked = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM challenge_records")
+            total_challenges = c.fetchone()['cnt']
+            c.execute("""SELECT COUNT(*) as cnt FROM challenge_records
+                         WHERE passed_challenge = 1""")
+            challenges_passed = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM shadow_trades")
+            total_trades = c.fetchone()['cnt']
+            c.execute("""SELECT COUNT(*) as cnt FROM confidence_calibration""")
+            calibrated = c.fetchone()['cnt']
+        score = 0.0
+        max_score = 100.0
+        components = {}
+        evidence_breadth = min(total_obs / 100 * 15, 15)
+        score += evidence_breadth
+        components['evidence_breadth'] = {'score': evidence_breadth, 'max': 15,
+                                           'evidence': f'{total_obs} observations in memory'}
+        validation_coverage = min(total_validations / total_obs * 15, 15) if total_obs > 0 else 0
+        score += validation_coverage
+        components['validation_coverage'] = {'score': validation_coverage, 'max': 15,
+                                              'evidence': f'{total_validations}/{total_obs} observations validated'}
+        timeline_score = min(timeline_events / 20 * 10, 10)
+        score += timeline_score
+        components['timeline_integrity'] = {'score': timeline_score, 'max': 10,
+                                             'evidence': f'{timeline_events} timeline events recorded'}
+        reproducibility_score = min(reproducible_obs / total_obs * 10, 10) if total_obs > 0 else 0
+        score += reproducibility_score
+        components['reproducibility'] = {'score': reproducibility_score, 'max': 10,
+                                          'evidence': f'{reproducible_obs}/{total_obs} observations reproducible'}
+        failure_transparency = min(total_failures * 2, 10)
+        score += failure_transparency
+        components['failure_transparency'] = {'score': failure_transparency, 'max': 10,
+                                               'evidence': f'{total_failures} failure records on file'}
+        framework_score = min(frameworks_ranked * 3, 15)
+        score += framework_score
+        components['framework_performance'] = {'score': framework_score, 'max': 15,
+                                                'evidence': f'{frameworks_ranked} frameworks ranked by evidence'}
+        challenge_score = min(challenges_passed * 5, 10)
+        score += challenge_score
+        components['challenge_integrity'] = {'score': challenge_score, 'max': 10,
+                                              'evidence': f'{challenges_passed}/{total_challenges} challenges passed' if total_challenges > 0 else 'No challenges conducted'}
+        calibration_score = min(calibrated * 1, 5)
+        score += calibration_score
+        components['calibration_evidence'] = {'score': calibration_score, 'max': 5,
+                                               'evidence': f'{calibrated} calibration events recorded'}
+        score = round(score, 1)
+        grade = 'F' if score < 20 else ('D' if score < 40 else ('C' if score < 60 else ('B' if score < 80 else 'A')))
+        verdict = 'Prototype — insufficient evidence for institutional credibility.'
+        if score >= 80:
+            verdict = 'INSTITUTIONAL GRADE: Evidence base meets institutional standards.'
+        elif score >= 60:
+            verdict = 'DEVELOPING: Evidence base growing but gaps remain for institutional use.'
+        elif score >= 40:
+            verdict = 'EMERGING: Core evidence exists but significant gaps remain.'
+        return jsonify({'success': True, 'data': {
+            'credibility_score': score,
+            'max_possible': max_score,
+            'grade': grade,
+            'verdict': verdict,
+            'components': components,
+            'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+        }})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ============================================================
 # RESEARCH ENGINE ROUTES
 # ============================================================
 
@@ -2616,40 +2939,77 @@ def api_validate_run_review():
 @app.route('/api/institutional-credibility')
 @login_required
 def api_institutional_credibility():
-    """Evidence-only institutional credibility score. No self-referential metrics."""
+    """Evidence-only institutional credibility score — delegates to Module 8."""
     try:
-        from research.observation_registry import ObservationRegistry
-        from research.storage.research_db import get_all_companies
-        reg = ObservationRegistry()
-        scorecard = reg.calculate_edge_score()
-        companies = len(get_all_companies())
-        total_obs = scorecard.get('total', 0)
-        validated = scorecard.get('confirmed', 0) + scorecard.get('invalidated', 0)
-        has_real_data = scorecard.get('has_validated_data', False)
-        validated_pct = round(validated / total_obs * 100, 1) if total_obs > 0 else 0.0
-        coverage_score = min(companies / 20 * 25, 25.0)
-        validation_score = validated_pct * 0.3 if total_obs > 0 else 0.0
-        benchmark_exists = 0.0
-        external_review_exists = 0.0
-        methodology_documented = 0.0
-        system_reliable = 5.0
-        credibility_score = round(
-            coverage_score + validation_score + benchmark_exists +
-            external_review_exists + methodology_documented + system_reliable, 1
-        )
+        from research.storage.research_db import get_all_companies, get_connection
+        from datetime import datetime, timezone
+        companies = get_all_companies()
+        total_companies = len(companies)
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) as cnt FROM observation_memory")
+            total_obs = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM observation_validations")
+            total_validations = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM evidence_timeline")
+            timeline_events = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM reproducibility_log")
+            reproducible_obs = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM failure_analysis")
+            total_failures = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM challenge_records")
+            total_challenges = c.fetchone()['cnt']
+            c.execute("""SELECT COUNT(*) as cnt FROM challenge_records WHERE passed_challenge = 1""")
+            challenges_passed = c.fetchone()['cnt']
+            c.execute("SELECT COUNT(*) as cnt FROM confidence_calibration")
+            calibrated = c.fetchone()['cnt']
+        score = 0.0
+        max_score = 100.0
+        components = {}
+        evidence_breadth = min(total_obs / 100 * 15, 15)
+        score += evidence_breadth
+        components['evidence_breadth'] = {'score': evidence_breadth, 'max': 15,
+                                           'evidence': f'{total_obs} observations in memory'}
+        validation_coverage = min(total_validations / total_obs * 15, 15) if total_obs > 0 else 0
+        score += validation_coverage
+        components['validation_coverage'] = {'score': validation_coverage, 'max': 15,
+                                              'evidence': f'{total_validations}/{total_obs} observations validated'}
+        timeline_score = min(timeline_events / 20 * 10, 10)
+        score += timeline_score
+        components['timeline_integrity'] = {'score': timeline_score, 'max': 10,
+                                             'evidence': f'{timeline_events} timeline events recorded'}
+        reproducibility_score = min(reproducible_obs / total_obs * 10, 10) if total_obs > 0 else 0
+        score += reproducibility_score
+        components['reproducibility'] = {'score': reproducibility_score, 'max': 10,
+                                          'evidence': f'{reproducible_obs}/{total_obs} observations reproducible'}
+        failure_transparency = min(total_failures * 2, 10)
+        score += failure_transparency
+        components['failure_transparency'] = {'score': failure_transparency, 'max': 10,
+                                               'evidence': f'{total_failures} failure records on file'}
+        challenge_score = min(challenges_passed * 5, 10)
+        score += challenge_score
+        components['challenge_integrity'] = {'score': challenge_score, 'max': 10,
+                                              'evidence': f'{challenges_passed}/{total_challenges} challenges passed' if total_challenges > 0 else 'No challenges conducted'}
+        calibration_score = min(calibrated * 1, 5)
+        score += calibration_score
+        components['calibration_evidence'] = {'score': calibration_score, 'max': 5,
+                                               'evidence': f'{calibrated} calibration events recorded'}
+        score = round(score, 1)
+        grade = 'F' if score < 20 else ('D' if score < 40 else ('C' if score < 60 else ('B' if score < 80 else 'A')))
+        verdict = 'Prototype — insufficient evidence for institutional credibility.'
+        if score >= 80:
+            verdict = 'INSTITUTIONAL GRADE: Evidence base meets institutional standards.'
+        elif score >= 60:
+            verdict = 'DEVELOPING: Evidence base growing but gaps remain for institutional use.'
+        elif score >= 40:
+            verdict = 'EMERGING: Core evidence exists but significant gaps remain.'
         return jsonify({'success': True, 'data': {
-            'credibility_score': credibility_score,
-            'max_possible': 100.0,
-            'components': {
-                'coverage_breadth': {'score': coverage_score, 'max': 25, 'detail': f'{companies}/20 companies'},
-                'validation_rate': {'score': validation_score, 'max': 30, 'detail': f'{validated}/{total_obs} observations validated'},
-                'benchmark_comparison': {'score': benchmark_exists, 'max': 15, 'detail': 'No benchmark comparison exists'},
-                'external_review': {'score': external_review_exists, 'max': 10, 'detail': 'No independent review'},
-                'methodology_documentation': {'score': methodology_documented, 'max': 10, 'detail': 'No documented methodology'},
-                'system_reliability': {'score': system_reliable, 'max': 10, 'detail': 'System runs but no uptime SLA'},
-            },
-            'grade': 'F' if credibility_score < 20 else ('D' if credibility_score < 40 else ('C' if credibility_score < 60 else ('B' if credibility_score < 80 else 'A'))),
-            'verdict': 'Prototype stage. Cannot be presented to institutional investors.',
+            'credibility_score': score,
+            'max_possible': max_score,
+            'grade': grade,
+            'verdict': verdict,
+            'components': components,
+            'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
         }})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -3687,6 +4047,12 @@ try:
     init_shadow_portfolio_tables()
 except Exception as e:
     print(f"Warning: Could not initialize shadow portfolio tables: {e}")
+
+try:
+    from research.storage.research_db import init_evidence_tables
+    init_evidence_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize evidence tables: {e}")
 
 try:
     from research.backfill_memory import backfill

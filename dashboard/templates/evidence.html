@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Evidence &amp; Credibility Engine</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);">v2 — Sovereignty Through Evidence</span>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0.8rem;">
+        <a href="/failure-ledger" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#ff4444;">Module 2</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Failure Ledger</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">Permanent failure records &amp; pattern analysis</div>
+        </a>
+        <a href="/edge-discovery" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#00ff9f;">Module 4</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Framework Performance</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">Ranked frameworks by evidence &amp; confirmation rate</div>
+        </a>
+        <a href="/edge" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#ffaa00;">Edge Scorecard</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Edge Scorecard</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">Observation accuracy, confidence, &amp; category analysis</div>
+        </a>
+        <a href="/research-quality" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#3399ff;">Research Quality</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Research Quality</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">Autopsy, calibration &amp; unified quality metrics</div>
+        </a>
+        <a href="/challenge" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#aa66ff;">Challenge</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Challenge Mode</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">Bull/bear/counterargument before publishing</div>
+        </a>
+        <a href="/autopsy" class="card" style="display:block;padding:1.2rem;border:1px solid #1e1e1e;text-decoration:none;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#ff6699;">Autopsy</div>
+            <div style="font-size:0.9rem;font-weight:700;margin:0.3rem 0;color:var(--text-primary);">Observation Autopsy</div>
+            <div style="font-size:0.7rem;color:#888;font-family:var(--font-mono);">5-dimension quality scoring per observation</div>
+        </a>
+    </div>
+
+    <div style="margin-top:2rem;">
+        <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.8rem;">Evidence Operations</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.8rem;">
+            <div class="card" style="padding:1rem;border:1px solid #1e1e1e;">
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#00ff9f;">Module 3: Calibration</div>
+                <div id="calibration-summary" style="margin-top:0.5rem;font-size:0.75rem;font-family:var(--font-mono);color:#888;">Loading...</div>
+            </div>
+            <div class="card" style="padding:1rem;border:1px solid #1e1e1e;">
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#00ff9f;">Module 8: Credibility Score</div>
+                <div id="credibility-summary" style="margin-top:0.5rem;font-size:0.75rem;font-family:var(--font-mono);color:#888;">Loading...</div>
+            </div>
+            <div class="card" style="padding:1rem;border:1px solid #1e1e1e;">
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#ff4444;">Module 9: Anti-Vanity</div>
+                <div id="anti-vanity-summary" style="margin-top:0.5rem;font-size:0.75rem;font-family:var(--font-mono);color:#888;">Loading...</div>
+            </div>
+            <div class="card" style="padding:1rem;border:1px solid #1e1e1e;">
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#ffaa00;">Module 10: Weekly Report</div>
+                <div id="weekly-report-summary" style="margin-top:0.5rem;font-size:0.75rem;font-family:var(--font-mono);color:#888;">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:2rem;">
+        <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.8rem;">Evidence Timeline</h2>
+        <div id="evidence-timeline" style="font-family:var(--font-mono);font-size:0.7rem;">
+            <div style="color:#555;text-align:center;padding:2rem;">Loading timeline...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadCalibration() {
+    try {
+        const r = await fetch('/api/evidence/calibration-dashboard');
+        const d = await r.json();
+        if (d.success && d.summary) {
+            document.getElementById('calibration-summary').innerHTML =
+                `MAE: ${d.summary.mean_absolute_error}<br>Calibrated: ${d.summary.total_calibrated}<br>Buckets: ${d.summary.by_bucket ? d.summary.by_bucket.length : 0}`;
+        }
+    } catch(e) {
+        document.getElementById('calibration-summary').textContent = 'Error loading';
+    }
+}
+async function loadCredibility() {
+    try {
+        const r = await fetch('/api/evidence/institutional-credibility');
+        const d = await r.json();
+        if (d.success) {
+            const s = d.data;
+            document.getElementById('credibility-summary').innerHTML =
+                `Score: ${s.credibility_score}/${s.max_possible}<br>Grade: ${s.grade}<br>${s.verdict}`;
+        }
+    } catch(e) {
+        document.getElementById('credibility-summary').textContent = 'Error loading';
+    }
+}
+async function loadAntiVanity() {
+    try {
+        const r = await fetch('/api/evidence/anti-vanity');
+        const d = await r.json();
+        if (d.success && d.audit) {
+            document.getElementById('anti-vanity-summary').innerHTML =
+                `Validations: ${d.audit.total_validations}/${d.audit.min_validations_required}<br>Status: ${d.audit.has_sufficient_validations ? 'PASS' : 'INSUFFICIENT_DATA'}<br>${d.audit.verdict || ''}`;
+        }
+    } catch(e) {
+        document.getElementById('anti-vanity-summary').textContent = 'Error loading';
+    }
+}
+async function loadWeeklyReport() {
+    try {
+        const r = await fetch('/api/evidence/weekly-ic-report');
+        const d = await r.json();
+        if (d.success && d.report) {
+            const s = d.report.sections;
+            document.getElementById('weekly-report-summary').innerHTML =
+                `Failures: ${s.failures?.total_failures || 0}<br>Observations: ${s.observations?.total_observations || 0}<br>Edge: ${s.edge_scorecard?.edge_score || '—'}`;
+        }
+    } catch(e) {
+        document.getElementById('weekly-report-summary').textContent = 'Error loading';
+    }
+}
+async function loadTimeline() {
+    try {
+        const r = await fetch('/api/evidence/timeline');
+        const d = await r.json();
+        if (d.success && d.timeline) {
+            const html = d.timeline.slice(0, 20).map(t =>
+                `<div style="padding:0.3rem 0;border-bottom:1px solid #111;">` +
+                `<span style="color:#555">${t.created_at}</span> ` +
+                `<span style="color:#00ff9f">[${t.event_type}]</span> ` +
+                `${t.event_label || ''} ` +
+                `<span style="color:#888">${t.ticker || ''}</span></div>`
+            ).join('');
+            document.getElementById('evidence-timeline').innerHTML = html || '<div style="color:#555;text-align:center;">No timeline events yet</div>';
+        }
+    } catch(e) {
+        document.getElementById('evidence-timeline').textContent = 'Error loading';
+    }
+}
+loadCalibration(); loadCredibility(); loadAntiVanity(); loadWeeklyReport(); loadTimeline();
+</script>
+{% endblock %}

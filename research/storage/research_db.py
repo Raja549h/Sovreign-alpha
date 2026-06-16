@@ -376,6 +376,47 @@ CREATE TABLE IF NOT EXISTS challenge_records (
     challenged_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS evidence_timeline (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    event_type TEXT NOT NULL,
+    event_label TEXT,
+    event_detail TEXT,
+    old_status TEXT,
+    new_status TEXT,
+    source TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS framework_performance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    framework_name TEXT NOT NULL,
+    category TEXT,
+    observation_count INTEGER DEFAULT 0,
+    confirmed_count INTEGER DEFAULT 0,
+    invalidated_count INTEGER DEFAULT 0,
+    confirmation_rate REAL,
+    avg_confidence REAL,
+    total_alpha_pct REAL,
+    last_observation_date TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS reproducibility_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    filing_sources TEXT,
+    earnings_call_sources TEXT,
+    financial_inputs TEXT,
+    calculations_used TEXT,
+    model_version TEXT,
+    agent_version TEXT,
+    data_signature TEXT,
+    logged_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS memo_evolution (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER REFERENCES companies(id),
@@ -754,6 +795,20 @@ VALIDATION_MIGRATIONS = [
     "ALTER TABLE observation_memory ADD COLUMN validated_by TEXT DEFAULT 'auto_engine'",
 ]
 
+REPRODUCIBILITY_MIGRATIONS = [
+    "ALTER TABLE observation_memory ADD COLUMN model_version TEXT DEFAULT '1.0'",
+    "ALTER TABLE observation_memory ADD COLUMN agent_version TEXT DEFAULT 'analyst-1.0'",
+    "ALTER TABLE observation_memory ADD COLUMN data_sources TEXT DEFAULT '[]'",
+    "ALTER TABLE observation_memory ADD COLUMN filings_used TEXT DEFAULT '[]'",
+    "ALTER TABLE observation_memory ADD COLUMN calculations_used TEXT DEFAULT ''",
+]
+
+EVIDENCE_TIMELINE_MIGRATIONS = [
+    "ALTER TABLE observation_memory ADD COLUMN expected_outcome TEXT DEFAULT ''",
+    "ALTER TABLE observation_memory ADD COLUMN actual_outcome TEXT DEFAULT ''",
+    "ALTER TABLE observation_memory ADD COLUMN is_immutable INTEGER DEFAULT 0",
+]
+
 
 def init_validation_tables():
     """Initialize validation tracking tables and migrate observation_memory."""
@@ -771,4 +826,21 @@ def init_shadow_portfolio_tables():
     """Initialize shadow portfolio and credibility evidence tables."""
     with sqlite3.connect(str(RESEARCH_DB)) as conn:
         conn.executescript(SHADOW_PORTFOLIO_TABLES_SQL)
+        conn.commit()
+
+
+def init_evidence_tables():
+    """Initialize evidence timeline, framework performance, reproducibility tables with migrations."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
+        for migration in REPRODUCIBILITY_MIGRATIONS:
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                pass
+        for migration in EVIDENCE_TIMELINE_MIGRATIONS:
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                pass
         conn.commit()
