@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-06-16T12:48:43.099224",
+  "score": 7.8,
+  "passed": 68,
+  "failed": 0,
+  "warned": 19,
+  "critical_issues": 0,
+  "findings": [
+    "[NOTE] Table 'edge_discovery_framework' has data",
+    "[NOTE] Table 'edge_scorecard' has data",
+    "[NOTE] Table 'filings' has data",
+    "[NOTE] Table 'institutional_scores' has data",
+    "[NOTE] Table 'observations' has data",
+    "[NOTE] Table 'portfolio_positions' has data",
+    "[NOTE] Table 'portfolio_scores' has data",
+    "[NOTE] Table 'portfolio_stress_results' has data",
+    "[NOTE] Table 'portfolios' has data",
+    "[NOTE] Table 'shadow_portfolio' has data",
+    "[NOTE] Table 'shadow_trades' has data",
+    "[NOTE] Table 'theses' has data",
+    "[NOTE] Table 'thesis_checks' has data",
+    "[NOTE] Table 'thesis_evolution' has data",
+    "[NOTE] Table 'thesis_scorecard' has data",
+    "[NOTE] Table 'watchlist' has data",
+    "[WARN] prediction_ledger table (Flask runtime) exists",
+    "[WARN] veto_archive table (Flask runtime) exists",
+    "[NOTE] Edge score records exist (actual: 0)"
+  ],
+  "recommendations": [
+    "[LOW] prediction_ledger table is created by Flask at runtime. Start the app to create it."
+  ],
+  "readiness_checks": {
+    "Evidence engine with timeline": true,
+    "Validation coverage tracked": true,
+    "Calibration system active": true,
+    "Failure ledgers maintained": true,
+    "Reproducibility logging": true,
+    "Immutable observation flag": true,
+    "SHA-256 proof hashes": true,
+    "System health dashboard": true,
+    "Audit trail page": true,
+    "Calibration page": true
+  }
+}
