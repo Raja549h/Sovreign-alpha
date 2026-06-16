@@ -29,10 +29,11 @@ def seed_research_db():
     """Create research tables and seed Bajaj Finance data."""
     print("[seed] Initializing research.db...")
 
-    from research.storage.research_db import init_evolution_tables, init_validation_tables, init_evolution_quality_tables
+    from research.storage.research_db import init_evolution_tables, init_validation_tables, init_evolution_quality_tables, init_shadow_portfolio_tables
     init_evolution_tables()
     init_validation_tables()
     init_evolution_quality_tables()
+    init_shadow_portfolio_tables()
 
     conn = sqlite3.connect(str(RESEARCH_DB))
     c = conn.cursor()
@@ -230,6 +231,30 @@ def seed_research_db():
                  expected, d30, d90, d180)
             )
         print("  [ok] 3 observations seeded into observation_memory")
+
+    # Coverage expansion: top NSE companies by liquidity
+    nse_coverage = [
+        ("RELIANCE", "Reliance Industries Limited", "Energy & Telecom"),
+        ("TCS", "Tata Consultancy Services Limited", "IT Services"),
+        ("HDFCBANK", "HDFC Bank Limited", "Banking"),
+        ("INFY", "Infosys Limited", "IT Services"),
+        ("ICICIBANK", "ICICI Bank Limited", "Banking"),
+        ("KOTAKBANK", "Kotak Mahindra Bank Limited", "Banking"),
+        ("SBIN", "State Bank of India", "Banking"),
+        ("BHARTIARTL", "Bharti Airtel Limited", "Telecom"),
+        ("ITC", "ITC Limited", "Consumer Goods"),
+        ("WIPRO", "Wipro Limited", "IT Services"),
+        ("HINDUNILVR", "Hindustan Unilever Limited", "Consumer Goods"),
+    ]
+    for ticker, name, sector in nse_coverage:
+        c.execute("""
+            INSERT OR IGNORE INTO companies
+            (ticker, company_name, exchange, sector)
+            VALUES (?, ?, ?, ?)
+        """, (ticker, name, "NSE", sector))
+        if c.rowcount > 0:
+            print(f"  [ok] Added {ticker} ({sector})")
+    conn.commit()
 
     # Research note
     c.execute("""
