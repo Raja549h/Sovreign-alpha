@@ -15,17 +15,13 @@
             <label>Avg Confidence</label>
             <div class="value">{{ (avg_confidence | default(0)) | pct }}</div>
         </div>
+        <div class="stat-box info">
+            <label>Total Predictions</label>
+            <div class="value">{{ ledgers_stats.total_predictions if ledgers_stats is defined else (ledger_stats.total_predictions | default(0)) }}</div>
+        </div>
         <div class="stat-box accent">
-            <label>Total Alpha</label>
-            <div class="value">${{ (total_alpha | default(0)) | round(0) | int }}</div>
-        </div>
-        <div class="stat-box warning">
-            <label>Performance Fees</label>
-            <div class="value warning">${{ (total_fees | default(0)) | round(0) | int }}</div>
-        </div>
-        <div class="stat-box {% if ledger_stats.success_rate and ledger_stats.success_rate < 50 %}danger{% else %}accent{% endif %}">
-            <label>Hit Rate</label>
-            <div class="value">{{ (ledger_stats.success_rate | default(0)) | round(1) }}%</div>
+            <label>Cleared</label>
+            <div class="value">{{ ledger_stats.cleared | default(0) }}</div>
         </div>
         <div class="stat-box info">
             <label>Veto Efficiency</label>
@@ -56,8 +52,8 @@
                 <div class="key-val"><span class="key">Risk Rejected</span><span class="val danger">{{ ledger_stats.risk_rejected | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Total Vetoes</span><span class="val">{{ ledger_stats.total_vetoes | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Correct Vetoes</span><span class="val">{{ ledger_stats.veto_correct_count | default(0) }}</span></div>
-                <div class="key-val"><span class="key">Avoided Drawdown</span><span class="val accent">${{ (ledger_stats.total_avoided_drawdown | default(0)) | round(0) | int }}</span></div>
                 <div class="key-val"><span class="key">Outcome Fill Rate</span><span class="val">{{ (ledger_stats.outcome_fill_rate | default(0)) | round(1) }}%</span></div>
+                <div class="key-val"><span class="key">Resolved Outcomes</span><span class="val">{{ ledger_stats.resolved_count | default(0) }}</span></div>
             </div>
         </div>
     </div>

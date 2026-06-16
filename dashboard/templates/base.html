@@ -505,24 +505,21 @@
         <div class="nav-brand">SOV ALPHA</div>
         <div class="nav-links">
             <a href="/" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
-            <a href="/decisions" class="{% if request.path == '/decisions' %}active{% endif %}">Decisions</a>
+            <a href="/system-health" class="{% if request.path == '/system-health' %}active{% endif %}">Health</a>
+            <a href="/evidence" class="{% if request.path == '/evidence' %}active{% endif %}">Evidence</a>
+            <a href="/audit" class="{% if request.path == '/audit' %}active{% endif %}">Audit</a>
+            <a href="/calibration" class="{% if request.path == '/calibration' %}active{% endif %}">Calibration</a>
             <a href="/predictions" class="{% if request.path == '/predictions' %}active{% endif %}">Predictions</a>
-            <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Veto Archive</a>
+            <a href="/failure-ledger" class="{% if request.path == '/failure-ledger' %}active{% endif %}">Graveyard</a>
+            <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Vetoes</a>
             <a href="/proofs" class="{% if request.path == '/proofs' %}active{% endif %}">Proofs</a>
-            <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Performance</a>
+            <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
-            <a href="/research/generate" class="{% if request.path == '/research/generate' or request.path.startswith('/research/report/') %}active{% endif %}">Deep Research</a>
             <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
             <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a>
-            <a href="/watchlist" class="{% if request.path == '/watchlist' %}active{% endif %}">Watchlist</a>
-            <a href="/evidence" class="{% if request.path == '/evidence' %}active{% endif %}">Evidence</a>
             <a href="/edge" class="{% if request.path == '/edge' %}active{% endif %}">Edge</a>
-            <a href="/autopsy" class="{% if request.path == '/autopsy' %}active{% endif %}">Autopsy</a>
             <a href="/challenge" class="{% if request.path == '/challenge' %}active{% endif %}">Challenge</a>
-            <a href="/failure-ledger" class="{% if request.path == '/failure-ledger' %}active{% endif %}">Failures</a>
-            <a href="/edge-discovery" class="{% if request.path == '/edge-discovery' %}active{% endif %}">Discover</a>
             <a href="/research-quality" class="{% if request.path == '/research-quality' %}active{% endif %}">Quality</a>
-            <a href="/upload" class="{% if request.path == '/upload' %}active{% endif %}">Upload</a>
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}

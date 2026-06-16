@@ -119,6 +119,44 @@ class AutopsyEngine:
                 'avg_research_quality_score': round(stats.get('avg_rqs') or 0, 4),
             }
 
+    def calculate_evidence_score(self, observation_id: int) -> Dict:
+        with _get_db() as conn:
+            c = conn.cursor()
+            c.execute("""SELECT signal_strength, novelty_score, actionability_score,
+                              falsifiability_score, relevance_score
+                         FROM observation_autopsy
+                         WHERE observation_id = ?
+                         ORDER BY id DESC LIMIT 1""", (observation_id,))
+            row = c.fetchone()
+            if not row:
+                return {
+                    'observation_id': observation_id,
+                    'signal_strength': 0.0,
+                    'novelty': 0.0,
+                    'actionability': 0.0,
+                    'falsifiability': 0.0,
+                    'relevance': 0.0,
+                    'evidence_score': 0.0,
+                    'status': 'INSUFFICIENT_DATA',
+                }
+            signal = float(row['signal_strength'])
+            novelty = float(row['novelty_score'])
+            actionability = float(row['actionability_score'])
+            falsifiability = float(row['falsifiability_score'])
+            relevance = float(row['relevance_score'])
+            weighted = (signal * 0.30 + novelty * 0.15 + actionability * 0.20 + falsifiability * 0.15 + relevance * 0.20)
+            evidence_score = round(weighted * 100, 2)
+            return {
+                'observation_id': observation_id,
+                'signal_strength': round(signal, 4),
+                'novelty': round(novelty, 4),
+                'actionability': round(actionability, 4),
+                'falsifiability': round(falsifiability, 4),
+                'relevance': round(relevance, 4),
+                'evidence_score': evidence_score,
+                'status': 'SUFFICIENT',
+            }
+
 
 class ReasoningAudit:
     """Phase 3: Record contributing factors for confirmed observations."""

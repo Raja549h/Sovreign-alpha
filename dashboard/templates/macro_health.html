@@ -14,6 +14,12 @@
 
     <div class="indicators-grid" id="indicatorsGrid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:0.65rem;margin-bottom:1rem;"></div>
 
+    <div style="text-align:center;padding:1rem;display:none;" id="macro-error">
+        <div style="color:#ff4444;font-family:var(--font-mono);font-size:0.75rem;">
+            Macro indicators unavailable. Awaiting data refresh.
+        </div>
+    </div>
+
     <div class="panel" id="regimeImplicationPanel" style="display:none;">
         <div class="panel-header">
             <h2>Regime Implication</h2>
@@ -30,21 +36,23 @@ function loadMacroHealth() {
     const compositeBox = document.getElementById('compositeBox');
     const implicationPanel = document.getElementById('regimeImplicationPanel');
     const implicationText = document.getElementById('regimeImplication');
+    const errorBox = document.getElementById('macro-error');
 
     fetch('/api/macro/macro-health')
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (!data.success) throw new Error(data.error || 'API error');
-            const report = data.report;
-            const indicators = report.indicators || [];
-            const score = report.composite_score || 0;
-            const implication = report.regime_implication || '';
-
-            document.getElementById('health-timestamp').textContent = report.calculated_at || new Date().toISOString().slice(0,19);
+            var report = data.report;
+            var indicators = Array.isArray(report.indicators) ? report.indicators : [];
+            var score = report.composite_score || 0;
+            var implication = report.regime_implication || '';
+            var ts = document.getElementById('health-timestamp');
+            ts.textContent = report.calculated_at || report.timestamp || new Date().toISOString().slice(0,19);
+            errorBox.style.display = 'none';
 
             compositeEl.textContent = score + ' / 100';
-            let color = '#ff4444';
-            let label = 'RED — Stress Conditions';
+            var color = '#ff4444';
+            var label = 'RED — Stress Conditions';
             if (score >= 70) { color = 'var(--accent)'; label = 'GREEN — Stable Macro Environment'; }
             else if (score >= 50) { color = 'var(--warning)'; label = 'AMBER — Moderate Risk Indicators'; }
             compositeBox.style.borderColor = color;
@@ -52,33 +60,45 @@ function loadMacroHealth() {
             compositeLabel.textContent = label;
             compositeLabel.style.color = color;
 
-            grid.innerHTML = indicators.map(ind => {
-                let statusColor = '#ff4444';
-                let statusLabel = 'RED';
+            grid.innerHTML = '';
+            if (indicators.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#555;font-family:var(--font-mono);font-size:0.75rem;">Macro indicators unavailable. Awaiting data refresh.</div>';
+                return;
+            }
+            for (var i = 0; i < indicators.length; i++) {
+                var ind = indicators[i];
+                if (!ind) continue;
+                var statusColor = '#ff4444';
+                var statusLabel = 'RED';
                 if (ind.status === 'GREEN') { statusColor = 'var(--accent)'; statusLabel = 'GREEN'; }
                 else if (ind.status === 'AMBER') { statusColor = 'var(--warning)'; statusLabel = 'AMBER'; }
-                const arrow = ind.direction === 'up' ? '▲' : ind.direction === 'down' ? '▼' : '—';
-                const arrowColor = ind.direction === 'up' ? 'var(--danger)' : ind.direction === 'down' ? 'var(--accent)' : '#555';
-                return '<div class="indicator-card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.75rem;border-left:3px solid ' + statusColor + ';">' +
+                var arrow = ind.direction === 'up' ? '▲' : ind.direction === 'down' ? '▼' : '—';
+                var arrowColor = ind.direction === 'up' ? 'var(--danger)' : ind.direction === 'down' ? 'var(--accent)' : '#555';
+                var valDisplay = ind.value != null ? ind.value : '—';
+                var nameDisplay = (ind.name || ind.key || 'Indicator').replace(/_/g, ' ');
+                grid.innerHTML += '<div class="indicator-card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.75rem;border-left:3px solid ' + statusColor + ';">' +
                     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">' +
-                    '<span style="font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.5px;font-family:var(--font-mono);">' + escapeHtml(ind.name) + '</span>' +
+                    '<span style="font-size:0.65rem;color:#555;text-transform:uppercase;letter-spacing:0.5px;font-family:var(--font-mono);">' + escapeHtml(nameDisplay) + '</span>' +
                     '<span class="status-pill" style="font-size:0.6rem;color:' + statusColor + ';border:1px solid ' + statusColor + ';padding:0.1rem 0.4rem;font-family:var(--font-mono);">' + statusLabel + '</span>' +
                     '</div>' +
                     '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
-                    '<span style="font-size:1.3rem;font-weight:700;font-family:var(--font-mono);color:var(--text-primary);">' + escapeHtml(ind.value || '—') + '</span>' +
+                    '<span style="font-size:1.3rem;font-weight:700;font-family:var(--font-mono);color:var(--text-primary);">' + escapeHtml(String(valDisplay)) + '</span>' +
                     '<span style="font-size:0.9rem;color:' + arrowColor + ';">' + arrow + '</span>' +
                     '</div>' +
-                    '<div style="font-size:0.65rem;color:#666;margin-top:0.3rem;font-family:var(--font-mono);">' + escapeHtml(ind.observation || '') + '</div>' +
+                    '<div style="font-size:0.65rem;color:#666;margin-top:0.3rem;font-family:var(--font-mono);">' + escapeHtml(ind.observation || 'Score: ' + (ind.score || '—')) + '</div>' +
                     '</div>';
-            }).join('');
+            }
 
             if (implication) {
                 implicationPanel.style.display = 'block';
                 implicationText.textContent = implication;
             }
         })
-        .catch(err => {
-            grid.innerHTML = '<div class="panel-body padded" style="grid-column:1/-1;text-align:center;color:var(--danger);">Failed to load: ' + escapeHtml(err.message) + '</div>';
+        .catch(function(err) {
+            compositeEl.textContent = '-- / 100';
+            compositeLabel.textContent = 'Unable to load macro data';
+            errorBox.style.display = 'block';
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#555;font-family:var(--font-mono);font-size:0.75rem;">Macro indicators unavailable. Awaiting data refresh.</div>';
         });
 }
 

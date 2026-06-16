@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+{% set bucket_display = {'very_low': 'Very Low', 'low': 'Low', 'medium': 'Medium', 'high': 'High', 'very_high': 'Very High'} %}
+{% set bucket_midpoint = {'very_low': 0.15, 'low': 0.40, 'medium': 0.60, 'high': 0.80, 'very_high': 0.95} %}
+<div class="container">
+    <div class="page-header">
+        <h1>Calibration Dashboard</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);">Module 3 — Predicted vs Actual Confidence Tracking</span>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="empty-state">
+        <div style="color:var(--danger);margin-bottom:0.5rem;">⚠ ERROR</div>
+        <div style="font-size:0.7rem;font-family:var(--font-mono);color:#888;">{{ error }}</div>
+    </div>
+    {% elif calibration_summary.total_calibrated < 3 %}
+    <div style="background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2);padding:2rem;margin-bottom:1rem;text-align:center;">
+        <div style="font-size:1.2rem;font-weight:700;color:var(--warning);font-family:var(--font-mono);margin-bottom:0.5rem;">INSUFFICIENT DATA</div>
+        <div style="font-size:0.75rem;color:#888;font-family:var(--font-mono);">
+            Only {{ calibration_summary.total_calibrated }} calibration event(s) recorded. Minimum 3 required for calibration analysis.
+        </div>
+    </div>
+    {% else %}
+
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem;">
+        <div class="stat-box accent"><label>Total Calibrated</label><div class="value">{{ calibration_summary.total_calibrated }}</div></div>
+        <div class="stat-box info"><label>Mean Absolute Error</label><div class="value">{{ calibration_summary.mean_absolute_error }}</div></div>
+        <div class="stat-box warning"><label>Calibration Buckets</label><div class="value">{{ calibration_summary.by_bucket|length }}</div></div>
+    </div>
+
+    <h2 style="font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.5rem;">Calibration by Confidence Bucket</h2>
+    <div style="overflow-x:auto;margin-bottom:1.5rem;">
+        <table style="width:100%;font-family:var(--font-mono);font-size:0.65rem;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #1e1e1e;">
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Confidence Bucket</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Expected Success Rate</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Actual Success Rate</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Calibration Error</th>
+                    <th style="text-align:right;padding:0.4rem;color:#888;">Observations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in calibration_summary.by_bucket %}
+                {% set bucket_name = bucket_display.get(b.calibration_bucket, b.calibration_bucket) %}
+                {% set expected = bucket_midpoint.get(b.calibration_bucket, 0.5) %}
+                {% set actual = b.actual_success_rate|default(b.avg_abs_error) %}
+                {% set cal_error = (expected - actual)|abs %}
+                <tr style="border-bottom:1px solid #0d0d0d;">
+                    <td style="padding:0.4rem;color:var(--text-primary);font-weight:600;">{{ bucket_name }}</td>
+                    <td style="padding:0.4rem;text-align:center;color:#888;">{{ (expected * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#00ff9f;">{{ (actual * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#ffaa00;">{{ (cal_error * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:right;color:#888;">{{ b.cnt }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 style="font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:0.5rem;">
+        Calibration Records ({{ calibration_records|length }})
+    </h2>
+    <div style="overflow-x:auto;">
+        <table style="width:100%;font-family:var(--font-mono);font-size:0.65rem;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #1e1e1e;">
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Date</th>
+                    <th style="text-align:left;padding:0.4rem;color:#888;">Ticker</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Predicted</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Actual</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Error</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Bucket</th>
+                    <th style="text-align:center;padding:0.4rem;color:#888;">Adjusted</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in calibration_records %}
+                <tr style="border-bottom:1px solid #0d0d0d;">
+                    <td style="padding:0.4rem;color:#555;">{{ r.calibration_date[:10] if r.calibration_date else r.created_at[:10] }}</td>
+                    <td style="padding:0.4rem;color:#00ff9f;font-weight:600;">{{ r.ticker }}</td>
+                    <td style="padding:0.4rem;text-align:center;color:var(--text-primary);">{{ (r.predicted_confidence * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#888;">{{ (r.actual_outcome * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;{% if r.confidence_error > 0 %}color:#ff4444{% else %}color:#00ff9f{% endif %};">{{ (r.confidence_error * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#888;">{{ bucket_display.get(r.calibration_bucket, r.calibration_bucket) }}</td>
+                    <td style="padding:0.4rem;text-align:center;color:#3399ff;">{{ (r.adjusted_confidence * 100)|round(1) }}%</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:#555;">No calibration records available</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
