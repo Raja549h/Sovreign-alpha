@@ -2194,6 +2194,271 @@ def api_intelligence():
 
 
 # ============================================================
+# EVOLUTION QUALITY ROUTES — Phases 1,3,4,5,6,7,8
+# ============================================================
+
+@app.template_global()
+def status_badge(s):
+    if not s: return '<span style="color:#555;">—</span>'
+    colors = {'CONFIRMED':'var(--accent)','PARTIALLY_CONFIRMED':'var(--warning)','INVALIDATED':'var(--danger)','ACTIVE':'var(--info)','MONITORING':'#888'}
+    c = colors.get(s, '#888')
+    return f'<span style="color:{c};font-weight:600;">{s.replace("_"," ")}</span>'
+
+
+@app.route('/autopsy')
+@login_required
+def autopsy_page():
+    """Research autopsy overview — Phase 1 quality scores."""
+    try:
+        from research.evolution_quality import AutopsyEngine
+        ae = AutopsyEngine()
+        autopsies = ae.get_all_autopsies(limit=100)
+        quality_summary = ae.get_quality_summary()
+        return render_template('autopsy.html', autopsies=autopsies,
+                               quality_summary=quality_summary,
+                               status_badge=status_badge)
+    except Exception as e:
+        return render_template('autopsy.html', autopsies=[],
+                               quality_summary=None, error=str(e),
+                               status_badge=status_badge)
+
+
+@app.route('/api/autopsy')
+@login_required
+def api_autopsy():
+    try:
+        from research.evolution_quality import AutopsyEngine
+        ae = AutopsyEngine()
+        company_id = request.args.get('company_id', type=int)
+        autopsies = ae.get_all_autopsies(company_id=company_id, limit=100)
+        quality = ae.get_quality_summary()
+        return jsonify({'success': True, 'autopsies': autopsies, 'quality': quality})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/autopsy/create', methods=['POST'])
+@login_required
+@limiter.limit("30 per minute")
+def api_autopsy_create():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id'], ['signal_strength', 'novelty_score',
+             'actionability_score', 'falsifiability_score', 'relevance_score', 'notes'])
+        from research.evolution_quality import AutopsyEngine
+        ae = AutopsyEngine()
+        scores = {
+            'signal_strength': data.get('signal_strength', 0.5),
+            'novelty_score': data.get('novelty_score', 0.5),
+            'actionability_score': data.get('actionability_score', 0.5),
+            'falsifiability_score': data.get('falsifiability_score', 0.5),
+            'relevance_score': data.get('relevance_score', 0.5),
+        }
+        aid = ae.score_observation(data['observation_id'], scores, data.get('notes', ''))
+        return jsonify({'success': True, 'autopsy_id': aid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/autopsy/<int:observation_id>')
+@login_required
+def api_autopsy_detail(observation_id):
+    try:
+        from research.evolution_quality import AutopsyEngine
+        ae = AutopsyEngine()
+        autopsy = ae.get_autopsy(observation_id)
+        return jsonify({'success': True, 'autopsy': autopsy})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/challenge')
+@login_required
+def challenge_page():
+    try:
+        from research.evolution_quality import ChallengeEngine
+        ce = ChallengeEngine()
+        challenges = ce.get_challenges(limit=50)
+        stats = ce.get_challenge_stats()
+        return render_template('challenge.html', challenges=challenges,
+                               challenge_stats=stats)
+    except Exception as e:
+        return render_template('challenge.html', challenges=[],
+                               challenge_stats=None, error=str(e))
+
+
+@app.route('/api/challenge')
+@login_required
+def api_challenge():
+    try:
+        from research.evolution_quality import ChallengeEngine
+        ce = ChallengeEngine()
+        observation_id = request.args.get('observation_id', type=int)
+        challenges = ce.get_challenges(observation_id=observation_id, limit=50)
+        return jsonify({'success': True, 'challenges': challenges})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/challenge/create', methods=['POST'])
+@login_required
+@limiter.limit("20 per minute")
+def api_challenge_create():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id', 'bull_case', 'bear_case', 'counterargument'],
+            ['challenger_type'])
+        from research.evolution_quality import ChallengeEngine
+        ce = ChallengeEngine()
+        result = ce.create_challenge(
+            observation_id=data['observation_id'],
+            bull_case=data['bull_case'],
+            bear_case=data['bear_case'],
+            counterargument=data['counterargument'],
+            challenger_type=data.get('challenger_type', 'cio'),
+        )
+        return jsonify({'success': True, 'challenge': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/challenge/resolve', methods=['POST'])
+@login_required
+@limiter.limit("20 per minute")
+def api_challenge_resolve():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['challenge_id', 'passed'], ['outcome'])
+        from research.evolution_quality import ChallengeEngine
+        ce = ChallengeEngine()
+        ce.resolve_challenge(data['challenge_id'], bool(data['passed']), data.get('outcome', ''))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/edge-discovery')
+@login_required
+def edge_discovery_page():
+    try:
+        from research.evolution_quality import EdgeDiscovery
+        ed = EdgeDiscovery()
+        rankings = ed.get_rankings(min_observations=1)
+        return render_template('edge_discovery.html', edge_rankings=rankings)
+    except Exception as e:
+        return render_template('edge_discovery.html', edge_rankings=None, error=str(e))
+
+
+@app.route('/api/edge-discovery')
+@login_required
+def api_edge_discovery():
+    try:
+        from research.evolution_quality import EdgeDiscovery
+        ed = EdgeDiscovery()
+        min_obs = request.args.get('min_observations', 2, type=int)
+        rankings = ed.get_rankings(min_observations=min_obs)
+        return jsonify({'success': True, 'rankings': rankings})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/research-quality')
+@login_required
+def research_quality_page():
+    try:
+        from research.evolution_quality import ResearchQualityAggregator
+        rqa = ResearchQualityAggregator()
+        quality = rqa.get_unified_quality()
+        return render_template('research_quality.html', unified_quality=quality)
+    except Exception as e:
+        return render_template('research_quality.html', unified_quality=None, error=str(e))
+
+
+@app.route('/api/research-quality')
+@login_required
+def api_research_quality():
+    try:
+        from research.evolution_quality import ResearchQualityAggregator
+        rqa = ResearchQualityAggregator()
+        quality = rqa.get_unified_quality()
+        return jsonify({'success': True, 'quality': quality})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/edge-discovery/update', methods=['POST'])
+@login_required
+@limiter.limit("30 per minute")
+def api_edge_update():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['framework', 'metric', 'category', 'confirmed'], [])
+        from research.evolution_quality import EdgeDiscovery
+        ed = EdgeDiscovery()
+        ed.update_framework(data['framework'], data['metric'],
+                           data['category'], bool(data['confirmed']))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/confidence-calibrate', methods=['POST'])
+@login_required
+@limiter.limit("30 per minute")
+def api_confidence_calibrate():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id', 'actual_outcome'], [])
+        from research.evolution_quality import ConfidenceCalibrator
+        cc = ConfidenceCalibrator()
+        result = cc.record_outcome(data['observation_id'], float(data['actual_outcome']))
+        return jsonify({'success': True, 'calibration': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/failure-analysis')
+@login_required
+def api_failure_analysis():
+    try:
+        from research.evolution_quality import FailureAnalysis
+        fa = FailureAnalysis()
+        company_id = request.args.get('company_id', type=int)
+        failures = fa.get_failures(company_id=company_id, limit=50)
+        summary = fa.get_pattern_summary()
+        return jsonify({'success': True, 'failures': failures, 'summary': summary})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/failure-analysis/create', methods=['POST'])
+@login_required
+@limiter.limit("20 per minute")
+def api_failure_create():
+    try:
+        from dashboard.security import InputValidator
+        data = InputValidator.validate_request_body(request.get_json(),
+            ['observation_id', 'category'], ['root_cause', 'missed_signals',
+             'incorrect_assumption', 'lessons', 'severity'])
+        from research.evolution_quality import FailureAnalysis
+        fa = FailureAnalysis()
+        fid = fa.record_failure(data['observation_id'], data['category'],
+                                data.get('root_cause', ''),
+                                data.get('missed_signals', ''),
+                                data.get('incorrect_assumption', ''),
+                                data.get('lessons', ''),
+                                data.get('severity', 'medium'))
+        return jsonify({'success': True, 'failure_id': fid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ============================================================
 # RESEARCH ENGINE ROUTES
 # ============================================================
 
@@ -3243,6 +3508,12 @@ try:
     init_extended_tables()
 except Exception as e:
     print(f"Warning: Could not initialize extended tables: {e}")
+
+try:
+    from research.storage.research_db import init_evolution_quality_tables
+    init_evolution_quality_tables()
+except Exception as e:
+    print(f"Warning: Could not initialize evolution quality tables: {e}")
 
 try:
     from research.backfill_memory import backfill

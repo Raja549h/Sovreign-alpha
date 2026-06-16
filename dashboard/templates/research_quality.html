@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Research Quality Dashboard</h1>
+        <div class="actions">
+            <button class="btn" onclick="refreshQuality()">REFRESH</button>
+        </div>
+    </div>
+
+    {% set uq = unified_quality if unified_quality else {
+        'overall_quality_score': 0, 'avg_research_quality': 0,
+        'calibration_mae': 0, 'autopsy_coverage': 0, 'frameworks_tracked': 0,
+        'autopsy': {'total_autopsied': 0, 'avg_signal_strength': 0, 'avg_novelty': 0,
+                     'avg_actionability': 0, 'avg_falsifiability': 0, 'avg_relevance': 0,
+                     'avg_research_quality_score': 0},
+        'calibration': {'total_calibrated': 0, 'mean_absolute_error': 0, 'by_bucket': []},
+        'edge_rankings': {'total_frameworks': 0, 'rankings': [], 'by_category': []}
+    } %}
+
+    <div class="stats-row">
+        <div class="stat-box accent"><label>Overall Quality Score</label><div class="value" id="overallScore">{{ "%.2f"|format(uq.overall_quality_score) }}</div></div>
+        <div class="stat-box info"><label>Avg Research Quality</label><div class="value" id="avgRqs">{{ "%.2f"|format(uq.avg_research_quality) }}</div></div>
+        <div class="stat-box warning"><label>Calibration MAE</label><div class="value" id="calibMae">{{ "%.4f"|format(uq.calibration_mae) }}</div></div>
+        <div class="stat-box"><label>Coverage</label><div class="value" id="coverage">{{ "%.0f"|format(uq.autopsy_coverage * 100) }}%</div></div>
+        <div class="stat-box info"><label>Frameworks</label><div class="value" id="frameworks">{{ uq.frameworks_tracked }}</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:1rem;">
+        <div class="panel">
+            <div class="panel-header"><h2>Autopsy Summary</h2></div>
+            <div class="panel-body padded">
+                {% set a = uq.autopsy %}
+                <div class="key-val"><span class="key">Total Autopsied</span><span class="val">{{ a.total_autopsied }}</span></div>
+                <div class="key-val"><span class="key">Avg Signal Strength</span><span class="val">{{ "%.3f"|format(a.avg_signal_strength) }}</span></div>
+                <div class="key-val"><span class="key">Avg Novelty</span><span class="val">{{ "%.3f"|format(a.avg_novelty) }}</span></div>
+                <div class="key-val"><span class="key">Avg Actionability</span><span class="val">{{ "%.3f"|format(a.avg_actionability) }}</span></div>
+                <div class="key-val"><span class="key">Avg Falsifiability</span><span class="val">{{ "%.3f"|format(a.avg_falsifiability) }}</span></div>
+                <div class="key-val"><span class="key">Avg Relevance</span><span class="val">{{ "%.3f"|format(a.avg_relevance) }}</span></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header"><h2>Calibration by Bucket</h2></div>
+            <div class="panel-body padded">
+                {% if uq.calibration.by_bucket %}
+                {% for b in uq.calibration.by_bucket %}
+                <div class="key-val"><span class="key">{{ b.calibration_bucket }}</span><span class="val">{{ b.cnt }} obs, MAE: {{ "%.3f"|format(b.avg_abs_error or 0) }}</span></div>
+                {% endfor %}
+                {% else %}
+                <div style="color:#555;text-align:center;padding:1rem;">No calibration data yet.</div>
+                {% endif %}
+                <div class="key-val" style="margin-top:0.5rem;border-top:1px solid #333;padding-top:0.5rem;">
+                    <span class="key">Total Calibrated</span><span class="val accent">{{ uq.calibration.total_calibrated }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:1rem;">
+        <div class="panel-header"><h2>Framework Accuracy by Category</h2></div>
+        <div class="panel-body padded">
+            {% if uq.edge_rankings.by_category %}
+            <div class="stats-row" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));">
+                {% for cat in uq.edge_rankings.by_category %}
+                <div class="stat-box" style="padding:0.5rem;"><label>{{ cat.category }}</label><div class="value" style="font-size:1.2rem;">{{ "%.0f"|format((cat.avg_acc or 0)*100) }}%</div><div class="sub">{{ cat.cnt }} frameworks</div></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="color:#555;text-align:center;padding:0.5rem;">No framework categories tracked yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshQuality() {
+    fetch('/api/research-quality')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.quality) {
+                const q = data.quality;
+                document.getElementById('overallScore').textContent = q.overall_quality_score != null ? q.overall_quality_score.toFixed(2) : '—';
+                document.getElementById('avgRqs').textContent = q.avg_research_quality != null ? q.avg_research_quality.toFixed(2) : '—';
+                document.getElementById('calibMae').textContent = q.calibration_mae != null ? q.calibration_mae.toFixed(4) : '—';
+                document.getElementById('coverage').textContent = q.autopsy_coverage != null ? (q.autopsy_coverage * 100).toFixed(0) + '%' : '—';
+                document.getElementById('frameworks').textContent = q.frameworks_tracked || '—';
+            }
+        }).catch(() => {});
+}
+refreshQuality();
+</script>
+{% endblock %}

@@ -290,6 +290,114 @@ def get_latest_scores(company_id: int) -> Optional[Dict]:
         return dict(row) if row else None
 
 
+EVOLUTION_QUALITY_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS observation_autopsy (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    signal_strength REAL,
+    novelty_score REAL,
+    actionability_score REAL,
+    falsifiability_score REAL,
+    relevance_score REAL,
+    research_quality_score REAL,
+    autopsy_notes TEXT,
+    performed_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS reasoning_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    validation_id INTEGER REFERENCES observation_validations(id),
+    contributing_factors TEXT,
+    primary_factor TEXT,
+    factor_weight REAL,
+    confidence_at_time REAL,
+    auditor_notes TEXT,
+    audited_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS failure_analysis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    invalidated_at TEXT,
+    failure_category TEXT,
+    root_cause TEXT,
+    missed_signals TEXT,
+    incorrect_assumption TEXT,
+    lessons_learned TEXT,
+    confidence_prior REAL,
+    confidence_posterior REAL,
+    severity TEXT,
+    analyzed_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS edge_discovery_framework (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    framework_name TEXT,
+    metric_name TEXT,
+    category TEXT,
+    total_observations INTEGER DEFAULT 0,
+    confirmed_count INTEGER DEFAULT 0,
+    invalidated_count INTEGER DEFAULT 0,
+    accuracy_rate REAL,
+    avg_confidence REAL,
+    predictive_value REAL,
+    rank_score REAL,
+    last_updated TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS confidence_calibration (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    predicted_confidence REAL,
+    actual_outcome REAL,
+    confidence_error REAL,
+    calibration_bucket TEXT,
+    adjusted_confidence REAL,
+    calibration_date TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS challenge_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
+    challenger_type TEXT,
+    bull_case TEXT,
+    bear_case TEXT,
+    counterargument TEXT,
+    challenge_outcome TEXT,
+    passed_challenge INTEGER DEFAULT 0,
+    observation_survived INTEGER DEFAULT 1,
+    challenged_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS memo_evolution (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id),
+    memo_reference TEXT,
+    memo_type TEXT,
+    prior_memo_reference TEXT,
+    quality_delta REAL,
+    new_insights_count INTEGER,
+    lessons_applied_count INTEGER,
+    lessons_ignored_count INTEGER,
+    overall_quality_score REAL,
+    generated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+
+def init_evolution_quality_tables():
+    """Initialize evolution quality tracking tables."""
+    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+        conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
+
+
 def get_notes(company_id: int = None) -> List[Dict]:
     """Get research notes, optionally filtered by company."""
     with get_connection() as conn:

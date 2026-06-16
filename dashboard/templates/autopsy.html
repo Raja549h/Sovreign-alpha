@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Research Autopsy</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);margin-right:1rem;" id="autopsy-updated"></span>
+        </div>
+    </div>
+
+    {% if observation %}
+    <div class="panel" style="margin-bottom:1rem;">
+        <div class="panel-header"><h2>Observation #{{ observation.id }}</h2></div>
+        <div class="panel-body padded">
+            <div class="key-val"><span class="key">Ticker</span><span class="val accent">{{ observation.ticker or '—' }}</span></div>
+            <div class="key-val"><span class="key">Category</span><span class="val">{{ observation.category or '—' }}</span></div>
+            <div class="key-val"><span class="key">Observation</span><span class="val" style="font-size:0.7rem;">{{ observation.observation_text or '—' }}</span></div>
+            <div class="key-val"><span class="key">Status</span><span class="val">{{ observation.validation_status or '—' }}</span></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="stats-row" id="quality-stats">
+        {% set q = quality_summary if quality_summary else {
+            'total_autopsied': 0, 'avg_signal_strength': 0, 'avg_novelty': 0,
+            'avg_actionability': 0, 'avg_falsifiability': 0, 'avg_relevance': 0,
+            'avg_research_quality_score': 0
+        } %}
+        <div class="stat-box info"><label>Total Autopsied</label><div class="value">{{ q.total_autopsied }}</div></div>
+        <div class="stat-box accent"><label>Avg RQS</label><div class="value">{{ "%.2f"|format(q.avg_research_quality_score) }}</div></div>
+        <div class="stat-box"><label>Signal</label><div class="value" style="font-size:1rem;">{{ "%.2f"|format(q.avg_signal_strength) }}</div></div>
+        <div class="stat-box"><label>Novelty</label><div class="value" style="font-size:1rem;">{{ "%.2f"|format(q.avg_novelty) }}</div></div>
+        <div class="stat-box"><label>Actionability</label><div class="value" style="font-size:1rem;">{{ "%.2f"|format(q.avg_actionability) }}</div></div>
+        <div class="stat-box"><label>Falsifiability</label><div class="value" style="font-size:1rem;">{{ "%.2f"|format(q.avg_falsifiability) }}</div></div>
+        <div class="stat-box"><label>Relevance</label><div class="value" style="font-size:1rem;">{{ "%.2f"|format(q.avg_relevance) }}</div></div>
+    </div>
+
+    <div style="margin:1rem 0 0.5rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Autopsy Records</h2>
+    </div>
+
+    <div class="table-wrapper" style="overflow-x:auto;border:1px solid #1e1e1e;">
+        <table class="data-table" style="width:100%;font-size:0.72rem;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#0a0a0a;border-bottom:1px solid #1e1e1e;">
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Ticker</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Category</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Signal</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Novelty</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Actionable</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Falsifiable</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Relevance</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">RQS</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Status</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Date</th>
+                </tr>
+            </thead>
+            <tbody id="autopsy-body">
+                {% if autopsies %}
+                {% for a in autopsies %}
+                <tr style="border-bottom:1px solid #1a1a1a;">
+                    <td style="padding:0.4rem 0.5rem;"><strong>{{ a.ticker or '' }}</strong></td>
+                    <td style="padding:0.4rem 0.5rem;color:#888;">{{ a.category or '' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ "%.2f"|format(a.signal_strength) if a.signal_strength is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ "%.2f"|format(a.novelty_score) if a.novelty_score is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ "%.2f"|format(a.actionability_score) if a.actionability_score is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ "%.2f"|format(a.falsifiability_score) if a.falsifiability_score is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ "%.2f"|format(a.relevance_score) if a.relevance_score is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;font-weight:600;color:var(--accent);">{{ "%.2f"|format(a.research_quality_score) if a.research_quality_score is not none else '—' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ status_badge(a.validation_status) | safe if status_badge is defined else a.validation_status }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#555;font-family:var(--font-mono);font-size:0.65rem;">{{ (a.performed_at or '')[:10] }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr><td colspan="10" style="padding:2rem;text-align:center;color:#555;">No autopsy records yet. Score observations via API to generate quality metrics.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function refreshAutopsy() {
+    fetch('/api/autopsy')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.quality) {
+                const q = data.quality;
+                document.getElementById('autopsy-updated').textContent = 'REFRESHED: ' + new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata',hour12:false}) + ' IST';
+            }
+        }).catch(() => {});
+}
+refreshAutopsy();
+</script>
+{% endblock %}

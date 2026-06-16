@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Edge Discovery — Framework Rankings</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);" id="disc-updated"></span>
+        </div>
+    </div>
+
+    {% set rankings = edge_rankings if edge_rankings else {'total_frameworks':0,'rankings':[],'by_category':[]} %}
+
+    <div class="stats-row">
+        <div class="stat-box info"><label>Frameworks Tracked</label><div class="value">{{ rankings.total_frameworks }}</div></div>
+        <div class="stat-box accent"><label>Categories</label><div class="value">{{ rankings.by_category|length }}</div></div>
+    </div>
+
+    {% if rankings.by_category %}
+    <div class="stats-row" style="grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));">
+        {% for cat in rankings.by_category %}
+        <div class="stat-box"><label>{{ cat.category or 'unknown' }}</label><div class="value" style="font-size:1rem;">{{ "%.0f"|format((cat.avg_acc or 0)*100) }}%</div><div class="sub">{{ cat.cnt }} frameworks</div></div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="table-wrapper" style="overflow-x:auto;border:1px solid #1e1e1e;margin-top:0.5rem;">
+        <table class="data-table" style="width:100%;font-size:0.72rem;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#0a0a0a;border-bottom:1px solid #1e1e1e;">
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Framework</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Metric</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Category</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Total</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Confirmed</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Invalidated</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Accuracy</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Rank</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if rankings.rankings %}
+                {% for f in rankings.rankings %}
+                <tr style="border-bottom:1px solid #1a1a1a;">
+                    <td style="padding:0.4rem 0.5rem;font-weight:600;">{{ f.framework_name or '' }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#888;">{{ f.metric_name or '' }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#888;">{{ f.category or '' }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ f.total_observations }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:var(--accent);">{{ f.confirmed_count }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:var(--danger);">{{ f.invalidated_count }}</td>
+                    <td style="padding:0.4rem 0.5rem;font-weight:600;color:var(--accent);">{{ "%.0f"|format((f.accuracy_rate or 0)*100) }}%</td>
+                    <td style="padding:0.4rem 0.5rem;color:#555;">#{{ loop.index }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr><td colspan="8" style="padding:2rem;text-align:center;color:#555;">No framework rankings yet. Observations must be validated to generate edge discovery data.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

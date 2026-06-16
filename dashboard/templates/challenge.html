@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>CIO Challenge Mode</h1>
+        <div class="actions">
+            <span style="font-size:0.6rem;color:#555;font-family:var(--font-mono);margin-right:1rem;" id="challenge-updated"></span>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        {% set cs = challenge_stats if challenge_stats else {'total_challenges':0,'passed':0,'observation_survived':0,'pass_rate':0} %}
+        <div class="stat-box info"><label>Total Challenges</label><div class="value">{{ cs.total_challenges }}</div></div>
+        <div class="stat-box accent"><label>Pass Rate</label><div class="value">{{ cs.pass_rate }}%</div></div>
+        <div class="stat-box accent"><label>Observations Survived</label><div class="value">{{ cs.observation_survived }}</div></div>
+    </div>
+
+    <div class="table-wrapper" style="overflow-x:auto;border:1px solid #1e1e1e;">
+        <table class="data-table" style="width:100%;font-size:0.72rem;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#0a0a0a;border-bottom:1px solid #1e1e1e;">
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Ticker</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Category</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Observation</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Bull Case</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Bear Case</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Counterargument</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Passed</th>
+                    <th style="padding:0.5rem;text-align:left;color:#555;text-transform:uppercase;">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if challenges %}
+                {% for c in challenges %}
+                <tr style="border-bottom:1px solid #1a1a1a;">
+                    <td style="padding:0.4rem 0.5rem;"><strong>{{ c.ticker or '' }}</strong></td>
+                    <td style="padding:0.4rem 0.5rem;color:#888;">{{ c.category or '' }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#aaa;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ c.observation_text or '' }}">{{ (c.observation_text or '')[:60] }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:var(--accent);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ c.bull_case or '' }}">{{ (c.bull_case or '')[:50] }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:var(--danger);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ c.bear_case or '' }}">{{ (c.bear_case or '')[:50] }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#bbb;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ c.counterargument or '' }}">{{ (c.counterargument or '')[:50] }}</td>
+                    <td style="padding:0.4rem 0.5rem;">{{ 'YES' if c.passed_challenge else 'NO' if c.passed_challenge == 0 and c.challenge_outcome != 'pending' else 'PENDING' }}</td>
+                    <td style="padding:0.4rem 0.5rem;color:#555;font-family:var(--font-mono);font-size:0.65rem;">{{ (c.challenged_at or '')[:10] }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr><td colspan="8" style="padding:2rem;text-align:center;color:#555;">No challenges recorded. Challenge observations via API before publishing.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
