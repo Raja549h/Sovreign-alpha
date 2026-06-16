@@ -29,9 +29,10 @@ def seed_research_db():
     """Create research tables and seed Bajaj Finance data."""
     print("[seed] Initializing research.db...")
 
-    from research.storage.research_db import init_evolution_tables, init_validation_tables
+    from research.storage.research_db import init_evolution_tables, init_validation_tables, init_evolution_quality_tables
     init_evolution_tables()
     init_validation_tables()
+    init_evolution_quality_tables()
 
     conn = sqlite3.connect(str(RESEARCH_DB))
     c = conn.cursor()

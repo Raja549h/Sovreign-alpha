@@ -114,10 +114,79 @@ class ObservationRegistry:
                  method, evidence, reasoning,
                  accuracy.get(new_status, 0.0))
             )
+            validation_id = c.lastrowid
             conn.commit()
 
         self.calculate_edge_score(prior.get('company_id'))
+
+        # Auto-trigger evolution quality integrations
+        try:
+            self._trigger_evolution_quality(observation_id, prior, new_status, validation_id, method)
+        except Exception:
+            pass
+
         return True
+
+    def _trigger_evolution_quality(self, observation_id: int, prior: Dict,
+                                    new_status: str, validation_id: int,
+                                    validation_method: str = 'auto') -> None:
+        """Auto-create autopsy, edge discovery, calibration on validation change."""
+        category = prior.get('category', 'unknown')
+        confidence = prior.get('confidence', 0.5)
+
+        # Phase 1: Auto-autopsy with sensible default scores
+        from research.evolution_quality import AutopsyEngine
+        ae = AutopsyEngine()
+
+        status_signal_map = {
+            'CONFIRMED': 0.85, 'PARTIALLY_CONFIRMED': 0.65,
+            'INVALIDATED': 0.3, 'MONITORING': 0.5, 'ACTIVE': 0.5,
+        }
+        signal = status_signal_map.get(new_status, 0.5)
+        ae.score_observation(observation_id, {
+            'signal_strength': signal,
+            'novelty_score': 0.5,
+            'actionability_score': 0.6 if new_status in ('CONFIRMED', 'PARTIALLY_CONFIRMED') else 0.3,
+            'falsifiability_score': 0.7,
+            'relevance_score': signal,
+        }, notes=f"Auto-scored on {new_status} validation")
+
+        # Phase 5: Update edge discovery framework
+        from research.evolution_quality import EdgeDiscovery
+        ed = EdgeDiscovery()
+        confirmed = new_status in ('CONFIRMED', 'PARTIALLY_CONFIRMED')
+        ed.update_framework('observation_validation', category, category, confirmed)
+
+        # Phase 6: Confidence calibration
+        from research.evolution_quality import ConfidenceCalibrator
+        cc = ConfidenceCalibrator()
+        actual_map = {'CONFIRMED': 1.0, 'PARTIALLY_CONFIRMED': 0.5,
+                      'INVALIDATED': 0.0, 'MONITORING': 0.0, 'ACTIVE': 0.5}
+        actual = actual_map.get(new_status, 0.5)
+        cc.record_outcome(observation_id, actual)
+
+        # Phase 3: Reasoning audit for confirmed observations
+        if new_status in ('CONFIRMED', 'PARTIALLY_CONFIRMED'):
+            from research.evolution_quality import ReasoningAudit
+            ra = ReasoningAudit()
+            try:
+                ra.record_factors(validation_id, [category, validation_method],
+                                  primary_factor=category, weight=confidence)
+            except Exception:
+                pass
+
+        # Phase 4: Failure analysis for invalidated observations
+        if new_status == 'INVALIDATED':
+            from research.evolution_quality import FailureAnalysis
+            fa = FailureAnalysis()
+            try:
+                fa.record_failure(observation_id, 'incorrect_assumption',
+                                  root_cause=evidence[:500] if evidence else "Validation failed",
+                                  missed_signals=reasoning[:500] if reasoning else "",
+                                  lessons=f"Observation {observation_id} invalidated via {method}",
+                                  severity='high')
+            except Exception:
+                pass
 
     def get_registry(self,
                      company_id: int = None,
