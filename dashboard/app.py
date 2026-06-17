@@ -257,6 +257,7 @@ def init_fund_db():
             asset TEXT NOT NULL,
             sector TEXT,
             rejection_reason TEXT NOT NULL,
+            risk_score REAL,
             expected_loss_pct REAL,
             actual_outcome TEXT,
             actual_return_pct REAL,
@@ -275,8 +276,8 @@ init_fund_db()
 # Validation tables init moved to late-startup block after evolution_tables
 
 def get_db_connection():
-    """Get a database connection."""
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    """Get database connection to billing.db (prediction_ledger, veto_archive)."""
+    conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -562,172 +563,14 @@ def check_setup_progress() -> dict:
     }
 
 
-# Institutional sample data — always shown as reference
-SAMPLE_STATS = {
-    'aum': 2400000000,
-    'approval_rate': 62.5,
-    'total_decisions': 328,
-    'total_approved': 205,
-    'total_alpha': 47250000,
-    'total_fees': 5670000,
-    'proofs_verified': 205
-}
-
-SAMPLE_REGIME = {
-    'regime': 'NEUTRAL',
-    'confidence': '78%',
-    'summary': 'VIX 18.4 (neutral) | 10Y 4.60% (stable) | SPX above MA200',
-    'indicators': {'vix': 18.4, 'treasury_10y': 4.60, 'dxy': 99.3, 'hy_oas': 345}
-}
-
-SAMPLE_RECENT_DECISIONS = [
-    {'decision_id': 'SA-2026-0328', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.89, 'value': 4200000, 'sector': 'Technology', 'thesis': 'AI infrastructure capex cycle accelerating. Data center GPU demand structurally undersupplied through 2027.', 'regime': 'NEUTRAL', 'entry': 142.50, 'target': 168.00, 'stop': 128.00},
-    {'decision_id': 'SA-2026-0327', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.86, 'value': 3800000, 'sector': 'Healthcare', 'thesis': 'GLP-1 franchise expansion driving revenue acceleration. Mounjaro/Zepbound TAM exceeding consensus estimates.', 'regime': 'NEUTRAL', 'entry': 812.00, 'target': 920.00, 'stop': 740.00},
-    {'decision_id': 'SA-2026-0326', 'symbol': 'JPM', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.72, 'value': 0, 'sector': 'Financial', 'thesis': 'Net interest margin compression risk. Credit loss provisions expected to rise in H2.', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
-    {'decision_id': 'SA-2026-0325', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.81, 'value': 2900000, 'sector': 'Energy', 'thesis': 'OPEC+ supply discipline supporting price floor. FCF yield at 8.2% with disciplined capital allocation.', 'regime': 'NEUTRAL', 'entry': 112.30, 'target': 128.00, 'stop': 102.00},
-    {'decision_id': 'SA-2026-0324', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.84, 'value': 3100000, 'sector': 'Technology', 'thesis': 'Custom ASIC revenue inflection point. VMware integration synergies exceeding initial guidance.', 'regime': 'NEUTRAL', 'entry': 218.50, 'target': 255.00, 'stop': 198.00},
-]
-
-SAMPLE_ALL_DECISIONS = [
-    {'decision_id': 'SA-2026-0328', 'symbol': 'NVDA', 'action': 'BUY', 'status': 'approved', 'confidence': 0.89, 'potential_return': 4200000, 'zk_proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'timestamp': '2026-05-16T08:45:00Z', 'fee': 504000, 'regime': 'NEUTRAL', 'sector': 'Technology'},
-    {'decision_id': 'SA-2026-0327', 'symbol': 'LLY', 'action': 'BUY', 'status': 'approved', 'confidence': 0.86, 'potential_return': 3800000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'timestamp': '2026-05-16T08:45:00Z', 'fee': 456000, 'regime': 'NEUTRAL', 'sector': 'Healthcare'},
-    {'decision_id': 'SA-2026-0326', 'symbol': 'JPM', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.72, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'timestamp': '2026-05-15T08:45:00Z', 'fee': 0, 'regime': 'NEUTRAL', 'sector': 'Financial'},
-    {'decision_id': 'SA-2026-0325', 'symbol': 'XOM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.81, 'potential_return': 2900000, 'zk_proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'timestamp': '2026-05-15T08:45:00Z', 'fee': 348000, 'regime': 'NEUTRAL', 'sector': 'Energy'},
-    {'decision_id': 'SA-2026-0324', 'symbol': 'AVGO', 'action': 'BUY', 'status': 'approved', 'confidence': 0.84, 'potential_return': 3100000, 'zk_proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'timestamp': '2026-05-14T08:45:00Z', 'fee': 372000, 'regime': 'RISK_ON', 'sector': 'Technology'},
-    {'decision_id': 'SA-2026-0323', 'symbol': 'TSM', 'action': 'BUY', 'status': 'approved', 'confidence': 0.87, 'potential_return': 3500000, 'zk_proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'timestamp': '2026-05-14T08:45:00Z', 'fee': 420000, 'regime': 'RISK_ON', 'sector': 'Technology'},
-    {'decision_id': 'SA-2026-0322', 'symbol': 'META', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.68, 'potential_return': 0, 'zk_proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 0, 'regime': 'RISK_ON', 'sector': 'Technology'},
-    {'decision_id': 'SA-2026-0321', 'symbol': 'GS', 'action': 'BUY', 'status': 'approved', 'confidence': 0.79, 'potential_return': 2400000, 'zk_proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'timestamp': '2026-05-13T08:45:00Z', 'fee': 288000, 'regime': 'RISK_ON', 'sector': 'Financial'},
-    {'decision_id': 'SA-2026-0320', 'symbol': 'UNH', 'action': 'BUY', 'status': 'approved', 'confidence': 0.82, 'potential_return': 2700000, 'zk_proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'timestamp': '2026-05-12T08:45:00Z', 'fee': 324000, 'regime': 'NEUTRAL', 'sector': 'Healthcare'},
-    {'decision_id': 'SA-2026-0319', 'symbol': 'CVX', 'action': 'BUY', 'status': 'approved', 'confidence': 0.76, 'potential_return': 2100000, 'zk_proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'timestamp': '2026-05-12T08:45:00Z', 'fee': 252000, 'regime': 'NEUTRAL', 'sector': 'Energy'},
-    {'decision_id': 'SA-2026-0318', 'symbol': 'TSLA', 'action': 'SELL', 'status': 'vetoed', 'confidence': 0.64, 'potential_return': 0, 'zk_proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'timestamp': '2026-05-11T08:45:00Z', 'fee': 0, 'regime': 'NEUTRAL', 'sector': 'Consumer'},
-    {'decision_id': 'SA-2026-0317', 'symbol': 'AMZN', 'action': 'BUY', 'status': 'approved', 'confidence': 0.83, 'potential_return': 3300000, 'zk_proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'timestamp': '2026-05-11T08:45:00Z', 'fee': 396000, 'regime': 'RISK_ON', 'sector': 'Technology'},
-]
-
-SAMPLE_PROOFS = [
-    {'decision_id': 'SA-2026-0328', 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'proof_hash_full': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'timestamp': '2026-05-16T08:45:00Z', 'symbol': 'NVDA', 'action': 'BUY', 'confidence': 0.89, 'value': 4200000, 'verdict': 'VERIFIED', 'merkle_root': '0xabc123def456', 'regime': 'NEUTRAL'},
-    {'decision_id': 'SA-2026-0327', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'timestamp': '2026-05-16T08:45:00Z', 'symbol': 'LLY', 'action': 'BUY', 'confidence': 0.86, 'value': 3800000, 'verdict': 'VERIFIED', 'merkle_root': '0xabc123def456', 'regime': 'NEUTRAL'},
-    {'decision_id': 'SA-2026-0325', 'proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'proof_hash_full': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'timestamp': '2026-05-15T08:45:00Z', 'symbol': 'XOM', 'action': 'BUY', 'confidence': 0.81, 'value': 2900000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'NEUTRAL'},
-    {'decision_id': 'SA-2026-0324', 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'proof_hash_full': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'timestamp': '2026-05-14T08:45:00Z', 'symbol': 'AVGO', 'action': 'BUY', 'confidence': 0.84, 'value': 3100000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'RISK_ON'},
-    {'decision_id': 'SA-2026-0323', 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'proof_hash_full': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'timestamp': '2026-05-14T08:45:00Z', 'symbol': 'TSM', 'action': 'BUY', 'confidence': 0.87, 'value': 3500000, 'verdict': 'VERIFIED', 'merkle_root': '0xdef789abc012', 'regime': 'RISK_ON'},
-    {'decision_id': 'SA-2026-0321', 'proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'proof_hash_full': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'timestamp': '2026-05-13T08:45:00Z', 'symbol': 'GS', 'action': 'BUY', 'confidence': 0.79, 'value': 2400000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'RISK_ON'},
-    {'decision_id': 'SA-2026-0320', 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'proof_hash_full': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'timestamp': '2026-05-12T08:45:00Z', 'symbol': 'UNH', 'action': 'BUY', 'confidence': 0.82, 'value': 2700000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'NEUTRAL'},
-    {'decision_id': 'SA-2026-0319', 'proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'proof_hash_full': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'timestamp': '2026-05-12T08:45:00Z', 'symbol': 'CVX', 'action': 'BUY', 'confidence': 0.76, 'value': 2100000, 'verdict': 'VERIFIED', 'merkle_root': '0x123456789abc', 'regime': 'NEUTRAL'},
-    {'decision_id': 'SA-2026-0317', 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'proof_hash_full': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'timestamp': '2026-05-11T08:45:00Z', 'symbol': 'AMZN', 'action': 'BUY', 'confidence': 0.83, 'value': 3300000, 'verdict': 'VERIFIED', 'merkle_root': '0xfedcba987654', 'regime': 'RISK_ON'},
-]
-
-SAMPLE_PREDICTIONS = [
-    {'prediction_id': 'SA-2026-0328', 'timestamp': '2026-05-16T08:45:00Z', 'asset': 'NVDA', 'sector': 'Technology', 'thesis': 'AI infrastructure capex cycle accelerating. Data center GPU demand structurally undersupplied through 2027. H100/B200 backlog extending into 2027. Gross margins expanding on mix shift to accelerated computing.', 'confidence_score': 0.89, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b4a39283746501', 'regime': 'NEUTRAL', 'entry': 142.50, 'target': 168.00, 'stop': 128.00},
-    {'prediction_id': 'SA-2026-0327', 'timestamp': '2026-05-16T08:45:00Z', 'asset': 'LLY', 'sector': 'Healthcare', 'thesis': 'GLP-1 franchise expansion driving revenue acceleration. Mounjaro/Zepbound TAM exceeding consensus estimates. Manufacturing scale-up on track for 2026 supply targets.', 'confidence_score': 0.86, 'status': 'cleared', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a92837465102', 'regime': 'NEUTRAL', 'entry': 812.00, 'target': 920.00, 'stop': 740.00},
-    {'prediction_id': 'SA-2026-0326', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'JPM', 'sector': 'Financial', 'thesis': 'Net interest margin compression risk from rate cut cycle. Credit loss provisions expected to rise in H2 2026. Risk/reward unfavorable at current valuation.', 'confidence_score': 0.72, 'status': 'risk-rejected', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
-    {'prediction_id': 'SA-2026-0325', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'XOM', 'sector': 'Energy', 'thesis': 'OPEC+ supply discipline supporting price floor. FCF yield at 8.2% with disciplined capital allocation. Permian basin production growth offsetting global declines.', 'confidence_score': 0.81, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x1b0a6c5d7e9f1b3a5d7e2f8a4c6d9e1f8b7a3c20123456704', 'regime': 'NEUTRAL', 'entry': 112.30, 'target': 128.00, 'stop': 102.00},
-    {'prediction_id': 'SA-2026-0324', 'timestamp': '2026-05-14T08:45:00Z', 'asset': 'AVGO', 'sector': 'Technology', 'thesis': 'Custom ASIC revenue inflection point. VMware integration synergies exceeding initial guidance. AI networking demand driving custom silicon orders from hyperscalers.', 'confidence_score': 0.84, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456705', 'regime': 'RISK_ON', 'entry': 218.50, 'target': 255.00, 'stop': 198.00},
-    {'prediction_id': 'SA-2026-0323', 'timestamp': '2026-05-14T08:45:00Z', 'asset': 'TSM', 'sector': 'Technology', 'thesis': '2nm process leadership solidifying. Advanced packaging capacity expansion meeting AI chip demand. Pricing power intact with multi-year customer commitments.', 'confidence_score': 0.87, 'status': 'cleared', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456706', 'regime': 'RISK_ON', 'entry': 18.20, 'target': 22.00, 'stop': 16.50},
-    {'prediction_id': 'SA-2026-0322', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'META', 'sector': 'Technology', 'thesis': 'AI infrastructure spend outpacing revenue growth. Reality Labs losses widening. Ad revenue growth decelerating in core markets.', 'confidence_score': 0.68, 'status': 'risk-rejected', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'regime': 'RISK_ON', 'entry': 0, 'target': 0, 'stop': 0},
-    {'prediction_id': 'SA-2026-0321', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'GS', 'sector': 'Financial', 'thesis': 'Investment banking recovery gaining traction. M&A pipeline rebuilding as rate uncertainty subsides. Trading revenue momentum strong in fixed income.', 'confidence_score': 0.79, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x2c1b7d5e8f0a4c9b3d6e1f7a5c9d4b8e2f7a3c90123456708', 'regime': 'RISK_ON', 'entry': 548.00, 'target': 620.00, 'stop': 500.00},
-    {'prediction_id': 'SA-2026-0320', 'timestamp': '2026-05-12T08:45:00Z', 'asset': 'UNH', 'sector': 'Healthcare', 'thesis': 'Medicare Advantage enrollment growth stabilizing. Optum health services margin expansion. Medical loss ratio trending below guidance.', 'confidence_score': 0.82, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456709', 'regime': 'NEUTRAL', 'entry': 312.00, 'target': 355.00, 'stop': 285.00},
-    {'prediction_id': 'SA-2026-0319', 'timestamp': '2026-05-12T08:45:00Z', 'asset': 'CVX', 'sector': 'Energy', 'thesis': 'LNG export capacity expansion driving long-term demand. Permian acreage quality supporting low breakeven costs. Share buyback program accretive.', 'confidence_score': 0.76, 'status': 'cleared', 'expected_timeline_days': 60, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f00123456710', 'regime': 'NEUTRAL', 'entry': 158.00, 'target': 178.00, 'stop': 145.00},
-    {'prediction_id': 'SA-2026-0318', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'TSLA', 'sector': 'Consumer', 'thesis': 'Price war intensifying globally. Margin compression from aggressive discounting. EV competition increasing from legacy OEMs and Chinese manufacturers.', 'confidence_score': 0.64, 'status': 'risk-rejected', 'expected_timeline_days': 45, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'regime': 'NEUTRAL', 'entry': 0, 'target': 0, 'stop': 0},
-    {'prediction_id': 'SA-2026-0317', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'AMZN', 'sector': 'Technology', 'thesis': 'AWS reacceleration driven by AI workload migration. Retail margin improvement from automation investments. Advertising business scaling rapidly.', 'confidence_score': 0.83, 'status': 'cleared', 'expected_timeline_days': 30, 'actual_outcome': '', 'actual_return_pct': 0, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456712', 'regime': 'RISK_ON', 'entry': 218.00, 'target': 250.00, 'stop': 198.00},
-]
-
-SAMPLE_VETOES = [
-    {'veto_id': 'VETO-2026-0326', 'timestamp': '2026-05-15T08:45:00Z', 'asset': 'JPM', 'sector': 'Financial', 'rejection_reason': 'SELL signal inconsistent with RISK_ON regime. Net interest margin compression thesis valid but timing premature. Credit spreads stable at 345bps, no systemic stress indicators.', 'expected_loss_pct': -6.5, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456703', 'regime': 'NEUTRAL'},
-    {'veto_id': 'VETO-2026-0322', 'timestamp': '2026-05-13T08:45:00Z', 'asset': 'META', 'sector': 'Technology', 'rejection_reason': 'Confidence 68% below regime threshold 70%. AI capex concerns valid but offset by advertising revenue resilience and Reels monetization inflection.', 'expected_loss_pct': -8.5, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x0a9f5c4d6e8b0a2c4d6f8e1a3c5d7e9f2a8b4c10123456707', 'regime': 'RISK_ON'},
-    {'veto_id': 'VETO-2026-0318', 'timestamp': '2026-05-11T08:45:00Z', 'asset': 'TSLA', 'sector': 'Consumer', 'rejection_reason': 'Confidence 64% below minimum threshold. Price war thesis correct but R/R ratio 1.1 below 1.5 minimum. High volatility (beta 2.1) amplifies downside risk beyond acceptable parameters.', 'expected_loss_pct': -15.0, 'actual_outcome': '', 'actual_return_pct': 0, 'avoided_drawdown': 0, 'veto_correct': None, 'proof_hash': '0x3d2a8c6e9f1b5d7a0c4e2f6b8d9a5c3e7f2b8d60123456711', 'regime': 'NEUTRAL'},
-    {'veto_id': 'VETO-2026-0312', 'timestamp': '2026-05-08T08:45:00Z', 'asset': 'COIN', 'sector': 'Financial', 'rejection_reason': 'Crypto regulatory uncertainty unresolved. Business model dependent on market conditions. Risk-adjusted return insufficient. Volatility 85% exceeds portfolio parameters.', 'expected_loss_pct': -22.0, 'actual_outcome': 'correct', 'actual_return_pct': -18.5, 'avoided_drawdown': 3.5, 'veto_correct': True, 'proof_hash': '0x4e3b9d7f0c6a2b8e1d5f3a7c9b4e2f8d3c7b6a50123456715', 'regime': 'RISK_OFF'},
-    {'veto_id': 'VETO-2026-0305', 'timestamp': '2026-05-02T08:45:00Z', 'asset': 'RIVN', 'sector': 'Consumer', 'rejection_reason': 'Cash burn rate unsustainable. Production targets repeatedly missed. EV competition intensifying. Confidence 58% well below threshold.', 'expected_loss_pct': -28.0, 'actual_outcome': 'correct', 'actual_return_pct': -24.3, 'avoided_drawdown': 3.7, 'veto_correct': True, 'proof_hash': '0x5d4c0e8a9f7d3b6c2e8f1a5d9c4b7e3f2a8d6c10123456716', 'regime': 'RISK_OFF'},
-    {'veto_id': 'VETO-2026-0298', 'timestamp': '2026-04-25T08:45:00Z', 'asset': 'SNAP', 'sector': 'Technology', 'rejection_reason': 'User growth deceleration. AR investment timeline too long. Advertising market share loss to TikTok and Meta. Risk/reward unfavorable.', 'expected_loss_pct': -18.0, 'actual_outcome': 'correct', 'actual_return_pct': -14.2, 'avoided_drawdown': 3.8, 'veto_correct': True, 'proof_hash': '0x6c5e1d9b0e9f4a8c3d7b2e6f1a0c5d8e2b7f4c30123456717', 'regime': 'NEUTRAL'},
-    {'veto_id': 'VETO-2026-0290', 'timestamp': '2026-04-18T08:45:00Z', 'asset': 'BYND', 'sector': 'Consumer', 'rejection_reason': 'Category growth stalled. Retail distribution shrinking. Margin compression from input costs. No path to profitability visible.', 'expected_loss_pct': -32.0, 'actual_outcome': 'correct', 'actual_return_pct': -28.7, 'avoided_drawdown': 3.3, 'veto_correct': True, 'proof_hash': '0x7b6d2e8c1f0a3b5d9e4f2c6b8a1d5e7f3c2b1a90123456718', 'regime': 'RISK_OFF'},
-    {'veto_id': 'VETO-2026-0282', 'timestamp': '2026-04-10T08:45:00Z', 'asset': 'HOOD', 'sector': 'Financial', 'rejection_reason': 'Revenue concentration in crypto trading. Regulatory overhang unresolved. User engagement declining. Volatility exceeds portfolio beta limits.', 'expected_loss_pct': -20.0, 'actual_outcome': 'incorrect', 'actual_return_pct': 12.5, 'avoided_drawdown': 0, 'veto_correct': False, 'proof_hash': '0x8a7c3f9d2e1b4c6a8f5d3e2b1c4a9f8e7d6c5b40123456719', 'regime': 'RISK_ON'},
-]
-
-SAMPLE_PERFORMANCE = {
-    'total_sessions': 328,
-    'avg_confidence': 0.79,
-    'total_alpha': 47250000,
-    'total_fees': 5670000,
-    'confidence_history': {
-        'labels': ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
-        'values': [0.74, 0.76, 0.78, 0.81, 0.79, 0.82, 0.80, 0.83, 0.81, 0.79, 0.82, 0.80]
-    },
-    'sector_data': {
-        'labels': ['Technology', 'Healthcare', 'Financial', 'Energy', 'Consumer'],
-        'approved': [52, 28, 35, 42, 18],
-        'vetoed': [12, 8, 15, 6, 22]
-    },
-    'return_distribution': {
-        'labels': ['<$1M', '$1-2M', '$2-3M', '$3-4M', '$4M+'],
-        'values': [28, 45, 52, 38, 15]
-    }
-}
-
-SAMPLE_LEDGER_STATS = {
-    'total_predictions': 328,
-    'cleared': 205,
-    'risk_rejected': 123,
-    'with_outcome': 142,
-    'correct': 106,
-    'success_rate': 74.6,
-    'veto_efficiency': 71.4,
-    'total_vetoes': 123,
-    'veto_correct_count': 88,
-    'total_avoided_drawdown': 4250000,
-    'outcome_fill_rate': 43.3
-}
-
-SAMPLE_LIVE_MARKET = {
-    'tickers': {
-        'NVDA': {'price': 142.50, 'change_pct': 2.3, 'volume': 52000000, 'market_cap': 3500000000000, 'pe_ratio': 65.2, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'AAPL': {'price': 189.25, 'change_pct': 0.8, 'volume': 48000000, 'market_cap': 2900000000000, 'pe_ratio': 31.5, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'MSFT': {'price': 412.80, 'change_pct': 1.1, 'volume': 22000000, 'market_cap': 3100000000000, 'pe_ratio': 35.8, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'JPM': {'price': 235.40, 'change_pct': -0.5, 'volume': 8500000, 'market_cap': 680000000000, 'pe_ratio': 12.3, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'XOM': {'price': 112.30, 'change_pct': 0.4, 'volume': 15000000, 'market_cap': 450000000000, 'pe_ratio': 11.8, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'LLY': {'price': 812.60, 'change_pct': 1.8, 'volume': 3200000, 'market_cap': 770000000000, 'pe_ratio': 95.2, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'GOOGL': {'price': 175.20, 'change_pct': 0.6, 'volume': 25000000, 'market_cap': 2200000000000, 'pe_ratio': 26.4, 'fetched_at': '2026-05-17T13:00:00Z'},
-        'AMZN': {'price': 218.00, 'change_pct': 1.4, 'volume': 42000000, 'market_cap': 2300000000000, 'pe_ratio': 58.7, 'fetched_at': '2026-05-17T13:00:00Z'},
-    },
-    'fetched_at': '2026-05-17T13:00:00Z'
-}
-
-SAMPLE_SIGNALS = {
-    'oversold': [
-        {'symbol': 'INTC', 'reason': 'RSI 28 — oversold on semiconductor sector rotation'},
-        {'symbol': 'PFE', 'reason': 'RSI 29 — pharma sector underperformance creating entry opportunity'},
-    ],
-    'overbought': [
-        {'symbol': 'META', 'reason': 'RSI 74 — approaching overbought after 12% rally'},
-        {'symbol': 'CRM', 'reason': 'RSI 72 — extended above 50-day MA by 8%'},
-    ],
-    'unusual_volume': [
-        {'symbol': 'NVDA', 'reason': 'Volume 2.8x average — institutional accumulation detected'},
-        {'symbol': 'TSM', 'reason': 'Volume 2.1x average — options expiry positioning'},
-    ]
-}
-
-SAMPLE_COMPANIES = [
-    {'ticker': 'NVDA', 'company_name': 'NVIDIA Corporation', 'sector': 'Technology'},
-    {'ticker': 'LLY', 'company_name': 'Eli Lilly & Co.', 'sector': 'Healthcare'},
-    {'ticker': 'JPM', 'company_name': 'JPMorgan Chase & Co.', 'sector': 'Financial'},
-    {'ticker': 'XOM', 'company_name': 'ExxonMobil Corporation', 'sector': 'Energy'},
-    {'ticker': 'AVGO', 'company_name': 'Broadcom Inc.', 'sector': 'Technology'},
-    {'ticker': 'TSM', 'company_name': 'Taiwan Semiconductor', 'sector': 'Technology'},
-    {'ticker': 'UNH', 'company_name': 'UnitedHealth Group', 'sector': 'Healthcare'},
-]
-
-SAMPLE_NOTES = [
-    {'note_reference': 'SA-RES-2026-0428', 'title': 'NVIDIA — AI Infrastructure Capex Cycle Acceleration: H100/B200 Backlog Analysis and Revenue Sensitivity', 'generated_at': '2026-05-16T08:45:00Z'},
-    {'note_reference': 'SA-RES-2026-0427', 'title': 'LLY — GLP-1 Franchise Expansion: Market Sizing Competitor Response and Manufacturing Scale-Up Trajectory', 'generated_at': '2026-05-15T10:30:00Z'},
-    {'note_reference': 'SA-RES-2026-0426', 'title': 'XOM — LNG Export Capacity and FCF Yield Analysis Under OPEC+ Supply Scenarios', 'generated_at': '2026-05-14T14:00:00Z'},
-    {'note_reference': 'SA-RES-2026-0425', 'title': 'AVGO — Custom ASIC Revenue Inflection Point: Hyperscaler Design Win Analysis', 'generated_at': '2026-05-13T09:15:00Z'},
-]
 
 def is_demo_mode():
-    """Check if we should show demo data (no real outcomes yet)."""
+    """Check if the system has no real data yet."""
     try:
         ledger = calculate_ledger_stats()
         return ledger['with_outcome'] == 0 or ledger['total_predictions'] == 0
     except Exception:
-        return True
+        return False
 
 
 def get_db_data(query, params=None):
@@ -784,23 +627,6 @@ def get_decisions():
         LIMIT 100
     """
     return get_db_data(query)
-
-
-def get_recent_decisions(limit=5):
-    """Get recent decisions."""
-    query = """
-        SELECT 
-            decision_id,
-            symbol,
-            trade_action as action,
-            alpha_generated,
-            fee_calculated,
-            timestamp
-        FROM performance_log
-        ORDER BY timestamp DESC
-        LIMIT ?
-    """
-    return get_db_data(query, (limit,))
 
 
 def get_inference_stats():
@@ -912,13 +738,6 @@ def calculate_dashboard_stats():
         'proofs_verified': proofs_count,
         'last_verified': datetime.utcnow().strftime('%H:%M:%S')
     }
-
-
-def get_db_connection():
-    """Get database connection for billing.db."""
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 @app.template_filter('pct')
@@ -1034,18 +853,7 @@ def get_evidence_trust_data():
         }
 
 
-def get_recent_decisions(limit=10):
-    """Get recent decisions from performance_log."""
-    try:
-        conn = get_db_connection()
-        rows = conn.execute(
-            "SELECT * FROM performance_log ORDER BY timestamp DESC LIMIT ?",
-            (limit,)
-        ).fetchall()
-        conn.close()
-        return [dict(r) for r in rows]
-    except Exception:
-        return []
+
 
 
 @app.route('/')
@@ -1070,8 +878,8 @@ def index():
         trust = get_evidence_trust_data()
         stats = get_dashboard_stats()
         regime = get_regime_data() if not demo else {'regime': 'NEUTRAL', 'confidence': '78%'}
-        predictions_list = get_predictions(8) if not demo else SAMPLE_PREDICTIONS[:8]
-        veto_list = get_veto_archive(6) if not demo else SAMPLE_VETOES[:6]
+        predictions_list = get_predictions(8) if not demo else []
+        veto_list = get_veto_archive(6) if not demo else []
         progress = check_setup_progress() if not demo else {'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False}
 
         return render_template('index.html',
@@ -1129,9 +937,9 @@ def decisions():
         has_data = len(decisions_list) > 0
         
         if is_demo_mode() or not has_data:
-            decisions_list = SAMPLE_ALL_DECISIONS
-            has_data = True
-            stats = {'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328}
+            decisions_list = []
+            has_data = False
+            stats = {'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0}
         
         return render_template('decisions.html', 
                                decisions=decisions_list,
@@ -1140,9 +948,9 @@ def decisions():
                                is_demo=is_demo_mode())
     except Exception:
         return render_template('decisions.html',
-                               decisions=SAMPLE_ALL_DECISIONS,
-                               has_data=True,
-                               stats={'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328},
+                               decisions=[],
+                               has_data=False,
+                               stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
                                 is_demo=True)
 
 
@@ -1156,8 +964,8 @@ def predictions():
         demo = is_demo_mode()
         
         if demo:
-            predictions_list = SAMPLE_PREDICTIONS
-            ledger_stats = SAMPLE_LEDGER_STATS
+            predictions_list = []
+            ledger_stats = {}
         
         return render_template('predictions.html',
                                predictions=predictions_list,
@@ -1165,8 +973,8 @@ def predictions():
                                is_demo=demo)
     except Exception:
         return render_template('predictions.html',
-                               predictions=SAMPLE_PREDICTIONS,
-                               ledger_stats=SAMPLE_LEDGER_STATS,
+                               predictions=[],
+                               ledger_stats={},
                                is_demo=True)
 
 
@@ -1219,8 +1027,8 @@ def veto_archive():
         demo = is_demo_mode()
         
         if demo:
-            veto_list = SAMPLE_VETOES
-            ledger_stats = SAMPLE_LEDGER_STATS
+            veto_list = []
+            ledger_stats = {}
         
         return render_template('veto_archive.html',
                                vetoes=veto_list,
@@ -1228,8 +1036,8 @@ def veto_archive():
                                is_demo=demo)
     except Exception:
         return render_template('veto_archive.html',
-                               vetoes=SAMPLE_VETOES,
-                               ledger_stats=SAMPLE_LEDGER_STATS,
+                               vetoes=[],
+                               ledger_stats={},
                                is_demo=True)
 
 
@@ -1260,8 +1068,8 @@ def proofs():
         demo = is_demo_mode()
         
         if demo or not has_proofs:
-            formatted_proofs = SAMPLE_PROOFS
-            has_proofs = True
+            formatted_proofs = []
+            has_proofs = False
         
         return render_template('proofs.html', 
                                proofs=formatted_proofs,
@@ -1270,9 +1078,9 @@ def proofs():
                                is_demo=demo)
     except Exception:
         return render_template('proofs.html',
-                               proofs=SAMPLE_PROOFS,
-                               has_proofs=True,
-                               stats={'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328},
+                               proofs=[],
+                               has_proofs=False,
+                               stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
                                 is_demo=True)
 
 
@@ -1376,15 +1184,15 @@ def performance():
         
         if demo:
             return render_template('performance.html',
-                                 total_sessions=SAMPLE_PERFORMANCE['total_sessions'],
-                                 avg_confidence=SAMPLE_PERFORMANCE['avg_confidence'],
-                                 total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
-                                 total_fees=SAMPLE_PERFORMANCE['total_fees'],
-                                 confidence_history=json.dumps(SAMPLE_PERFORMANCE['confidence_history']),
-                                 sector_data=json.dumps(SAMPLE_PERFORMANCE['sector_data']),
-                                 return_distribution=json.dumps(SAMPLE_PERFORMANCE['return_distribution']),
-                                 stats={'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328},
-                                 ledger_stats=SAMPLE_LEDGER_STATS,
+                                 total_sessions=0,
+                                 avg_confidence=0,
+                                 total_alpha=0,
+                                 total_fees=0,
+                                 confidence_history=json.dumps({'labels': [], 'values': []}),
+                                 sector_data=json.dumps({'labels': [], 'approved': [], 'vetoed': []}),
+                                 return_distribution=json.dumps({'labels': [], 'values': []}),
+                                 stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
+                                 ledger_stats={},
                                  is_demo=True)
 
         decisions = get_decisions()
@@ -1428,8 +1236,8 @@ def performance():
         return render_template('performance.html',
                              total_sessions=total_sessions,
                              avg_confidence=avg_confidence,
-                             total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
-                             total_fees=SAMPLE_PERFORMANCE['total_fees'],
+                             total_alpha=0,
+                             total_fees=0,
                              confidence_history=json.dumps(confidence_history),
                              sector_data=json.dumps(sector_data),
                              return_distribution=json.dumps(return_distribution),
@@ -1438,15 +1246,15 @@ def performance():
                              is_demo=demo)
     except Exception:
         return render_template('performance.html',
-                             total_sessions=SAMPLE_PERFORMANCE['total_sessions'],
-                             avg_confidence=SAMPLE_PERFORMANCE['avg_confidence'],
-                             total_alpha=SAMPLE_PERFORMANCE['total_alpha'],
-                             total_fees=SAMPLE_PERFORMANCE['total_fees'],
-                             confidence_history=json.dumps(SAMPLE_PERFORMANCE['confidence_history']),
-                             sector_data=json.dumps(SAMPLE_PERFORMANCE['sector_data']),
-                             return_distribution=json.dumps(SAMPLE_PERFORMANCE['return_distribution']),
-                             stats={'approval_rate': 62.5, 'approved': 205, 'vetoed': 123, 'total_alpha': 47250000, 'total_fees': 5670000, 'total_decisions': 328},
-                             ledger_stats=SAMPLE_LEDGER_STATS,
+                             total_sessions=0,
+                             avg_confidence=0,
+                             total_alpha=0,
+                             total_fees=0,
+                             confidence_history=json.dumps({'labels': [], 'values': []}),
+                             sector_data=json.dumps({'labels': [], 'approved': [], 'vetoed': []}),
+                             return_distribution=json.dumps({'labels': [], 'values': []}),
+                             stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
+                             ledger_stats={},
                              is_demo=True)
 
 
@@ -1462,8 +1270,8 @@ def api_refresh():
         demo = is_demo_mode()
         
         if demo:
-            predictions = SAMPLE_PREDICTIONS[:8]
-            vetoes = SAMPLE_VETOES[:6]
+            predictions = []
+            vetoes = []
         
         return jsonify({
             'success': True,
@@ -1523,21 +1331,17 @@ def live_market():
         with open(DATA_DIR / "live_market_data.json", "r") as f:
             raw = json.load(f)
         market_data = normalize_market_data(raw)
-    except:
-        market_data = SAMPLE_LIVE_MARKET
+    except Exception:
+        market_data = {'tickers': {}, 'fetched_at': None}
     
     try:
         with open(DATA_DIR / "live_signals.json", "r") as f:
             signals = json.load(f)
-    except:
-        signals = SAMPLE_SIGNALS
+    except Exception:
+        signals = {}
     
     demo = is_demo_mode()
     has_data = len(market_data.get('tickers', {})) > 0
-    
-    if not has_data and demo:
-        market_data = SAMPLE_LIVE_MARKET
-        signals = SAMPLE_SIGNALS
     
     return render_template('live_market.html',
                        market_data=market_data,
@@ -1552,7 +1356,7 @@ def api_live_data():
     try:
         with open(DATA_DIR / "live_market_data.json", "r") as f:
             return jsonify(json.load(f))
-    except:
+    except Exception:
         return jsonify({"error": "No data available"})
 
 
@@ -1563,7 +1367,7 @@ def api_signals():
     try:
         with open(DATA_DIR / "live_signals.json", "r") as f:
             return jsonify(json.load(f))
-    except:
+    except Exception:
         return jsonify({"error": "No signals available"})
 
 
@@ -1741,7 +1545,7 @@ def upload_positions():
                 
                 print(f"Uploaded file columns: {list(df.columns)}")
                 break
-            except:
+            except Exception:
                 continue
         
         # If CSV failed, try Excel
@@ -1751,7 +1555,7 @@ def upload_positions():
                 df = pd.read_excel(io.BytesIO(content))
                 df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
                 print(f"Uploaded Excel file columns: {list(df.columns)}")
-            except:
+            except Exception:
                 return jsonify({'success': False, 'error': 'Invalid file format. Please upload CSV or Excel (.xlsx, .xls)'})
         
         # Define column aliases (case-insensitive matching)
@@ -1848,7 +1652,7 @@ def upload_params():
         try:
             float(max_position); float(max_sector); float(max_drawdown)
             float(min_confidence); float(benchmark); float(aum)
-        except:
+        except Exception:
             return jsonify({'success': False, 'error': 'All values must be numeric.'})
         
         save_fund_param('max_position_size_pct', max_position)
@@ -1875,12 +1679,12 @@ def upload_research():
         content = file.read()
         try:
             research_text = content.decode('utf-8')
-        except:
+        except Exception:
             try:
                 import io
                 content_str = io.BytesIO(content).read().decode('latin-1')
                 research_text = content_str[:10000]
-            except:
+            except Exception:
                 return jsonify({'success': False, 'error': 'Could not read file. Please upload .txt file.'})
     
     if not research_text.strip():
@@ -1976,7 +1780,7 @@ def api_run():
                 df = pd.read_csv(fund_positions.decode('utf-8'))
                 sample_csv = DATA_DIR / "sample_positions.csv"
                 df.to_csv(sample_csv, index=False)
-            except:
+            except Exception:
                 pass
         
         if fund_params:
@@ -2087,7 +1891,7 @@ def run_analysis_page():
                                recent_decisions=[],
                                progress=progress,
                                is_demo=False,
-                               session_user=session_user)
+                                session_user=session_user)
         
         fund_positions = get_fund_file('positions')
         fund_params = get_fund_params()
@@ -2098,7 +1902,7 @@ def run_analysis_page():
                 df = pd.read_csv(fund_positions.decode('utf-8'))
                 sample_csv = DATA_DIR / "sample_positions.csv"
                 df.to_csv(sample_csv, index=False)
-            except:
+            except Exception:
                 pass
         
         if fund_params:
@@ -3267,17 +3071,17 @@ def research_home():
                 heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': 0, 'severity': 'NONE', 'severity_label': 'No flags'})
         watchlist = get_watchlist_companies() if not demo else []
         if demo or (not companies and not notes):
-            companies = SAMPLE_COMPANIES
-            notes = SAMPLE_NOTES
-            total_flags = 3
+            companies = []
+            notes = []
+            total_flags = 0
         return render_template('research_home.html',
                              companies=companies, notes=notes[:10],
                              total_flags=total_flags, is_demo=demo,
                              heatmap=heatmap, watchlist_companies=watchlist)
     except Exception as e:
         return render_template('research_home.html',
-                             companies=SAMPLE_COMPANIES, notes=SAMPLE_NOTES,
-                             total_flags=3, error=str(e), is_demo=True)
+                             companies=[], notes=[],
+                             total_flags=0, error=str(e), is_demo=True)
 
 
 @app.route('/research/<ticker>')
@@ -3604,7 +3408,11 @@ def api_shadow_portfolio_close():
             return jsonify({'success': False, 'error': 'position not found'})
         entry_price = pos[4]
         return_pct = round((exit_price - entry_price) / entry_price * 100, 2)
-        benchmark_return_pct = 0.0
+        try:
+            fund_params = get_fund_params()
+            benchmark_return_pct = float(fund_params.get('benchmark_return_pct', 0.0))
+        except Exception:
+            benchmark_return_pct = 0.0
         alpha_pct = round(return_pct - benchmark_return_pct, 2)
         c.execute("""UPDATE shadow_portfolio SET
             exit_date = ?, exit_price = ?, return_pct = ?,
@@ -4089,37 +3897,42 @@ def seed_database_on_startup():
 
         c.execute("""
             CREATE TABLE IF NOT EXISTS prediction_ledger (
-                prediction_id TEXT PRIMARY KEY,
-                timestamp TEXT,
-                asset TEXT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prediction_id TEXT UNIQUE,
+                timestamp TEXT NOT NULL,
+                asset TEXT NOT NULL,
                 sector TEXT,
                 thesis TEXT,
                 confidence_score REAL,
-                status TEXT,
+                status TEXT NOT NULL,
                 expected_timeline_days INTEGER,
-                proof_hash TEXT,
-                created_at TEXT,
-                updated_at TEXT,
                 actual_outcome TEXT,
                 actual_return_pct REAL,
-                outcome_notes TEXT
+                outcome_notes TEXT,
+                proof_hash TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT
             )
         """)
 
         c.execute("""
             CREATE TABLE IF NOT EXISTS veto_archive (
-                veto_id TEXT PRIMARY KEY,
-                asset TEXT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                veto_id TEXT UNIQUE,
+                prediction_id TEXT,
+                timestamp TEXT NOT NULL,
+                asset TEXT NOT NULL,
                 sector TEXT,
-                rejection_reason TEXT,
+                rejection_reason TEXT NOT NULL,
                 risk_score REAL,
-                timestamp TEXT,
+                expected_loss_pct REAL,
                 actual_outcome TEXT,
                 actual_return_pct REAL,
-                expected_loss_pct REAL,
                 avoided_drawdown REAL,
-                veto_correct INTEGER,
-                notes TEXT
+                veto_correct BOOLEAN,
+                proof_hash TEXT,
+                notes TEXT,
+                created_at TEXT NOT NULL
             )
         """)
 
