@@ -148,7 +148,10 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 def _get_jwt_secret() -> str:
-    return JWT_SECRET or os.environ.get('SECRET_KEY', 'sovereign-alpha-fallback-secret-change-in-production')
+    secret = JWT_SECRET or os.environ.get('SECRET_KEY')
+    if not secret:
+        raise RuntimeError("JWT_SECRET or SECRET_KEY environment variable must be set in production")
+    return secret
 
 def create_session_token(fund_id: str) -> str:
     secret = _get_jwt_secret()

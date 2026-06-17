@@ -103,19 +103,36 @@ if RESEARCH_DB.exists():
     c2 = conn2.cursor()
     c2.execute("SELECT name FROM sqlite_master WHERE type='table'")
     all_tables = [r[0] for r in c2.fetchall()]
-    # prediction_ledger and veto_archive are created at Flask runtime, not at DB init
+    # prediction_ledger and veto_archive are created at Flask runtime (in billing.db)
     has_ledger = 'prediction_ledger' in all_tables
     has_veto = 'veto_archive' in all_tables
-    check("prediction_ledger table (Flask runtime) exists", has_ledger, "medium")
-    check("veto_archive table (Flask runtime) exists", has_veto, "medium")
+    # Also check billing.db (fund_data.db) where these tables are created at runtime
+    if FUND_DB.exists():
+        conn_fund = sqlite3.connect(str(FUND_DB))
+        cf = conn_fund.cursor()
+        cf.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        fund_tables = [r[0] for r in cf.fetchall()]
+        has_ledger = has_ledger or 'prediction_ledger' in fund_tables
+        has_veto = has_veto or 'veto_archive' in fund_tables
+        conn_fund.close()
+    check("prediction_ledger table (runtime) exists", has_ledger, "medium")
+    check("veto_archive table (runtime) exists", has_veto, "medium")
     if has_ledger:
-        c2.execute("PRAGMA table_info(prediction_ledger)")
-        cols = {r[1] for r in c2.fetchall()}
+        # Check schema in whichever DB has the table
+        if 'prediction_ledger' in all_tables:
+            pdb = RESEARCH_DB
+        else:
+            pdb = FUND_DB
+        conn_p = sqlite3.connect(str(pdb))
+        cp = conn_p.cursor()
+        cp.execute("PRAGMA table_info(prediction_ledger)")
+        cols = {r[1] for r in cp.fetchall()}
         check("prediction_ledger has 'actual_outcome' column", 'actual_outcome' in cols, "high")
-        check("prediction_ledger has 'confidence' column", 'confidence' in cols, "high")
+        check("prediction_ledger has 'confidence' column", 'confidence' in cols or 'confidence_score' in cols, "high")
         check("prediction_ledger has 'status' column", 'status' in cols, "high")
+        conn_p.close()
     if not has_ledger:
-        rec("prediction_ledger table is created by Flask at runtime. Start the app to create it.", "low")
+        rec("prediction_ledger table is created by Flask at runtime in billing.db. Start the app to create it.", "low")
     conn2.close()
 
 # --- 2. DATA INTEGRITY AUDIT ---

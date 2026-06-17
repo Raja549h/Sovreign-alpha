@@ -216,7 +216,7 @@ class ObservationRegistry:
             c.execute(query, params)
             return [dict(r) for r in c.fetchall()]
 
-    def calculate_edge_score(self, company_id: int = None) -> Dict:
+    def calculate_edge_score(self, company_id: int = None, min_validations: int = 5) -> Dict:
         with _get_db() as conn:
             c = conn.cursor()
 
@@ -245,7 +245,7 @@ class ObservationRegistry:
 
         resolved = confirmed + invalidated
         weighted = (confirmed * 1.0 + partial * 0.5 + invalidated * -1.0)
-        confidence_factor = min(avg_conf or 0.5, 1.0)
+        confidence_factor = min(avg_conf if avg_conf is not None else 0.5, 1.0)
 
         if resolved > 0:
             accuracy_rate = round(confirmed / resolved, 4)
@@ -254,7 +254,7 @@ class ObservationRegistry:
             accuracy_rate = 0.0
             weighted_accuracy = 0.0
 
-        has_validated_data = resolved > 0
+        has_validated_data = resolved > 0 and resolved >= min_validations
 
         coverage_factor = min(total / 10, 1.0) if has_validated_data else 0.0
 
