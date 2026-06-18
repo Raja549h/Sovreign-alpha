@@ -254,6 +254,14 @@ CREATE TABLE IF NOT EXISTS edge_scorecard (
     worst_categories TEXT,
     edge_score REAL
 );
+
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER REFERENCES companies(id) UNIQUE,
+    alert_threshold TEXT DEFAULT 'MEDIUM',
+    notes TEXT DEFAULT '',
+    added_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # ---------------------------------------------------------------------------
