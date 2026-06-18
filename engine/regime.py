@@ -165,10 +165,10 @@ class MarketRegimeEngine:
                         float(tn10_hist['Close'].iloc[-1] - tn10_hist['Close'].iloc[-20]), 3
                     )
 
-            tn2 = yf.Ticker("^TYX")
+            tn2 = yf.Ticker("^IRX")
             tn2_hist = tn2.history(period="30d")
             if not tn2_hist.empty:
-                indicators.treasury_2y = round(float(tn2_hist['Close'].iloc[-1]) / 10, 3)
+                indicators.treasury_2y = round(float(tn2_hist['Close'].iloc[-1]), 3)
 
         except Exception as e:
             logger.warning(f"yfinance indicator fetch failed: {e}")

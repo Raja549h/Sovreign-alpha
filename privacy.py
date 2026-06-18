@@ -159,7 +159,14 @@ def create_session_token(fund_id: str) -> str:
     signature = hashlib.sha256(f"{token_data}:{secret}".encode()).hexdigest()
     return base64.b64encode(f"{token_data}:{signature}".encode()).decode()
 
+_revoked_tokens = set()
+
+def revoke_token(token: str):
+    _revoked_tokens.add(token)
+
 def verify_session_token(token: str) -> Optional[str]:
+    if token in _revoked_tokens:
+        return None
     try:
         secret = _get_jwt_secret()
         decoded = base64.b64decode(token.encode()).decode()

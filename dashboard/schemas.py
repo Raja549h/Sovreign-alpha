@@ -366,13 +366,14 @@ EVOLUTION_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_autopsy (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     observation_id INTEGER REFERENCES observation_memory(id),
+    company_id INTEGER REFERENCES companies(id),
     signal_strength REAL,
     novelty_score REAL,
     actionability_score REAL,
     falsifiability_score REAL,
     relevance_score REAL,
-    composite_score REAL,
-    notes TEXT,
+    research_quality_score REAL,
+    autopsy_notes TEXT,
     scored_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -252,6 +252,43 @@ def main():
     except Exception as e:
         print(f"\nWarning: Could not save results: {e}")
 
+    try:
+        import sqlite3
+        from config import BILLING_DIR
+        db_path = BILLING_DIR / "billing.db"
+        conn = sqlite3.connect(str(db_path))
+        c = conn.cursor()
+        for p in results.get("approved", []):
+            proof_hash = ""
+            for cert in results.get("certificates", []):
+                if cert.get("prediction_id") == p.get("prediction_id"):
+                    proof_hash = cert.get("commitment_hash", "")
+                    break
+            
+            c.execute("""
+                INSERT OR REPLACE INTO prediction_ledger 
+                (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
+                 status, expected_timeline_days, proof_hash, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                p.get("prediction_id"),
+                p.get("timestamp"),
+                p.get("ticker"),
+                "Unknown",
+                p.get("thesis"),
+                p.get("confidence", 0.0),
+                "cleared",
+                p.get("expected_timeline_days", 30),
+                proof_hash,
+                datetime.utcnow().isoformat() + 'Z',
+                datetime.utcnow().isoformat() + 'Z'
+            ))
+        conn.commit()
+        conn.close()
+        print(f"Persisted predictions to {db_path}")
+    except Exception as e:
+        print(f"Warning: Could not persist to billing DB: {e}")
+
     return 0
 
 
