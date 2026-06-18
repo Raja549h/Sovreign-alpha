@@ -190,7 +190,8 @@ class DataLayer:
             ema_26 = round(float(close.ewm(span=26).mean().iloc[-1]), 2) if len(close) >= 26 else 0
 
             macd_val = round(ema_12 - ema_26, 3)
-            macd_signal_line = round(float(close.ewm(span=9).mean().iloc[-1]), 2) if len(close) >= 9 else 0
+            macd_line_series = close.ewm(span=12).mean() - close.ewm(span=26).mean()
+            macd_signal_line = round(float(macd_line_series.ewm(span=9).mean().iloc[-1]), 2) if len(close) >= 9 else 0
 
             delta = close.diff()
             gain = delta.where(delta > 0, 0).rolling(14).mean()

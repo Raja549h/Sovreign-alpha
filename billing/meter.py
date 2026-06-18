@@ -34,53 +34,13 @@ class BillingMeter:
         self.conn = sqlite3.connect(str(self.db_path))
         self.conn.row_factory = sqlite3.Row
         
-        cursor = self.conn.cursor()
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS inference_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT NOT NULL,
-                agent_id TEXT NOT NULL,
-                model TEXT NOT NULL,
-                input_tokens INTEGER,
-                output_tokens INTEGER,
-                total_tokens INTEGER,
-                latency_ms REAL,
-                cost_estimate REAL,
-                decision_id TEXT,
-                status TEXT
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS performance_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT NOT NULL,
-                decision_id TEXT NOT NULL,
-                trade_action TEXT,
-                symbol TEXT,
-                position_value REAL,
-                alpha_generated REAL,
-                fee_calculated REAL,
-                fee_paid REAL,
-                status TEXT
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS monthly_summary (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                month TEXT NOT NULL,
-                total_inferences INTEGER,
-                total_tokens INTEGER,
-                total_cost REAL,
-                alpha_generated REAL,
-                performance_fee REAL,
-                report_generated_at TEXT
-            )
-        """)
-        
-        self.conn.commit()
+        try:
+            from dashboard.schemas import init_billing_db
+            self.conn.close() # Close existing connection since init_billing_db creates its own
+            self.conn = init_billing_db(self.db_path)
+            self.conn.row_factory = sqlite3.Row
+        except Exception as e:
+            logger.warning(f"Meter DB init failed: {e}")
         logger.info(f"Billing database initialized at {self.db_path}")
 
     def log_inference(self, agent_id: str, model: str, input_tokens: int, 

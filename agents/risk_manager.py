@@ -76,35 +76,14 @@ class RiskManager:
     def __init__(self, data_dir: Optional[Path] = None):
         self.regime_engine = MarketRegimeEngine()
         self.data_dir = data_dir or BILLING_DIR
-        self.db_path = self.data_dir / "fund_data.db"
+        self.db_path = self.data_dir / "billing.db"
         self._ensure_tables()
 
     def _ensure_tables(self):
-        """Ensure veto archive table exists."""
+        """Ensure veto archive table exists using canonical schema."""
         try:
-            conn = sqlite3.connect(str(self.db_path))
-            c = conn.cursor()
-            c.execute("""
-                CREATE TABLE IF NOT EXISTS veto_archive (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    veto_id TEXT UNIQUE,
-                    prediction_id TEXT,
-                    timestamp TEXT NOT NULL,
-                    asset TEXT NOT NULL,
-                    sector TEXT,
-                    rejection_reason TEXT NOT NULL,
-                    expected_loss_pct REAL,
-                    actual_outcome TEXT,
-                    actual_return_pct REAL,
-                    avoided_drawdown REAL,
-                    veto_correct BOOLEAN,
-                    proof_hash TEXT,
-                    notes TEXT,
-                    created_at TEXT NOT NULL
-                )
-            """)
-            conn.commit()
-            conn.close()
+            from dashboard.schemas import init_billing_db
+            init_billing_db(self.db_path)
         except Exception as e:
             logger.warning(f"Veto table creation failed: {e}")
 
@@ -116,9 +95,9 @@ class RiskManager:
             c.execute("""
                 INSERT OR REPLACE INTO veto_archive
                 (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
-                 expected_loss_pct, actual_outcome, actual_return_pct,
+                 risk_score, expected_loss_pct, actual_outcome, actual_return_pct,
                  avoided_drawdown, veto_correct, proof_hash, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 veto.veto_id,
                 veto.prediction_id,
@@ -126,6 +105,7 @@ class RiskManager:
                 veto.ticker,
                 "",
                 veto.veto_reason,
+                1.0 - getattr(veto, 'rejected_confidence', 0.5), # Add risk_score (1 - confidence)
                 veto.expected_loss_pct,
                 veto.actual_outcome,
                 veto.actual_return_pct,

@@ -49,16 +49,25 @@ class RSAProofGenerator:
             logger.info("Loading existing RSA key pair")
             
             with open(private_key_file, "rb") as f:
-                self.private_key = serialization.load_pem_private_key(
-                    f.read(), password=None, backend=default_backend()
-                )
+                pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
+                try:
+                    self.private_key = serialization.load_pem_private_key(
+                        f.read(), password=pwd, backend=default_backend()
+                    )
+                except ValueError:
+                    logger.warning("Failed to decrypt private key. Generating new pair.")
+                    self._generate_new_keys(private_key_file, public_key_file)
+                    return
             
             with open(public_key_file, "rb") as f:
                 self.public_key = serialization.load_pem_public_key(
                     f.read(), backend=default_backend()
                 )
         else:
-            logger.info("Generating new RSA key pair (2048-bit)")
+            self._generate_new_keys(private_key_file, public_key_file)
+
+    def _generate_new_keys(self, private_key_file, public_key_file):
+        logger.info("Generating new secure RSA key pair (2048-bit)")
             
             self.private_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -68,10 +77,11 @@ class RSAProofGenerator:
             
             self.public_key = self.private_key.public_key()
             
+            pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
             private_pem = self.private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.BestAvailableEncryption(pwd)
             )
             
             public_pem = self.public_key.public_bytes(

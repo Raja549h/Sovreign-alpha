@@ -299,6 +299,7 @@ class ObservationRegistry:
                 top_cats = [c[0] for c in sorted_cats[:3]]
                 worst_cats = [c[0] for c in sorted_cats[-3:]] if len(sorted_cats) >= 3 else [c[0] for c in sorted_cats]
 
+            c.execute("DELETE FROM edge_scorecard WHERE company_id IS ?", (company_id,))
             c.execute(
                 """INSERT INTO edge_scorecard
                    (company_id, calculated_at, total_observations, confirmed,

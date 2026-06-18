@@ -86,13 +86,13 @@ class AutopsyEngine:
                              JOIN observation_memory om ON om.id = oa.observation_id
                              JOIN companies c ON c.id = oa.company_id
                              WHERE oa.company_id = ?
-                             ORDER BY oa.performed_at DESC LIMIT ?""", (company_id, limit))
+                             ORDER BY oa.scored_at DESC LIMIT ?""", (company_id, limit))
             else:
                 c.execute("""SELECT oa.*, om.observation_text, om.category, om.validation_status, c.ticker
                              FROM observation_autopsy oa
                              JOIN observation_memory om ON om.id = oa.observation_id
                              JOIN companies c ON c.id = oa.company_id
-                             ORDER BY oa.performed_at DESC LIMIT ?""", (limit,))
+                             ORDER BY oa.scored_at DESC LIMIT ?""", (limit,))
             return [dict(r) for r in c.fetchall()]
 
     def get_quality_summary(self) -> Dict:
@@ -804,6 +804,7 @@ class WeeklyICReport:
 
     def generate_report(self) -> Dict:
         from research.storage.research_db import get_all_companies
+        from research.observation_registry import ObservationRegistry
         report = {
             'generated_at': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
             'period': 'Weekly IC Report',
@@ -824,10 +825,10 @@ class WeeklyICReport:
                          FROM failure_analysis GROUP BY failure_category ORDER BY cnt DESC""")
             report['sections']['failure_patterns'] = [dict(r) for r in c.fetchall()]
             c.execute("""SELECT COUNT(*) as cnt FROM observation_validations
-                         WHERE validated_at >= date('now', '-7 days')""")
+                         WHERE validation_date >= date('now', '-7 days')""")
             report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()['cnt']}
             c.execute("""SELECT COUNT(*) as cnt FROM shadow_trades
-                         WHERE closed_at >= date('now', '-7 days')""")
+                         WHERE trade_date >= date('now', '-7 days')""")
             report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()['cnt']}
             reg = ObservationRegistry()
             score = reg.calculate_edge_score()

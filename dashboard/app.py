@@ -195,7 +195,10 @@ if TEMPLATE_DIR.exists():
 DB_PATH = BILLING_DIR / "billing.db"
 FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
-FUND_PASSWORD = os.environ.get("FUND_PASSWORD", "admin")
+import secrets
+FUND_PASSWORD = os.environ.get("FUND_PASSWORD")
+if not FUND_PASSWORD:
+    FUND_PASSWORD = secrets.token_urlsafe(32)
 
 DEMO_MODE = False
 
@@ -349,7 +352,7 @@ def update_veto_outcome(veto_id: str, outcome_data: dict) -> bool:
     try:
         actual_return = outcome_data.get('actual_return_pct', 0.0)
         expected_loss = outcome_data.get('expected_loss_pct', 0.0)
-        veto_correct = actual_return < expected_loss if expected_loss > 0 else None
+        veto_correct = actual_return < 0 if expected_loss > 0 else None
         avoided = abs(expected_loss - actual_return) if veto_correct and actual_return < 0 else 0
         
         c.execute("""
@@ -713,8 +716,7 @@ def get_dashboard_stats():
             "SELECT COUNT(*) FROM veto_archive"
         ).fetchone()[0]
         correct_vetoes = conn.execute(
-            """SELECT COUNT(*) FROM veto_archive
-               WHERE veto_correct = 1 OR veto_correct = 'YES' OR correct = 1"""
+            "SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1 OR veto_correct = 'YES'"
         ).fetchone()[0]
         resolved_outcomes = conn.execute(
             "SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''"
@@ -984,7 +986,7 @@ def proofs():
                 'timestamp': pd.get('created_at', '') or pd.get('timestamp', '') or datetime.utcnow().isoformat(),
                 'symbol': p.get('symbol', pd.get('trade_action', 'N/A')),
                 'action': p.get('action', pd.get('trade_action', 'BUY')),
-                'confidence': 0.85,
+                'confidence': p.get('confidence', pd.get('confidence_score', 'NO DATA')),
                 'value': p.get('position_value', p.get('estimated_value', 0)) or 0,
                 'verdict': pd.get('verdict', 'VERIFIED')
             })
@@ -1107,7 +1109,7 @@ def performance():
         confidence_history = {'labels': [], 'values': []}
         for i, d in enumerate(decisions[:20]):
             confidence_history['labels'].append(f"D{i+1}")
-            confidence_history['values'].append(0.65 + (hash(str(d.get('decision_id', ''))) % 35) / 100)
+            confidence_history['values'].append(d.get('confidence', 0.0))
         
         sector_data = {'labels': [], 'approved': [], 'vetoed': []}
         sector_stats = get_sector_stats()
@@ -1131,13 +1133,13 @@ def performance():
                 else: return_distribution['values'][3] += 1
         
         if all(v == 0 for v in return_distribution['values']):
-            return_distribution = {'labels': ['$0-50K', '$50K-100K', '$100K-200K', '$200K+'], 'values': [1, 2, 1, 2]}
+            return_distribution = {'labels': ['NO DATA'], 'values': [0]}
         
         sessions = load_results_files()
         total_sessions = len(sessions)
         avg_confidence = 0.75
         if decisions:
-            avg_confidence = 0.65 + (sum(hash(str(d.get('decision_id', ''))) for d in decisions) % 35) / 100 / len(decisions)
+            avg_confidence = sum(d.get('confidence', 0.0) for d in decisions) / len(decisions)
         
         ledger_stats = calculate_ledger_stats()
         
@@ -1373,6 +1375,13 @@ def login_page():
 def logout():
     """Logout - clear session."""
     try:
+        session_token = request.cookies.get('session_token')
+        if session_token:
+            try:
+                from privacy import revoke_token
+                revoke_token(session_token)
+            except ImportError:
+                pass
         resp = make_response(redirect(url_for('login_page')))
         resp.set_cookie('session_token', '', expires=0)
         resp.set_cookie('session_user', '', expires=0)
@@ -1747,7 +1756,7 @@ def api_run():
                     trade_action='HOLD',
                     symbol=pos.get('symbol', 'N/A'),
                     position_value=value,
-                    alpha_generated=value * 0.05,
+                    alpha_generated=0.0,
                     status='active'
                 )
                 
@@ -1869,7 +1878,7 @@ def run_analysis_page():
                     trade_action='HOLD',
                     symbol=pos.get('symbol', 'N/A'),
                     position_value=value,
-                    alpha_generated=value * 0.05,
+                    alpha_generated=0.0,
                     status='active'
                 )
         
@@ -3914,6 +3923,13 @@ try:
     init_extended_tables()
 except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
+
+from research.storage.research_db import RESEARCH_DB as _RDB_PATH
+try:
+    _fconn = sqlite3.connect(str(BILLING_DIR / "fund_data.db"))
+    _fconn.close()
+except Exception as _fe:
+    pass
 
 try:
     from research.backfill_memory import backfill

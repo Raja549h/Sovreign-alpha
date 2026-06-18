@@ -174,6 +174,20 @@ def seed_all_empty_tables(db_path=None, quiet=False):
              '<h2>Executive Summary</h2><p>Bajaj Finance continues to execute well with industry-leading AUM growth of 26% YoY. Credit costs remain well-controlled at 1.2%, below the guided range. Key risks include competitive intensity in consumer lending and potential regulatory changes.</p><h2>Key Findings</h2><ul><li>AUM crossed ₹3.6L Cr, growing 26% YoY</li><li>NIM stable at 4.8%, within historical range</li><li>Credit cost at 1.2%, well controlled</li><li>Branch expansion to 4,000+ locations driving cross-sell</li></ul><h2>Risk Assessment</h2><p>Primary risk is competitive pressure from banks expanding into consumer lending. Regulatory risk around unsecured lending remains elevated but manageable given Bajaj Finance\'s underwriting track record.</p>',
              3.2, 8.5, 2.8, 7.8, 0, 'published'))
         log("Seeded research notes")
+    else:
+        c.execute("""UPDATE research_notes SET
+            summary = COALESCE(NULLIF(summary, ''), 'Comprehensive forensic analysis of Bajaj Finance showing strong AUM growth trajectory with controlled credit costs.'),
+            full_content = COALESCE(NULLIF(full_content, ''), '<h2>Executive Summary</h2><p>Bajaj Finance continues to execute well with industry-leading AUM growth of 26% YoY. Credit costs remain well-controlled at 1.2%, below the guided range. Key risks include competitive intensity in consumer lending and potential regulatory changes.</p><h2>Key Findings</h2><ul><li>AUM crossed Rs.3.6L Cr, growing 26% YoY</li><li>NIM stable at 4.8%, within historical range</li><li>Credit cost at 1.2%, well controlled</li><li>Branch expansion to 4,000+ locations driving cross-sell</li></ul><h2>Risk Assessment</h2><p>Primary risk is competitive pressure from banks expanding into consumer lending. Regulatory risk around unsecured lending remains elevated but manageable given Bajaj Finance underwriting track record.</p>'),
+            risk_intensity_score = COALESCE(risk_intensity_score, 3.2),
+            confidence_score = COALESCE(confidence_score, 8.5),
+            regime_sensitivity_score = COALESCE(regime_sensitivity_score, 2.8),
+            structural_quality_score = COALESCE(structural_quality_score, 7.8),
+            forensic_flags_count = COALESCE(forensic_flags_count, 0),
+            status = COALESCE(status, 'published')
+            WHERE note_reference = 'SR-2026-BAF-001'
+            AND (summary IS NULL OR full_content IS NULL OR summary = '' OR full_content = '')""")
+        if c.rowcount > 0:
+            log(f"Updated research note SR-2026-BAF-001 with content ({c.rowcount} row)")
 
     conn.commit()
     conn.close()
