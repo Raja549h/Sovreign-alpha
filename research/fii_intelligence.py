@@ -15,8 +15,8 @@ BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
 RESEARCH_DB = BILLING_DIR / "research.db"
 
-FII_FLOWS_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS fii_flows (
+NSDL_FPI_FLOWS_SQL = """
+CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     flow_date TEXT UNIQUE,
     equity_net REAL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS fii_flows (
     equity_sell REAL,
     source TEXT,
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
+)
 """
 
 FII_ALERT_THRESHOLD = 5000  # Cr, 5-day cumulative outflow triggers alert
@@ -46,7 +46,8 @@ def _get_db():
 
 def init_fii_tables():
     with _get_db() as conn:
-        conn.executescript(FII_FLOWS_TABLE_SQL)
+        conn.execute(NSDL_FPI_FLOWS_SQL)
+        conn.commit()
 
 
 class FIIIntelligence:
@@ -82,8 +83,8 @@ class FIIIntelligence:
                                     'equity_buy': equity_buy, 'equity_sell': equity_sell,
                                     'source': 'NSDL'
                                 }
-        except Exception:
-            pass
+        except Exception as _e:
+            print(f"[fii] Primary NSDL fetch failed: {_e}")
         try:
             import yfinance as yf
             nsei = yf.download('^NSEI', period='5d', interval='1d', progress=False)
@@ -99,8 +100,8 @@ class FIIIntelligence:
                     'equity_sell': abs(min(est_flow, 0)),
                     'source': 'YFINANCE_ESTIMATE'
                 }
-        except Exception:
-            pass
+        except Exception as _e:
+            print(f"[fii] yfinance fallback failed: {_e}")
         return {
             'date': today, 'equity_net': 0.0, 'debt_net': 0.0,
             'total_net': 0.0, 'equity_buy': 0.0, 'equity_sell': 0.0,
@@ -113,7 +114,7 @@ class FIIIntelligence:
             with _get_db() as conn:
                 c = conn.cursor()
                 c.execute(
-                    """INSERT OR IGNORE INTO fii_flows
+                    """INSERT OR IGNORE INTO nsdl_fpi_flows
                        (flow_date, equity_net, debt_net, total_net,
                         equity_buy, equity_sell, source)
                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -124,7 +125,8 @@ class FIIIntelligence:
                 )
                 conn.commit()
                 return c.rowcount > 0
-        except Exception:
+        except Exception as _e:
+            print(f"[fii] store_daily_flow failed: {_e}")
             return False
 
     def get_flow_summary(self, days: int = 30) -> Dict:
@@ -132,7 +134,7 @@ class FIIIntelligence:
             c = conn.cursor()
             cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
             c.execute("""SELECT flow_date, equity_net, debt_net, total_net
-                         FROM fii_flows WHERE flow_date >= ? ORDER BY flow_date ASC""", (cut,))
+                         FROM nsdl_fpi_flows WHERE flow_date >= ? ORDER BY flow_date ASC""", (cut,))
             rows = c.fetchall()
         if not rows:
             return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
@@ -199,7 +201,7 @@ class FIIIntelligence:
         with _get_db() as conn:
             c = conn.cursor()
             cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
-            c.execute("""SELECT * FROM fii_flows WHERE flow_date >= ?
+            c.execute("""SELECT * FROM nsdl_fpi_flows WHERE flow_date >= ?
                          ORDER BY flow_date DESC""", (cut,))
             return [dict(r) for r in c.fetchall()]
 
