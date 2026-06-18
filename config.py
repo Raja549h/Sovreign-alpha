@@ -5,13 +5,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data"
+IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false").lower() == "true"
+PERSISTENT_DIR = Path(os.environ.get("PERSISTENT_DIR", "/data" if IS_CLOUD else BASE_DIR))
+
+DATA_DIR = PERSISTENT_DIR / "data"
+BILLING_DIR = PERSISTENT_DIR / "billing"
+RESULTS_DIR = PERSISTENT_DIR / "results"
+
 AGENTS_DIR = BASE_DIR / "agents"
 ENGINE_DIR = BASE_DIR / "engine"
 RAG_DIR = BASE_DIR / "rag"
 ZKML_DIR = BASE_DIR / "zkml"
 BLOCKCHAIN_DIR = BASE_DIR / "blockchain"
-BILLING_DIR = BASE_DIR / "billing"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")

@@ -59,18 +59,32 @@ FLASK_AVAILABLE = True
 IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false").lower() == "true"
 
 BASE_DIR = project_dir
-DATA_DIR = BASE_DIR / "data"
-BILLING_DIR = BASE_DIR / "billing"
-RESULTS_DIR = BASE_DIR / "results"
-PROOFS_DIR = BASE_DIR / "zkml" / "proofs"
-CERTS_DIR = BASE_DIR / "zkml" / "certificates"
+PERSISTENT_DIR = Path(os.environ.get("PERSISTENT_DIR", "/data" if IS_CLOUD else BASE_DIR))
+
+if IS_CLOUD and PERSISTENT_DIR != BASE_DIR:
+    if not (PERSISTENT_DIR / "billing").exists():
+        import shutil
+        print("[startup] Initializing persistent storage from Docker image data...")
+        if (BASE_DIR / "billing").exists():
+            shutil.copytree(BASE_DIR / "billing", PERSISTENT_DIR / "billing", dirs_exist_ok=True)
+        if (BASE_DIR / "results").exists():
+            shutil.copytree(BASE_DIR / "results", PERSISTENT_DIR / "results", dirs_exist_ok=True)
+        if (BASE_DIR / "zkml" / "proofs").exists():
+            (PERSISTENT_DIR / "zkml").mkdir(parents=True, exist_ok=True)
+            shutil.copytree(BASE_DIR / "zkml" / "proofs", PERSISTENT_DIR / "zkml" / "proofs", dirs_exist_ok=True)
+
+DATA_DIR = PERSISTENT_DIR / "data"
+BILLING_DIR = PERSISTENT_DIR / "billing"
+RESULTS_DIR = PERSISTENT_DIR / "results"
+PROOFS_DIR = PERSISTENT_DIR / "zkml" / "proofs"
+CERTS_DIR = PERSISTENT_DIR / "zkml" / "certificates"
 FUNDS_DIR = DATA_DIR / "funds"
 
-DATA_DIR.mkdir(exist_ok=True)
-RESULTS_DIR.mkdir(exist_ok=True)
-PROOFS_DIR.mkdir(exist_ok=True)
-CERTS_DIR.mkdir(exist_ok=True)
-BILLING_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+PROOFS_DIR.mkdir(parents=True, exist_ok=True)
+CERTS_DIR.mkdir(parents=True, exist_ok=True)
+BILLING_DIR.mkdir(parents=True, exist_ok=True)
 FUNDS_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_regime_data():
