@@ -3926,7 +3926,7 @@ except Exception as e:
 try:
     from scripts.seed_all_empty_tables import seed_all_empty_tables
     from research.storage.research_db import RESEARCH_DB
-    seed_all_empty_tables(db_path=str(RESEARCH_DB), quiet=True)
+    result = seed_all_empty_tables(db_path=str(RESEARCH_DB), quiet=False)
 except Exception as e:
     print(f"Warning: Could not seed extended tables: {e}")
 
@@ -3948,10 +3948,25 @@ try:
     from research.storage.research_db import RESEARCH_DB as _RDB
     _vconn2 = sqlite3.connect(str(_RDB))
     _vc2 = _vconn2.cursor()
-    for _tbl in ['companies', 'observation_memory', 'fii_flows', 'nsdl_fpi_flows']:
-        _vc2.execute(f"SELECT COUNT(*) FROM {_tbl}")
-        _cnt = _vc2.fetchone()[0]
-        print(f"  [research.db] {_tbl}: {_cnt} rows")
+    _all_tables = [
+        'companies', 'filings', 'financial_series', 'forensic_flags', 'research_notes',
+        'institutional_scores', 'nsdl_fpi_flows', 'fii_flows', 'fii_flow_snapshots',
+        'edge_scorecard', 'watchlist',
+        'observation_memory', 'observation_validations', 'evidence_timeline',
+        'multi_source_evidence', 'framework_performance', 'reproducibility_log',
+        'observation_autopsy', 'reasoning_audit', 'failure_analysis',
+        'calibration_history', 'edge_discovery_framework', 'shadow_portfolio',
+        'credibility_evidence', 'research_quality_metrics', 'confidence_calibration',
+        'portfolios', 'portfolio_positions', 'portfolio_scores', 'portfolio_stress_results',
+        'theses', 'thesis_checks', 'observations',
+    ]
+    for _tbl in _all_tables:
+        try:
+            _vc2.execute(f"SELECT COUNT(*) FROM {_tbl}")
+            _cnt = _vc2.fetchone()[0]
+            print(f"  [research.db] {_tbl}: {_cnt} rows")
+        except Exception:
+            print(f"  [research.db] {_tbl}: MISSING")
     _vconn2.close()
 except Exception as _ve:
     print(f"  [research.db] verification failed: {_ve}")

@@ -647,6 +647,8 @@ def init_extended_tables():
     """Initialize new extended tables."""
     with sqlite3.connect(str(RESEARCH_DB)) as conn:
         conn.executescript(EXTENDED_TABLES_SQL)
+        conn.commit()
+    print(f"[db] Extended tables ready: portfolios, theses, thesis_checks, thesis_evolution, thesis_scorecard, watchlist, observations, shadow_portfolio, shadow_trades, edge_discovery_framework, credibility_evidence, research_quality_metrics, confidence_calibration, observation_autopsy, reasoning_audit, failure_analysis, calibration_history")
 
 
 EVOLUTION_TABLES_SQL = """
