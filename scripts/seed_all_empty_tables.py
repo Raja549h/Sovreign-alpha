@@ -162,6 +162,19 @@ def seed_all_empty_tables(db_path=None, quiet=False):
             c.execute("INSERT OR IGNORE INTO watchlist (company_id, alert_threshold, notes) VALUES (?, ?, ?)", (cid, threshold, notes))
         log("Seeded watchlist")
 
+    c.execute("SELECT COUNT(*) FROM research_notes")
+    if c.fetchone()[0] == 0:
+        c.execute("""INSERT OR IGNORE INTO research_notes
+            (company_id, note_reference, title, summary, full_content,
+             risk_intensity_score, confidence_score, regime_sensitivity_score,
+             structural_quality_score, forensic_flags_count, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (1, 'SR-2026-BAF-001', 'Bajaj Finance — Deep Dive',
+             'Comprehensive forensic analysis of Bajaj Finance showing strong AUM growth trajectory with controlled credit costs.',
+             '<h2>Executive Summary</h2><p>Bajaj Finance continues to execute well with industry-leading AUM growth of 26% YoY. Credit costs remain well-controlled at 1.2%, below the guided range. Key risks include competitive intensity in consumer lending and potential regulatory changes.</p><h2>Key Findings</h2><ul><li>AUM crossed ₹3.6L Cr, growing 26% YoY</li><li>NIM stable at 4.8%, within historical range</li><li>Credit cost at 1.2%, well controlled</li><li>Branch expansion to 4,000+ locations driving cross-sell</li></ul><h2>Risk Assessment</h2><p>Primary risk is competitive pressure from banks expanding into consumer lending. Regulatory risk around unsecured lending remains elevated but manageable given Bajaj Finance\'s underwriting track record.</p>',
+             3.2, 8.5, 2.8, 7.8, 0, 'published'))
+        log("Seeded research notes")
+
     conn.commit()
     conn.close()
     if not quiet:

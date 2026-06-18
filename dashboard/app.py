@@ -3090,7 +3090,9 @@ def research_note(reference):
             return f"Note {reference} not found", 404
         # Strip dangerous tags/attributes from note content to prevent XSS
         import re as _re
-        content = note.get('full_content', '')
+        content = note.get('full_content')
+        if not content:
+            content = ''
         content = _re.sub(r'<script[^>]*>.*?</script>', '', content, flags=_re.IGNORECASE | _re.DOTALL)
         content = _re.sub(r'\bon\w+\s*=\s*["\'][^"\']*["\']', '', content, flags=_re.IGNORECASE)
         content = _re.sub(r'javascript:', '', content, flags=_re.IGNORECASE)
@@ -3908,6 +3910,8 @@ try:
     from dashboard.schemas import init_research_db
     from research.storage.research_db import RESEARCH_DB as _research_db
     init_research_db(_research_db)
+    from research.storage.research_db import init_extended_tables
+    init_extended_tables()
 except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
 
