@@ -1,5 +1,6 @@
 name: Deploy to Hugging Face Spaces
 
+# Triggers on every push to main — deploys to HF Space
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
