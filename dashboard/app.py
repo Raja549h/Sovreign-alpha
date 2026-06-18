@@ -4001,9 +4001,9 @@ def seed_database_on_startup():
             for vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes in samples:
                 c.execute("""
                     INSERT OR IGNORE INTO veto_archive
-                    (veto_id, asset, sector, rejection_reason, risk_score, timestamp, actual_outcome, actual_return_pct, expected_loss_pct, avoided_drawdown, veto_correct, notes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes))
+                    (veto_id, asset, sector, rejection_reason, risk_score, timestamp, actual_outcome, actual_return_pct, expected_loss_pct, avoided_drawdown, veto_correct, notes, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes, ts))
             print(f"[seed] Inserted {len(samples)} sample vetoes")
 
         # Sync decisions from prediction_ledger and veto_archive
@@ -4063,7 +4063,8 @@ if is_demo_mode():
               "cleared", 30, "0x" + _uuid.uuid4().hex[:40],
               _now.isoformat(), _now.isoformat(), "incorrect", -1.8))
         _c.execute("DELETE FROM decisions")
-        _c.execute("INSERT INTO decisions SELECT prediction_id, asset, 'approve', status, confidence_score, NULL, NULL, proof_hash, timestamp FROM prediction_ledger")
+        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT prediction_id, asset, 'approve', status, confidence_score, timestamp FROM prediction_ledger")
+        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT veto_id, asset, 'veto', 'vetoed', 1.0 - risk_score, timestamp FROM veto_archive")
         _conn.commit()
         _conn.close()
         _ledger = calculate_ledger_stats()
