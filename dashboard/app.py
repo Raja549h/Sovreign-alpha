@@ -3803,9 +3803,10 @@ def seed_database_on_startup():
     try:
         from dashboard.schemas import init_billing_db
 
-        if IS_CLOUD and DB_PATH.exists():
-            print("[seed] Cloud deploy detected - removing old DB for clean schema")
-            DB_PATH.unlink()
+        if DB_PATH.exists():
+            print("[seed] Database exists - preserving production data")
+        else:
+            print("[seed] Database missing - initializing new schema")
 
         init_billing_db(DB_PATH)
 
