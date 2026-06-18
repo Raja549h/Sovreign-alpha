@@ -61,6 +61,13 @@ IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false")
 BASE_DIR = project_dir
 PERSISTENT_DIR = Path(os.environ.get("PERSISTENT_DIR", "/data" if IS_CLOUD else BASE_DIR))
 
+if IS_CLOUD and not PERSISTENT_DIR.exists():
+    try:
+        PERSISTENT_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        print(f"WARNING: Cannot create {PERSISTENT_DIR}. Falling back to BASE_DIR.")
+        PERSISTENT_DIR = BASE_DIR
+
 if IS_CLOUD and PERSISTENT_DIR != BASE_DIR:
     if not (PERSISTENT_DIR / "billing").exists():
         import shutil
