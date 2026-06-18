@@ -211,69 +211,10 @@ def inject_globals():
     }
 
 def init_fund_db():
-    conn = sqlite3.connect(str(FUND_DATA_DB))
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS fund_uploads (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_type TEXT,
-            file_content BLOB,
-            uploaded_at TEXT
-        )
-    """)
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS fund_params (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            param_key TEXT UNIQUE,
-            param_value TEXT,
-            updated_at TEXT
-        )
-    """)
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS prediction_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            prediction_id TEXT UNIQUE,
-            timestamp TEXT NOT NULL,
-            asset TEXT NOT NULL,
-            sector TEXT,
-            thesis TEXT,
-            confidence_score REAL,
-            status TEXT NOT NULL,
-            expected_timeline_days INTEGER,
-            actual_outcome TEXT,
-            actual_return_pct REAL,
-            outcome_notes TEXT,
-            proof_hash TEXT,
-            created_at TEXT NOT NULL,
-            updated_at TEXT
-        )
-    """)
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS veto_archive (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            veto_id TEXT UNIQUE,
-            prediction_id TEXT,
-            timestamp TEXT NOT NULL,
-            asset TEXT NOT NULL,
-            sector TEXT,
-            rejection_reason TEXT NOT NULL,
-            risk_score REAL,
-            expected_loss_pct REAL,
-            actual_outcome TEXT,
-            actual_return_pct REAL,
-            avoided_drawdown REAL,
-            veto_correct BOOLEAN,
-            proof_hash TEXT,
-            notes TEXT,
-            created_at TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
+    from dashboard.schemas import init_fund_data_db
+    init_fund_data_db(FUND_DATA_DB)
 
 init_fund_db()
-
-# Validation tables init moved to late-startup block after evolution_tables
 
 def get_db_connection():
     """Get database connection to billing.db (prediction_ledger, veto_archive)."""
@@ -2348,7 +2289,7 @@ def api_system_health():
 
         validation_coverage_pct = round(resolved_obs / observations * 100, 1) if observations > 0 else 0
 
-        conn2 = sqlite3.connect(str(fund_data_db_path))
+        conn2 = sqlite3.connect(str(DB_PATH))
         c2 = conn2.cursor()
         c2.execute("SELECT COUNT(*) FROM prediction_ledger")
         total_predictions = c2.fetchone()[0]
@@ -3845,128 +3786,20 @@ def api_macro_init_db():
 
 
 def seed_database_on_startup():
-    """Create essential tables and seed sample data on first startup."""
+    """Create all tables and seed sample data on first startup."""
     import uuid
     try:
+        from dashboard.schemas import init_billing_db
+
         if IS_CLOUD and DB_PATH.exists():
             print("[seed] Cloud deploy detected - removing old DB for clean schema")
             DB_PATH.unlink()
 
+        init_billing_db(DB_PATH)
+
         conn = sqlite3.connect(str(DB_PATH))
         c = conn.cursor()
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS prediction_ledger (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                prediction_id TEXT UNIQUE,
-                timestamp TEXT NOT NULL,
-                asset TEXT NOT NULL,
-                sector TEXT,
-                thesis TEXT,
-                confidence_score REAL,
-                status TEXT NOT NULL,
-                expected_timeline_days INTEGER,
-                actual_outcome TEXT,
-                actual_return_pct REAL,
-                outcome_notes TEXT,
-                proof_hash TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT
-            )
-        """)
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS veto_archive (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                veto_id TEXT UNIQUE,
-                prediction_id TEXT,
-                timestamp TEXT NOT NULL,
-                asset TEXT NOT NULL,
-                sector TEXT,
-                rejection_reason TEXT NOT NULL,
-                risk_score REAL,
-                expected_loss_pct REAL,
-                actual_outcome TEXT,
-                actual_return_pct REAL,
-                avoided_drawdown REAL,
-                veto_correct BOOLEAN,
-                proof_hash TEXT,
-                notes TEXT,
-                created_at TEXT NOT NULL
-            )
-        """)
-
-        # Migration: check if old schema exists and recreate if needed
-        cols = [r[1] for r in c.execute("PRAGMA table_info(veto_archive)").fetchall()]
-        if 'symbol' in cols and 'asset' not in cols:
-            print("[seed] Migrating veto_archive from old schema...")
-            c.execute("DROP TABLE veto_archive")
-            c.execute("""
-                CREATE TABLE veto_archive (
-                    veto_id TEXT PRIMARY KEY,
-                    asset TEXT,
-                    sector TEXT,
-                    rejection_reason TEXT,
-                    risk_score REAL,
-                    timestamp TEXT,
-                    actual_outcome TEXT,
-                    actual_return_pct REAL,
-                    expected_loss_pct REAL,
-                    avoided_drawdown REAL,
-                    veto_correct INTEGER,
-                    notes TEXT
-                )
-            """)
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS performance_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                decision_id TEXT,
-                symbol TEXT,
-                action TEXT,
-                status TEXT,
-                alpha_generated REAL,
-                fee_calculated REAL,
-                timestamp TEXT
-            )
-        """)
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS decisions (
-                decision_id TEXT PRIMARY KEY,
-                symbol TEXT,
-                action TEXT,
-                status TEXT,
-                confidence REAL,
-                potential_return REAL,
-                fee REAL,
-                zk_proof_hash TEXT,
-                timestamp TEXT
-            )
-        """)
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS inference_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                model TEXT,
-                prompt_tokens INTEGER,
-                completion_tokens INTEGER,
-                total_tokens INTEGER,
-                cost REAL,
-                timestamp TEXT
-            )
-        """)
-
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS monthly_summary (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                month TEXT,
-                total_decisions INTEGER,
-                approved INTEGER,
-                vetoed INTEGER,
-                accuracy REAL
-            )
-        """)
+        c.execute("BEGIN IMMEDIATE")
 
         c.execute("SELECT COUNT(*) FROM prediction_ledger")
         if c.fetchone()[0] == 0:
@@ -3985,7 +3818,6 @@ def seed_database_on_startup():
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret))
             print(f"[seed] Inserted {len(samples)} sample predictions")
-        # Always ensure outcomes exist (for fresh and existing databases)
         c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
         c.execute("UPDATE prediction_ledger SET actual_outcome = 'incorrect', actual_return_pct = -3.2 WHERE prediction_id = 'pred-003' AND (actual_outcome IS NULL OR actual_outcome = '')")
         c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', actual_return_pct = 4.1 WHERE prediction_id = 'pred-004' AND (actual_outcome IS NULL OR actual_outcome = '')")
@@ -4006,8 +3838,7 @@ def seed_database_on_startup():
                 """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes, ts))
             print(f"[seed] Inserted {len(samples)} sample vetoes")
 
-        # Sync decisions from prediction_ledger and veto_archive
-        c.execute("""DELETE FROM decisions""")
+        c.execute("DELETE FROM decisions")
         c.execute("""INSERT INTO decisions
             (decision_id, symbol, action, status, confidence, potential_return, fee, zk_proof_hash, timestamp)
             SELECT
@@ -4020,27 +3851,27 @@ def seed_database_on_startup():
         c.execute("""INSERT INTO decisions
             (decision_id, symbol, action, status, confidence, potential_return, fee, zk_proof_hash, timestamp)
             SELECT
-                veto_id, asset, 'veto', 'vetoed', 1.0 - risk_score,
+                veto_id, asset, 'veto', 'vetoed',
+                COALESCE(1.0 - risk_score, 0.5),
                 -expected_loss_pct, NULL, NULL, timestamp
             FROM veto_archive
         """)
-        print(f"[seed] Synced {c.rowcount + 0} decisions from predictions + vetoes")
 
         conn.commit()
         conn.close()
-        print("[seed] Database seeding complete")
+        print("[seed] Billing DB seeding complete")
     except Exception as e:
         print(f"[seed] Seeding failed: {e}")
 
 seed_database_on_startup()
 
-# Safety net: if demo mode somehow persists, force-insert data directly
 if is_demo_mode():
-    print("[seed] SAFETY NET: Demo mode still active — force-seeding data...")
+    print("[seed] SAFETY NET: Demo mode active — inserting emergency data...")
     try:
         import uuid as _uuid
         _conn = sqlite3.connect(str(DB_PATH))
         _c = _conn.cursor()
+        _c.execute("BEGIN IMMEDIATE")
         _now = datetime.utcnow()
         _c.execute("""
             INSERT OR IGNORE INTO prediction_ledger
@@ -4064,55 +3895,20 @@ if is_demo_mode():
               _now.isoformat(), _now.isoformat(), "incorrect", -1.8))
         _c.execute("DELETE FROM decisions")
         _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT prediction_id, asset, 'approve', status, confidence_score, timestamp FROM prediction_ledger")
-        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT veto_id, asset, 'veto', 'vetoed', 1.0 - risk_score, timestamp FROM veto_archive")
+        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT veto_id, asset, 'veto', 'vetoed', COALESCE(1.0 - risk_score, 0.5), timestamp FROM veto_archive")
         _conn.commit()
         _conn.close()
         _ledger = calculate_ledger_stats()
-        print(f"[seed] Safety net: {_ledger['total_predictions']} predictions, {_ledger['with_outcome']} outcomes, is_demo={_ledger['with_outcome'] == 0 or _ledger['total_predictions'] == 0}")
+        print(f"[seed] Safety net: {_ledger['total_predictions']} predictions, {_ledger['with_outcome']} outcomes")
     except Exception as _e:
         print(f"[seed] Safety net also failed: {_e}")
 
 try:
-    from research.storage.research_db import init_db as init_research_db
-    init_research_db()
+    from dashboard.schemas import init_research_db
+    from research.storage.research_db import RESEARCH_DB as _research_db
+    init_research_db(_research_db)
 except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
-
-try:
-    from research.storage.research_db import init_evolution_tables
-    init_evolution_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize evolution tables: {e}")
-
-try:
-    from research.storage.research_db import init_validation_tables
-    init_validation_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize validation tables: {e}")
-
-try:
-    from research.storage.research_db import init_extended_tables
-    init_extended_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize extended tables: {e}")
-
-try:
-    from research.storage.research_db import init_evolution_quality_tables
-    init_evolution_quality_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize evolution quality tables: {e}")
-
-try:
-    from research.storage.research_db import init_shadow_portfolio_tables
-    init_shadow_portfolio_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize shadow portfolio tables: {e}")
-
-try:
-    from research.storage.research_db import init_evidence_tables
-    init_evidence_tables()
-except Exception as e:
-    print(f"Warning: Could not initialize evidence tables: {e}")
 
 try:
     from research.backfill_memory import backfill
@@ -4122,13 +3918,40 @@ try:
 except Exception as e:
     print(f"Warning: Could not backfill observations: {e}")
 
-# Seed all 15 extended tables with realistic data if empty
 try:
     from scripts.seed_all_empty_tables import seed_all_empty_tables
     from research.storage.research_db import RESEARCH_DB
     seed_all_empty_tables(db_path=str(RESEARCH_DB), quiet=True)
 except Exception as e:
     print(f"Warning: Could not seed extended tables: {e}")
+
+print("=" * 60)
+print("STARTUP VERIFICATION")
+print("=" * 60)
+try:
+    _vconn = sqlite3.connect(str(DB_PATH))
+    _vc = _vconn.cursor()
+    for _tbl in ['prediction_ledger', 'veto_archive', 'decisions', 'performance_log', 'inference_log', 'monthly_summary']:
+        _vc.execute(f"SELECT COUNT(*) FROM {_tbl}")
+        _cnt = _vc.fetchone()[0]
+        print(f"  [billing.db] {_tbl}: {_cnt} rows")
+    _vconn.close()
+except Exception as _ve:
+    print(f"  [billing.db] verification failed: {_ve}")
+
+try:
+    from research.storage.research_db import RESEARCH_DB as _RDB
+    _vconn2 = sqlite3.connect(str(_RDB))
+    _vc2 = _vconn2.cursor()
+    for _tbl in ['companies', 'observation_memory', 'fii_flows', 'nsdl_fpi_flows']:
+        _vc2.execute(f"SELECT COUNT(*) FROM {_tbl}")
+        _cnt = _vc2.fetchone()[0]
+        print(f"  [research.db] {_tbl}: {_cnt} rows")
+    _vconn2.close()
+except Exception as _ve:
+    print(f"  [research.db] verification failed: {_ve}")
+
+print("=" * 60)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))

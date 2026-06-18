@@ -252,7 +252,7 @@ class BillingMeter:
         try:
             next_month = datetime.strptime(month_start, '%Y-%m') + timedelta(days=32)
             month_end = next_month.strftime('%Y-%m') + '-01'
-        except:
+        except Exception:
             month_end = f"{month}-31"
         
         cursor.execute("""

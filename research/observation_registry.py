@@ -122,8 +122,8 @@ class ObservationRegistry:
         # Auto-trigger evolution quality integrations
         try:
             self._trigger_evolution_quality(observation_id, prior, new_status, validation_id, method)
-        except Exception:
-            pass
+        except Exception as _e:
+            print(f"[registry] _trigger_evolution_quality failed: {_e}")
 
         return True
 
@@ -172,8 +172,8 @@ class ObservationRegistry:
             try:
                 ra.record_factors(validation_id, [category, validation_method],
                                   primary_factor=category, weight=confidence)
-            except Exception:
-                pass
+            except Exception as _e:
+                print(f"[registry] ReasoningAudit.record_factors failed: {_e}")
 
         # Phase 4: Failure analysis for invalidated observations
         if new_status == 'INVALIDATED':
@@ -185,8 +185,8 @@ class ObservationRegistry:
                                   missed_signals=reasoning[:500] if reasoning else "",
                                   lessons=f"Observation {observation_id} invalidated via {method}",
                                   severity='high')
-            except Exception:
-                pass
+            except Exception as _e:
+                print(f"[registry] FailureAnalysis.record_failure failed: {_e}")
 
     def get_registry(self,
                      company_id: int = None,

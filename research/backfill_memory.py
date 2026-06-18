@@ -163,8 +163,10 @@ def backfill():
                  confidence, source, direction)
             )
             inserted += 1
-        except Exception:
+        except Exception as _e:
             skipped += 1
+            if skipped <= 3:
+                print(f"[backfill] Skipped row {company_id}/{flag_type}: {_e}")
 
     conn.commit()
     conn.close()
