@@ -30,9 +30,7 @@ venv.bak/
 zkml/keys/private_key.pem
 
 # Database
-*.db
-*.sqlite
-billing/billing.db
+# Databases are deliberately committed to sync the audited local state to Hugging Face
 *.db-journal
 *.db-wal
 *.db-shm
