@@ -66,11 +66,12 @@ PROOFS_DIR = BASE_DIR / "zkml" / "proofs"
 CERTS_DIR = BASE_DIR / "zkml" / "certificates"
 FUNDS_DIR = DATA_DIR / "funds"
 
+DATA_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(exist_ok=True)
 PROOFS_DIR.mkdir(exist_ok=True)
 CERTS_DIR.mkdir(exist_ok=True)
 BILLING_DIR.mkdir(exist_ok=True)
-FUNDS_DIR.mkdir(exist_ok=True)
+FUNDS_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_regime_data():
     """Get current regime classification for dashboard."""
