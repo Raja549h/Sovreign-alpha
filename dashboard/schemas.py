@@ -527,7 +527,7 @@ def safe_migrate(conn: any, migrations: list) -> None:
 
 def init_billing_db() -> any:
     """Create/verify db tables."""
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+
     conn = get_connection()
     conn.executescript(BILLING_TABLES_SQL)
     conn.commit()
@@ -536,7 +536,7 @@ def init_billing_db() -> any:
 
 def init_research_db() -> any:
     """Create/verify db tables + run migrations."""
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+
     conn = get_connection()
     conn.executescript(RESEARCH_TABLES_SQL)
     conn.executescript(OBSERVATION_TABLES_SQL)
@@ -548,7 +548,7 @@ def init_research_db() -> any:
 
 def init_fund_data_db() -> any:
     """Create/verify db tables."""
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+
     conn = get_connection()
     conn.executescript(FUND_DATA_TABLES_SQL)
     conn.commit()
