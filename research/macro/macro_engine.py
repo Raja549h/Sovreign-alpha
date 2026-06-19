@@ -5,7 +5,7 @@ Ties together all 5 macro intelligence modules for portfolio-level analysis.
 Provides the single entry point for the dashboard routes.
 """
 
-import sqlite3
+from database import get_connection
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -18,11 +18,10 @@ from research.macro import reserve_stress
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 ALL_MACRO_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS macro_portfolio_links (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     portfolio_id INTEGER,
     company_id INTEGER,
     linked_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -31,7 +30,7 @@ CREATE TABLE IF NOT EXISTS macro_portfolio_links (
 
 
 def init_macro_tables():
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with get_connection() as conn:
         conn.executescript(ALL_MACRO_TABLES_SQL)
     fii_flow.init_fii_tables()
     macro_health.init_macro_tables()

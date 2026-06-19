@@ -10,7 +10,7 @@ Flow data must be entered manually (NSDL, SEBI, Bloomberg sources) or
 collected via automation master_daily step.
 """
 
-import sqlite3
+from database import get_connection
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -18,11 +18,10 @@ from typing import Dict, List, Optional, Tuple
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 FII_FLOW_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS fii_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     date TEXT NOT NULL,
     flow_type TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS fii_flows (
 );
 
 CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     daily_net_cr REAL,
     weekly_net_cr REAL,
@@ -70,13 +69,12 @@ def init_fii_tables():
     if _INIT_DONE:
         return
     _INIT_DONE = True
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with get_connection() as conn:
         conn.executescript(FII_FLOW_TABLES_SQL)
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -88,7 +86,7 @@ def record_flow_entry(date: str, flow_type: str, category: str,
         source_upper = 'EXTERNAL'
     with _get_db() as conn:
         conn.execute(
-            "INSERT INTO fii_flows (date, flow_type, category, amount_cr, source, notes) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO fii_flows (date, flow_type, category, amount_cr, source, notes) VALUES (%s, %s, %s, %s, %s, %s)",
             (date, flow_type, category, amount_cr, source_upper, notes)
         )
         conn.commit()
@@ -98,7 +96,7 @@ def get_recent_flows(days: int = 30) -> List[Dict]:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
     with _get_db() as conn:
         cur = conn.execute(
-            "SELECT * FROM fii_flows WHERE date >= ? ORDER BY date DESC", (cutoff,)
+            "SELECT * FROM fii_flows WHERE date >= %s ORDER BY date DESC", (cutoff,)
         )
         return [dict(r) for r in cur.fetchall()]
 

@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-Seed Muthoot Finance (MUTHOOTFIN) data into research.db.
+Seed Muthoot Finance (MUTHOOTFIN) data into db.
 All values sourced from public filings and verified sources.
 Safe to run multiple times (INSERT OR IGNORE).
 """
 
 import os
 import sys
-import sqlite3
+from database import get_connection
 import json
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 SOURCES = {
     "NIM": "Equitymaster Annual Report Analysis FY25 (Aug 2025)",
@@ -35,20 +34,20 @@ SOURCES = {
 
 def get_company_id(conn, ticker):
     c = conn.cursor()
-    c.execute("SELECT id FROM companies WHERE ticker = ?", (ticker,))
+    c.execute("SELECT id FROM companies WHERE ticker = %s", (ticker,))
     row = c.fetchone()
     return row[0] if row else None
 
 
 def seed_muthoot():
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = get_connection()
     c = conn.cursor()
 
     # Add company
     c.execute("""
-        INSERT OR IGNORE INTO companies
+        INSERT INTO companies
         (ticker, company_name, exchange, sector)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, ("MUTHOOTFIN", "Muthoot Finance Limited", "NSE", "Gold Loan NBFC"))
     conn.commit()
 
@@ -120,9 +119,9 @@ def seed_muthoot():
     count = 0
     for metric, period, value, unit, source in metrics:
         c.execute("""
-            INSERT OR IGNORE INTO financial_series
+            INSERT INTO financial_series
             (company_id, metric_name, period, value, unit, extracted_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (company_id, metric, period, value, unit, now))
         count += 1
     print(f"[seed] {count} financial metrics inserted")
@@ -215,17 +214,17 @@ def seed_muthoot():
 
     for flag_type, severity, desc, evidence, period, note in flags:
         c.execute("""
-            INSERT OR IGNORE INTO forensic_flags
+            INSERT INTO forensic_flags
             (company_id, flag_type, severity, description, supporting_data, period, analyst_note)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (company_id, flag_type, severity, desc, evidence, period, note))
     print(f"[seed] {len(flags)} forensic flags inserted")
 
     # Research note record
     c.execute("""
-        INSERT OR IGNORE INTO research_notes
+        INSERT INTO research_notes
         (company_id, note_reference, title, status)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, (company_id, "SR-2026-MFL-001",
           "Muthoot Finance — Gold Price Dependency Masking NIM Fragility "
           "and Non-Gold Cross-Subsidy Risk",

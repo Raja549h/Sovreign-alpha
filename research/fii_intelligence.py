@@ -6,18 +6,17 @@ for India macro intelligence and portfolio vulnerability.
 """
 
 import json
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 NSDL_FPI_FLOWS_SQL = """
 CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     flow_date TEXT UNIQUE,
     equity_net REAL,
     debt_net REAL,
@@ -39,8 +38,7 @@ SECTOR_FII_SENSITIVITY = {
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -114,10 +112,10 @@ class FIIIntelligence:
             with _get_db() as conn:
                 c = conn.cursor()
                 c.execute(
-                    """INSERT OR IGNORE INTO nsdl_fpi_flows
+                    """INSERT INTO nsdl_fpi_flows
                        (flow_date, equity_net, debt_net, total_net,
                         equity_buy, equity_sell, source)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                     (flow_data.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
                      flow_data.get('equity_net', 0.0), flow_data.get('debt_net', 0.0),
                      flow_data.get('total_net', 0.0), flow_data.get('equity_buy', 0.0),
@@ -134,7 +132,7 @@ class FIIIntelligence:
             c = conn.cursor()
             cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
             c.execute("""SELECT flow_date, equity_net, debt_net, total_net
-                         FROM nsdl_fpi_flows WHERE flow_date >= ? ORDER BY flow_date ASC""", (cut,))
+                         FROM nsdl_fpi_flows WHERE flow_date >= %s ORDER BY flow_date ASC""", (cut,))
             rows = c.fetchall()
         if not rows:
             return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
@@ -201,7 +199,7 @@ class FIIIntelligence:
         with _get_db() as conn:
             c = conn.cursor()
             cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
-            c.execute("""SELECT * FROM nsdl_fpi_flows WHERE flow_date >= ?
+            c.execute("""SELECT * FROM nsdl_fpi_flows WHERE flow_date >= %s
                          ORDER BY flow_date DESC""", (cut,))
             return [dict(r) for r in c.fetchall()]
 

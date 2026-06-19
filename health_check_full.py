@@ -6,7 +6,7 @@ Diagnostic audit only. No fixes applied.
 
 import os
 import sys
-import sqlite3
+from database import get_connection
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).parent
@@ -51,7 +51,7 @@ required_files = [
     "dashboard/app.py",
     "data/institutional_feed.py",
     "zkml/trust_engine.py",
-    "billing/meter.db",
+    "billing/db",
     ".env",
 ]
 
@@ -259,9 +259,9 @@ print("\n" + "=" * 60)
 print("STEP 3 — DATABASE HEALTH CHECK")
 print("=" * 60)
 
-db_path = PROJECT_DIR / "billing" / "research.db"
+db_path = None
 if not db_path.exists():
-    db_path = PROJECT_DIR / "billing" / "meter.db"
+    db_path = None
 
 print(f"DB STATUS: {db_path}")
 
@@ -269,14 +269,14 @@ new_tables = ['companies', 'filings', 'financial_series', 'forensic_flags', 'res
 tables_present = 0
 
 try:
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+    c.execute("SELECT name FROM information_schema.tables WHERE table_schema='public' ORDER BY name")
     all_tables = [r[0] for r in c.fetchall()]
     
     for table in new_tables:
         if table in all_tables:
-            c.execute(f"PRAGMA table_info({table})")
+            c.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = ({table})")
             cols = c.fetchall()
             c.execute(f"SELECT COUNT(*) FROM {table}")
             count = c.fetchone()[0]
@@ -498,12 +498,12 @@ except Exception as e:
     print(f"FAIL: zkml/trust_engine.py — {e}")
     pipeline_intact = False
 
-# Check billing/meter.db
-meter_db = PROJECT_DIR / "billing" / "meter.db"
+# Check billing/db
+meter_db = None
 if meter_db.exists():
-    print("OK: billing/meter.db exists")
+    print("OK: billing/db exists")
 else:
-    print("MISSING: billing/meter.db")
+    print("MISSING: billing/db")
     pipeline_intact = False
 
 if pipeline_intact:
@@ -519,7 +519,7 @@ print("STEP 7 — CLEANUP")
 print("=" * 60)
 
 try:
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     c = conn.cursor()
     
     # Delete in order (foreign key constraints)

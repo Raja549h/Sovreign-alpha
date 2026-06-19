@@ -22,7 +22,6 @@ All errors handled gracefully — partial failures do not stop the pipeline.
 import os
 import sys
 import json
-import sqlite3
 import traceback
 from pathlib import Path
 from datetime import datetime, timedelta

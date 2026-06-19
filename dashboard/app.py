@@ -20,8 +20,8 @@ FIX LOG:
 import os
 import sys
 import json
-import sqlite3
 import pandas as pd
+from database import get_connection as db_get_connection
 from pathlib import Path
 from datetime import datetime, timedelta
 from functools import wraps
@@ -213,8 +213,7 @@ TEMPLATE_DIR = dashboard_dir / 'templates'
 if TEMPLATE_DIR.exists():
     app.template_folder = str(TEMPLATE_DIR)
 
-DB_PATH = BILLING_DIR / "billing.db"
-FUND_DATA_DB = BILLING_DIR / "fund_data.db"
+DB_PATH = None
 
 import secrets
 FUND_PASSWORD = os.environ.get("FUND_PASSWORD")
@@ -242,9 +241,8 @@ def init_fund_db():
 init_fund_db()
 
 def get_db_connection():
-    """Get database connection to billing.db (prediction_ledger, veto_archive)."""
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+    """Get database connection to db (prediction_ledger, veto_archive)."""
+    conn = db_get_connection()
     return conn
 
 def save_prediction(prediction_data: dict) -> bool:
@@ -256,7 +254,7 @@ def save_prediction(prediction_data: dict) -> bool:
             INSERT INTO prediction_ledger 
             (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
              status, expected_timeline_days, proof_hash, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             prediction_data.get('prediction_id'),
             prediction_data.get('timestamp', datetime.utcnow().isoformat() + 'Z'),
@@ -274,6 +272,7 @@ def save_prediction(prediction_data: dict) -> bool:
         return True
     except Exception as e:
         print(f"Error saving prediction: {e}")
+        conn.rollback()
         return False
     finally:
         conn.close()
@@ -286,7 +285,7 @@ def get_predictions(limit: int = 100) -> list:
         c.execute("""
             SELECT * FROM prediction_ledger 
             ORDER BY timestamp DESC 
-            LIMIT ?
+            LIMIT %s
         """, (limit,))
         rows = c.fetchall()
         conn.close()
@@ -301,11 +300,11 @@ def update_prediction_outcome(prediction_id: str, outcome_data: dict) -> bool:
     try:
         c.execute("""
             UPDATE prediction_ledger SET
-            actual_outcome = ?,
-            actual_return_pct = ?,
-            outcome_notes = ?,
-            updated_at = ?
-            WHERE prediction_id = ?
+            actual_outcome = %s,
+            actual_return_pct = %s,
+            outcome_notes = %s,
+            updated_at = %s
+            WHERE prediction_id = %s
         """, (
             outcome_data.get('outcome', ''),
             outcome_data.get('actual_return_pct', 0.0),
@@ -330,7 +329,7 @@ def save_veto(veto_data: dict) -> bool:
             INSERT INTO veto_archive
             (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
              expected_loss_pct, proof_hash, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             veto_data.get('veto_id'),
             veto_data.get('prediction_id', ''),
@@ -358,7 +357,7 @@ def get_veto_archive(limit: int = 100) -> list:
         c.execute("""
             SELECT * FROM veto_archive 
             ORDER BY timestamp DESC 
-            LIMIT ?
+            LIMIT %s
         """, (limit,))
         rows = c.fetchall()
         conn.close()
@@ -378,12 +377,12 @@ def update_veto_outcome(veto_id: str, outcome_data: dict) -> bool:
         
         c.execute("""
             UPDATE veto_archive SET
-            actual_outcome = ?,
-            actual_return_pct = ?,
-            avoided_drawdown = ?,
-            veto_correct = ?,
-            notes = ?
-            WHERE veto_id = ?
+            actual_outcome = %s,
+            actual_return_pct = %s,
+            avoided_drawdown = %s,
+            veto_correct = %s,
+            notes = %s
+            WHERE veto_id = %s
         """, (
             outcome_data.get('outcome', ''),
             actual_return,
@@ -481,32 +480,32 @@ def login_required(f):
     return decorated_function
 
 def save_fund_file(file_type: str, content: bytes):
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = db_get_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM fund_uploads WHERE file_type = ?", (file_type,))
-    c.execute("INSERT INTO fund_uploads (file_type, file_content, uploaded_at) VALUES (?, ?, ?)",
+    c.execute("DELETE FROM fund_uploads WHERE file_type = %s", (file_type,))
+    c.execute("INSERT INTO fund_uploads (file_type, file_content, uploaded_at) VALUES (%s, %s, %s)",
               (file_type, content, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
     conn.close()
 
 def get_fund_file(file_type: str) -> bytes:
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = db_get_connection()
     c = conn.cursor()
-    c.execute("SELECT file_content FROM fund_uploads WHERE file_type = ?", (file_type,))
+    c.execute("SELECT file_content FROM fund_uploads WHERE file_type = %s", (file_type,))
     row = c.fetchone()
     conn.close()
     return row[0] if row else None
 
 def save_fund_param(key: str, value: str):
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = db_get_connection()
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO fund_params (param_key, param_value, updated_at) VALUES (?, ?, ?)",
+    c.execute("INSERT INTO fund_params (param_key, param_value, updated_at) VALUES (%s, %s, %s)",
               (key, value, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
     conn.close()
 
 def get_fund_params() -> dict:
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = db_get_connection()
     c = conn.cursor()
     c.execute("SELECT param_key, param_value FROM fund_params")
     rows = c.fetchall()
@@ -545,8 +544,7 @@ def get_db_data(query, params=None):
         print(f"Database not found at {DB_PATH}")
         return []
     
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+    conn = db_get_connection()
     cursor = conn.cursor()
     
     try:
@@ -758,7 +756,7 @@ def get_dashboard_stats():
 
 
 def get_evidence_trust_data():
-    """Get evidence-based trust metrics from research.db (no vanity metrics)."""
+    """Get evidence-based trust metrics from db (no vanity metrics)."""
     try:
         from research.storage.research_db import get_connection as get_rsch_conn
         with get_rsch_conn() as conn:
@@ -937,7 +935,7 @@ def prediction_detail(prediction_id):
     """Audit-record style page for a single prediction."""
     try:
         conn = get_db_connection()
-        row = conn.execute("SELECT * FROM prediction_ledger WHERE id = ?", (prediction_id,)).fetchone()
+        row = conn.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,)).fetchone()
         conn.close()
         if not row:
             return render_template('prediction_detail.html',
@@ -1945,10 +1943,10 @@ def health():
 def debug_db():
     """Debug endpoint to check database status."""
     try:
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = db_get_connection()
         c = conn.cursor()
         
-        tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        tables = c.execute("SELECT name FROM information_schema.tables WHERE table_schema='public'").fetchall()
         table_info = {}
         for (name,) in tables:
             count = c.execute("SELECT COUNT(*) FROM [{}]".format(name.replace(']', ']]'))).fetchone()[0]
@@ -2293,14 +2291,14 @@ def system_health():
 def api_system_health():
     """API endpoint returning full system health data."""
     try:
-        research_db_path = BILLING_DIR / "research.db"
+        research_db_path = None
         fund_data_db_path = FUND_DATA_DB
 
         from research.storage.research_db import get_all_companies, get_notes
         companies = get_all_companies()
         research_notes = get_notes()
 
-        conn = sqlite3.connect(str(research_db_path))
+        conn = db_get_connection()
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM observation_memory")
         observations = c.fetchone()[0]
@@ -2320,7 +2318,7 @@ def api_system_health():
 
         validation_coverage_pct = round(resolved_obs / observations * 100, 1) if observations > 0 else 0
 
-        conn2 = sqlite3.connect(str(DB_PATH))
+        conn2 = db_get_connection()
         c2 = conn2.cursor()
         c2.execute("SELECT COUNT(*) FROM prediction_ledger")
         total_predictions = c2.fetchone()[0]
@@ -2329,19 +2327,19 @@ def api_system_health():
         pending_predictions = total_predictions - resolved_predictions
         conn2.close()
 
-        db_research_size_kb = research_db_path.stat().st_size // 1024 if research_db_path.exists() else 0
+        db_research_size_kb = 0
         db_fund_size_kb = fund_data_db_path.stat().st_size // 1024 if fund_data_db_path.exists() else 0
 
-        conn3 = sqlite3.connect(str(research_db_path))
+        conn3 = db_get_connection()
         c3 = conn3.cursor()
-        c3.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+        c3.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'")
         table_count = c3.fetchone()[0]
         conn3.close()
 
         proof_files = len(list(PROOFS_DIR.glob("*.json"))) if PROOFS_DIR.exists() else 0
         certificates = len(list(CERTS_DIR.glob("*.json"))) if CERTS_DIR.exists() else 0
 
-        db_research_healthy = research_db_path.exists()
+        db_research_healthy = True
         db_fund_healthy = fund_data_db_path.exists()
 
         evidence_quality = 'INSUFFICIENT_DATA'
@@ -3123,7 +3121,7 @@ def research_note(reference):
         content = note.get('full_content')
         if not content:
             content = ''
-        content = _re.sub(r'<script[^>]*>.*?</script>', '', content, flags=_re.IGNORECASE | _re.DOTALL)
+        content = _re.sub(r'<script[^>]*>.*%s</script>', '', content, flags=_re.IGNORECASE | _re.DOTALL)
         content = _re.sub(r'\bon\w+\s*=\s*["\'][^"\']*["\']', '', content, flags=_re.IGNORECASE)
         content = _re.sub(r'javascript:', '', content, flags=_re.IGNORECASE)
         note = dict(note)
@@ -3277,10 +3275,8 @@ def deep_research_download(reference):
 def api_shadow_portfolio():
     """List shadow portfolio positions with P&L."""
     try:
-        import sqlite3, json
-        from research.storage.research_db import RESEARCH_DB
-        conn = sqlite3.connect(str(RESEARCH_DB))
-        conn.row_factory = sqlite3.Row
+        import json
+                conn = db_get_connection()
         positions = conn.execute(
             "SELECT * FROM shadow_portfolio ORDER BY entry_date DESC"
         ).fetchall()
@@ -3295,9 +3291,8 @@ def api_shadow_portfolio():
 def api_shadow_portfolio_open():
     """Open a shadow portfolio position."""
     try:
-        import sqlite3, json
-        from research.storage.research_db import RESEARCH_DB
-        body = request.get_json(force=True, silent=True) or {}
+        import json
+                body = request.get_json(force=True, silent=True) or {}
         ticker = body.get('ticker', '').upper()
         if not ticker:
             return jsonify({'success': False, 'error': 'ticker required'})
@@ -3305,12 +3300,12 @@ def api_shadow_portfolio_open():
         thesis = body.get('thesis', '')
         expected_outcome = body.get('expected_outcome', '')
         confidence = float(body.get('confidence', 0.5))
-        conn = sqlite3.connect(str(RESEARCH_DB))
+        conn = db_get_connection()
         c = conn.cursor()
         c.execute("""INSERT INTO shadow_portfolio
             (position_id, ticker, entry_date, entry_price, thesis,
              expected_outcome, confidence, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN')""",
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'OPEN')""",
             (f"SP-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{ticker}",
              ticker, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
              entry_price, thesis, expected_outcome, confidence))
@@ -3327,16 +3322,15 @@ def api_shadow_portfolio_open():
 def api_shadow_portfolio_close():
     """Close a shadow portfolio position and record P&L."""
     try:
-        import sqlite3, json
-        from research.storage.research_db import RESEARCH_DB
-        body = request.get_json(force=True, silent=True) or {}
+        import json
+                body = request.get_json(force=True, silent=True) or {}
         position_id = body.get('position_id', '')
         exit_price = float(body.get('exit_price', 0))
         outcome = body.get('outcome', '')
         lessons = body.get('lessons', '')
-        conn = sqlite3.connect(str(RESEARCH_DB))
+        conn = db_get_connection()
         c = conn.cursor()
-        pos = c.execute("SELECT * FROM shadow_portfolio WHERE position_id = ?",
+        pos = c.execute("SELECT * FROM shadow_portfolio WHERE position_id = %s",
                         (position_id,)).fetchone()
         if not pos:
             return jsonify({'success': False, 'error': 'position not found'})
@@ -3349,10 +3343,10 @@ def api_shadow_portfolio_close():
             benchmark_return_pct = 0.0
         alpha_pct = round(return_pct - benchmark_return_pct, 2)
         c.execute("""UPDATE shadow_portfolio SET
-            exit_date = ?, exit_price = ?, return_pct = ?,
-            benchmark_return_pct = ?, alpha_pct = ?,
-            status = 'CLOSED', outcome = ?, lessons = ?
-            WHERE position_id = ?""",
+            exit_date = %s, exit_price = %s, return_pct = %s,
+            benchmark_return_pct = %s, alpha_pct = %s,
+            status = 'CLOSED', outcome = %s, lessons = %s
+            WHERE position_id = %s""",
             (datetime.now(timezone.utc).strftime('%Y-%m-%d'),
              exit_price, return_pct, benchmark_return_pct,
              alpha_pct, outcome, lessons, position_id))
@@ -3401,10 +3395,10 @@ def api_portfolio_delete():
         pid = int(request.form.get('portfolio_id', 0))
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("DELETE FROM portfolio_scores WHERE portfolio_id = ?", (pid,))
-            c.execute("DELETE FROM portfolio_stress_results WHERE portfolio_id = ?", (pid,))
-            c.execute("DELETE FROM portfolio_positions WHERE portfolio_id = ?", (pid,))
-            c.execute("DELETE FROM portfolios WHERE id = ?", (pid,))
+            c.execute("DELETE FROM portfolio_scores WHERE portfolio_id = %s", (pid,))
+            c.execute("DELETE FROM portfolio_stress_results WHERE portfolio_id = %s", (pid,))
+            c.execute("DELETE FROM portfolio_positions WHERE portfolio_id = %s", (pid,))
+            c.execute("DELETE FROM portfolios WHERE id = %s", (pid,))
             conn.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -3831,7 +3825,7 @@ def seed_database_on_startup():
 
         init_billing_db(DB_PATH)
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = db_get_connection()
         c = conn.cursor()
         c.execute("BEGIN IMMEDIATE")
 
@@ -3847,9 +3841,9 @@ def seed_database_on_startup():
             ]
             for pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret in samples:
                 c.execute("""
-                    INSERT OR IGNORE INTO prediction_ledger
+                    INSERT INTO prediction_ledger
                     (prediction_id, timestamp, asset, sector, thesis, confidence_score, status, expected_timeline_days, proof_hash, created_at, updated_at, actual_outcome, actual_return_pct)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret))
             print(f"[seed] Inserted {len(samples)} sample predictions")
         c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
@@ -3866,9 +3860,9 @@ def seed_database_on_startup():
             ]
             for vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes in samples:
                 c.execute("""
-                    INSERT OR IGNORE INTO veto_archive
+                    INSERT INTO veto_archive
                     (veto_id, asset, sector, rejection_reason, risk_score, timestamp, actual_outcome, actual_return_pct, expected_loss_pct, avoided_drawdown, veto_correct, notes, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (vid, asset, sector, reason, risk, ts, outcome, ret, exp_loss, avoided, correct, notes, ts))
             print(f"[seed] Inserted {len(samples)} sample vetoes")
 
@@ -3903,26 +3897,26 @@ if is_demo_mode():
     print("[seed] SAFETY NET: Demo mode active — inserting emergency data...")
     try:
         import uuid as _uuid
-        _conn = sqlite3.connect(str(DB_PATH))
+        _conn = db_get_connection()
         _c = _conn.cursor()
         _c.execute("BEGIN IMMEDIATE")
         _now = datetime.utcnow()
         _c.execute("""
-            INSERT OR IGNORE INTO prediction_ledger
+            INSERT INTO prediction_ledger
             (prediction_id, timestamp, asset, sector, thesis, confidence_score,
              status, expected_timeline_days, proof_hash, created_at, updated_at,
              actual_outcome, actual_return_pct)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, ("safety-001", (_now - timedelta(days=1)).isoformat() + 'Z',
               "NIFTY50", "Index", "Emergency seed — system recovery", 0.65,
               "cleared", 30, "0x" + _uuid.uuid4().hex[:40],
               _now.isoformat(), _now.isoformat(), "correct", 2.5))
         _c.execute("""
-            INSERT OR IGNORE INTO prediction_ledger
+            INSERT INTO prediction_ledger
             (prediction_id, timestamp, asset, sector, thesis, confidence_score,
              status, expected_timeline_days, proof_hash, created_at, updated_at,
              actual_outcome, actual_return_pct)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, ("safety-002", (_now - timedelta(days=2)).isoformat() + 'Z',
               "BANKNIFTY", "Index", "Emergency seed — system recovery", 0.70,
               "cleared", 30, "0x" + _uuid.uuid4().hex[:40],
@@ -3939,16 +3933,14 @@ if is_demo_mode():
 
 try:
     from dashboard.schemas import init_research_db
-    from research.storage.research_db import RESEARCH_DB as _research_db
-    init_research_db(_research_db)
+        init_research_db()
     from research.storage.research_db import init_extended_tables
     init_extended_tables()
 except Exception as e:
     print(f"Warning: Could not initialize research DB: {e}")
 
-from research.storage.research_db import RESEARCH_DB as _RDB_PATH
 try:
-    _fconn = sqlite3.connect(str(BILLING_DIR / "fund_data.db"))
+    _fconn = db_get_connection()
     _fconn.close()
 except Exception as _fe:
     pass
@@ -3963,8 +3955,7 @@ except Exception as e:
 
 try:
     from scripts.seed_all_empty_tables import seed_all_empty_tables
-    from research.storage.research_db import RESEARCH_DB
-    result = seed_all_empty_tables(db_path=str(RESEARCH_DB), quiet=False)
+        result = seed_all_empty_tables(quiet=False)
 except Exception as e:
     print(f"Warning: Could not seed extended tables: {e}")
 
@@ -3972,19 +3963,18 @@ print("=" * 60)
 print("STARTUP VERIFICATION")
 print("=" * 60)
 try:
-    _vconn = sqlite3.connect(str(DB_PATH))
+    _vconn = db_get_connection()
     _vc = _vconn.cursor()
     for _tbl in ['prediction_ledger', 'veto_archive', 'decisions', 'performance_log', 'inference_log', 'monthly_summary']:
         _vc.execute(f"SELECT COUNT(*) FROM {_tbl}")
         _cnt = _vc.fetchone()[0]
-        print(f"  [billing.db] {_tbl}: {_cnt} rows")
+        print(f"  [db] {_tbl}: {_cnt} rows")
     _vconn.close()
 except Exception as _ve:
-    print(f"  [billing.db] verification failed: {_ve}")
+    print(f"  [db] verification failed: {_ve}")
 
 try:
-    from research.storage.research_db import RESEARCH_DB as _RDB
-    _vconn2 = sqlite3.connect(str(_RDB))
+        _vconn2 = db_get_connection()
     _vc2 = _vconn2.cursor()
     _all_tables = [
         'companies', 'filings', 'financial_series', 'forensic_flags', 'research_notes',
@@ -4002,12 +3992,12 @@ try:
         try:
             _vc2.execute(f"SELECT COUNT(*) FROM {_tbl}")
             _cnt = _vc2.fetchone()[0]
-            print(f"  [research.db] {_tbl}: {_cnt} rows")
+            print(f"  [db] {_tbl}: {_cnt} rows")
         except Exception:
-            print(f"  [research.db] {_tbl}: MISSING")
+            print(f"  [db] {_tbl}: MISSING")
     _vconn2.close()
 except Exception as _ve:
-    print(f"  [research.db] verification failed: {_ve}")
+    print(f"  [db] verification failed: {_ve}")
 
 print("=" * 60)
 

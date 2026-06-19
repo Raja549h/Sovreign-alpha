@@ -6,22 +6,20 @@ and calculates accuracy metrics for institutional credibility.
 """
 
 import json
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 VALID_STATUSES = ['ACTIVE', 'MONITORING', 'CONFIRMED', 'PARTIALLY_CONFIRMED', 'INVALIDATED']
 REVIEW_TYPES = ['30_day', '90_day', '180_day', 'triggered', 'manual']
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -49,7 +47,7 @@ class ObservationRegistry:
                     confidence, source, metric_name, metric_value,
                     expected_implication, review_date_30, review_date_90,
                     review_date_180, validation_status)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ACTIVE')""",
                 (company_id, today, category, observation_text,
                  confidence, source, metric_name, metric_value,
                  expected_implication, d30, d90, d180)
@@ -69,7 +67,7 @@ class ObservationRegistry:
                     FROM observation_memory om
                     JOIN companies c ON c.id = om.company_id
                     WHERE om.{col} IS NOT NULL
-                    AND om.{col} <= ?
+                    AND om.{col} <= %s
                     AND om.validation_status IN ('ACTIVE', 'MONITORING')
                     ORDER BY om.{col} ASC""",
                 (today,)
@@ -94,9 +92,9 @@ class ObservationRegistry:
             c = conn.cursor()
             c.execute(
                 """UPDATE observation_memory
-                   SET validation_status = ?, validation_evidence = ?,
-                       validated_at = ?, validated_by = 'auto_engine'
-                   WHERE id = ?""",
+                   SET validation_status = %s, validation_evidence = %s,
+                       validated_at = %s, validated_by = 'auto_engine'
+                   WHERE id = %s""",
                 (new_status, evidence, today, observation_id)
             )
 
@@ -108,7 +106,7 @@ class ObservationRegistry:
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
                     supporting_data, groq_reasoning, accuracy_contribution)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (observation_id, prior.get('company_id'), today, 'triggered',
                  prior.get('validation_status', 'ACTIVE'), new_status,
                  method, evidence, reasoning,
@@ -201,17 +199,17 @@ class ObservationRegistry:
             where = []
             params = []
             if company_id:
-                where.append("om.company_id = ?")
+                where.append("om.company_id = %s")
                 params.append(company_id)
             if category:
-                where.append("om.category = ?")
+                where.append("om.category = %s")
                 params.append(category)
             if status:
-                where.append("om.validation_status = ?")
+                where.append("om.validation_status = %s")
                 params.append(status)
             if where:
                 query += " WHERE " + " AND ".join(where)
-            query += " ORDER BY om.observation_date DESC LIMIT ?"
+            query += " ORDER BY om.observation_date DESC LIMIT %s"
             params.append(limit)
             c.execute(query, params)
             return [dict(r) for r in c.fetchall()]
@@ -222,11 +220,11 @@ class ObservationRegistry:
 
             if company_id:
                 c.execute("""SELECT validation_status, COUNT(*) as cnt
-                             FROM observation_memory WHERE company_id = ?
+                             FROM observation_memory WHERE company_id = %s
                              GROUP BY validation_status""", (company_id,))
                 c2 = conn.cursor()
                 c2.execute("""SELECT AVG(confidence) as avg_conf
-                              FROM observation_memory WHERE company_id = ?""", (company_id,))
+                              FROM observation_memory WHERE company_id = %s""", (company_id,))
             else:
                 c.execute("""SELECT validation_status, COUNT(*) as cnt
                              FROM observation_memory GROUP BY validation_status""")
@@ -299,14 +297,14 @@ class ObservationRegistry:
                 top_cats = [c[0] for c in sorted_cats[:3]]
                 worst_cats = [c[0] for c in sorted_cats[-3:]] if len(sorted_cats) >= 3 else [c[0] for c in sorted_cats]
 
-            c.execute("DELETE FROM edge_scorecard WHERE company_id IS ?", (company_id,))
+            c.execute("DELETE FROM edge_scorecard WHERE company_id IS %s", (company_id,))
             c.execute(
                 """INSERT INTO edge_scorecard
                    (company_id, calculated_at, total_observations, confirmed,
                     partially_confirmed, invalidated, active, monitoring,
                     accuracy_rate, weighted_accuracy, avg_confidence,
                     top_categories, worst_categories, edge_score)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  total, confirmed, partial, invalidated, active, monitoring,
                  accuracy_rate, weighted_accuracy, round(avg_conf, 4),
@@ -333,7 +331,7 @@ class ObservationRegistry:
     def _get_observation(self, observation_id: int) -> Optional[Dict]:
         with _get_db() as conn:
             c = conn.cursor()
-            c.execute("SELECT * FROM observation_memory WHERE id = ?", (observation_id,))
+            c.execute("SELECT * FROM observation_memory WHERE id = %s", (observation_id,))
             r = c.fetchone()
             return dict(r) if r else None
 
@@ -342,7 +340,7 @@ class ObservationRegistry:
             c = conn.cursor()
             if company_id:
                 c.execute("""SELECT * FROM edge_scorecard
-                             WHERE company_id = ? ORDER BY id DESC LIMIT 1""", (company_id,))
+                             WHERE company_id = %s ORDER BY id DESC LIMIT 1""", (company_id,))
             else:
                 c.execute("""SELECT * FROM edge_scorecard
                              WHERE company_id IS NULL ORDER BY id DESC LIMIT 1""")
@@ -356,7 +354,7 @@ class ObservationRegistry:
                          FROM observation_validations ov
                          JOIN observation_memory om ON om.id = ov.observation_id
                          JOIN companies c ON c.id = ov.company_id
-                         ORDER BY ov.created_at DESC LIMIT ?""", (limit,))
+                         ORDER BY ov.created_at DESC LIMIT %s""", (limit,))
             results = [dict(r) for r in c.fetchall()]
             if results:
                 return results
@@ -372,5 +370,5 @@ class ObservationRegistry:
                                 om.created_at
                          FROM observation_memory om
                          JOIN companies c ON c.id = om.company_id
-                         ORDER BY om.created_at DESC LIMIT ?""", (limit,))
+                         ORDER BY om.created_at DESC LIMIT %s""", (limit,))
             return [dict(r) for r in c.fetchall()]

@@ -1,4 +1,3 @@
-import sqlite3
 import os
 import sys
 from pathlib import Path
@@ -16,7 +15,7 @@ def run_red_team_attacks():
     # 1. Null values in DB
     print("[1] Attack: Inserting Null Values into Prediction Ledger")
     try:
-        conn = sqlite3.connect(str(BILLING_DIR / "billing.db"))
+        conn = get_connection())
         c = conn.cursor()
         c.execute("""
             INSERT INTO prediction_ledger (prediction_id, timestamp, asset, confidence_score, status)
@@ -39,7 +38,7 @@ def run_red_team_attacks():
             VALUES ('pred-001', '2023-01-01', 'AAPL', 0.9, 'cleared')
         """)
         conn.commit()
-        print("    -> Handled gracefully (Replaced or Ignored via INSERT OR REPLACE/IGNORE)")
+        print("    -> Handled gracefully (Replaced or Ignored via INSERT/IGNORE)")
     except Exception as e:
         print(f"    -> Handled duplicate gracefully: {e}")
 
@@ -60,7 +59,7 @@ def run_red_team_attacks():
     # 4. Schema mismatch simulation
     print("[4] Attack: Schema Mismatch")
     try:
-        conn = sqlite3.connect(str(BILLING_DIR / "billing.db"))
+        conn = get_connection())
         conn.execute("ALTER TABLE veto_archive RENAME TO veto_archive_corrupt")
         conn.commit()
         from agents.risk_manager import RiskManager

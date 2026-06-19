@@ -1,6 +1,6 @@
 import os
 import json
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
@@ -19,10 +19,10 @@ class BillingMeter:
     
     def __init__(self, data_dir: Optional[Path] = None):
         self.data_dir = data_dir or BILLING_DIR
-        self.db_path = self.data_dir / "billing.db"
+        self.db_path = self.data_dir / "db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
-        self.conn: Optional[sqlite3.Connection] = None
+        self.conn: Optional[any] = None
         
         self._initialize_database()
         
@@ -31,14 +31,14 @@ class BillingMeter:
 
     def _initialize_database(self):
         """Initialize SQLite database with required tables."""
-        self.conn = sqlite3.connect(str(self.db_path))
-        self.conn.row_factory = sqlite3.Row
+        self.conn = get_connection()
+        self.
         
         try:
             from dashboard.schemas import init_billing_db
             self.conn.close() # Close existing connection since init_billing_db creates its own
             self.conn = init_billing_db(self.db_path)
-            self.conn.row_factory = sqlite3.Row
+            self.
         except Exception as e:
             logger.warning(f"Meter DB init failed: {e}")
         logger.info(f"Billing database initialized at {self.db_path}")
@@ -68,7 +68,7 @@ class BillingMeter:
             INSERT INTO inference_log 
             (timestamp, agent_id, model, input_tokens, output_tokens, 
              total_tokens, latency_ms, cost_estimate, decision_id, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             datetime.utcnow().isoformat() + 'Z',
             agent_id,
@@ -102,7 +102,7 @@ class BillingMeter:
             INSERT INTO performance_log
             (timestamp, decision_id, trade_action, symbol, position_value,
              alpha_generated, fee_calculated, fee_paid, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             datetime.utcnow().isoformat() + 'Z',
             decision_id,
@@ -137,7 +137,7 @@ class BillingMeter:
                 model,
                 agent_id
             FROM inference_log
-            WHERE timestamp >= ?
+            WHERE timestamp >= %s
             GROUP BY model, agent_id
             ORDER BY total_calls DESC
         """, (cutoff,))
@@ -177,7 +177,7 @@ class BillingMeter:
                 symbol,
                 trade_action
             FROM performance_log
-            WHERE timestamp >= ?
+            WHERE timestamp >= %s
             GROUP BY symbol, trade_action
             ORDER BY total_alpha DESC
         """, (cutoff,))
@@ -221,7 +221,7 @@ class BillingMeter:
                 SUM(total_tokens) as total_tokens,
                 SUM(cost_estimate) as total_cost
             FROM inference_log
-            WHERE timestamp >= ? AND timestamp < ?
+            WHERE timestamp >= %s AND timestamp < %s
         """, (month_start, month_end))
         
         inference_row = cursor.fetchone()
@@ -232,7 +232,7 @@ class BillingMeter:
                 SUM(fee_calculated) as total_fees,
                 COUNT(*) as total_trades
             FROM performance_log
-            WHERE timestamp >= ? AND timestamp < ?
+            WHERE timestamp >= %s AND timestamp < %s
         """, (month_start, month_end))
         
         performance_row = cursor.fetchone()
@@ -257,7 +257,7 @@ class BillingMeter:
             INSERT INTO monthly_summary
             (month, total_inferences, total_tokens, total_cost,
              alpha_generated, performance_fee, report_generated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             month,
             report['inference']['total_calls'],

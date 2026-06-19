@@ -8,7 +8,7 @@ holdings share similar import-vulnerability profiles.
 Design principle: institutional risk awareness for concentrated equity portfolios.
 """
 
-import sqlite3
+from database import get_connection
 import json
 from datetime import datetime
 from pathlib import Path
@@ -16,11 +16,10 @@ from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 IMPORT_SENSITIVITY_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS import_sensitivity_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER,
     ticker TEXT,
     sector TEXT,
@@ -173,13 +172,12 @@ RISK_THRESHOLDS = [
 
 
 def init_import_tables():
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with get_connection() as conn:
         conn.executescript(IMPORT_SENSITIVITY_TABLES_SQL)
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -230,11 +228,19 @@ def assess_import_sensitivity(company_id: int, company_name: str, ticker: str,
     try:
         with _get_db() as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO import_sensitivity_scores
+                INSERT INTO import_sensitivity_scores
                 (company_id, ticker, sector, import_dependency_score,
                  raw_material_import_pct, capex_import_pct,
                  currency_headwind_risk, observation)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (company_id) DO UPDATE SET
+                ticker = EXCLUDED.ticker,
+                sector = EXCLUDED.sector,
+                import_dependency_score = EXCLUDED.import_dependency_score,
+                raw_material_import_pct = EXCLUDED.raw_material_import_pct,
+                capex_import_pct = EXCLUDED.capex_import_pct,
+                currency_headwind_risk = EXCLUDED.currency_headwind_risk,
+                observation = EXCLUDED.observation
             """, (
                 company_id, ticker, sector, base_score,
                 _pct_from_dependency(profile['raw_material_dependency']),

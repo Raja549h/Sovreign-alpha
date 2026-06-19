@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 """
-Initialize billing/meter.db — Legacy billing meter database
+Initialize billing/db — Legacy billing meter database
 ============================================================
 Creates the billing meter database with required tables.
 This file exists for backward compatibility with existing pipeline code.
 """
 
-import sqlite3
+from database import get_connection
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-DB_PATH = BASE_DIR / "billing" / "meter.db"
+DB_PATH = None
 
 
 def init_meter_db():
-    """Create meter.db with required tables if it doesn't exist."""
+    """Create db with required tables if it doesn't exist."""
     if DB_PATH.exists():
         return
     
-    conn = sqlite3.connect(str(DB_PATH))
+    conn = get_connection()
     c = conn.cursor()
     
     # Decisions table
     c.execute("""
-        CREATE TABLE IF NOT EXISTS decisions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS meter_decisions (
+            id SERIAL PRIMARY KEY,
             decision_id TEXT,
             symbol TEXT,
             action TEXT,
@@ -38,7 +38,7 @@ def init_meter_db():
     # Proofs table
     c.execute("""
         CREATE TABLE IF NOT EXISTS proofs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             decision_id TEXT,
             proof_hash TEXT,
             verified INTEGER,
@@ -49,7 +49,7 @@ def init_meter_db():
     # Performance table
     c.execute("""
         CREATE TABLE IF NOT EXISTS performance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             date TEXT,
             portfolio_value REAL,
             benchmark_value REAL,

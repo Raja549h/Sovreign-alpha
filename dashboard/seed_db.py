@@ -11,7 +11,7 @@ and initializes fund parameters. Safe to run multiple times.
 
 import os
 import sys
-import sqlite3
+from database import get_connection
 import json
 from pathlib import Path
 from datetime import datetime
@@ -21,13 +21,11 @@ sys.path.insert(0, str(BASE_DIR))
 BILLING_DIR = BASE_DIR / "billing"
 BILLING_DIR.mkdir(exist_ok=True)
 
-RESEARCH_DB = BILLING_DIR / "research.db"
-FUND_DB = BILLING_DIR / "fund_data.db"
 
 
 def seed_research_db():
     """Create research tables and seed Bajaj Finance data."""
-    print("[seed] Initializing research.db...")
+    print("[seed] Initializing db...")
 
     from research.storage.research_db import init_evolution_tables, init_validation_tables, init_evolution_quality_tables, init_shadow_portfolio_tables, init_evidence_tables
     init_evolution_tables()
@@ -36,13 +34,13 @@ def seed_research_db():
     init_shadow_portfolio_tables()
     init_evidence_tables()
 
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = get_connection()
     c = conn.cursor()
 
     # 1. companies
     c.execute("""
         CREATE TABLE IF NOT EXISTS companies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             ticker TEXT NOT NULL,
             company_name TEXT NOT NULL,
             exchange TEXT DEFAULT 'NSE',
@@ -55,7 +53,7 @@ def seed_research_db():
     # 2. filings
     c.execute("""
         CREATE TABLE IF NOT EXISTS filings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             company_id INTEGER REFERENCES companies(id),
             filing_type TEXT,
             period TEXT,
@@ -71,7 +69,7 @@ def seed_research_db():
     # 3. financial_series
     c.execute("""
         CREATE TABLE IF NOT EXISTS financial_series (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             company_id INTEGER REFERENCES companies(id),
             metric_name TEXT,
             period TEXT,
@@ -85,7 +83,7 @@ def seed_research_db():
     # 4. forensic_flags
     c.execute("""
         CREATE TABLE IF NOT EXISTS forensic_flags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             company_id INTEGER REFERENCES companies(id),
             flag_type TEXT,
             severity TEXT,
@@ -100,7 +98,7 @@ def seed_research_db():
     # 5. research_notes
     c.execute("""
         CREATE TABLE IF NOT EXISTS research_notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             company_id INTEGER REFERENCES companies(id),
             note_reference TEXT UNIQUE,
             title TEXT,
@@ -120,7 +118,7 @@ def seed_research_db():
     # 6. institutional_scores
     c.execute("""
         CREATE TABLE IF NOT EXISTS institutional_scores (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             company_id INTEGER REFERENCES companies(id),
             period TEXT,
             risk_intensity REAL,
@@ -137,9 +135,9 @@ def seed_research_db():
 
     # Insert Bajaj Finance
     c.execute("""
-        INSERT OR IGNORE INTO companies
+        INSERT INTO companies
         (ticker, company_name, exchange, sector)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, ("BAJFINANCE", "Bajaj Finance Limited", "NSE", "NBFC"))
     company_id = c.execute("SELECT id FROM companies WHERE ticker='BAJFINANCE'").fetchone()[0]
     print(f"  [ok] BAJFINANCE (id={company_id})")
@@ -176,9 +174,9 @@ def seed_research_db():
     count = 0
     for metric, period, value, unit in metrics:
         c.execute("""
-            INSERT OR IGNORE INTO financial_series
+            INSERT INTO financial_series
             (company_id, metric_name, period, value, unit)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """, (company_id, metric, period, value, unit))
         count += 1
     print(f"  [ok] {count} financial metrics inserted")
@@ -198,9 +196,9 @@ def seed_research_db():
 
     for flag_type, severity, desc, evidence, period in flags:
         c.execute("""
-            INSERT OR IGNORE INTO forensic_flags
+            INSERT INTO forensic_flags
             (company_id, flag_type, severity, description, supporting_data, period)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (company_id, flag_type, severity, desc, evidence, period))
     print(f"  [ok] {len(flags)} forensic flags inserted")
 
@@ -210,7 +208,7 @@ def seed_research_db():
     d30 = (datetime.utcnow() + timedelta(days=30)).strftime('%Y-%m-%d')
     d90 = (datetime.utcnow() + timedelta(days=90)).strftime('%Y-%m-%d')
     d180 = (datetime.utcnow() + timedelta(days=180)).strftime('%Y-%m-%d')
-    c.execute("SELECT COUNT(*) FROM observation_memory WHERE company_id = ?", (company_id,))
+    c.execute("SELECT COUNT(*) FROM observation_memory WHERE company_id = %s", (company_id,))
     if c.fetchone()[0] == 0:
         obs_list = [
             ('credit_cost_acceleration', 'margin', 0.85,
@@ -227,7 +225,7 @@ def seed_research_db():
                    (company_id, observation_date, category, observation_text,
                     confidence, source, expected_implication, review_date_30,
                     review_date_90, review_date_180, validation_status)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ACTIVE')""",
                 (company_id, today, cat, obs_text, conf, 'filing',
                  expected, d30, d90, d180)
             )
@@ -249,9 +247,9 @@ def seed_research_db():
     ]
     for ticker, name, sector in nse_coverage:
         c.execute("""
-            INSERT OR IGNORE INTO companies
+            INSERT INTO companies
             (ticker, company_name, exchange, sector)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, (ticker, name, "NSE", sector))
         if c.rowcount > 0:
             print(f"  [ok] Added {ticker} ({sector})")
@@ -259,9 +257,9 @@ def seed_research_db():
 
     # Research note
     c.execute("""
-        INSERT OR IGNORE INTO research_notes
+        INSERT INTO research_notes
         (company_id, note_reference, title, status)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, (company_id, "SR-2026-BAF-001",
           "Bajaj Finance — Marginal Efficiency Compression Under Liquidity Normalisation",
           "published"))
@@ -269,18 +267,18 @@ def seed_research_db():
 
     conn.commit()
     conn.close()
-    print("  [done] research.db seeded")
+    print("  [done] db seeded")
 
 
 def seed_fund_db():
     """Create fund data tables and seed parameters."""
-    print("[seed] Initializing fund_data.db...")
-    conn = sqlite3.connect(str(FUND_DB))
+    print("[seed] Initializing db...")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS fund_params (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             param_key TEXT UNIQUE,
             param_value TEXT,
             updated_at TEXT
@@ -289,7 +287,7 @@ def seed_fund_db():
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS fund_uploads (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             file_type TEXT,
             file_content BLOB,
             uploaded_at TEXT
@@ -306,14 +304,14 @@ def seed_fund_db():
 
     for key, value in params:
         c.execute("""
-            INSERT OR IGNORE INTO fund_params (param_key, param_value, updated_at)
-            VALUES (?, ?, ?)
+            INSERT INTO fund_params (param_key, param_value, updated_at)
+            VALUES (%s, %s, %s)
         """, (key, value, datetime.utcnow().isoformat()))
         print(f"  [ok] {key} = {value}")
 
     conn.commit()
     conn.close()
-    print("  [done] fund_data.db seeded")
+    print("  [done] db seeded")
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ After 30 days you have 30 days of immutable institutional evidence.
 import os
 import sys
 import json
-import sqlite3
+from database import get_connection
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -34,16 +34,15 @@ DATA_DIR.mkdir(exist_ok=True)
 PROOFS_DIR.mkdir(exist_ok=True)
 BILLING_DIR.mkdir(exist_ok=True)
 
-FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 
 def init_db():
     """Initialize database tables if they don't exist."""
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = get_connection()
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS prediction_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             prediction_id TEXT UNIQUE,
             timestamp TEXT NOT NULL,
             asset TEXT NOT NULL,
@@ -62,7 +61,7 @@ def init_db():
     """)
     c.execute("""
         CREATE TABLE IF NOT EXISTS veto_archive (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             veto_id TEXT UNIQUE,
             prediction_id TEXT,
             timestamp TEXT NOT NULL,
@@ -88,8 +87,7 @@ init_db()
 
 def get_db_connection():
     """Get a database connection."""
-    conn = sqlite3.connect(str(FUND_DATA_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -102,7 +100,7 @@ def save_prediction(prediction_data: dict) -> bool:
             INSERT INTO prediction_ledger 
             (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
              status, expected_timeline_days, proof_hash, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             prediction_data.get('prediction_id'),
             prediction_data.get('timestamp'),
@@ -134,7 +132,7 @@ def save_veto(veto_data: dict) -> bool:
             INSERT INTO veto_archive
             (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
              expected_loss_pct, proof_hash, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             veto_data.get('veto_id'),
             veto_data.get('prediction_id', ''),

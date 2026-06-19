@@ -21,7 +21,7 @@ import sys
 import json
 import time
 import hashlib
-import sqlite3
+
 import csv
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -36,7 +36,6 @@ HISTORICAL_DATA_DIR = BACKTEST_DIR / "historical_data"
 CHECKPOINT_DIR = BACKTEST_DIR / "checkpoints"
 DOCS_DIR = BASE_DIR / "documents"
 BILLING_DIR = BASE_DIR / "billing"
-FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 # Create directories
 for d in [HISTORICAL_DATA_DIR, CHECKPOINT_DIR, DOCS_DIR]:
@@ -80,8 +79,8 @@ SECTOR_MAP = {
 
 def get_db_connection():
     """Get database connection."""
-    conn = sqlite3.connect(str(FUND_DATA_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection())
+    
     return conn
 
 
@@ -91,7 +90,7 @@ def init_db_tables():
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS prediction_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             prediction_id TEXT UNIQUE,
             timestamp TEXT NOT NULL,
             asset TEXT NOT NULL,
@@ -110,7 +109,7 @@ def init_db_tables():
     """)
     c.execute("""
         CREATE TABLE IF NOT EXISTS veto_archive (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             veto_id TEXT UNIQUE,
             prediction_id TEXT,
             timestamp TEXT NOT NULL,
@@ -1115,11 +1114,11 @@ def populate_dashboard(predictions, vetoes):
     for p in predictions:
         try:
             c.execute("""
-                INSERT OR IGNORE INTO prediction_ledger
+                INSERT INTO prediction_ledger
                 (prediction_id, timestamp, asset, sector, thesis, confidence_score,
                  status, expected_timeline_days, actual_outcome, actual_return_pct,
                  proof_hash, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 p['prediction_id'],
                 p['date'] + 'T16:00:00Z',
@@ -1142,11 +1141,11 @@ def populate_dashboard(predictions, vetoes):
     for v in vetoes:
         try:
             c.execute("""
-                INSERT OR IGNORE INTO veto_archive
+                INSERT INTO veto_archive
                 (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
                  expected_loss_pct, actual_outcome, actual_return_pct, avoided_drawdown,
                  veto_correct, proof_hash, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 v['veto_id'],
                 v['prediction_id'],

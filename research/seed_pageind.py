@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-Seed Page Industries (PAGEIND) data into research.db.
+Seed Page Industries (PAGEIND) data into db.
 All values sourced from public filings and verified sources.
 Safe to run multiple times (INSERT OR IGNORE).
 """
 
 import os
 import sys
-import sqlite3
+from database import get_connection
 import json
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 SOURCES = {
     "Revenue": "Page Industries Annual Reports FY21-FY25; Equitymaster",
@@ -38,20 +37,20 @@ SOURCES = {
 
 def get_company_id(conn, ticker):
     c = conn.cursor()
-    c.execute("SELECT id FROM companies WHERE ticker = ?", (ticker,))
+    c.execute("SELECT id FROM companies WHERE ticker = %s", (ticker,))
     row = c.fetchone()
     return row[0] if row else None
 
 
 def seed_pageind():
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = get_connection()
     c = conn.cursor()
 
     # Add company
     c.execute("""
-        INSERT OR IGNORE INTO companies
+        INSERT INTO companies
         (ticker, company_name, exchange, sector)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, ("PAGEIND", "Page Industries Limited", "NSE", "Apparel / Innerwear"))
     conn.commit()
 
@@ -137,9 +136,9 @@ def seed_pageind():
     count = 0
     for metric, period, value, unit, source in metrics:
         c.execute("""
-            INSERT OR IGNORE INTO financial_series
+            INSERT INTO financial_series
             (company_id, metric_name, period, value, unit, extracted_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (company_id, metric, period, value, unit, now))
         count += 1
     print(f"[seed] {count} financial metrics inserted")
@@ -247,9 +246,9 @@ def seed_pageind():
 
     for flag_type, severity, desc, evidence, period, note in flags:
         c.execute("""
-            INSERT OR IGNORE INTO forensic_flags
+            INSERT INTO forensic_flags
             (company_id, flag_type, severity, description, supporting_data, period, analyst_note)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (company_id, flag_type, severity, desc, evidence, period, note))
     print(f"[seed] {len(flags)} forensic flags inserted")
 

@@ -7,7 +7,7 @@ Generates a one-page executive summary for CIOs.
 
 import os
 import sys
-import sqlite3
+from database import get_connection
 from datetime import datetime
 from pathlib import Path
 
@@ -16,15 +16,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 BASE_DIR = Path(__file__).parent.parent
 DOCS_DIR = BASE_DIR / "documents"
 BILLING_DIR = BASE_DIR / "billing"
-FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 DOCS_DIR.mkdir(exist_ok=True)
 
 
 def get_db_connection():
     """Get a database connection."""
-    conn = sqlite3.connect(str(FUND_DATA_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 

@@ -71,14 +71,14 @@ for obs in observations:
     c.execute("""INSERT INTO observation_validations
         (observation_id, company_id, review_type, prior_status, new_status,
          validation_method, supporting_data, validation_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))""",
+        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())""",
         (oid, obs['company_id'], 'automated_audit', obs['status'], status,
          'evidence_cross_reference', evidence))
     vid = c.lastrowid
     conn.commit()
 
     # Update observation_memory validation_status
-    c.execute("UPDATE observation_memory SET validation_status=? WHERE id=?", (status, oid))
+    c.execute("UPDATE observation_memory SET validation_status=%s WHERE id=%s", (status, oid))
     conn.commit()
 
     # Record reasoning factors
@@ -194,7 +194,7 @@ for obs in observations:
 print("\n--- 10. Recording credibility evidence ---")
 c.execute("""INSERT INTO credibility_evidence
     (evidence_type, description, status, source_url)
-    VALUES (?, ?, ?, ?)""",
+    VALUES (%s, %s, %s, %s)""",
     ('validation_outcome',
      'Credit cost acceleration observation validated by Q2 earnings and provisions data',
      'confirmed', 'https://example.com/audit/1'))

@@ -2,14 +2,14 @@
 SOVEREIGN ALPHA - INTERNAL AUDIT DIVISION
 Automated forensic audit: schema, data integrity, code quality, security.
 """
-import sqlite3, json, os, sys, hashlib, importlib, inspect, re
+from database import get_connection, json, os, sys, hashlib, importlib, inspect, re
 from pathlib import Path
 from datetime import datetime
 
 BASE = Path(__file__).parent
 BILLING = BASE / "billing"
-RESEARCH_DB = BILLING / "research.db"
-FUND_DB = BILLING / "fund_data.db"
+RESEARCH_DB = BILLING / "db"
+FUND_DB = BILLING / "db"
 
 sys.path.insert(0, str(BASE))
 
@@ -48,15 +48,15 @@ print("=" * 70)
 # --- 1. DATABASE SCHEMA AUDIT ---
 print("\n--- 1. DATABASE SCHEMA AUDIT ---")
 
-check("research.db exists", RESEARCH_DB.exists(), "critical")
-check("fund_data.db exists", FUND_DB.exists(), "critical")
+check("db exists", RESEARCH_DB.exists(), "critical")
+check("db exists", FUND_DB.exists(), "critical")
 
 if RESEARCH_DB.exists():
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+    c.execute("SELECT name FROM information_schema.tables WHERE table_schema='public' ORDER BY name")
     tables = [r[0] for r in c.fetchall() if r[0] != 'sqlite_sequence']
-    check("research.db has tables", len(tables) > 0, "critical")
+    check("db has tables", len(tables) > 0, "critical")
     print("  Tables (" + str(len(tables)) + "): " + ", ".join(tables))
 
     REQUIRED_TABLES = [
@@ -70,7 +70,7 @@ if RESEARCH_DB.exists():
     for t in REQUIRED_TABLES:
         check("Required table '" + t + "' exists", t in tables, "critical")
 
-    c.execute("PRAGMA table_info(observation_memory)")
+    c.execute("SELECT column_name FROM information_schema.columns WHERE table_name = (observation_memory)")
     obs_cols = {r[1] for r in c.fetchall()}
     REQUIRED_OBS_COLS = ['id', 'company_id', 'observation_text', 'confidence',
         'validation_status', 'model_version', 'agent_version',
@@ -96,21 +96,21 @@ if RESEARCH_DB.exists():
 
     conn.close()
 else:
-    check("research.db required for audit", False, "critical")
+    check("db required for audit", False, "critical")
 
 if RESEARCH_DB.exists():
-    conn2 = sqlite3.connect(str(RESEARCH_DB))
+    conn2 = get_connection()
     c2 = conn2.cursor()
-    c2.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    c2.execute("SELECT name FROM information_schema.tables WHERE table_schema='public'")
     all_tables = [r[0] for r in c2.fetchall()]
-    # prediction_ledger and veto_archive are created at Flask runtime (in billing.db)
+    # prediction_ledger and veto_archive are created at Flask runtime (in db)
     has_ledger = 'prediction_ledger' in all_tables
     has_veto = 'veto_archive' in all_tables
-    # Also check billing.db (fund_data.db) where these tables are created at runtime
+    # Also check db (db) where these tables are created at runtime
     if FUND_DB.exists():
-        conn_fund = sqlite3.connect(str(FUND_DB))
+        conn_fund = get_connection()
         cf = conn_fund.cursor()
-        cf.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        cf.execute("SELECT name FROM information_schema.tables WHERE table_schema='public'")
         fund_tables = [r[0] for r in cf.fetchall()]
         has_ledger = has_ledger or 'prediction_ledger' in fund_tables
         has_veto = has_veto or 'veto_archive' in fund_tables
@@ -123,23 +123,22 @@ if RESEARCH_DB.exists():
             pdb = RESEARCH_DB
         else:
             pdb = FUND_DB
-        conn_p = sqlite3.connect(str(pdb))
+        conn_p = get_connection()
         cp = conn_p.cursor()
-        cp.execute("PRAGMA table_info(prediction_ledger)")
+        cp.execute("SELECT column_name FROM information_schema.columns WHERE table_name = (prediction_ledger)")
         cols = {r[1] for r in cp.fetchall()}
         check("prediction_ledger has 'actual_outcome' column", 'actual_outcome' in cols, "high")
         check("prediction_ledger has 'confidence' column", 'confidence' in cols or 'confidence_score' in cols, "high")
         check("prediction_ledger has 'status' column", 'status' in cols, "high")
         conn_p.close()
     if not has_ledger:
-        rec("prediction_ledger table is created by Flask at runtime in billing.db. Start the app to create it.", "low")
+        rec("prediction_ledger table is created by Flask at runtime in db. Start the app to create it.", "low")
     conn2.close()
 
 # --- 2. DATA INTEGRITY AUDIT ---
 print("\n--- 2. DATA INTEGRITY AUDIT ---")
 
-conn = sqlite3.connect(str(RESEARCH_DB))
-conn.row_factory = sqlite3.Row
+conn = get_connection()
 c = conn.cursor()
 
 c.execute("SELECT COUNT(*) FROM companies WHERE ticker IS NULL OR ticker = ''")
@@ -262,11 +261,10 @@ check("CSRF/rate limiting exists", csrf_check, "high")
 print("\n--- 6. PREDICTION SYSTEM AUDIT ---")
 
 if RESEARCH_DB.exists():
-    conn3 = sqlite3.connect(str(RESEARCH_DB))
-    conn3.row_factory = sqlite3.Row
+    conn3 = get_connection()
     c3 = conn3.cursor()
     try:
-        c3.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='prediction_ledger'")
+        c3.execute("SELECT name FROM information_schema.tables WHERE table_schema='public' AND name='prediction_ledger'")
         if c3.fetchone():
             c3.execute("SELECT COUNT(*) as cnt FROM prediction_ledger")
             total_preds = c3.fetchone()['cnt']

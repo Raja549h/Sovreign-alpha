@@ -27,7 +27,7 @@ Current financial data:
 Recent developments:
 {recent_news}
 
-Has this observation been validated?
+Has this observation been validated%s
 
 Output JSON only:
 {{
@@ -106,9 +106,9 @@ class AutoReviewEngine:
             c = conn.cursor()
             c.execute(
                 """UPDATE observation_memory
-                   SET validation_status = ?, validation_evidence = ?,
-                       validated_at = ?, validated_by = 'auto_engine'
-                   WHERE id = ?""",
+                   SET validation_status = %s, validation_evidence = %s,
+                       validated_at = %s, validated_by = 'auto_engine'
+                   WHERE id = %s""",
                 (new_status, evidence,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'), obs_id)
             )
@@ -121,7 +121,7 @@ class AutoReviewEngine:
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
                     supporting_data, groq_reasoning, accuracy_contribution)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (obs_id, company_id,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  review_type, observation.get('validation_status', 'ACTIVE'),

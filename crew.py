@@ -253,10 +253,10 @@ def main():
         print(f"\nWarning: Could not save results: {e}")
 
     try:
-        import sqlite3
+        from database import get_connection
         from config import BILLING_DIR
-        db_path = BILLING_DIR / "billing.db"
-        conn = sqlite3.connect(str(db_path))
+        db_path = None
+        conn = get_connection()
         c = conn.cursor()
         for p in results.get("approved", []):
             proof_hash = ""
@@ -266,10 +266,10 @@ def main():
                     break
             
             c.execute("""
-                INSERT OR REPLACE INTO prediction_ledger 
+                INSERT INTO prediction_ledger 
                 (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
                  status, expected_timeline_days, proof_hash, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 p.get("prediction_id"),
                 p.get("timestamp"),

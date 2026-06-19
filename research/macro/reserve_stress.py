@@ -12,7 +12,7 @@ Framework based on:
 - Reserve volatility
 """
 
-import sqlite3
+from database import get_connection
 import json
 import math
 from datetime import datetime
@@ -21,11 +21,10 @@ from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 RESERVE_STRESS_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS reserve_stress_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     reserve_level_usd_bn REAL,
     stress_level TEXT,
@@ -66,13 +65,12 @@ STRESS_LEVELS = [
 
 
 def init_reserve_tables():
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with get_connection() as conn:
         conn.executescript(RESERVE_STRESS_TABLES_SQL)
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -229,7 +227,7 @@ def build_reserve_stress_report(
                 (snapshot_date, reserve_level_usd_bn, stress_level, stress_score,
                  three_month_change_pct, six_month_change_pct, twelve_month_change_pct,
                  import_cover_months, short_term_debt_coverage, reserve_volatility, details)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 datetime.utcnow().strftime('%Y-%m-%d'), reserve_usd_bn,
                 stress_info['level'], round(composite_stress, 1),
@@ -256,7 +254,7 @@ def get_latest_reserve_snapshot() -> Optional[Dict]:
 def get_reserve_history(limit: int = 12) -> List[Dict]:
     with _get_db() as conn:
         cur = conn.execute(
-            "SELECT * FROM reserve_stress_snapshots ORDER BY created_at DESC LIMIT ?",
+            "SELECT * FROM reserve_stress_snapshots ORDER BY created_at DESC LIMIT %s",
             (limit,)
         )
         return [dict(r) for r in cur.fetchall()]
