@@ -20,11 +20,24 @@ def seed_all_empty_tables(db_path=None, quiet=False):
     c.execute("SELECT id, ticker, company_name, sector FROM companies")
     companies = [dict(r) for r in c.fetchall()]
     com = {r['ticker']: r for r in companies}
+
     if not companies:
         if not quiet:
-            print("[seed] No companies found, skipping table seeding")
-        conn.close()
-        return []
+            print("[seed] No companies found. Seeding initial companies...")
+        c.execute("""
+            INSERT INTO companies (ticker, company_name, exchange, sector)
+            VALUES 
+            ('RELIANCE', 'Reliance Industries', 'NSE', 'Energy'),
+            ('TCS', 'Tata Consultancy', 'NSE', 'IT'),
+            ('INFY', 'Infosys', 'NSE', 'IT'),
+            ('HDFCBANK', 'HDFC Bank', 'NSE', 'Banking'),
+            ('BAJFINANCE', 'Bajaj Finance', 'NSE', 'NBFC')
+        """)
+        conn.commit()
+        c.execute("SELECT id, ticker, company_name, sector FROM companies")
+        companies = [dict(r) for r in c.fetchall()]
+        com = {r['ticker']: r for r in companies}
+
     results = []
 
     def log(msg):
