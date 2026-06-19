@@ -516,7 +516,7 @@ class DataLayer:
             }
 
             for ind_code, ind_name in indicators.items():
-                url = f"{base}/IND/indicator/{ind_code}?date=2023:2026&format=json"
+                url = f"{base}/IND/indicator/{ind_code}%sdate=2023:2026&format=json"
                 response = requests.get(url, timeout=10)
                 if response.status_code == 200:
                     data = response.json()

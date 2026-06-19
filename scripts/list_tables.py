@@ -1,9 +1,8 @@
-import sqlite3
-conn = sqlite3.connect('c:/Users/lokes/Downloads/project/sovereign-alpha/data/research.db')
+conn = get_connection()
 cursor = conn.cursor()
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+cursor.execute("SELECT name FROM information_schema.tables WHERE table_schema='public';")
 tables = cursor.fetchall()
-print("Tables in research.db:")
+print("Tables in db:")
 for table in tables:
     print(table[0])
     cursor.execute(f"SELECT COUNT(*) FROM {table[0]};")

@@ -8,7 +8,7 @@ import os
 import sys
 import json
 import smtplib
-import sqlite3
+from database import IntegrityError, OperationalError, DatabaseError, get_connection
 import random
 import traceback
 import uuid
@@ -19,7 +19,6 @@ from email.mime.multipart import MIMEMultipart
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 def load_env():
     env_file = BASE_DIR / ".env"
@@ -52,11 +51,11 @@ SEED_VETOES = [
 
 
 def init_tables():
-    conn = sqlite3.connect(str(FUND_DATA_DB))
+    conn = get_connection()
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS prediction_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             prediction_id TEXT UNIQUE,
             timestamp TEXT NOT NULL,
             asset TEXT NOT NULL,
@@ -75,7 +74,7 @@ def init_tables():
     """)
     c.execute("""
         CREATE TABLE IF NOT EXISTS veto_archive (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             veto_id TEXT UNIQUE,
             prediction_id TEXT,
             timestamp TEXT NOT NULL,
@@ -97,8 +96,7 @@ def init_tables():
 
 
 def get_db_connection():
-    conn = sqlite3.connect(str(FUND_DATA_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -122,7 +120,7 @@ def seed_meaningful_data():
     c = conn.cursor()
     now = datetime.utcnow()
     today_cleared = 0
-    c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'cleared'",
+    c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'",
               (f"{now.strftime('%Y-%m-%d')}%",))
     row = c.fetchone()
     if row:
@@ -152,7 +150,7 @@ def seed_meaningful_data():
                     (prediction_id, timestamp, asset, sector, thesis, confidence_score,
                      status, expected_timeline_days, actual_outcome, actual_return_pct,
                      outcome_notes, proof_hash, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     pid, ts, pred['asset'], pred['sector'], pred['thesis'],
                     pred['confidence'], pred['status'], 30,
@@ -160,7 +158,7 @@ def seed_meaningful_data():
                     f"0x{uuid.uuid4().hex[:40]}", ts, ts,
                 ))
                 cleared_count += 1
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 pass
         if cleared_count > 0:
             print(f"[seed] Inserted {cleared_count} cleared predictions (shuffled)")
@@ -175,7 +173,7 @@ def seed_meaningful_data():
                     (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
                      expected_loss_pct, actual_outcome, actual_return_pct, avoided_drawdown,
                      veto_correct, notes, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     vid, '', ts, veto['asset'], veto['sector'], veto['reason'],
                     veto['risk_score'] * 10, veto['outcome'],
@@ -186,7 +184,7 @@ def seed_meaningful_data():
                     ts,
                 ))
                 seeded_vetoes += 1
-            except sqlite3.IntegrityError:
+            except IntegrityError:
                 pass
         if seeded_vetoes > 0:
             print(f"[seed] Inserted {seeded_vetoes} veto records")
@@ -200,18 +198,18 @@ def get_today_stats():
     today = datetime.now().strftime('%Y-%m-%d')
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp LIKE ?", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp LIKE %s", (f"{today}%",))
     total = c.fetchone()['total'] or 0
-    c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'cleared'", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'", (f"{today}%",))
     approved = c.fetchone()['approved'] or 0
-    c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp LIKE ? AND status = 'risk-rejected'", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'risk-rejected'", (f"{today}%",))
     rejected = c.fetchone()['rejected'] or 0
-    c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp LIKE ?", (f"{today}%",))
+    c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp LIKE %s", (f"{today}%",))
     avg_conf = c.fetchone()['avg_conf'] or 0
     c.execute("""
         SELECT asset, status, confidence_score, thesis
         FROM prediction_ledger
-        WHERE timestamp LIKE ? AND status = 'cleared'
+        WHERE timestamp LIKE %s AND status = 'cleared'
         ORDER BY confidence_score DESC LIMIT 1
     """, (f"{today}%",))
     top = c.fetchone()
@@ -421,9 +419,9 @@ def get_featured_observation():
             high_conf = [o for o in all_obs if o.get('accuracy_contribution', 0) >= 0.5]
             if high_conf:
                 pick = random.choice(high_conf)
-                return f"{pick.get('ticker', '?')} | {pick.get('category', '?')} | {pick.get('observation_text', '')[:120]}"
+                return f"{pick.get('ticker', '%s')} | {pick.get('category', '%s')} | {pick.get('observation_text', '')[:120]}"
             pick = random.choice(all_obs)
-            return f"{pick.get('ticker', '?')} | {pick.get('category', '?')} | {pick.get('observation_text', '')[:120]}"
+            return f"{pick.get('ticker', '%s')} | {pick.get('category', '%s')} | {pick.get('observation_text', '')[:120]}"
     except Exception:
         pass
     return None
@@ -445,7 +443,7 @@ def get_currency_flag():
 
 
 def init_research_tables():
-    """Ensure research.db tables exist and backfill observation memory."""
+    """Ensure db tables exist and backfill observation memory."""
     try:
         from research.storage.research_db import init_db as init_research_db, init_evolution_tables, init_validation_tables, init_extended_tables
         init_research_db()

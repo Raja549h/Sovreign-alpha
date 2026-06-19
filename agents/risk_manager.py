@@ -17,7 +17,7 @@ All vetoes stored permanently for outcome tracking.
 import os
 import sys
 import json
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -76,7 +76,7 @@ class RiskManager:
     def __init__(self, data_dir: Optional[Path] = None):
         self.regime_engine = MarketRegimeEngine()
         self.data_dir = data_dir or BILLING_DIR
-        self.db_path = self.data_dir / "billing.db"
+        self.db_path = self.data_dir / "db"
         self._ensure_tables()
 
     def _ensure_tables(self):
@@ -90,14 +90,14 @@ class RiskManager:
     def _save_veto(self, veto: VetoRecord) -> bool:
         """Persist veto to database."""
         try:
-            conn = sqlite3.connect(str(self.db_path))
+            conn = get_connection()
             c = conn.cursor()
             c.execute("""
-                INSERT OR REPLACE INTO veto_archive
+                INSERT INTO veto_archive
                 (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
                  risk_score, expected_loss_pct, actual_outcome, actual_return_pct,
                  avoided_drawdown, veto_correct, proof_hash, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 veto.veto_id,
                 veto.prediction_id,
@@ -290,7 +290,7 @@ class RiskManager:
     def get_veto_summary(self) -> Dict[str, Any]:
         """Get summary of all vetoes."""
         try:
-            conn = sqlite3.connect(str(self.db_path))
+            conn = get_connection()
             c = conn.cursor()
             c.execute("SELECT COUNT(*) as total FROM veto_archive")
             total = c.fetchone()[0] or 0

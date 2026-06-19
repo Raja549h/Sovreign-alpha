@@ -10,7 +10,7 @@ Usage: python health_check.py [--full]
 import os
 import sys
 import json
-import sqlite3
+from database import get_connection
 import argparse
 from pathlib import Path
 
@@ -124,15 +124,15 @@ def check_directories():
 
 def check_database():
     """Check SQLite database."""
-    db_path = BASE_DIR / 'billing' / 'billing.db'
+    db_path = None
     
     if not db_path.exists():
         return False, "Database not found"
     
     try:
-        conn = sqlite3.connect(str(db_path))
+        conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        cursor.execute("SELECT name FROM information_schema.tables WHERE table_schema='public'")
         tables = [row[0] for row in cursor.fetchall()]
         conn.close()
         

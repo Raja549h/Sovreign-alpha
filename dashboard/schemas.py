@@ -5,27 +5,27 @@ Every table across all databases is defined here and only here.
 No other file creates tables; they import from here.
 
 Databases:
-  billing.db:   prediction_ledger, veto_archive, decisions, performance_log,
+  db:   prediction_ledger, veto_archive, decisions, performance_log,
                 inference_log, monthly_summary
-  research.db:  companies, filings, financial_series, forensic_flags,
+  db:  companies, filings, financial_series, forensic_flags,
                 research_notes, institutional_scores, nsdl_fpi_flows,
                 fii_flows, fii_flow_snapshots, edge_scorecard,
                 observation_memory, observation_validations
                 (+ evolution, validation, quality, shadow_portfolio, evidence)
-  fund_data.db: fund_params, fund_uploads
+  db: fund_params, fund_uploads
 """
 
-import sqlite3
 from pathlib import Path
 from typing import Optional
+from database import IntegrityError, OperationalError, DatabaseError, get_connection
 
 # ---------------------------------------------------------------------------
-# billing.db
+# db
 # ---------------------------------------------------------------------------
 
 BILLING_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS prediction_ledger (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     prediction_id TEXT UNIQUE,
     timestamp TEXT NOT NULL,
     asset TEXT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS prediction_ledger (
 );
 
 CREATE TABLE IF NOT EXISTS veto_archive (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     veto_id TEXT UNIQUE,
     prediction_id TEXT,
     timestamp TEXT NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS decisions (
 );
 
 CREATE TABLE IF NOT EXISTS performance_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     decision_id TEXT,
     symbol TEXT,
     action TEXT,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS performance_log (
 );
 
 CREATE TABLE IF NOT EXISTS inference_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     model TEXT,
     agent_id TEXT,
     prompt_tokens INTEGER,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS inference_log (
 );
 
 CREATE TABLE IF NOT EXISTS monthly_summary (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     month TEXT,
     total_decisions INTEGER,
     approved INTEGER,
@@ -121,12 +121,12 @@ CREATE TABLE IF NOT EXISTS monthly_summary (
 """
 
 # ---------------------------------------------------------------------------
-# research.db — core tables
+# db — core tables
 # ---------------------------------------------------------------------------
 
 RESEARCH_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS companies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     ticker TEXT NOT NULL,
     company_name TEXT NOT NULL,
     exchange TEXT DEFAULT 'NSE',
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 
 CREATE TABLE IF NOT EXISTS filings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     filing_type TEXT,
     period TEXT,
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS filings (
 );
 
 CREATE TABLE IF NOT EXISTS financial_series (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     metric_name TEXT,
     period TEXT,
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS financial_series (
 );
 
 CREATE TABLE IF NOT EXISTS forensic_flags (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     flag_type TEXT,
     severity TEXT,
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS forensic_flags (
 );
 
 CREATE TABLE IF NOT EXISTS research_notes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     note_reference TEXT UNIQUE,
     title TEXT,
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS research_notes (
 );
 
 CREATE TABLE IF NOT EXISTS institutional_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     period TEXT,
     risk_intensity REAL,
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS institutional_scores (
 );
 
 CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     flow_date TEXT UNIQUE,
     equity_net REAL,
     debt_net REAL,
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
 );
 
 CREATE TABLE IF NOT EXISTS fii_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     date TEXT NOT NULL,
     flow_type TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS fii_flows (
 );
 
 CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     daily_net_cr REAL,
     weekly_net_cr REAL,
@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
 );
 
 CREATE TABLE IF NOT EXISTS edge_scorecard (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER,
     calculated_at TEXT,
     total_observations INTEGER,
@@ -256,7 +256,7 @@ CREATE TABLE IF NOT EXISTS edge_scorecard (
 );
 
 CREATE TABLE IF NOT EXISTS watchlist (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id) UNIQUE,
     alert_threshold TEXT DEFAULT 'MEDIUM',
     notes TEXT DEFAULT '',
@@ -265,12 +265,12 @@ CREATE TABLE IF NOT EXISTS watchlist (
 """
 
 # ---------------------------------------------------------------------------
-# research.db — observation / validation tables
+# db — observation / validation tables
 # ---------------------------------------------------------------------------
 
 OBSERVATION_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_memory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     observation_date TEXT,
     category TEXT,
@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS observation_memory (
 );
 
 CREATE TABLE IF NOT EXISTS observation_validations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER,
     validation_date TEXT,
@@ -314,7 +314,7 @@ CREATE TABLE IF NOT EXISTS observation_validations (
 );
 
 CREATE TABLE IF NOT EXISTS evidence_timeline (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     event_type TEXT,
     event_date TEXT,
@@ -325,7 +325,7 @@ CREATE TABLE IF NOT EXISTS evidence_timeline (
 );
 
 CREATE TABLE IF NOT EXISTS multi_source_evidence (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     source_name TEXT,
     source_type TEXT,
@@ -337,7 +337,7 @@ CREATE TABLE IF NOT EXISTS multi_source_evidence (
 );
 
 CREATE TABLE IF NOT EXISTS framework_performance (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     framework_name TEXT,
     category TEXT,
     accuracy REAL,
@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS framework_performance (
 );
 
 CREATE TABLE IF NOT EXISTS reproducibility_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     original_prediction TEXT,
     reproduced_by TEXT,
@@ -359,12 +359,12 @@ CREATE TABLE IF NOT EXISTS reproducibility_log (
 """
 
 # ---------------------------------------------------------------------------
-# research.db — evolution / quality tables (from evolution_quality.py)
+# db — evolution / quality tables (from evolution_quality.py)
 # ---------------------------------------------------------------------------
 
 EVOLUTION_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_autopsy (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     signal_strength REAL,
@@ -378,7 +378,7 @@ CREATE TABLE IF NOT EXISTS observation_autopsy (
 );
 
 CREATE TABLE IF NOT EXISTS reasoning_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     validation_id INTEGER,
     validation_method TEXT,
     primary_factor TEXT,
@@ -389,7 +389,7 @@ CREATE TABLE IF NOT EXISTS reasoning_audit (
 );
 
 CREATE TABLE IF NOT EXISTS failure_analysis (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     failure_type TEXT,
     severity TEXT,
@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS failure_analysis (
 );
 
 CREATE TABLE IF NOT EXISTS calibration_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     predicted_confidence REAL,
     actual_outcome REAL,
@@ -409,7 +409,7 @@ CREATE TABLE IF NOT EXISTS calibration_history (
 );
 
 CREATE TABLE IF NOT EXISTS edge_discovery_framework (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     edge_type TEXT,
     category TEXT,
     sub_category TEXT,
@@ -419,7 +419,7 @@ CREATE TABLE IF NOT EXISTS edge_discovery_framework (
 );
 
 CREATE TABLE IF NOT EXISTS shadow_portfolio (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     entry_date TEXT,
     entry_price REAL,
@@ -437,7 +437,7 @@ CREATE TABLE IF NOT EXISTS shadow_portfolio (
 );
 
 CREATE TABLE IF NOT EXISTS credibility_evidence (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     evidence_type TEXT,
     evidence_text TEXT,
@@ -448,7 +448,7 @@ CREATE TABLE IF NOT EXISTS credibility_evidence (
 );
 
 CREATE TABLE IF NOT EXISTS research_quality_metrics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     period TEXT,
     completeness REAL,
@@ -461,7 +461,7 @@ CREATE TABLE IF NOT EXISTS research_quality_metrics (
 );
 
 CREATE TABLE IF NOT EXISTS confidence_calibration (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     confidence_bucket TEXT,
     expected_accuracy REAL,
@@ -472,19 +472,19 @@ CREATE TABLE IF NOT EXISTS confidence_calibration (
 """
 
 # ---------------------------------------------------------------------------
-# fund_data.db
+# db
 # ---------------------------------------------------------------------------
 
 FUND_DATA_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS fund_params (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     param_key TEXT UNIQUE,
     param_value TEXT,
     updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS fund_uploads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     file_type TEXT,
     file_content BLOB,
     uploaded_at TEXT
@@ -516,28 +516,28 @@ OBSERVATION_MIGRATIONS = [
 ]
 
 
-def safe_migrate(conn: sqlite3.Connection, migrations: list) -> None:
+def safe_migrate(conn: any, migrations: list) -> None:
     """Run ALTER TABLE migrations, silently skipping those that fail."""
     for migration in migrations:
         try:
             conn.execute(migration)
-        except sqlite3.OperationalError:
+        except OperationalError:
             pass
 
 
-def init_billing_db(db_path: Path) -> sqlite3.Connection:
-    """Create/verify billing.db tables."""
+def init_billing_db() -> any:
+    """Create/verify db tables."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.executescript(BILLING_TABLES_SQL)
     conn.commit()
     return conn
 
 
-def init_research_db(db_path: Path) -> sqlite3.Connection:
-    """Create/verify research.db tables + run migrations."""
+def init_research_db() -> any:
+    """Create/verify db tables + run migrations."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.executescript(RESEARCH_TABLES_SQL)
     conn.executescript(OBSERVATION_TABLES_SQL)
     conn.executescript(EVOLUTION_TABLES_SQL)
@@ -546,10 +546,10 @@ def init_research_db(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
-def init_fund_data_db(db_path: Path) -> sqlite3.Connection:
-    """Create/verify fund_data.db tables."""
+def init_fund_data_db() -> any:
+    """Create/verify db tables."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.executescript(FUND_DATA_TABLES_SQL)
     conn.commit()
     return conn

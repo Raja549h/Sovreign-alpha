@@ -218,7 +218,7 @@ def extract_management_commentary(pdf_path: str) -> str:
     text_lower = text.lower()
     
     for section in MANAGEMENT_SECTIONS:
-        pattern = re.compile(rf'{re.escape(section)}.*?(?=\n\s*\n[A-Z]|\Z)', re.IGNORECASE | re.DOTALL)
+        pattern = re.compile(rf'{re.escape(section)}.*%s(%s=\n\s*\n[A-Z]|\Z)', re.IGNORECASE | re.DOTALL)
         matches = pattern.findall(text)
         if matches:
             for match in matches:

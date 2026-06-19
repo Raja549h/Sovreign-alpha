@@ -7,14 +7,13 @@ immediately have populated memory timelines.
 """
 
 import sys
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 FLAG_TO_CATEGORY = {
     'margin_compression': 'margin',
@@ -74,8 +73,7 @@ FLAG_DIRECTION = {
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
@@ -158,7 +156,7 @@ def backfill():
                 """INSERT INTO observation_memory
                    (company_id, observation_date, category, observation_text,
                     confidence, source, direction)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, obs_date, category, description,
                  confidence, source, direction)
             )

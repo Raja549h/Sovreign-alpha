@@ -1,0 +1,140 @@
+# SQLite Dependency Audit
+
+- **Total SQL Statements Detected**: ~999
+- **Total SQLite-Specific Statements Detected**: ~267
+
+## Modules Importing `sqlite3`
+- `.\research\thesis_evolution_engine.py`
+- `.\scripts\verify_db.py`
+- `.\dashboard\seed_db.py`
+- `research\observation_registry.py`
+- `research\seed_muthoot.py`
+- `research\macro\import_sensitivity.py`
+- `.\research\macro\reserve_stress.py`
+- `dashboard\app.py`
+- `.\generate_sqlite_audit.py`
+- `.\backtesting\backtest_90day.py`
+- `.\scripts\red_team_attack.py`
+- `.\research\macro\import_sensitivity.py`
+- `backtesting\backtest_90day.py`
+- `.\documents\generate_one_pager.py`
+- `.\scripts\list_tables.py`
+- `.\automation\email_digest.py`
+- `research\thesis_tracker.py`
+- `.\research\seed_pageind.py`
+- `research\backfill_memory.py`
+- `.\billing\meter.py`
+- `.\research\observation_stream.py`
+- `.\research\macro\macro_health.py`
+- `.\scripts\seed_all_empty_tables.py`
+- `dashboard\schemas.py`
+- `research\storage\research_db.py`
+- `.\operations\daily_cycle.py`
+- `.\research\seed_muthoot.py`
+- `.\extract_inventory.py`
+- `research\macro\macro_engine.py`
+- `.\health_check_full.py`
+- `research\portfolio_intelligence.py`
+- `.\billing\init_meter_db.py`
+- `.\research\thesis_tracker.py`
+- `agents\risk_manager.py`
+- `research\evolution_quality.py`
+- `.\documents\generate_whitepaper.py`
+- `.\agents\risk_manager.py`
+- `.\automation\master_daily.py`
+- `.\research\observation_registry.py`
+- `.\test_persistence.py`
+- `.\audit_check.py`
+- `.\dashboard\schemas.py`
+- `research\observation_stream.py`
+- `research\seed_pageind.py`
+- `research\macro\fii_flow.py`
+- `research\macro\reserve_stress.py`
+- `dashboard\seed_db.py`
+- `research\macro\macro_health.py`
+- `.\research\macro\fii_flow.py`
+- `.\research\evolution_quality.py`
+- `billing\init_meter_db.py`
+- `automation\email_digest.py`
+- `billing\meter.py`
+- `.\backtesting\reanalyze_buy_metrics.py`
+- `backtesting\reanalyze_buy_metrics.py`
+- `research\fii_intelligence.py`
+- `.\dashboard\app.py`
+- `.\research\storage\research_db.py`
+- `.\health_check.py`
+- `.\research\fii_intelligence.py`
+- `.\scripts\list_tables_billing.py`
+- `.\crew.py`
+- `automation\master_daily.py`
+- `.\research\portfolio_intelligence.py`
+- `research\thesis_evolution_engine.py`
+- `.\research\backfill_memory.py`
+- `.\research\macro\macro_engine.py`
+
+## AUTOINCREMENT Usage
+- `.\dashboard\seed_db.py`
+- `research\macro\import_sensitivity.py`
+- `.\research\macro\reserve_stress.py`
+- `.\backtesting\backtest_90day.py`
+- `.\generate_sqlite_audit.py`
+- `.\research\macro\import_sensitivity.py`
+- `backtesting\backtest_90day.py`
+- `.\automation\email_digest.py`
+- `.\research\macro\macro_health.py`
+- `dashboard\schemas.py`
+- `research\storage\research_db.py`
+- `.\operations\daily_cycle.py`
+- `research\macro\macro_engine.py`
+- `.\billing\init_meter_db.py`
+- `.\dashboard\schemas.py`
+- `research\macro\fii_flow.py`
+- `research\macro\reserve_stress.py`
+- `dashboard\seed_db.py`
+- `research\macro\macro_health.py`
+- `.\research\macro\fii_flow.py`
+- `automation\email_digest.py`
+- `billing\init_meter_db.py`
+- `.\backtesting\reanalyze_buy_metrics.py`
+- `backtesting\reanalyze_buy_metrics.py`
+- `research\fii_intelligence.py`
+- `.\research\storage\research_db.py`
+- `.\research\fii_intelligence.py`
+- `.\research\macro\macro_engine.py`
+
+## INSERT OR IGNORE Usage
+- `.\research\thesis_tracker.py`
+- `.\backtesting\reanalyze_buy_metrics.py`
+- `backtesting\reanalyze_buy_metrics.py`
+- `research\fii_intelligence.py`
+- `.\research\seed_muthoot.py`
+- `.\dashboard\app.py`
+- `.\dashboard\seed_db.py`
+- `research\seed_muthoot.py`
+- `dashboard\app.py`
+- `.\generate_sqlite_audit.py`
+- `.\backtesting\backtest_90day.py`
+- `.\research\fii_intelligence.py`
+- `backtesting\backtest_90day.py`
+- `research\seed_pageind.py`
+- `.\scripts\seed_all_empty_tables.py`
+- `dashboard\seed_db.py`
+- `.\research\seed_pageind.py`
+- `research\thesis_tracker.py`
+
+## INSERT OR REPLACE Usage
+- `agents\risk_manager.py`
+- `.\agents\risk_manager.py`
+- `research\macro\import_sensitivity.py`
+- `.\dashboard\app.py`
+- `dashboard\app.py`
+- `.\generate_sqlite_audit.py`
+- `.\scripts\red_team_attack.py`
+- `.\research\macro\import_sensitivity.py`
+- `.\crew.py`
+
+## PRAGMA Usage
+- `.\generate_sqlite_audit.py`
+- `.\health_check_full.py`
+- `.\audit_check.py`
+- `.\extract_inventory.py`

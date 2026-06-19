@@ -175,7 +175,7 @@ class EnhancedProofVerifier:
         chain = certificate.get("chain_of_custody", [])
         if chain:
             for step in chain:
-                lines.append(f"  Step {step.get('step', '?')}: {step.get('agent', 'N/A')} - {step.get('action', 'N/A')}")
+                lines.append(f"  Step {step.get('step', '%s')}: {step.get('agent', 'N/A')} - {step.get('action', 'N/A')}")
         else:
             lines.append("  Chain not available in certificate")
         lines.append("")

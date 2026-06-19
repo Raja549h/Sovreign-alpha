@@ -162,7 +162,7 @@ def main():
     - Risk management at every step
     - Ready for hedge fund deployment
     
-    Questions?
+    Questions%s
     """)
     
     print(f"\nDashboard still running at: http://localhost:{DASHBOARD_PORT}")

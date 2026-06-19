@@ -6,19 +6,18 @@ Does NOT touch existing tables.
 """
 
 import os
-import sqlite3
 import json
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from database import IntegrityError, OperationalError, DatabaseError, get_connection as db_get_connection
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS companies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     ticker TEXT NOT NULL,
     company_name TEXT NOT NULL,
     exchange TEXT DEFAULT 'NSE',
@@ -28,7 +27,7 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 
 CREATE TABLE IF NOT EXISTS filings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     filing_type TEXT,
     period TEXT,
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS filings (
 );
 
 CREATE TABLE IF NOT EXISTS financial_series (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     metric_name TEXT,
     period TEXT,
@@ -52,7 +51,7 @@ CREATE TABLE IF NOT EXISTS financial_series (
 );
 
 CREATE TABLE IF NOT EXISTS forensic_flags (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     flag_type TEXT,
     severity TEXT,
@@ -64,7 +63,7 @@ CREATE TABLE IF NOT EXISTS forensic_flags (
 );
 
 CREATE TABLE IF NOT EXISTS research_notes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     note_reference TEXT UNIQUE,
     title TEXT,
@@ -81,7 +80,7 @@ CREATE TABLE IF NOT EXISTS research_notes (
 );
 
 CREATE TABLE IF NOT EXISTS institutional_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     period TEXT,
     risk_intensity REAL,
@@ -97,7 +96,7 @@ CREATE TABLE IF NOT EXISTS institutional_scores (
 
 FII_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS fii_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     date TEXT NOT NULL,
     flow_type TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -108,7 +107,7 @@ CREATE TABLE IF NOT EXISTS fii_flows (
 );
 
 CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     daily_net_cr REAL,
     weekly_net_cr REAL,
@@ -125,22 +124,21 @@ CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
 def init_fii_tables():
     """Initialize FII flow tracking tables."""
     BILLING_DIR.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(FII_TABLES_SQL)
 
 
 def init_db():
     """Initialize database tables."""
     BILLING_DIR.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(TABLES_SQL)
     return RESEARCH_DB
 
 
 def get_connection():
     """Get database connection with row factory."""
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = db_get_connection()
     return conn
 
 
@@ -148,7 +146,7 @@ def get_company(ticker: str, exchange: str = 'NSE') -> Optional[Dict]:
     """Get company by ticker and exchange."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM companies WHERE ticker = ? AND exchange = ?", (ticker, exchange))
+        c.execute("SELECT * FROM companies WHERE ticker = %s AND exchange = %s", (ticker, exchange))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -159,13 +157,13 @@ def add_company(ticker: str, name: str, exchange: str = 'NSE', sector: str = Non
         c = conn.cursor()
         try:
             c.execute(
-                "INSERT INTO companies (ticker, company_name, exchange, sector) VALUES (?, ?, ?, ?)",
+                "INSERT INTO companies (ticker, company_name, exchange, sector) VALUES (%s, %s, %s, %s)",
                 (ticker, name, exchange, sector)
             )
             conn.commit()
             return c.lastrowid
-        except sqlite3.IntegrityError:
-            c.execute("SELECT id FROM companies WHERE ticker = ? AND exchange = ?", (ticker, exchange))
+        except IntegrityError:
+            c.execute("SELECT id FROM companies WHERE ticker = %s AND exchange = %s", (ticker, exchange))
             return c.fetchone()['id']
 
 
@@ -174,7 +172,7 @@ def save_filing(company_id: int, filing_type: str, period: str, url: str = None,
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO filings (company_id, filing_type, period, source_url, local_path) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO filings (company_id, filing_type, period, source_url, local_path) VALUES (%s, %s, %s, %s, %s)",
             (company_id, filing_type, period, url, path)
         )
         conn.commit()
@@ -189,11 +187,11 @@ def update_filing(filing_id: int, **kwargs):
         values = []
         for key, value in kwargs.items():
             if key in ['extracted_text', 'extracted_tables', 'status']:
-                fields.append(f"{key} = ?")
+                fields.append(f"{key} = %s")
                 values.append(json.dumps(value) if isinstance(value, (dict, list)) else value)
         if fields:
             values.append(filing_id)
-            c.execute(f"UPDATE filings SET {', '.join(fields)} WHERE id = ?", values)
+            c.execute(f"UPDATE filings SET {', '.join(fields)} WHERE id = %s", values)
             conn.commit()
 
 
@@ -202,7 +200,7 @@ def save_metric(company_id: int, metric: str, period: str, value: float, unit: s
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO financial_series (company_id, metric_name, period, value, unit, source_filing_id) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO financial_series (company_id, metric_name, period, value, unit, source_filing_id) VALUES (%s, %s, %s, %s, %s, %s)",
             (company_id, metric, period, value, unit, filing_id)
         )
         conn.commit()
@@ -213,7 +211,7 @@ def save_flag(company_id: int, flag_type: str, severity: str, description: str, 
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO forensic_flags (company_id, flag_type, severity, description, supporting_data, period, analyst_note) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO forensic_flags (company_id, flag_type, severity, description, supporting_data, period, analyst_note) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (company_id, flag_type, severity, description, json.dumps(data) if data else None, period, analyst_note)
         )
         conn.commit()
@@ -228,7 +226,7 @@ def save_note(company_id: int, reference: str, title: str, content: str, scores:
                (company_id, note_reference, title, summary, full_content, 
                 risk_intensity_score, confidence_score, regime_sensitivity_score, 
                 structural_quality_score, forensic_flags_count) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (company_id, reference, title, summary, content,
              scores.get('risk_intensity'), scores.get('confidence'),
              scores.get('regime_sensitivity'), scores.get('structural_quality'),
@@ -242,7 +240,7 @@ def update_note_pdf(note_id: int, pdf_path: str):
     """Update note with PDF path."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("UPDATE research_notes SET pdf_path = ? WHERE id = ?", (pdf_path, note_id))
+        c.execute("UPDATE research_notes SET pdf_path = %s WHERE id = %s", (pdf_path, note_id))
         conn.commit()
 
 
@@ -254,7 +252,7 @@ def save_scores(company_id: int, period: str, scores: Dict, rationale: Dict = No
             """INSERT INTO institutional_scores 
                (company_id, period, risk_intensity, confidence, regime_sensitivity, 
                 structural_quality, composite_score, scoring_rationale) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
             (company_id, period, scores.get('risk_intensity'), scores.get('confidence'),
              scores.get('regime_sensitivity'), scores.get('structural_quality'),
              scores.get('composite'), json.dumps(rationale) if rationale else None)
@@ -267,9 +265,9 @@ def get_financial_series(company_id: int, metric: str = None) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         if metric:
-            c.execute("SELECT * FROM financial_series WHERE company_id = ? AND metric_name = ? ORDER BY period", (company_id, metric))
+            c.execute("SELECT * FROM financial_series WHERE company_id = %s AND metric_name = %s ORDER BY period", (company_id, metric))
         else:
-            c.execute("SELECT * FROM financial_series WHERE company_id = ? ORDER BY metric_name, period", (company_id,))
+            c.execute("SELECT * FROM financial_series WHERE company_id = %s ORDER BY metric_name, period", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -277,7 +275,7 @@ def get_flags(company_id: int) -> List[Dict]:
     """Get all forensic flags for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM forensic_flags WHERE company_id = ? ORDER BY detected_at DESC", (company_id,))
+        c.execute("SELECT * FROM forensic_flags WHERE company_id = %s ORDER BY detected_at DESC", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -285,14 +283,14 @@ def get_latest_scores(company_id: int) -> Optional[Dict]:
     """Get latest institutional scores for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM institutional_scores WHERE company_id = ? ORDER BY scored_at DESC LIMIT 1", (company_id,))
+        c.execute("SELECT * FROM institutional_scores WHERE company_id = %s ORDER BY scored_at DESC LIMIT 1", (company_id,))
         row = c.fetchone()
         return dict(row) if row else None
 
 
 EVOLUTION_QUALITY_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_autopsy (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     signal_strength REAL,
@@ -306,7 +304,7 @@ CREATE TABLE IF NOT EXISTS observation_autopsy (
 );
 
 CREATE TABLE IF NOT EXISTS reasoning_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     validation_id INTEGER REFERENCES observation_validations(id),
@@ -319,7 +317,7 @@ CREATE TABLE IF NOT EXISTS reasoning_audit (
 );
 
 CREATE TABLE IF NOT EXISTS failure_analysis (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     invalidated_at TEXT,
@@ -335,7 +333,7 @@ CREATE TABLE IF NOT EXISTS failure_analysis (
 );
 
 CREATE TABLE IF NOT EXISTS edge_discovery_framework (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     framework_name TEXT,
     metric_name TEXT,
     category TEXT,
@@ -350,7 +348,7 @@ CREATE TABLE IF NOT EXISTS edge_discovery_framework (
 );
 
 CREATE TABLE IF NOT EXISTS confidence_calibration (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     predicted_confidence REAL,
@@ -363,7 +361,7 @@ CREATE TABLE IF NOT EXISTS confidence_calibration (
 );
 
 CREATE TABLE IF NOT EXISTS challenge_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     challenger_type TEXT,
@@ -377,7 +375,7 @@ CREATE TABLE IF NOT EXISTS challenge_records (
 );
 
 CREATE TABLE IF NOT EXISTS evidence_timeline (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     event_type TEXT NOT NULL,
@@ -390,7 +388,7 @@ CREATE TABLE IF NOT EXISTS evidence_timeline (
 );
 
 CREATE TABLE IF NOT EXISTS framework_performance (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     framework_name TEXT NOT NULL,
     category TEXT,
     observation_count INTEGER DEFAULT 0,
@@ -404,7 +402,7 @@ CREATE TABLE IF NOT EXISTS framework_performance (
 );
 
 CREATE TABLE IF NOT EXISTS reproducibility_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     filing_sources TEXT,
@@ -418,7 +416,7 @@ CREATE TABLE IF NOT EXISTS reproducibility_log (
 );
 
 CREATE TABLE IF NOT EXISTS memo_evolution (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     memo_reference TEXT,
     memo_type TEXT,
@@ -435,7 +433,7 @@ CREATE TABLE IF NOT EXISTS memo_evolution (
 
 def init_evolution_quality_tables():
     """Initialize evolution quality tracking tables."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
 
 
@@ -444,7 +442,7 @@ def get_notes(company_id: int = None) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         if company_id:
-            c.execute("SELECT * FROM research_notes WHERE company_id = ? ORDER BY generated_at DESC", (company_id,))
+            c.execute("SELECT * FROM research_notes WHERE company_id = %s ORDER BY generated_at DESC", (company_id,))
         else:
             c.execute("SELECT * FROM research_notes ORDER BY generated_at DESC")
         return [dict(row) for row in c.fetchall()]
@@ -462,7 +460,7 @@ def get_filings(company_id: int) -> List[Dict]:
     """Get all filings for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM filings WHERE company_id = ? ORDER BY ingested_at DESC", (company_id,))
+        c.execute("SELECT * FROM filings WHERE company_id = %s ORDER BY ingested_at DESC", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -470,7 +468,7 @@ def get_filings_count(company_id: int) -> int:
     """Get count of filings for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM filings WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM filings WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -478,7 +476,7 @@ def get_metrics_count(company_id: int) -> int:
     """Get count of metrics for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -486,7 +484,7 @@ def get_flags_count(company_id: int) -> int:
     """Get count of flags for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM forensic_flags WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM forensic_flags WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -494,7 +492,7 @@ def get_flags_by_severity(company_id: int) -> Dict[str, int]:
     """Get flag counts by severity."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT severity, COUNT(*) as cnt FROM forensic_flags WHERE company_id = ? GROUP BY severity", (company_id,))
+        c.execute("SELECT severity, COUNT(*) as cnt FROM forensic_flags WHERE company_id = %s GROUP BY severity", (company_id,))
         return {row['severity']: row['cnt'] for row in c.fetchall()}
 
 
@@ -502,7 +500,7 @@ def get_note_by_reference(reference: str) -> Optional[Dict]:
     """Get note by reference number."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM research_notes WHERE note_reference = ?", (reference,))
+        c.execute("SELECT * FROM research_notes WHERE note_reference = %s", (reference,))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -511,7 +509,7 @@ def get_company_by_id(company_id: int) -> Optional[Dict]:
     """Get company by ID."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM companies WHERE id = ?", (company_id,))
+        c.execute("SELECT * FROM companies WHERE id = %s", (company_id,))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -521,7 +519,7 @@ def get_metric_series(company_id: int, metric: str) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "SELECT period, value, unit FROM financial_series WHERE company_id = ? AND metric_name = ? ORDER BY period",
+            "SELECT period, value, unit FROM financial_series WHERE company_id = %s AND metric_name = %s ORDER BY period",
             (company_id, metric)
         )
         return [dict(row) for row in c.fetchall()]
@@ -543,18 +541,18 @@ def delete_company(company_id: int):
     """Delete company and all related data (cascade)."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("DELETE FROM institutional_scores WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM research_notes WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM forensic_flags WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM financial_series WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM filings WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM companies WHERE id = ?", (company_id,))
+        c.execute("DELETE FROM institutional_scores WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM research_notes WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM forensic_flags WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM financial_series WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM filings WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM companies WHERE id = %s", (company_id,))
         conn.commit()
 
 
 EXTENDED_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS portfolios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT DEFAULT '',
     strategy TEXT DEFAULT '',
@@ -563,7 +561,7 @@ CREATE TABLE IF NOT EXISTS portfolios (
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_positions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
     company_id INTEGER REFERENCES companies(id),
     weight_pct REAL,
@@ -573,7 +571,7 @@ CREATE TABLE IF NOT EXISTS portfolio_positions (
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_stress_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
     scenario TEXT NOT NULL,
     impact_pct REAL,
@@ -585,7 +583,7 @@ CREATE TABLE IF NOT EXISTS portfolio_stress_results (
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
     diversification_score REAL,
     concentration_penalty REAL,
@@ -597,7 +595,7 @@ CREATE TABLE IF NOT EXISTS portfolio_scores (
 );
 
 CREATE TABLE IF NOT EXISTS theses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     title TEXT NOT NULL,
     thesis_text TEXT,
@@ -611,7 +609,7 @@ CREATE TABLE IF NOT EXISTS theses (
 );
 
 CREATE TABLE IF NOT EXISTS thesis_checks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     thesis_id INTEGER REFERENCES theses(id) ON DELETE CASCADE,
     variable TEXT,
     expected_range TEXT,
@@ -622,7 +620,7 @@ CREATE TABLE IF NOT EXISTS thesis_checks (
 );
 
 CREATE TABLE IF NOT EXISTS watchlist (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id) UNIQUE,
     alert_threshold TEXT DEFAULT 'MEDIUM',
     notes TEXT DEFAULT '',
@@ -630,7 +628,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
 );
 
 CREATE TABLE IF NOT EXISTS observations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     ticker TEXT,
     company TEXT,
     type TEXT,
@@ -645,10 +643,10 @@ CREATE TABLE IF NOT EXISTS observations (
 
 def init_extended_tables():
     """Initialize new extended tables."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(EXTENDED_TABLES_SQL)
         conn.execute("""CREATE TABLE IF NOT EXISTS calibration_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             observation_id INTEGER REFERENCES observation_memory(id),
             predicted_confidence REAL,
             actual_outcome REAL,
@@ -661,7 +659,7 @@ def init_extended_tables():
 
 EVOLUTION_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_memory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     observation_date TEXT,
     category TEXT,
@@ -675,7 +673,7 @@ CREATE TABLE IF NOT EXISTS observation_memory (
 );
 
 CREATE TABLE IF NOT EXISTS thesis_evolution (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     analysis_date TEXT,
     prior_analysis_date TEXT,
@@ -689,7 +687,7 @@ CREATE TABLE IF NOT EXISTS thesis_evolution (
 );
 
 CREATE TABLE IF NOT EXISTS thesis_scorecard (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     scored_at TEXT,
     business_quality TEXT,
@@ -707,13 +705,13 @@ CREATE TABLE IF NOT EXISTS thesis_scorecard (
 
 def init_evolution_tables():
     """Initialize thesis evolution tracking tables."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(EVOLUTION_TABLES_SQL)
 
 
 VALIDATION_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS observation_validations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     observation_id INTEGER REFERENCES observation_memory(id),
     company_id INTEGER REFERENCES companies(id),
     validation_date TEXT,
@@ -728,7 +726,7 @@ CREATE TABLE IF NOT EXISTS observation_validations (
 );
 
 CREATE TABLE IF NOT EXISTS edge_scorecard (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     company_id INTEGER REFERENCES companies(id),
     calculated_at TEXT,
     total_observations INTEGER,
@@ -748,7 +746,7 @@ CREATE TABLE IF NOT EXISTS edge_scorecard (
 
 SHADOW_PORTFOLIO_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS shadow_portfolio (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     position_id TEXT UNIQUE,
     ticker TEXT NOT NULL,
     company_name TEXT,
@@ -772,7 +770,7 @@ CREATE TABLE IF NOT EXISTS shadow_portfolio (
 );
 
 CREATE TABLE IF NOT EXISTS shadow_trades (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     portfolio_id INTEGER REFERENCES shadow_portfolio(id),
     trade_date TEXT NOT NULL,
     trade_type TEXT CHECK(trade_type IN ('BUY','SELL')),
@@ -784,7 +782,7 @@ CREATE TABLE IF NOT EXISTS shadow_trades (
 );
 
 CREATE TABLE IF NOT EXISTS credibility_evidence (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     evidence_type TEXT NOT NULL,
     description TEXT NOT NULL,
     status TEXT DEFAULT 'pending',
@@ -822,35 +820,35 @@ EVIDENCE_TIMELINE_MIGRATIONS = [
 
 def init_validation_tables():
     """Initialize validation tracking tables and migrate observation_memory."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(VALIDATION_TABLES_SQL)
         for migration in VALIDATION_MIGRATIONS:
             try:
                 conn.execute(migration)
-            except sqlite3.OperationalError:
+            except OperationalError:
                 pass
         conn.commit()
 
 
 def init_shadow_portfolio_tables():
     """Initialize shadow portfolio and credibility evidence tables."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(SHADOW_PORTFOLIO_TABLES_SQL)
         conn.commit()
 
 
 def init_evidence_tables():
     """Initialize evidence timeline, framework performance, reproducibility tables with migrations."""
-    with sqlite3.connect(str(RESEARCH_DB)) as conn:
+    with db_get_connection() as conn:
         conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
         for migration in REPRODUCIBILITY_MIGRATIONS:
             try:
                 conn.execute(migration)
-            except sqlite3.OperationalError:
+            except OperationalError:
                 pass
         for migration in EVIDENCE_TIMELINE_MIGRATIONS:
             try:
                 conn.execute(migration)
-            except sqlite3.OperationalError:
+            except OperationalError:
                 pass
         conn.commit()

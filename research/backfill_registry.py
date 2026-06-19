@@ -42,12 +42,12 @@ def backfill():
             c = conn.cursor()
             c.execute(
                 """UPDATE observation_memory
-                   SET review_date_30 = ?,
-                       review_date_90 = ?,
-                       review_date_180 = ?,
-                       expected_implication = COALESCE(NULLIF(?, ''), expected_implication),
-                       validation_status = COALESCE(NULLIF(?, ''), validation_status)
-                   WHERE id = ?""",
+                   SET review_date_30 = %s,
+                       review_date_90 = %s,
+                       review_date_180 = %s,
+                       expected_implication = COALESCE(NULLIF(%s, ''), expected_implication),
+                       validation_status = COALESCE(NULLIF(%s, ''), validation_status)
+                   WHERE id = %s""",
                 (d30, d90, d180, expected, vstatus, obs_id)
             )
             updated += c.rowcount

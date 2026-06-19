@@ -7,14 +7,13 @@ classifies directional change automatically.
 
 import os
 import json
-import sqlite3
+from database import get_connection
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
-RESEARCH_DB = BILLING_DIR / "research.db"
 
 CATEGORIES = [
     'margin', 'funding_cost', 'governance',
@@ -44,15 +43,14 @@ load_dotenv(BASE_DIR / ".env")
 
 
 def _get_db():
-    conn = sqlite3.connect(str(RESEARCH_DB))
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     return conn
 
 
 def _get_company_name(company_id: int) -> str:
     with _get_db() as conn:
         c = conn.cursor()
-        c.execute("SELECT company_name FROM companies WHERE id = ?", (company_id,))
+        c.execute("SELECT company_name FROM companies WHERE id = %s", (company_id,))
         r = c.fetchone()
         return r['company_name'] if r else str(company_id)
 
@@ -101,7 +99,7 @@ class ThesisEvolutionEngine:
                 """INSERT INTO observation_memory
                    (company_id, observation_date, category, observation_text,
                     confidence, source, metric_name, metric_value, direction)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  category, observation_text, confidence, source,
                  metric_name, metric_value, direction)
@@ -243,7 +241,7 @@ class ThesisEvolutionEngine:
                    (company_id, scored_at, business_quality, capital_allocation,
                     governance, liquidity, funding_structure, macro_exposure,
                     valuation, overall_direction, scorecard_summary)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  scorecard.get('business_quality'),
                  scorecard.get('capital_allocation'),
@@ -271,15 +269,15 @@ class ThesisEvolutionEngine:
             if category:
                 c.execute(
                     """SELECT * FROM observation_memory
-                       WHERE company_id = ? AND category = ?
-                       ORDER BY observation_date DESC, id DESC LIMIT ?""",
+                       WHERE company_id = %s AND category = %s
+                       ORDER BY observation_date DESC, id DESC LIMIT %s""",
                     (company_id, category, limit)
                 )
             else:
                 c.execute(
                     """SELECT * FROM observation_memory
-                       WHERE company_id = ?
-                       ORDER BY observation_date DESC, id DESC LIMIT ?""",
+                       WHERE company_id = %s
+                       ORDER BY observation_date DESC, id DESC LIMIT %s""",
                     (company_id, limit)
                 )
             return [dict(r) for r in c.fetchall()]
@@ -289,7 +287,7 @@ class ThesisEvolutionEngine:
             c = conn.cursor()
             c.execute(
                 """SELECT * FROM observation_memory
-                   WHERE company_id = ? AND category = ?
+                   WHERE company_id = %s AND category = %s
                    ORDER BY observation_date DESC, id DESC LIMIT 1 OFFSET 1""",
                 (company_id, category)
             )
@@ -307,7 +305,7 @@ class ThesisEvolutionEngine:
                    (company_id, analysis_date, prior_analysis_date, category,
                     prior_observation, current_observation,
                     evolution_status, magnitude, evidence)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  prior_date or '', category,
                  prior_obs, current_obs,

@@ -179,7 +179,7 @@ class BacktestEngine:
 - Regime: {day['regime']}
 - Momentum: {day['momentum']:.2f}
 
-Should we buy, sell or hold {ticker} today? Answer with just BUY, SELL, or HOLD."""
+Should we buy, sell or hold {ticker} today%s Answer with just BUY, SELL, or HOLD."""
         
         # Stub response for testing
         if day['rsi'] < 30:
