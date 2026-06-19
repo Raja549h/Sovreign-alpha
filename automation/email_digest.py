@@ -5,12 +5,9 @@ Falls back gracefully on any failure -- email always sends with whatever data is
 """
 
 import os
-import sys
-import json
 import smtplib
-from database import IntegrityError, OperationalError, DatabaseError, get_connection
+from database import IntegrityError, get_connection
 import random
-import traceback
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path

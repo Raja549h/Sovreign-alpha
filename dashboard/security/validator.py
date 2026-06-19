@@ -1,8 +1,7 @@
 import re
 import os
 import html
-from functools import wraps
-from flask import request, abort
+from flask import abort
 
 
 class InputValidator:

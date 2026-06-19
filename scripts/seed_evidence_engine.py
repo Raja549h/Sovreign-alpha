@@ -4,7 +4,8 @@ Populates: observation_validations, confidence_calibration, evidence_timeline,
            failure_analysis, observation_autopsy, reproducibility_log,
            framework_performance, memo_evolution, challenge_records
 """
-import sys, os, json
+import sys
+import json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from database import get_connection

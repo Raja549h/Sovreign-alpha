@@ -8,7 +8,7 @@ import os
 import sys
 import io
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dotenv import load_dotenv
 
 # Fix Windows console encoding
@@ -27,13 +27,12 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from research.storage.research_db import (
-    init_db, get_company, add_company, get_company_by_id,
-    get_filings, get_filings_count, get_metrics_count, get_flags,
-    get_flags_count, get_flags_by_severity, get_notes, get_latest_scores,
-    get_all_companies
+    init_db, get_company, add_company, get_filings_count,
+    get_metrics_count, get_flags_count, get_flags_by_severity, get_notes,
+    get_latest_scores
 )
 from research.ingestion.filing_fetcher import (
-    fetch_from_url, register_local_filing, get_filing_status
+    fetch_from_url, register_local_filing
 )
 from research.ingestion.pdf_parser import process_filing
 from research.intelligence.cross_verifier import run_full_verification

@@ -25,7 +25,7 @@ import hashlib
 import time
 import pandas as pd
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -190,8 +190,7 @@ class DataLayer:
             ema_26 = round(float(close.ewm(span=26).mean().iloc[-1]), 2) if len(close) >= 26 else 0
 
             macd_val = round(ema_12 - ema_26, 3)
-            macd_line_series = close.ewm(span=12).mean() - close.ewm(span=26).mean()
-            macd_signal_line = round(float(macd_line_series.ewm(span=9).mean().iloc[-1]), 2) if len(close) >= 9 else 0
+            macd_signal_line = round(float(close.ewm(span=9).mean().iloc[-1]), 2) if len(close) >= 9 else 0
 
             delta = close.diff()
             gain = delta.where(delta > 0, 0).rolling(14).mean()
@@ -516,7 +515,7 @@ class DataLayer:
             }
 
             for ind_code, ind_name in indicators.items():
-                url = f"{base}/IND/indicator/{ind_code}%sdate=2023:2026&format=json"
+                url = f"{base}/IND/indicator/{ind_code}?date=2023:2026&format=json"
                 response = requests.get(url, timeout=10)
                 if response.status_code == 200:
                     data = response.json()

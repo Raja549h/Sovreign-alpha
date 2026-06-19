@@ -1,7 +1,6 @@
 from database import get_connection
 """Seed all 15 tables currently empty in db."""
 
-import sqlite3, json
 from pathlib import Path
 from datetime import datetime, timezone
 

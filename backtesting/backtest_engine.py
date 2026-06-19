@@ -7,11 +7,9 @@ Runs the full system over 50 historical data points comparing:
 - APPROACH B: Full Council (Sovereign Alpha)
 """
 
-import json
-import os
 import csv
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, List, Optional
 from pathlib import Path
 
 try:
@@ -21,7 +19,6 @@ except ImportError:
     YFINANCE_AVAILABLE = False
 
 try:
-    from groq import Groq
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False

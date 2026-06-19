@@ -24,8 +24,8 @@ import os
 import sys
 import json
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -165,10 +165,10 @@ class MarketRegimeEngine:
                         float(tn10_hist['Close'].iloc[-1] - tn10_hist['Close'].iloc[-20]), 3
                     )
 
-            tn2 = yf.Ticker("^IRX")
+            tn2 = yf.Ticker("^TYX")
             tn2_hist = tn2.history(period="30d")
             if not tn2_hist.empty:
-                indicators.treasury_2y = round(float(tn2_hist['Close'].iloc[-1]), 3)
+                indicators.treasury_2y = round(float(tn2_hist['Close'].iloc[-1]) / 10, 3)
 
         except Exception as e:
             logger.warning(f"yfinance indicator fetch failed: {e}")

@@ -1,3 +1,4 @@
+from database import get_connection
 """
 WHITEPAPER GENERATOR
 Sovereign Alpha - Institutional Intelligence System
@@ -5,10 +6,8 @@ Sovereign Alpha - Institutional Intelligence System
 Generates institutional whitepaper from prediction ledger data.
 """
 
-import os
 import sys
-from database import get_connection
-import json
+
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 BASE_DIR = Path(__file__).parent.parent
 DOCS_DIR = BASE_DIR / "documents"
 BILLING_DIR = BASE_DIR / "billing"
+FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 DOCS_DIR.mkdir(exist_ok=True)
 
@@ -79,7 +79,7 @@ def get_predictions(limit=100):
     """Get recent predictions."""
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM prediction_ledger ORDER BY timestamp DESC LIMIT %s", (limit,))
+    c.execute("SELECT * FROM prediction_ledger ORDER BY timestamp DESC LIMIT ?", (limit,))
     rows = c.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -89,7 +89,7 @@ def get_vetoes(limit=50):
     """Get recent vetoes."""
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM veto_archive ORDER BY timestamp DESC LIMIT %s", (limit,))
+    c.execute("SELECT * FROM veto_archive ORDER BY timestamp DESC LIMIT ?", (limit,))
     rows = c.fetchall()
     conn.close()
     return [dict(row) for row in rows]

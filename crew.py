@@ -16,7 +16,6 @@ Run with: python crew.py
 """
 
 import sys
-import os
 import json
 from datetime import datetime
 from pathlib import Path
@@ -24,11 +23,11 @@ from typing import Dict, Any, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import BASE_DIR, DATA_DIR, GROQ_API_KEY, logger, BILLING_DIR
+from config import BASE_DIR, GROQ_API_KEY, logger
 from engine.regime import MarketRegimeEngine
 from engine.data_layer import DataLayer
 from agents.analyst import AnalystAgent, InstitutionalPrediction
-from agents.risk_manager import RiskManager, RiskApproval
+from agents.risk_manager import RiskManager
 from agents.auditor import CryptographicAuditor, AuditCertificate
 
 
@@ -254,7 +253,6 @@ def main():
 
     try:
         from database import get_connection
-        from config import BILLING_DIR
         db_path = None
         conn = get_connection()
         c = conn.cursor()

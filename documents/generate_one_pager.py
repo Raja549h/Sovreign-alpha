@@ -1,3 +1,4 @@
+from database import get_connection
 """
 EXECUTIVE ONE-PAGER GENERATOR
 Sovereign Alpha - Institutional Intelligence System
@@ -5,9 +6,8 @@ Sovereign Alpha - Institutional Intelligence System
 Generates a one-page executive summary for CIOs.
 """
 
-import os
 import sys
-from database import get_connection
+
 from datetime import datetime
 from pathlib import Path
 
@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 BASE_DIR = Path(__file__).parent.parent
 DOCS_DIR = BASE_DIR / "documents"
 BILLING_DIR = BASE_DIR / "billing"
+FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 DOCS_DIR.mkdir(exist_ok=True)
 

@@ -5,11 +5,10 @@ Compares management statements against financial data.
 Detects divergences between guidance and actuals.
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 from research.storage.research_db import (
-    get_financial_series, get_metric_series, save_flag, get_flags,
-    get_company, get_connection
+    get_metric_series, save_flag, get_flags
 )
 
 DIVERGENCE_THRESHOLDS = {

@@ -1,3 +1,4 @@
+from database import get_connection
 """
 Macro & Currency Intelligence Engine — Orchestrator
 ====================================================
@@ -5,10 +6,10 @@ Ties together all 5 macro intelligence modules for portfolio-level analysis.
 Provides the single entry point for the dashboard routes.
 """
 
-from database import get_connection
+
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from research.macro import fii_flow
 from research.macro import currency_sensitivity
@@ -18,10 +19,11 @@ from research.macro import reserve_stress
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 ALL_MACRO_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS macro_portfolio_links (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     portfolio_id INTEGER,
     company_id INTEGER,
     linked_at TEXT DEFAULT CURRENT_TIMESTAMP

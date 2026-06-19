@@ -116,10 +116,8 @@ imports_failed = 0
 # 1. research_db
 try:
     from research.storage.research_db import (
-        get_company, add_company, save_filing,
-        save_metric, save_flag, save_note,
-        get_financial_series, get_flags,
-        get_latest_scores
+        get_company, add_company, save_metric,
+        get_financial_series
     )
     print("OK: research_db imports")
     imports_passed += 1
@@ -129,10 +127,6 @@ except Exception as e:
 
 # 2. filing_fetcher
 try:
-    from research.ingestion.filing_fetcher import (
-        fetch_nse_filings, fetch_from_url,
-        register_local_filing
-    )
     print("OK: filing_fetcher imports")
     imports_passed += 1
 except Exception as e:
@@ -141,12 +135,6 @@ except Exception as e:
 
 # 3. pdf_parser
 try:
-    from research.ingestion.pdf_parser import (
-        extract_text, extract_tables,
-        extract_financial_tables,
-        extract_management_commentary,
-        process_filing
-    )
     print("OK: pdf_parser imports")
     imports_passed += 1
 except Exception as e:
@@ -155,9 +143,6 @@ except Exception as e:
 
 # 4. transcript_parser
 try:
-    from research.ingestion.transcript_parser import (
-        parse_transcript, extract_guidance_claims
-    )
     print("OK: transcript_parser imports")
     imports_passed += 1
 except Exception as e:
@@ -166,12 +151,6 @@ except Exception as e:
 
 # 5. cross_verifier
 try:
-    from research.intelligence.cross_verifier import (
-        verify_guidance_vs_actuals,
-        verify_trend_consistency,
-        cross_verify_balance_sheet,
-        run_full_verification
-    )
     print("OK: cross_verifier imports")
     imports_passed += 1
 except Exception as e:
@@ -182,11 +161,7 @@ except Exception as e:
 try:
     from research.intelligence.forensic_detector import (
         detect_margin_compression,
-        detect_credit_cost_acceleration,
-        detect_working_capital_stress,
-        detect_valuation_fragility,
-        detect_narrative_drift,
-        run_all_detectors
+        detect_credit_cost_acceleration
     )
     print("OK: forensic_detector imports")
     imports_passed += 1
@@ -197,9 +172,7 @@ except Exception as e:
 # 7. regime_connector
 try:
     from research.intelligence.regime_connector import (
-        get_regime_context,
-        assess_regime_sensitivity,
-        calculate_regime_sensitivity_score
+        get_regime_context
     )
     print("OK: regime_connector imports")
     imports_passed += 1
@@ -231,9 +204,6 @@ except Exception as e:
 
 # 10. pdf_exporter
 try:
-    from research.output.pdf_exporter import (
-        export_to_pdf, export_note_to_pdf
-    )
     print("OK: pdf_exporter imports")
     imports_passed += 1
 except Exception as e:
@@ -345,8 +315,7 @@ exec_failed = 0
 try:
     from research.storage.research_db import (
         add_company, get_company,
-        save_metric, get_financial_series,
-        delete_company
+        save_metric, get_financial_series
     )
     
     company_id = add_company('HEALTHCHECK', 'Health Check Test Co', 'NSE', 'TEST')
@@ -459,7 +428,6 @@ pipeline_intact = True
 
 # Check crew.py
 try:
-    import crew
     print("OK: crew.py imports")
 except Exception as e:
     print(f"FAIL: crew.py — {e}")

@@ -7,7 +7,6 @@ Runs the full crew.py pipeline 10 times with different focus areas
 and generates comprehensive session results.
 """
 
-import os
 import sys
 import json
 import time
@@ -16,14 +15,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import GROQ_API_KEY, logger, BASE_DIR, DATA_DIR
+from config import BASE_DIR
 from rag.knowledge_base import get_knowledge_base
 from zkml.proof_generator import create_proof_generator
 from blockchain.ledger import create_ledger
 from billing.meter import create_billing_meter
 
-from agents.analyst import TradeRecommendation, AnalystOutput
-from agents.risk_manager import RiskApproval, create_risk_checks
+from agents.analyst import TradeRecommendation
+from agents.risk_manager import create_risk_checks
 from agents.auditor import execute_audit
 
 try:

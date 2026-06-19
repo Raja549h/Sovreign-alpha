@@ -1,3 +1,4 @@
+from database import get_connection
 """
 Backfill Memory — Populate observation_memory from forensic_flags
 ==================================================================
@@ -7,13 +8,14 @@ immediately have populated memory timelines.
 """
 
 import sys
-from database import get_connection
+
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 FLAG_TO_CATEGORY = {
     'margin_compression': 'margin',
@@ -156,7 +158,7 @@ def backfill():
                 """INSERT INTO observation_memory
                    (company_id, observation_date, category, observation_text,
                     confidence, source, direction)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (company_id, obs_date, category, description,
                  confidence, source, direction)
             )

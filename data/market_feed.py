@@ -7,7 +7,6 @@ Fetches real-time market data using yfinance.
 
 import sys
 import json
-import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any
@@ -16,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import yfinance as yf
 import pandas as pd
-import numpy as np
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 OUTPUT_FILE = DATA_DIR / "live_market_data.json"

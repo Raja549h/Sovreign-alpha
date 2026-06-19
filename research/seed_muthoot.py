@@ -1,19 +1,19 @@
+from database import get_connection
 #!/usr/bin/env python3
 """
-Seed Muthoot Finance (MUTHOOTFIN) data into db.
+Seed Muthoot Finance (MUTHOOTFIN) data into research.db.
 All values sourced from public filings and verified sources.
 Safe to run multiple times (INSERT OR IGNORE).
 """
 
-import os
-import sys
-from database import get_connection
+
 import json
 from pathlib import Path
 from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 SOURCES = {
     "NIM": "Equitymaster Annual Report Analysis FY25 (Aug 2025)",
@@ -34,7 +34,7 @@ SOURCES = {
 
 def get_company_id(conn, ticker):
     c = conn.cursor()
-    c.execute("SELECT id FROM companies WHERE ticker = %s", (ticker,))
+    c.execute("SELECT id FROM companies WHERE ticker = ?", (ticker,))
     row = c.fetchone()
     return row[0] if row else None
 
@@ -45,9 +45,9 @@ def seed_muthoot():
 
     # Add company
     c.execute("""
-        INSERT INTO companies
+        INSERT OR IGNORE INTO companies
         (ticker, company_name, exchange, sector)
-        VALUES (%s, %s, %s, %s)
+        VALUES (?, ?, ?, ?)
     """, ("MUTHOOTFIN", "Muthoot Finance Limited", "NSE", "Gold Loan NBFC"))
     conn.commit()
 
@@ -119,9 +119,9 @@ def seed_muthoot():
     count = 0
     for metric, period, value, unit, source in metrics:
         c.execute("""
-            INSERT INTO financial_series
+            INSERT OR IGNORE INTO financial_series
             (company_id, metric_name, period, value, unit, extracted_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (company_id, metric, period, value, unit, now))
         count += 1
     print(f"[seed] {count} financial metrics inserted")
@@ -214,17 +214,17 @@ def seed_muthoot():
 
     for flag_type, severity, desc, evidence, period, note in flags:
         c.execute("""
-            INSERT INTO forensic_flags
+            INSERT OR IGNORE INTO forensic_flags
             (company_id, flag_type, severity, description, supporting_data, period, analyst_note)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (company_id, flag_type, severity, desc, evidence, period, note))
     print(f"[seed] {len(flags)} forensic flags inserted")
 
     # Research note record
     c.execute("""
-        INSERT INTO research_notes
+        INSERT OR IGNORE INTO research_notes
         (company_id, note_reference, title, status)
-        VALUES (%s, %s, %s, %s)
+        VALUES (?, ?, ?, ?)
     """, (company_id, "SR-2026-MFL-001",
           "Muthoot Finance — Gold Price Dependency Masking NIM Fragility "
           "and Non-Gold Cross-Subsidy Risk",

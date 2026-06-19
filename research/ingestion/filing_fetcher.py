@@ -5,15 +5,14 @@ Fetches company filings from NSE India, BSE India, or direct URLs.
 Includes fallback for manual registration of locally downloaded files.
 """
 
-import os
 import time
 import requests
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from datetime import datetime
 
 from research.storage.research_db import (
-    get_company, add_company, save_filing, get_connection
+    save_filing
 )
 
 BASE_DIR = Path(__file__).parent.parent.parent

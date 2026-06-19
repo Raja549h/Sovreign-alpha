@@ -14,8 +14,8 @@ from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 from research.storage.research_db import (
-    get_company, get_company_by_id, get_financial_series, get_flags, get_latest_scores,
-    get_all_metrics, save_note, get_notes, get_note_by_reference
+    get_company_by_id, get_financial_series, get_flags, get_latest_scores, get_all_metrics,
+    save_note, get_note_by_reference
 )
 from research.intelligence.scorer import format_scorecard
 from research.intelligence.regime_connector import get_regime_context

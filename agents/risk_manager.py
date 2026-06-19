@@ -14,14 +14,12 @@ Every veto includes reason, rejected confidence, market regime, timestamp.
 All vetoes stored permanently for outcome tracking.
 """
 
-import os
 import sys
-import json
 from database import get_connection
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -83,7 +81,7 @@ class RiskManager:
         """Ensure veto archive table exists using canonical schema."""
         try:
             from dashboard.schemas import init_billing_db
-            init_billing_db(self.db_path)
+            init_billing_db()
         except Exception as e:
             logger.warning(f"Veto table creation failed: {e}")
 

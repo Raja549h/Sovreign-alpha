@@ -7,7 +7,7 @@ Reuses existing engine.regime module and FII flow intelligence.
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 BASE_DIR = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))

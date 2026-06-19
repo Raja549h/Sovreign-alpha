@@ -9,7 +9,6 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 
 console = Console()
 
@@ -17,8 +16,7 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from research.storage.research_db import (
-    init_db, add_company, get_company, save_metric, save_flag,
-    get_company_by_id
+    add_company, save_metric, save_flag
 )
 from research.engine import SovereignAlphaResearch
 

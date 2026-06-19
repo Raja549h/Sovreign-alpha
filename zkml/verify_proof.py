@@ -8,7 +8,6 @@ Usage: python zkml/verify_proof.py zkml/proofs/cert_NVDA_20260503.json
 
 import sys
 import json
-import hashlib
 from pathlib import Path
 
 # Get the project root
@@ -18,7 +17,7 @@ ZKML_DIR = PROJECT_ROOT / "zkml"
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import base64

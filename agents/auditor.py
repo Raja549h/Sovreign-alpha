@@ -13,7 +13,6 @@ Provides cryptographic proof that:
 - Record has not been retroactively altered
 """
 
-import os
 import sys
 import json
 import hashlib

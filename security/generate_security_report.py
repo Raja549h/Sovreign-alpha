@@ -5,9 +5,8 @@ Reads all security logs and generates SECURITY_INTEGRITY_REPORT.md.
 """
 
 import json
-import os
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict
 from pathlib import Path
 
 

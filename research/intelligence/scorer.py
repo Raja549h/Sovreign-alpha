@@ -5,11 +5,11 @@ Generates risk intensity, confidence, regime sensitivity, and structural quality
 All scores 0-10. Higher is worse for risk scores, better for quality scores.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict
 
 from research.storage.research_db import (
-    get_flags, get_flags_by_severity, get_financial_series, get_metric_series,
-    get_filings_count, get_metrics_count, save_scores, get_company
+    get_flags, get_financial_series, get_metric_series, get_filings_count,
+    save_scores
 )
 from research.intelligence.regime_connector import calculate_regime_sensitivity_score
 
@@ -78,7 +78,6 @@ def calculate_confidence(company_id: int) -> Dict:
     
     has_transcripts = False
     try:
-        from research.ingestion.transcript_parser import parse_transcript
         has_transcripts = True
     except ImportError:
         pass

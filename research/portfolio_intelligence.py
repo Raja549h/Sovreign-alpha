@@ -1,26 +1,25 @@
+from database import get_connection
 """
 Portfolio Intelligence Engine
 Analyzes multi-company portfolio risk including concentration,
 hidden correlations, stress test scenarios, and forensic scoring.
 """
-import json
-from database import get_connection as db_get_connection
-import math
+
 from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 def get_connection():
-    conn = db_get_connection()
+    conn = get_connection()
     return conn
 
 def create_portfolio(name: str, description: str = "", strategy: str = "") -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO portfolios (name, description, strategy) VALUES (%s, %s, %s)", (name, description, strategy))
+        c.execute("INSERT INTO portfolios (name, description, strategy) VALUES (?, ?, ?)", (name, description, strategy))
         conn.commit()
         return c.lastrowid
 
@@ -33,14 +32,14 @@ def get_portfolios() -> List[Dict]:
 def get_portfolio(portfolio_id: int) -> Optional[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM portfolios WHERE id = %s", (portfolio_id,))
+        c.execute("SELECT * FROM portfolios WHERE id = ?", (portfolio_id,))
         r = c.fetchone()
         return dict(r) if r else None
 
 def add_position(portfolio_id: int, company_id: int, weight_pct: float, cost_basis: float = None, notes: str = "") -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO portfolio_positions (portfolio_id, company_id, weight_pct, cost_basis, notes) VALUES (%s, %s, %s, %s, %s)", (portfolio_id, company_id, weight_pct, cost_basis, notes))
+        c.execute("INSERT INTO portfolio_positions (portfolio_id, company_id, weight_pct, cost_basis, notes) VALUES (?, ?, ?, ?, ?)", (portfolio_id, company_id, weight_pct, cost_basis, notes))
         conn.commit()
         return c.lastrowid
 
@@ -51,7 +50,7 @@ def get_positions(portfolio_id: int) -> List[Dict]:
             SELECT p.*, c.ticker, c.company_name, c.sector
             FROM portfolio_positions p
             JOIN companies c ON c.id = p.company_id
-            WHERE p.portfolio_id = %s
+            WHERE p.portfolio_id = ?
             ORDER BY p.weight_pct DESC
         """, (portfolio_id,))
         return [dict(r) for r in c.fetchall()]
@@ -59,7 +58,7 @@ def get_positions(portfolio_id: int) -> List[Dict]:
 def delete_position(position_id: int):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("DELETE FROM portfolio_positions WHERE id = %s", (position_id,))
+        c.execute("DELETE FROM portfolio_positions WHERE id = ?", (position_id,))
         conn.commit()
 
 def calculate_concentration(portfolio_id: int) -> Dict:
@@ -125,7 +124,7 @@ def run_stress_test(portfolio_id: int, scenario: str = "rate_shock") -> Dict:
     for p in positions:
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("SELECT severity, flag_type FROM forensic_flags WHERE company_id = %s", (p["company_id"],))
+            c.execute("SELECT severity, flag_type FROM forensic_flags WHERE company_id = ?", (p["company_id"],))
             flags = [dict(r) for r in c.fetchall()]
         positions_with_flags.append({"position": p, "flags": flags})
     if scenario == "rate_shock":
@@ -151,13 +150,13 @@ def save_stress_results(portfolio_id: int, results: List[Dict]):
     with get_connection() as conn:
         c = conn.cursor()
         for r in results:
-            c.execute("INSERT INTO portfolio_stress_results (portfolio_id, scenario, impact_pct, impact_value, max_position_impact, num_positions_affected) VALUES (%s, %s, %s, %s, %s, %s)", (portfolio_id, r["scenario"], r["impact_pct"], r["impact_value"], r["max_position_impact"], r["num_positions_affected"]))
+            c.execute("INSERT INTO portfolio_stress_results (portfolio_id, scenario, impact_pct, impact_value, max_position_impact, num_positions_affected) VALUES (?, ?, ?, ?, ?, ?)", (portfolio_id, r["scenario"], r["impact_pct"], r["impact_value"], r["max_position_impact"], r["num_positions_affected"]))
         conn.commit()
 
 def get_stress_results(portfolio_id: int) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM portfolio_stress_results WHERE portfolio_id = %s ORDER BY id DESC", (portfolio_id,))
+        c.execute("SELECT * FROM portfolio_stress_results WHERE portfolio_id = ? ORDER BY id DESC", (portfolio_id,))
         return [dict(r) for r in c.fetchall()]
 
 def calculate_portfolio_score(portfolio_id: int) -> Dict:
@@ -185,14 +184,14 @@ def calculate_portfolio_score(portfolio_id: int) -> Dict:
     score = {"portfolio_id": portfolio_id, "diversification_score": diversity * 10, "concentration_penalty": conc_penalty, "sector_concentration_penalty": sector_penalty, "correlation_penalty": round(corr_penalty, 1), "stress_impact_score": round(stress_penalty, 1), "composite_score": composite}
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO portfolio_scores (portfolio_id, diversification_score, concentration_penalty, sector_concentration_penalty, correlation_penalty, stress_impact_score, composite_score) VALUES (%s, %s, %s, %s, %s, %s, %s)", (portfolio_id, score["diversification_score"], score["concentration_penalty"], score["sector_concentration_penalty"], score["correlation_penalty"], score["stress_impact_score"], score["composite_score"]))
+        c.execute("INSERT INTO portfolio_scores (portfolio_id, diversification_score, concentration_penalty, sector_concentration_penalty, correlation_penalty, stress_impact_score, composite_score) VALUES (?, ?, ?, ?, ?, ?, ?)", (portfolio_id, score["diversification_score"], score["concentration_penalty"], score["sector_concentration_penalty"], score["correlation_penalty"], score["stress_impact_score"], score["composite_score"]))
         conn.commit()
     return score
 
 def get_portfolio_scores(portfolio_id: int) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM portfolio_scores WHERE portfolio_id = %s ORDER BY scored_at DESC", (portfolio_id,))
+        c.execute("SELECT * FROM portfolio_scores WHERE portfolio_id = ? ORDER BY scored_at DESC", (portfolio_id,))
         return [dict(r) for r in c.fetchall()]
 
 def grade_from_score(score: float) -> str:

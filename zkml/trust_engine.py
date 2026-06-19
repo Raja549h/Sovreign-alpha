@@ -11,9 +11,8 @@ This is the core privacy guarantee for institutional hedge fund operations.
 import json
 import hashlib
 import base64
-import os
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 from pathlib import Path
 
 try:
@@ -53,14 +52,9 @@ class TrustEngine:
         
         if private_key_path.exists() and public_key_path.exists():
             with open(private_key_path, "rb") as f:
-                pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
-                try:
-                    self.private_key = serialization.load_pem_private_key(
-                        f.read(), password=pwd, backend=default_backend()
-                    )
-                except ValueError:
-                    self._generate_key_pair()
-                    return
+                self.private_key = serialization.load_pem_private_key(
+                    f.read(), password=None, backend=default_backend()
+                )
             with open(public_key_path, "rb") as f:
                 self.public_key = serialization.load_pem_public_key(
                     f.read(), backend=default_backend()
@@ -81,11 +75,10 @@ class TrustEngine:
         
         self.keys_dir.mkdir(parents=True, exist_ok=True)
         
-        pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
         private_pem = self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.BestAvailableEncryption(pwd)
+            encryption_algorithm=serialization.NoEncryption()
         )
         public_pem = self.public_key.public_bytes(
             encoding=serialization.Encoding.PEM,

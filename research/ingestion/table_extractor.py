@@ -7,10 +7,7 @@ This module re-exports for backward compatibility.
 """
 
 from research.ingestion.pdf_parser import (
-    extract_tables,
     extract_financial_tables,
-    FINANCIAL_METRICS,
-    _parse_table_row,
     _identify_metric,
     _extract_value,
 )

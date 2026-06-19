@@ -8,7 +8,7 @@ concentrated currency risk.
 Design principle: institutional risk awareness, NOT forecasting.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent.parent

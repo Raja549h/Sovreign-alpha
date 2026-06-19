@@ -1,3 +1,4 @@
+from database import get_connection
 """
 Import Sensitivity Overlay — Portfolio-level import dependency intelligence
 ============================================================================
@@ -8,18 +9,18 @@ holdings share similar import-vulnerability profiles.
 Design principle: institutional risk awareness for concentrated equity portfolios.
 """
 
-from database import get_connection
-import json
+
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 IMPORT_SENSITIVITY_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS import_sensitivity_scores (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_id INTEGER,
     ticker TEXT,
     sector TEXT,
@@ -228,19 +229,11 @@ def assess_import_sensitivity(company_id: int, company_name: str, ticker: str,
     try:
         with _get_db() as conn:
             conn.execute("""
-                INSERT INTO import_sensitivity_scores
+                INSERT OR REPLACE INTO import_sensitivity_scores
                 (company_id, ticker, sector, import_dependency_score,
                  raw_material_import_pct, capex_import_pct,
                  currency_headwind_risk, observation)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (company_id) DO UPDATE SET
-                ticker = EXCLUDED.ticker,
-                sector = EXCLUDED.sector,
-                import_dependency_score = EXCLUDED.import_dependency_score,
-                raw_material_import_pct = EXCLUDED.raw_material_import_pct,
-                capex_import_pct = EXCLUDED.capex_import_pct,
-                currency_headwind_risk = EXCLUDED.currency_headwind_risk,
-                observation = EXCLUDED.observation
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 company_id, ticker, sector, base_score,
                 _pct_from_dependency(profile['raw_material_dependency']),

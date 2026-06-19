@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 BASE_DIR = Path(__file__).parent.parent
 
@@ -27,7 +27,7 @@ Current financial data:
 Recent developments:
 {recent_news}
 
-Has this observation been validated%s
+Has this observation been validated?
 
 Output JSON only:
 {{
@@ -106,9 +106,9 @@ class AutoReviewEngine:
             c = conn.cursor()
             c.execute(
                 """UPDATE observation_memory
-                   SET validation_status = %s, validation_evidence = %s,
-                       validated_at = %s, validated_by = 'auto_engine'
-                   WHERE id = %s""",
+                   SET validation_status = ?, validation_evidence = ?,
+                       validated_at = ?, validated_by = 'auto_engine'
+                   WHERE id = ?""",
                 (new_status, evidence,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'), obs_id)
             )
@@ -121,7 +121,7 @@ class AutoReviewEngine:
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
                     supporting_data, groq_reasoning, accuracy_contribution)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (obs_id, company_id,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  review_type, observation.get('validation_status', 'ACTIVE'),
