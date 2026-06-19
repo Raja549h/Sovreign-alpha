@@ -214,7 +214,8 @@ TEMPLATE_DIR = dashboard_dir / 'templates'
 if TEMPLATE_DIR.exists():
     app.template_folder = str(TEMPLATE_DIR)
 
-DB_PATH = None
+DB_PATH = BILLING_DIR / "billing.db"
+FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 import secrets
 FUND_PASSWORD = os.environ.get("FUND_PASSWORD")
@@ -237,7 +238,7 @@ def inject_globals():
 
 def init_fund_db():
     from dashboard.schemas import init_fund_data_db
-    init_fund_data_db(FUND_DATA_DB)
+    init_fund_data_db()
 
 init_fund_db()
 
@@ -3824,7 +3825,7 @@ def seed_database_on_startup():
         else:
             print("[seed] Database missing - initializing new schema")
 
-        init_billing_db(DB_PATH)
+        init_billing_db()
 
         conn = db_get_connection()
         c = conn.cursor()
