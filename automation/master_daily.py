@@ -24,7 +24,7 @@ import sys
 import json
 import traceback
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -167,7 +167,7 @@ def run_pipeline():
     # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from dashboard.app import FUND_DATA_DB, save_prediction
+        from dashboard.app import save_prediction
         for pred in predictions:
             status = 'cleared' if any(a.ticker == pred.ticker for a in approved) else 'risk-rejected'
             pred_data = {

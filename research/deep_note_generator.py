@@ -9,7 +9,7 @@ import json
 import hashlib
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).parent.parent
@@ -61,7 +61,7 @@ SECTION_PROMPTS = {
     "12_second_order_risks": "Identify 3-5 second-order risks for {company} that are not visible in headline financial metrics. These must be non-obvious observations requiring cross-referencing multiple data sources.",
     "13_valuation_fragility": "Assess whether current valuation multiple for {company} is sustainable given actual earnings quality and return profile. PE: {pe}, PBV: {pbv}. Data: {financial_data}",
     "14_institutional_risk_assessment": "Produce a structured risk assessment for a concentrated value-oriented institutional investor holding {company}. Focus on position sizing implications.",
-    "15_capital_allocation_analysis": "Assess how {company} allocates capital — capex intensity, dividend policy, buyback history, and acquisition track record. Is capital being deployed productively%s Data: {financial_data}",
+    "15_capital_allocation_analysis": "Assess how {company} allocates capital — capex intensity, dividend policy, buyback history, and acquisition track record. Is capital being deployed productively? Data: {financial_data}",
     "16_governance_red_flags": "Scan for governance indicators — promoter pledge, related party transactions, auditor changes, regulatory actions, and ownership concentration for {company}. Data: {financial_data} {sector_context}",
     "17_scenario_stress_testing": "Run three scenarios for {company}: Base case (current trajectory continues), Bear case (macro deterioration + sector stress), Bull case (operational improvement + re-rating). For each describe key assumptions and impact on earnings quality.",
     "18_competitive_positioning": "Assess {company}'s competitive position relative to sector peers. Market share trend, pricing power, switching costs, and entry barrier analysis. Data: {competitive_position}",
@@ -247,7 +247,7 @@ if (nav) {{
             if (window.scrollY >= s.offsetTop - 200) current = s.id;
         }});
         nav.querySelectorAll('.nav-section').forEach(function(a) {{
-            a.style.color = a.getAttribute('href') === '#' + current %s '#00ff9f' : '#555';
+            a.style.color = a.getAttribute('href') === '#' + current ? '#00ff9f' : '#555';
         }});
     }});
 }}
@@ -256,4 +256,3 @@ if (nav) {{
 </html>"""
 
 # Re-export existing functions from note_generator for convenience
-from research.output.note_generator import get_note_html

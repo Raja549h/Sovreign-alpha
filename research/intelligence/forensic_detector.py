@@ -7,11 +7,10 @@ and Groq-powered qualitative narrative analysis.
 
 import os
 import json
-from typing import List, Dict, Optional
-from pathlib import Path
+from typing import List, Dict
 
 from research.storage.research_db import (
-    get_metric_series, save_flag, get_company, get_flags
+    get_metric_series, save_flag, get_flags
 )
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')

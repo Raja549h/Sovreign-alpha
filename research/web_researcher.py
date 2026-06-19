@@ -5,12 +5,9 @@ Uses yfinance for financial data and Groq web search for qualitative context.
 """
 
 import os
-import json
 import sys
-import io
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).parent.parent

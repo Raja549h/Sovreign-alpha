@@ -1,25 +1,26 @@
+from database import get_connection
 """
 Thesis Tracker & Watchlist
 Manages investment theses lifecycle: creation, status monitoring,
 narrative drift detection, and watchlist with alert thresholds.
 """
-import json
-from database import get_connection as db_get_connection
+
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 
 BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 def get_connection():
-    conn = db_get_connection()
+    conn = get_connection()
     return conn
 
 def create_thesis(company_id: int, title: str, thesis_text: str, key_variables: str = "", timeframe_days: int = 90, conviction: float = 0.0) -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO theses (company_id, title, thesis_text, key_variables, timeframe_days, conviction) VALUES (%s, %s, %s, %s, %s, %s)", (company_id, title, thesis_text, key_variables, timeframe_days, conviction))
+        c.execute("INSERT INTO theses (company_id, title, thesis_text, key_variables, timeframe_days, conviction) VALUES (?, ?, ?, ?, ?, ?)", (company_id, title, thesis_text, key_variables, timeframe_days, conviction))
         conn.commit()
         return c.lastrowid
 
@@ -30,10 +31,10 @@ def get_theses(company_id: int = None, status: str = None) -> List[Dict]:
         params = []
         where = []
         if company_id:
-            where.append("t.company_id = %s")
+            where.append("t.company_id = ?")
             params.append(company_id)
         if status:
-            where.append("t.status = %s")
+            where.append("t.status = ?")
             params.append(status)
         if where:
             query += " WHERE " + " AND ".join(where)
@@ -44,26 +45,26 @@ def get_theses(company_id: int = None, status: str = None) -> List[Dict]:
 def get_thesis(thesis_id: int) -> Optional[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT t.*, c.ticker, c.company_name FROM theses t JOIN companies c ON c.id = t.company_id WHERE t.id = %s", (thesis_id,))
+        c.execute("SELECT t.*, c.ticker, c.company_name FROM theses t JOIN companies c ON c.id = t.company_id WHERE t.id = ?", (thesis_id,))
         r = c.fetchone()
         return dict(r) if r else None
 
 def update_thesis_status(thesis_id: int, status: str, notes: str = ""):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("UPDATE theses SET status = %s, updated_at = CURRENT_TIMESTAMP, notes = notes || %s WHERE id = %s", (status, f"\n[{datetime.utcnow().isoformat()}] {notes}", thesis_id))
+        c.execute("UPDATE theses SET status = ?, updated_at = CURRENT_TIMESTAMP, notes = notes || ? WHERE id = ?", (status, f"\n[{datetime.utcnow().isoformat()}] {notes}", thesis_id))
         conn.commit()
 
 def add_check(thesis_id: int, variable: str, expected_range: str, actual_value: str, flag_severity: str = None, notes: str = ""):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO thesis_checks (thesis_id, variable, expected_range, actual_value, flag_severity, notes) VALUES (%s, %s, %s, %s, %s, %s)", (thesis_id, variable, expected_range, actual_value, flag_severity, notes))
+        c.execute("INSERT INTO thesis_checks (thesis_id, variable, expected_range, actual_value, flag_severity, notes) VALUES (?, ?, ?, ?, ?, ?)", (thesis_id, variable, expected_range, actual_value, flag_severity, notes))
         conn.commit()
 
 def get_checks(thesis_id: int) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM thesis_checks WHERE thesis_id = %s ORDER BY checked_at DESC", (thesis_id,))
+        c.execute("SELECT * FROM thesis_checks WHERE thesis_id = ? ORDER BY checked_at DESC", (thesis_id,))
         return [dict(r) for r in c.fetchall()]
 
 def assess_thesis_status(thesis_id: int) -> Dict:
@@ -122,16 +123,16 @@ def detect_narrative_drift(thesis_id: int, new_facts: str) -> Dict:
 def add_to_watchlist(company_id: int, alert_threshold: str = "MEDIUM", notes: str = "") -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO watchlist (company_id, alert_threshold, notes) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (company_id, alert_threshold, notes))
+        c.execute("INSERT OR IGNORE INTO watchlist (company_id, alert_threshold, notes) VALUES (?, ?, ?)", (company_id, alert_threshold, notes))
         conn.commit()
-        c.execute("SELECT id FROM watchlist WHERE company_id = %s", (company_id,))
+        c.execute("SELECT id FROM watchlist WHERE company_id = ?", (company_id,))
         r = c.fetchone()
         return r["id"] if r else 0
 
 def remove_from_watchlist(company_id: int):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("DELETE FROM watchlist WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM watchlist WHERE company_id = ?", (company_id,))
         conn.commit()
 
 def get_watchlist() -> List[Dict]:
@@ -161,5 +162,5 @@ def get_watchlist_companies() -> List[Dict]:
 def is_on_watchlist(company_id: int) -> bool:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM watchlist WHERE company_id = %s", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM watchlist WHERE company_id = ?", (company_id,))
         return c.fetchone()["cnt"] > 0

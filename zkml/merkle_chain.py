@@ -12,7 +12,6 @@ that proves it belongs to an unbroken chain of X verified decisions"
 
 import json
 import hashlib
-import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path

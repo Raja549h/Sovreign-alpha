@@ -6,7 +6,6 @@ Reads the backtest checkpoint data and generates:
 2. Pushes all 328 predictions to prediction ledger database
 """
 
-import os
 import sys
 import json
 

@@ -1,3 +1,4 @@
+from database import get_connection
 """
 India Macro Health Scorecard -- Institutional-grade macro environment assessment
 =================================================================================
@@ -19,7 +20,7 @@ Indicators tracked:
 """
 
 import os
-from database import get_connection
+
 import json
 import pandas as pd
 from datetime import datetime
@@ -28,10 +29,11 @@ from typing import Dict, List, Optional
 
 BASE_DIR = Path(__file__).parent.parent.parent
 BILLING_DIR = BASE_DIR / "billing"
+RESEARCH_DB = BILLING_DIR / "research.db"
 
 MACRO_HEALTH_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS macro_health_snapshots (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     snapshot_date TEXT NOT NULL,
     composite_score REAL,
     status TEXT,
@@ -212,7 +214,7 @@ def fetch_live_indicators() -> Dict:
                          headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
         if r.status_code == 200:
             import re
-            m = re.search(r'India\s*10Y[^<]*%s([\d.]+)%', r.text, re.IGNORECASE)
+            m = re.search(r'India\s*10Y[^<]*?([\d.]+)%', r.text, re.IGNORECASE)
             if m:
                 indicators['gsec_10y'] = round(float(m.group(1)), 2)
     except Exception:
@@ -270,7 +272,7 @@ def build_macro_health_report(indicators: Dict = None) -> Dict:
             (snapshot_date, composite_score, status, gdp_growth, cpi_inflation, iip_growth,
              pmi_manufacturing, pmi_services, inr_change_pct, forex_reserves_change_pct,
              fiscal_deficit_pct, cad_pct, gsec_10y, indicator_details)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             datetime.utcnow().strftime('%Y-%m-%d'),
             report['composite_score'], report['status'],
@@ -300,7 +302,7 @@ def get_latest_snapshot() -> Optional[Dict]:
 def get_snapshot_history(limit: int = 12) -> List[Dict]:
     with _get_db() as conn:
         cur = conn.execute(
-            "SELECT * FROM macro_health_snapshots ORDER BY created_at DESC LIMIT %s",
+            "SELECT * FROM macro_health_snapshots ORDER BY created_at DESC LIMIT ?",
             (limit,)
         )
         return [dict(r) for r in cur.fetchall()]

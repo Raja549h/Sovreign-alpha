@@ -16,13 +16,11 @@ This script:
 8. Saves checkpoints every 10 days for resume capability
 """
 
-import os
 import sys
 import json
 import time
 import hashlib
 
-import csv
 from datetime import datetime, timedelta
 from pathlib import Path
 import numpy as np
@@ -804,7 +802,7 @@ def generate_backtest_report(metrics, predictions, vetoes):
     lines.append("## APPROVED TRADE PERFORMANCE")
     lines.append("")
     lines.append(f"| Metric | Value |")
-    lines.append(f"|--------|-------|")
+    lines.append("|--------|-------|")
     lines.append(f"| Approved Trades | {metrics['total_approved']} |")
     lines.append(f"| Avg Return (10-day) | {metrics['avg_approved_return']:.2f}% |")
     lines.append(f"| Win Rate | {metrics['approved_win_rate']:.1f}% |")

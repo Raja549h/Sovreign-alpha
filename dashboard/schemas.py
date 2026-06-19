@@ -15,9 +15,7 @@ Databases:
   db: fund_params, fund_uploads
 """
 
-from pathlib import Path
-from typing import Optional
-from database import IntegrityError, OperationalError, DatabaseError, get_connection
+from database import OperationalError, get_connection
 
 # ---------------------------------------------------------------------------
 # db
@@ -527,7 +525,6 @@ def safe_migrate(conn: any, migrations: list) -> None:
 
 def init_billing_db() -> any:
     """Create/verify db tables."""
-
     conn = get_connection()
     conn.executescript(BILLING_TABLES_SQL)
     conn.commit()
@@ -536,7 +533,6 @@ def init_billing_db() -> any:
 
 def init_research_db() -> any:
     """Create/verify db tables + run migrations."""
-
     conn = get_connection()
     conn.executescript(RESEARCH_TABLES_SQL)
     conn.executescript(OBSERVATION_TABLES_SQL)
@@ -548,7 +544,6 @@ def init_research_db() -> any:
 
 def init_fund_data_db() -> any:
     """Create/verify db tables."""
-
     conn = get_connection()
     conn.executescript(FUND_DATA_TABLES_SQL)
     conn.commit()

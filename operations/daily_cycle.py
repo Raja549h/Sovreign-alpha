@@ -1,3 +1,4 @@
+from database import get_connection
 """
 DAILY ANALYSIS CYCLE
 Sovereign Alpha - Institutional Intelligence System
@@ -17,9 +18,9 @@ After 30 days you have 30 days of immutable institutional evidence.
 import os
 import sys
 import json
-from database import get_connection
+
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -34,6 +35,7 @@ DATA_DIR.mkdir(exist_ok=True)
 PROOFS_DIR.mkdir(exist_ok=True)
 BILLING_DIR.mkdir(exist_ok=True)
 
+FUND_DATA_DB = BILLING_DIR / "fund_data.db"
 
 
 def init_db():
@@ -42,7 +44,7 @@ def init_db():
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS prediction_ledger (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             prediction_id TEXT UNIQUE,
             timestamp TEXT NOT NULL,
             asset TEXT NOT NULL,
@@ -61,7 +63,7 @@ def init_db():
     """)
     c.execute("""
         CREATE TABLE IF NOT EXISTS veto_archive (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             veto_id TEXT UNIQUE,
             prediction_id TEXT,
             timestamp TEXT NOT NULL,
@@ -100,7 +102,7 @@ def save_prediction(prediction_data: dict) -> bool:
             INSERT INTO prediction_ledger 
             (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
              status, expected_timeline_days, proof_hash, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             prediction_data.get('prediction_id'),
             prediction_data.get('timestamp'),
@@ -132,7 +134,7 @@ def save_veto(veto_data: dict) -> bool:
             INSERT INTO veto_archive
             (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
              expected_loss_pct, proof_hash, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             veto_data.get('veto_id'),
             veto_data.get('prediction_id', ''),

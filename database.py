@@ -3,10 +3,10 @@ import psycopg2
 from psycopg2.extras import DictCursor
 from psycopg2 import pool
 
-class DatabaseError(Exception): pass
-class IntegrityError(DatabaseError): pass
-class OperationalError(DatabaseError): pass
-class ConnectionError(DatabaseError): pass
+class DatabaseError(psycopg2.Error): pass
+class IntegrityError(psycopg2.IntegrityError): pass
+class OperationalError(psycopg2.OperationalError): pass
+class ConnectionError(psycopg2.OperationalError): pass
 
 NEON_URL = os.environ.get("NEON_URL", "")
 
@@ -104,7 +104,11 @@ class DatabaseConnection:
         return cursor
 
     def executescript(self, sql_script):
-        pass
+        """Execute multiple SQL statements separated by semicolons"""
+        cursor = self.cursor()
+        statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
+        for stmt in statements:
+            cursor.execute(stmt)
 
     def fetch_one(self, query, params=None):
         cursor = self.execute(query, params)

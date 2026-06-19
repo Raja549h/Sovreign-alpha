@@ -6,9 +6,7 @@ Handles both text files and PDFs.
 """
 
 import re
-import json
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 from research.ingestion.pdf_parser import extract_text
 
@@ -20,16 +18,16 @@ GUIDANCE_PATTERNS = [
 ]
 
 METRIC_PATTERNS = {
-    'NIM': r'(%s:net interest margin|nim)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'ROA': r'(%s:return on assets|roa)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'ROE': r'(%s:return on equity|roe)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'AUM': r'(%s:aum|assets under management)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:cr|crore|billion|mn)%s',
-    'CREDIT_COST': r'(%s:credit cost|loan loss)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'COF': r'(%s:cost of funds|cof)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'GNPA': r'(%s:gross npa|gnpa)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'NNPA': r'(%s:net npa|nnpa)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:%|percent|bps)%s',
-    'PAT': r'(%s:pat|profit after tax|net profit)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:cr|crore|billion|mn)%s',
-    'NII': r'(%s:nii|net interest income)\s*(%s:of|at|is|was|to be)%s\s*([\d.]+)\s*(%s:cr|crore|billion|mn)%s',
+    'NIM': r'(?:net interest margin|nim)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'ROA': r'(?:return on assets|roa)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'ROE': r'(?:return on equity|roe)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'AUM': r'(?:aum|assets under management)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:cr|crore|billion|mn)?',
+    'CREDIT_COST': r'(?:credit cost|loan loss)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'COF': r'(?:cost of funds|cof)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'GNPA': r'(?:gross npa|gnpa)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'NNPA': r'(?:net npa|nnpa)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:%|percent|bps)?',
+    'PAT': r'(?:pat|profit after tax|net profit)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:cr|crore|billion|mn)?',
+    'NII': r'(?:nii|net interest income)\s*(?:of|at|is|was|to be)?\s*([\d.]+)\s*(?:cr|crore|billion|mn)?',
 }
 
 MANAGEMENT_TITLES = [
@@ -38,7 +36,7 @@ MANAGEMENT_TITLES = [
 ]
 
 ANALYST_PATTERNS = [
-    r'analyst', r'question', r'from', r'(%s:morgan|goldman|jp|citi|hsbc|icici|kotak|hdfc|axis)',
+    r'analyst', r'question', r'from', r'(?:morgan|goldman|jp|citi|hsbc|icici|kotak|hdfc|axis)',
 ]
 
 
@@ -99,7 +97,7 @@ def parse_transcript(filepath: str) -> Dict:
                 result['forward_statements'].append(line)
         
         if not result['company']:
-            match = re.search(r'([A-Z]{2,})\s*(%s:limited|ltd|corp|corporation)', text, re.IGNORECASE)
+            match = re.search(r'([A-Z]{2,})\s*(?:limited|ltd|corp|corporation)', text, re.IGNORECASE)
             if match:
                 result['company'] = match.group(1)
         

@@ -1,9 +1,8 @@
-import os
+import sys
 import hashlib
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from datetime import datetime
 import pandas as pd
 
 try:
@@ -15,29 +14,21 @@ except ImportError:
     print("WARNING: ChromaDB not available, using fallback search")
 
 try:
-    from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext
-    from llama_index.core import Document as LIDocument
-    from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-    from llama_index.vector_stores.chroma import ChromaVectorStore
     LLAMA_INDEX_AVAILABLE = True
 except ImportError:
     try:
-        from llama_index import VectorStoreIndex, SimpleDirectoryReader
-        from llama_index.embeddings import HuggingFaceEmbedding
         LLAMA_INDEX_AVAILABLE = True
     except ImportError:
         LLAMA_INDEX_AVAILABLE = False
         print("WARNING: LlamaIndex not available, using simple fallback")
 
 try:
-    from groq import Groq
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False
 
 from config import (
-    DATA_DIR, CHROMA_PERSIST_DIR, GROQ_API_KEY,
-    embedding_model, logger
+    DATA_DIR, CHROMA_PERSIST_DIR, logger
 )
 
 

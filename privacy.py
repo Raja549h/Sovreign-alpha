@@ -9,7 +9,6 @@ import base64
 import time
 from datetime import datetime
 from typing import Optional, Any, Dict, List
-from pathlib import Path
 
 try:
     from cryptography.fernet import Fernet

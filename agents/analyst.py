@@ -10,9 +10,7 @@ Generates high-confidence predictions using:
 Output format matches Goldman Sachs research / Bloomberg intelligence notes.
 """
 
-import os
 import sys
-import json
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List

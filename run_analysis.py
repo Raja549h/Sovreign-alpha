@@ -7,7 +7,6 @@ Simple script that runs the analysis cycle for dashboard /run endpoint.
 
 import os
 import sys
-import json
 from datetime import datetime
 from pathlib import Path
 

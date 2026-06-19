@@ -5,10 +5,8 @@ Sovereign Alpha - YC Demo Script
 Runs a specific sequence showing the system in action.
 """
 
-import time
 import json
 from datetime import datetime
-from pathlib import Path
 
 try:
     import yfinance as yf
@@ -78,7 +76,6 @@ def generate_zk_proof(recommendation):
     
     # Generate policy-blind proof
     import hashlib
-    import base64
     
     trade_data = {
         'decision_id': recommendation['decision_id'],

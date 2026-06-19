@@ -5,10 +5,8 @@ import os
 import sys
 import hashlib
 import logging
-import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Any, Dict, List
-from pathlib import Path
 
 try:
     from cryptography.fernet import Fernet

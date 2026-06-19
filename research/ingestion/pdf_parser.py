@@ -5,9 +5,7 @@ Uses pdfplumber for PDF extraction with institutional-grade parsing.
 """
 
 import re
-import json
-from pathlib import Path
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 
 try:
     import pdfplumber
@@ -16,7 +14,7 @@ except ImportError:
     PDFPLUMBER_AVAILABLE = False
 
 from research.storage.research_db import (
-    save_metric, update_filing, get_connection
+    save_metric, update_filing
 )
 
 FINANCIAL_METRICS = {
@@ -218,7 +216,7 @@ def extract_management_commentary(pdf_path: str) -> str:
     text_lower = text.lower()
     
     for section in MANAGEMENT_SECTIONS:
-        pattern = re.compile(rf'{re.escape(section)}.*%s(%s=\n\s*\n[A-Z]|\Z)', re.IGNORECASE | re.DOTALL)
+        pattern = re.compile(rf'{re.escape(section)}.*?(?=\n\s*\n[A-Z]|\Z)', re.IGNORECASE | re.DOTALL)
         matches = pattern.findall(text)
         if matches:
             for match in matches:

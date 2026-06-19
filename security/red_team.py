@@ -13,9 +13,8 @@ Each attack is documented with:
 """
 
 import json
-import os
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, List
 from pathlib import Path
 
 
@@ -347,7 +346,6 @@ class EnhancedLedger:
 
 def run_red_team():
     """Run red team security testing."""
-    import sys
     
     # Run attacks
     attacker = MaliciousAnalyst()

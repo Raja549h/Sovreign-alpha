@@ -16,14 +16,13 @@ what the policy or trade contained.
 import json
 import hashlib
 import base64
-import os
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 try:
     from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa, padding
+    from cryptography.hazmat.primitives.asymmetric import padding
     from cryptography.hazmat.backends import default_backend
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -175,7 +174,7 @@ class EnhancedProofVerifier:
         chain = certificate.get("chain_of_custody", [])
         if chain:
             for step in chain:
-                lines.append(f"  Step {step.get('step', '%s')}: {step.get('agent', 'N/A')} - {step.get('action', 'N/A')}")
+                lines.append(f"  Step {step.get('step', '?')}: {step.get('agent', 'N/A')} - {step.get('action', 'N/A')}")
         else:
             lines.append("  Chain not available in certificate")
         lines.append("")

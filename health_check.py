@@ -7,7 +7,6 @@ Verifies the entire system is ready before running.
 Usage: python health_check.py [--full]
 """
 
-import os
 import sys
 import json
 from database import get_connection
@@ -15,7 +14,6 @@ import argparse
 from pathlib import Path
 
 try:
-    import requests
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False

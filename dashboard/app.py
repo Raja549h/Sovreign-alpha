@@ -54,7 +54,6 @@ from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_cors import CORS
-from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 FLASK_AVAILABLE = True
 IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false").lower() == "true"
@@ -237,10 +236,16 @@ def inject_globals():
     }
 
 def init_fund_db():
-    from dashboard.schemas import init_fund_data_db
-    init_fund_data_db()
+    try:
+        from dashboard.schemas import init_fund_data_db
+        init_fund_data_db()
+    except Exception as e:
+        print(f"Warning: Could not initialize fund database: {e}")
 
-init_fund_db()
+try:
+    init_fund_db()
+except Exception as e:
+    print(f"Warning: Initialization failed: {e}")
 
 def get_db_connection():
     """Get database connection to db (prediction_ledger, veto_archive)."""
@@ -2609,10 +2614,10 @@ def api_evidence_institutional_credibility():
     """Module 8: Evidence-only institutional credibility scoring.
     No self-referential metrics. Every point must cite evidence."""
     try:
-        from research.storage.research_db import get_all_companies, get_financial_series
+        from research.storage.research_db import get_all_companies
         companies = get_all_companies()
         total_companies = len(companies)
-        with get_connection() as conn:
+        with db_get_connection() as conn:
             c = conn.cursor()
             c.execute("SELECT COUNT(*) as cnt FROM observation_memory")
             total_obs = c.fetchone()['cnt']
@@ -3277,7 +3282,6 @@ def deep_research_download(reference):
 def api_shadow_portfolio():
     """List shadow portfolio positions with P&L."""
     try:
-        import json
         conn = db_get_connection()
         positions = conn.execute(
             "SELECT * FROM shadow_portfolio ORDER BY entry_date DESC"
@@ -3293,7 +3297,6 @@ def api_shadow_portfolio():
 def api_shadow_portfolio_open():
     """Open a shadow portfolio position."""
     try:
-        import json
         body = request.get_json(force=True, silent=True) or {}
         ticker = body.get('ticker', '').upper()
         if not ticker:
@@ -3324,7 +3327,6 @@ def api_shadow_portfolio_open():
 def api_shadow_portfolio_close():
     """Close a shadow portfolio position and record P&L."""
     try:
-        import json
         body = request.get_json(force=True, silent=True) or {}
         position_id = body.get('position_id', '')
         exit_price = float(body.get('exit_price', 0))
@@ -3363,7 +3365,7 @@ def api_shadow_portfolio_close():
 @login_required
 def portfolio_page():
     try:
-        from research.portfolio_intelligence import get_portfolios, get_positions, calculate_concentration, calculate_portfolio_score, run_all_stress_tests, get_portfolio_scores, grade_from_score, detect_hidden_correlations
+        from research.portfolio_intelligence import get_portfolios, get_positions, calculate_concentration, calculate_portfolio_score, run_all_stress_tests, detect_hidden_correlations
         all_portfolios = get_portfolios()
         selected = request.args.get('portfolio_id', type=int)
         portfolio_detail = None
@@ -3705,7 +3707,7 @@ def macro_currency_cards():
 @login_required
 def api_macro_currency():
     try:
-        from research.portfolio_intelligence import get_portfolios, get_positions
+        from research.portfolio_intelligence import get_positions
         from research.storage.research_db import get_company_by_id
         from research.macro.currency_sensitivity import build_portfolio_currency_view
 
@@ -3766,7 +3768,7 @@ def _macro_direction(value, thresholds):
 @login_required
 def api_macro_import_sensitivity():
     try:
-        from research.portfolio_intelligence import get_portfolios, get_positions
+        from research.portfolio_intelligence import get_positions
         from research.storage.research_db import get_company_by_id
         from research.macro.import_sensitivity import build_import_sensitivity_overlay
 

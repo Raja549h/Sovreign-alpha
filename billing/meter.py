@@ -1,10 +1,7 @@
-import os
-import json
 from database import get_connection
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
-from collections import defaultdict
 
 from config import BILLING_DIR, PERFORMANCE_FEE_PCT, logger
 

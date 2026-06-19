@@ -4,7 +4,6 @@ PDF Exporter — Convert HTML research notes to print-ready PDF
 Uses xhtml2pdf for PDF generation with institutional formatting.
 """
 
-import os
 from pathlib import Path
 from typing import Optional
 

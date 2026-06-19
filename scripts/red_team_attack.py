@@ -1,14 +1,10 @@
-import os
 import sys
 from pathlib import Path
-from datetime import datetime
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 from database import get_connection
 
-from config import BILLING_DIR
-from dashboard.schemas import init_billing_db
 
 def run_red_team_attacks():
     print("=== STARTING RED TEAM RESILIENCE TEST ===")

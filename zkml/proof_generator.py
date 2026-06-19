@@ -5,7 +5,6 @@ Sovereign Alpha - RSA ZK Proof Generator
 Real cryptographic proof system using RSA keys.
 """
 
-import os
 import sys
 import json
 import hashlib
@@ -49,53 +48,43 @@ class RSAProofGenerator:
             logger.info("Loading existing RSA key pair")
             
             with open(private_key_file, "rb") as f:
-                pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
-                try:
-                    self.private_key = serialization.load_pem_private_key(
-                        f.read(), password=pwd, backend=default_backend()
-                    )
-                except ValueError:
-                    logger.warning("Failed to decrypt private key. Generating new pair.")
-                    self._generate_new_keys(private_key_file, public_key_file)
-                    return
+                self.private_key = serialization.load_pem_private_key(
+                    f.read(), password=None, backend=default_backend()
+                )
             
             with open(public_key_file, "rb") as f:
                 self.public_key = serialization.load_pem_public_key(
                     f.read(), backend=default_backend()
                 )
         else:
-            self._generate_new_keys(private_key_file, public_key_file)
-
-    def _generate_new_keys(self, private_key_file, public_key_file):
-        logger.info("Generating new secure RSA key pair (2048-bit)")
-        
-        self.private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-            backend=default_backend()
-        )
-        
-        self.public_key = self.private_key.public_key()
-        
-        pwd = os.environ.get("RSA_PASSWORD", "sovereign_alpha_fallback").encode()
-        private_pem = self.private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.BestAvailableEncryption(pwd)
-        )
-        
-        public_pem = self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
-        
-        with open(private_key_file, "wb") as f:
-            f.write(private_pem)
-        
-        with open(public_key_file, "wb") as f:
-            f.write(public_pem)
-        
-        logger.info("RSA key pair saved to zkml/keys/")
+            logger.info("Generating new RSA key pair (2048-bit)")
+            
+            self.private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048,
+                backend=default_backend()
+            )
+            
+            self.public_key = self.private_key.public_key()
+            
+            private_pem = self.private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+            
+            public_pem = self.public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            
+            with open(private_key_file, "wb") as f:
+                f.write(private_pem)
+            
+            with open(public_key_file, "wb") as f:
+                f.write(public_pem)
+            
+            logger.info("RSA key pair saved to zkml/keys/")
     
     def _hash_decision(self, decision: Dict[str, Any]) -> str:
         """Create SHA-256 hash of decision data."""
