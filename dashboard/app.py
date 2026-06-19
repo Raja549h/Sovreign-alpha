@@ -21,16 +21,17 @@ import os
 import sys
 import json
 import pandas as pd
-from database import get_connection as db_get_connection
 from pathlib import Path
-from datetime import datetime, timedelta
-from functools import wraps
-import time
-import hmac
 
 dashboard_dir = Path(__file__).parent
 project_dir = dashboard_dir.parent
 sys.path.insert(0, str(project_dir))
+
+from database import get_connection as db_get_connection
+from datetime import datetime, timedelta
+from functools import wraps
+import time
+import hmac
 
 from dotenv import load_dotenv
 load_dotenv(str(project_dir / '.env'))

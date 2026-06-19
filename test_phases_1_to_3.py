@@ -1,3 +1,4 @@
+from database import get_connection
 import psycopg2
 from pathlib import Path
 import json

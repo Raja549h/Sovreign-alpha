@@ -1,3 +1,4 @@
+from database import get_connection
 import os
 os.environ['SPACE_ID'] = 'test'
 from dashboard.app import seed_database_on_startup, DB_PATH

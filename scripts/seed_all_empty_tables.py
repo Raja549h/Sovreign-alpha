@@ -1,3 +1,4 @@
+from database import get_connection
 """Seed all 15 tables currently empty in db."""
 
 import sqlite3, json
@@ -13,7 +14,7 @@ def ts():
 def seed_all_empty_tables(db_path=None, quiet=False):
     """Seed all 15 tables with realistic data if empty."""
     db = Path(db_path) if db_path else DB
-    conn = get_connection())
+    conn = get_connection()
     
     c = conn.cursor()
 

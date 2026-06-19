@@ -11,13 +11,14 @@ and initializes fund parameters. Safe to run multiple times.
 
 import os
 import sys
-from database import get_connection
-import json
 from pathlib import Path
-from datetime import datetime
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
+
+from database import get_connection
+import json
+from datetime import datetime
 BILLING_DIR = BASE_DIR / "billing"
 BILLING_DIR.mkdir(exist_ok=True)
 

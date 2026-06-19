@@ -29,6 +29,7 @@ import numpy as np
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+from database import get_connection
 
 BASE_DIR = Path(__file__).parent.parent
 BACKTEST_DIR = BASE_DIR / "backtesting"
@@ -79,7 +80,7 @@ SECTOR_MAP = {
 
 def get_db_connection():
     """Get database connection."""
-    conn = get_connection())
+    conn = get_connection()
     
     return conn
 

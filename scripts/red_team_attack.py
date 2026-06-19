@@ -5,6 +5,7 @@ from datetime import datetime
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+from database import get_connection
 
 from config import BILLING_DIR
 from dashboard.schemas import init_billing_db
@@ -15,7 +16,7 @@ def run_red_team_attacks():
     # 1. Null values in DB
     print("[1] Attack: Inserting Null Values into Prediction Ledger")
     try:
-        conn = get_connection())
+        conn = get_connection()
         c = conn.cursor()
         c.execute("""
             INSERT INTO prediction_ledger (prediction_id, timestamp, asset, confidence_score, status)
@@ -59,7 +60,7 @@ def run_red_team_attacks():
     # 4. Schema mismatch simulation
     print("[4] Attack: Schema Mismatch")
     try:
-        conn = get_connection())
+        conn = get_connection()
         conn.execute("ALTER TABLE veto_archive RENAME TO veto_archive_corrupt")
         conn.commit()
         from agents.risk_manager import RiskManager
