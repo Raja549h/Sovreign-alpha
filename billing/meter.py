@@ -32,13 +32,11 @@ class BillingMeter:
     def _initialize_database(self):
         """Initialize SQLite database with required tables."""
         self.conn = get_connection()
-        self.
-        
+
         try:
             from dashboard.schemas import init_billing_db
             self.conn.close() # Close existing connection since init_billing_db creates its own
             self.conn = init_billing_db(self.db_path)
-            self.
         except Exception as e:
             logger.warning(f"Meter DB init failed: {e}")
         logger.info(f"Billing database initialized at {self.db_path}")

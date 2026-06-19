@@ -3277,7 +3277,7 @@ def api_shadow_portfolio():
     """List shadow portfolio positions with P&L."""
     try:
         import json
-                conn = db_get_connection()
+        conn = db_get_connection()
         positions = conn.execute(
             "SELECT * FROM shadow_portfolio ORDER BY entry_date DESC"
         ).fetchall()
@@ -3293,7 +3293,7 @@ def api_shadow_portfolio_open():
     """Open a shadow portfolio position."""
     try:
         import json
-                body = request.get_json(force=True, silent=True) or {}
+        body = request.get_json(force=True, silent=True) or {}
         ticker = body.get('ticker', '').upper()
         if not ticker:
             return jsonify({'success': False, 'error': 'ticker required'})
@@ -3324,7 +3324,7 @@ def api_shadow_portfolio_close():
     """Close a shadow portfolio position and record P&L."""
     try:
         import json
-                body = request.get_json(force=True, silent=True) or {}
+        body = request.get_json(force=True, silent=True) or {}
         position_id = body.get('position_id', '')
         exit_price = float(body.get('exit_price', 0))
         outcome = body.get('outcome', '')
@@ -3934,7 +3934,7 @@ if is_demo_mode():
 
 try:
     from dashboard.schemas import init_research_db
-        init_research_db()
+    init_research_db()
     from research.storage.research_db import init_extended_tables
     init_extended_tables()
 except Exception as e:
@@ -3956,7 +3956,7 @@ except Exception as e:
 
 try:
     from scripts.seed_all_empty_tables import seed_all_empty_tables
-        result = seed_all_empty_tables(quiet=False)
+    result = seed_all_empty_tables(quiet=False)
 except Exception as e:
     print(f"Warning: Could not seed extended tables: {e}")
 
@@ -3975,7 +3975,7 @@ except Exception as _ve:
     print(f"  [db] verification failed: {_ve}")
 
 try:
-        _vconn2 = db_get_connection()
+    _vconn2 = db_get_connection()
     _vc2 = _vconn2.cursor()
     _all_tables = [
         'companies', 'filings', 'financial_series', 'forensic_flags', 'research_notes',

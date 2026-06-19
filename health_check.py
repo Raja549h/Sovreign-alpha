@@ -277,8 +277,6 @@ def main():
             BASE_DIR / "requirements-docker.txt",
             BASE_DIR / "README.md",
             BASE_DIR / ".hfignore"
-
-            ]
         ]
         missing = [f for f in deploy_files if not f.exists()]
         if not missing:
