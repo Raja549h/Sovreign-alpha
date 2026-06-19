@@ -3822,16 +3822,10 @@ def seed_database_on_startup():
     try:
         from dashboard.schemas import init_billing_db
 
-        if DB_PATH.exists():
-            print("[seed] Database exists - preserving production data")
-        else:
-            print("[seed] Database missing - initializing new schema")
-
-        init_billing_db()
 
         conn = db_get_connection()
         c = conn.cursor()
-        c.execute("BEGIN IMMEDIATE")
+        pass
 
         c.execute("SELECT COUNT(*) FROM prediction_ledger")
         if c.fetchone()[0] == 0:
@@ -3903,7 +3897,7 @@ if is_demo_mode():
         import uuid as _uuid
         _conn = db_get_connection()
         _c = _conn.cursor()
-        _c.execute("BEGIN IMMEDIATE")
+        pass
         _now = datetime.utcnow()
         _c.execute("""
             INSERT INTO prediction_ledger
