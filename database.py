@@ -25,6 +25,15 @@ class NeonRow:
     def keys(self):
         return self._keys
 
+    def values(self):
+        return self._d.values()
+
+    def items(self):
+        return self._d.items()
+
+    def get(self, key, default=None):
+        return self._d.get(key, default)
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._d[self._keys[key]]
@@ -35,6 +44,9 @@ class NeonRow:
 
     def __len__(self):
         return len(self._d)
+
+    def __contains__(self, key):
+        return key in self._d
 
 class NeonCursor:
     def __init__(self, cursor):
@@ -72,6 +84,14 @@ class NeonCursor:
     @property
     def lastrowid(self):
         return 1
+
+    @property
+    def rowcount(self):
+        return self.cursor.rowcount
+
+    @property
+    def description(self):
+        return self.cursor.description
 
     def close(self):
         self.cursor.close()

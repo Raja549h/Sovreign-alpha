@@ -484,7 +484,7 @@ CREATE TABLE IF NOT EXISTS fund_params (
 CREATE TABLE IF NOT EXISTS fund_uploads (
     id SERIAL PRIMARY KEY,
     file_type TEXT,
-    file_content BLOB,
+    file_content BYTEA,
     uploaded_at TEXT
 );
 """

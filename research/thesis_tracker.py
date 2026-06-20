@@ -13,9 +13,6 @@ BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
 RESEARCH_DB = BILLING_DIR / "research.db"
 
-def get_connection():
-    conn = get_connection()
-    return conn
 
 def create_thesis(company_id: int, title: str, thesis_text: str, key_variables: str = "", timeframe_days: int = 90, conviction: float = 0.0) -> int:
     with get_connection() as conn:
