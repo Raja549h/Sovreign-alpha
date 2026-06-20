@@ -34,7 +34,7 @@ SOURCES = {
 
 def get_company_id(conn, ticker):
     c = conn.cursor()
-    c.execute("SELECT id FROM companies WHERE ticker = ?", (ticker,))
+    c.execute("SELECT id FROM companies WHERE ticker = %s", (ticker,))
     row = c.fetchone()
     return row[0] if row else None
 
@@ -47,7 +47,7 @@ def seed_muthoot():
     c.execute("""
         INSERT OR IGNORE INTO companies
         (ticker, company_name, exchange, sector)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, ("MUTHOOTFIN", "Muthoot Finance Limited", "NSE", "Gold Loan NBFC"))
     conn.commit()
 
@@ -121,7 +121,7 @@ def seed_muthoot():
         c.execute("""
             INSERT OR IGNORE INTO financial_series
             (company_id, metric_name, period, value, unit, extracted_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (company_id, metric, period, value, unit, now))
         count += 1
     print(f"[seed] {count} financial metrics inserted")
@@ -216,7 +216,7 @@ def seed_muthoot():
         c.execute("""
             INSERT OR IGNORE INTO forensic_flags
             (company_id, flag_type, severity, description, supporting_data, period, analyst_note)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (company_id, flag_type, severity, desc, evidence, period, note))
     print(f"[seed] {len(flags)} forensic flags inserted")
 
@@ -224,7 +224,7 @@ def seed_muthoot():
     c.execute("""
         INSERT OR IGNORE INTO research_notes
         (company_id, note_reference, title, status)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """, (company_id, "SR-2026-MFL-001",
           "Muthoot Finance — Gold Price Dependency Masking NIM Fragility "
           "and Non-Gold Cross-Subsidy Risk",

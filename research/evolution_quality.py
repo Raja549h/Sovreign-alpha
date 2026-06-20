@@ -45,7 +45,7 @@ class AutopsyEngine:
     def score_observation(self, observation_id: int, scores: Dict[str, float], notes: str = "") -> int:
         with _get_db() as conn:
             c = conn.cursor()
-            c.execute("SELECT company_id FROM observation_memory WHERE id = ?", (observation_id,))
+            c.execute("SELECT company_id FROM observation_memory WHERE id = %s", (observation_id,))
             row = c.fetchone()
             if not row:
                 raise ValueError(f"Observation {observation_id} not found")
@@ -63,7 +63,7 @@ class AutopsyEngine:
                 (observation_id, company_id, signal_strength, novelty_score,
                  actionability_score, falsifiability_score, relevance_score,
                  research_quality_score, autopsy_notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (observation_id, company_id, signal, novelty, actionability,
                   falsifiability, relevance, rqs, notes))
             conn.commit()
@@ -72,7 +72,7 @@ class AutopsyEngine:
     def get_autopsy(self, observation_id: int) -> Optional[Dict]:
         with _get_db() as conn:
             c = conn.cursor()
-            c.execute("SELECT * FROM observation_autopsy WHERE observation_id = ? ORDER BY id DESC LIMIT 1", (observation_id,))
+            c.execute("SELECT * FROM observation_autopsy WHERE observation_id = %s ORDER BY id DESC LIMIT 1", (observation_id,))
             row = c.fetchone()
             return dict(row) if row else None
 
@@ -84,14 +84,14 @@ class AutopsyEngine:
                              FROM observation_autopsy oa
                              JOIN observation_memory om ON om.id = oa.observation_id
                              JOIN companies c ON c.id = oa.company_id
-                             WHERE oa.company_id = ?
-                             ORDER BY oa.performed_at DESC LIMIT ?""", (company_id, limit))
+                             WHERE oa.company_id = %s
+                             ORDER BY oa.performed_at DESC LIMIT %s""", (company_id, limit))
             else:
                 c.execute("""SELECT oa.*, om.observation_text, om.category, om.validation_status, c.ticker
                              FROM observation_autopsy oa
                              JOIN observation_memory om ON om.id = oa.observation_id
                              JOIN companies c ON c.id = oa.company_id
-                             ORDER BY oa.performed_at DESC LIMIT ?""", (limit,))
+                             ORDER BY oa.performed_at DESC LIMIT %s""", (limit,))
             return [dict(r) for r in c.fetchall()]
 
     def get_quality_summary(self) -> Dict:
@@ -124,7 +124,7 @@ class AutopsyEngine:
             c.execute("""SELECT signal_strength, novelty_score, actionability_score,
                               falsifiability_score, relevance_score
                          FROM observation_autopsy
-                         WHERE observation_id = ?
+                         WHERE observation_id = %s
                          ORDER BY id DESC LIMIT 1""", (observation_id,))
             row = c.fetchone()
             if not row:
@@ -166,7 +166,7 @@ class ReasoningAudit:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT ov.observation_id, ov.company_id, ov.accuracy_contribution
-                         FROM observation_validations ov WHERE ov.id = ?""", (validation_id,))
+                         FROM observation_validations ov WHERE ov.id = %s""", (validation_id,))
             row = c.fetchone()
             if not row:
                 raise ValueError(f"Validation {validation_id} not found")
@@ -179,7 +179,7 @@ class ReasoningAudit:
                 INSERT INTO reasoning_audit
                 (observation_id, company_id, validation_id, contributing_factors,
                  primary_factor, factor_weight, confidence_at_time, auditor_notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (row['observation_id'], row['company_id'], validation_id,
                   factor_str, primary, weight,
                   row['accuracy_contribution'] or 0.5, notes))
@@ -192,7 +192,7 @@ class ReasoningAudit:
             c.execute("""SELECT ra.*, ov.new_status, ov.validation_method
                          FROM reasoning_audit ra
                          JOIN observation_validations ov ON ov.id = ra.validation_id
-                         WHERE ra.observation_id = ?
+                         WHERE ra.observation_id = %s
                          ORDER BY ra.audited_at DESC""", (observation_id,))
             return [dict(r) for r in c.fetchall()]
 
@@ -206,7 +206,7 @@ class FailureAnalysis:
                        severity: str = "medium") -> int:
         with _get_db() as conn:
             c = conn.cursor()
-            c.execute("""SELECT company_id, confidence FROM observation_memory WHERE id = ?""", (observation_id,))
+            c.execute("""SELECT company_id, confidence FROM observation_memory WHERE id = %s""", (observation_id,))
             row = c.fetchone()
             if not row:
                 raise ValueError(f"Observation {observation_id} not found")
@@ -218,7 +218,7 @@ class FailureAnalysis:
                 (observation_id, company_id, invalidated_at, failure_category,
                  root_cause, missed_signals, incorrect_assumption, lessons_learned,
                  confidence_prior, confidence_posterior, severity)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (observation_id, company_id, datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                   category, root_cause, missed_signals, incorrect_assumption, lessons,
                   confidence_prior, 0.0, severity))
@@ -233,14 +233,14 @@ class FailureAnalysis:
                              FROM failure_analysis fa
                              JOIN observation_memory om ON om.id = fa.observation_id
                              JOIN companies c ON c.id = fa.company_id
-                             WHERE fa.company_id = ?
-                             ORDER BY fa.analyzed_at DESC LIMIT ?""", (company_id, limit))
+                             WHERE fa.company_id = %s
+                             ORDER BY fa.analyzed_at DESC LIMIT %s""", (company_id, limit))
             else:
                 c.execute("""SELECT fa.*, om.observation_text, om.category, c.ticker
                              FROM failure_analysis fa
                              JOIN observation_memory om ON om.id = fa.observation_id
                              JOIN companies c ON c.id = fa.company_id
-                             ORDER BY fa.analyzed_at DESC LIMIT ?""", (limit,))
+                             ORDER BY fa.analyzed_at DESC LIMIT %s""", (limit,))
             return [dict(r) for r in c.fetchall()]
 
     def get_pattern_summary(self) -> Dict:
@@ -267,7 +267,7 @@ class EdgeDiscovery:
             c = conn.cursor()
             c.execute("""SELECT id, total_observations, confirmed_count, invalidated_count
                          FROM edge_discovery_framework
-                         WHERE framework_name = ? AND metric_name = ? AND category = ?""",
+                         WHERE framework_name = %s AND metric_name = %s AND category = %s""",
                       (framework, metric, category))
             row = c.fetchone()
 
@@ -287,9 +287,9 @@ class EdgeDiscovery:
             if row:
                 c.execute("""
                     UPDATE edge_discovery_framework SET
-                    total_observations = ?, confirmed_count = ?, invalidated_count = ?,
-                    accuracy_rate = ?, last_updated = ?
-                    WHERE id = ?
+                    total_observations = %s, confirmed_count = %s, invalidated_count = %s,
+                    accuracy_rate = %s, last_updated = %s
+                    WHERE id = %s
                 """, (total, confirmed_c, invalidated_c, accuracy,
                       datetime.now(timezone.utc).strftime('%Y-%m-%d'), fid))
             else:
@@ -297,7 +297,7 @@ class EdgeDiscovery:
                     INSERT INTO edge_discovery_framework
                     (framework_name, metric_name, category, total_observations,
                      confirmed_count, invalidated_count, accuracy_rate)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (framework, metric, category, total,
                       confirmed_c, invalidated_c, accuracy))
             conn.commit()
@@ -306,17 +306,17 @@ class EdgeDiscovery:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT * FROM edge_discovery_framework
-                         WHERE total_observations >= ?
+                         WHERE total_observations >= %s
                          ORDER BY accuracy_rate DESC""", (min_observations,))
             rows = [dict(r) for r in c.fetchall()]
 
             c.execute("""SELECT COUNT(*) as total FROM edge_discovery_framework
-                         WHERE total_observations >= ?""", (min_observations,))
+                         WHERE total_observations >= %s""", (min_observations,))
             total_frameworks = c.fetchone()['total']
 
             c.execute("""SELECT category, COUNT(*) as cnt, AVG(accuracy_rate) as avg_acc
                          FROM edge_discovery_framework
-                         WHERE total_observations >= ?
+                         WHERE total_observations >= %s
                          GROUP BY category ORDER BY avg_acc DESC""", (min_observations,))
             by_category = [dict(r) for r in c.fetchall()]
 
@@ -334,12 +334,12 @@ class ConfidenceCalibrator:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT confidence, validation_status, category
-                         FROM observation_memory WHERE id = ?""", (observation_id,))
+                         FROM observation_memory WHERE id = %s""", (observation_id,))
             row = c.fetchone()
             if not row:
                 raise ValueError(f"Observation {observation_id} not found")
             predicted = row['confidence'] or 0.5
-            company_id = c.execute("SELECT company_id FROM observation_memory WHERE id = ?",
+            company_id = c.execute("SELECT company_id FROM observation_memory WHERE id = %s",
                                    (observation_id,)).fetchone()['company_id']
 
             error = actual_outcome - predicted
@@ -352,7 +352,7 @@ class ConfidenceCalibrator:
                 INSERT INTO confidence_calibration
                 (observation_id, company_id, predicted_confidence, actual_outcome,
                  confidence_error, calibration_bucket, adjusted_confidence, calibration_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (observation_id, company_id, predicted, actual_outcome,
                   round(error, 4), bucket, round(adjusted, 4),
                   datetime.now(timezone.utc).strftime('%Y-%m-%d')))
@@ -407,7 +407,7 @@ class ChallengeEngine:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT company_id, observation_text, confidence
-                         FROM observation_memory WHERE id = ?""", (observation_id,))
+                         FROM observation_memory WHERE id = %s""", (observation_id,))
             row = c.fetchone()
             if not row:
                 raise ValueError(f"Observation {observation_id} not found")
@@ -416,7 +416,7 @@ class ChallengeEngine:
                 INSERT INTO challenge_records
                 (observation_id, company_id, challenger_type, bull_case,
                  bear_case, counterargument, challenge_outcome, passed_challenge)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (observation_id, row['company_id'], challenger_type,
                   bull_case, bear_case, counterargument, 'pending', 0))
             conn.commit()
@@ -437,9 +437,9 @@ class ChallengeEngine:
             c = conn.cursor()
             c.execute("""
                 UPDATE challenge_records
-                SET passed_challenge = ?, challenge_outcome = ?,
-                    observation_survived = ?
-                WHERE id = ?
+                SET passed_challenge = %s, challenge_outcome = %s,
+                    observation_survived = %s
+                WHERE id = %s
             """, (1 if passed else 0, outcome, 1 if passed else 0, challenge_id))
             conn.commit()
 
@@ -451,14 +451,14 @@ class ChallengeEngine:
                              FROM challenge_records cr
                              JOIN observation_memory om ON om.id = cr.observation_id
                              JOIN companies c ON c.id = cr.company_id
-                             WHERE cr.observation_id = ?
+                             WHERE cr.observation_id = %s
                              ORDER BY cr.challenged_at DESC""", (observation_id,))
             else:
                 c.execute("""SELECT cr.*, om.observation_text, om.category, c.ticker
                              FROM challenge_records cr
                              JOIN observation_memory om ON om.id = cr.observation_id
                              JOIN companies c ON c.id = cr.company_id
-                             ORDER BY cr.challenged_at DESC LIMIT ?""", (limit,))
+                             ORDER BY cr.challenged_at DESC LIMIT %s""", (limit,))
             return [dict(r) for r in c.fetchall()]
 
     def get_challenge_stats(self) -> Dict:
@@ -537,7 +537,7 @@ class EvidenceTimeline:
                 INSERT INTO evidence_timeline
                 (observation_id, company_id, event_type, event_label, event_detail,
                  old_status, new_status, source)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (observation_id, company_id, event_type, event_label, event_detail,
                   old_status, new_status, source))
             conn.commit()
@@ -553,17 +553,17 @@ class EvidenceTimeline:
             where = []
             params = []
             if company_id:
-                where.append("et.company_id = ?")
+                where.append("et.company_id = %s")
                 params.append(company_id)
             if observation_id:
-                where.append("et.observation_id = ?")
+                where.append("et.observation_id = %s")
                 params.append(observation_id)
             if event_type:
-                where.append("et.event_type = ?")
+                where.append("et.event_type = %s")
                 params.append(event_type)
             if where:
                 parts.append("WHERE " + " AND ".join(where))
-            parts.append("ORDER BY et.created_at DESC LIMIT ?")
+            parts.append("ORDER BY et.created_at DESC LIMIT %s")
             params.append(limit)
             c.execute(" ".join(parts), params)
             return [dict(r) for r in c.fetchall()]
@@ -578,7 +578,7 @@ class FrameworkPerformance:
             c = conn.cursor()
             c.execute("""SELECT id, observation_count, confirmed_count, invalidated_count
                          FROM framework_performance
-                         WHERE framework_name = ? AND category = ?""",
+                         WHERE framework_name = %s AND category = %s""",
                       (framework_name, category))
             row = c.fetchone()
             if row:
@@ -593,10 +593,10 @@ class FrameworkPerformance:
                 inv_count = 0 if confirmed else 1
             conf_rate = round(conf_count / (conf_count + inv_count), 4) if (conf_count + inv_count) > 0 else 0
             if fid:
-                c.execute("""UPDATE framework_performance SET observation_count = ?,
-                             confirmed_count = ?, invalidated_count = ?,
-                             confirmation_rate = ?, last_observation_date = ?
-                             WHERE id = ?""",
+                c.execute("""UPDATE framework_performance SET observation_count = %s,
+                             confirmed_count = %s, invalidated_count = %s,
+                             confirmation_rate = %s, last_observation_date = %s
+                             WHERE id = %s""",
                           (obs_count, conf_count, inv_count, conf_rate,
                            datetime.now(timezone.utc).strftime('%Y-%m-%d'), fid))
             else:
@@ -604,7 +604,7 @@ class FrameworkPerformance:
                              (framework_name, category, observation_count, confirmed_count,
                               invalidated_count, confirmation_rate, avg_confidence,
                               last_observation_date)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
                           (framework_name, category, obs_count, conf_count, inv_count,
                            conf_rate, confidence, datetime.now(timezone.utc).strftime('%Y-%m-%d')))
             conn.commit()
@@ -614,12 +614,12 @@ class FrameworkPerformance:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT confirmation_rate FROM framework_performance
-                         WHERE framework_name = ? AND category = ?""", (framework, category))
+                         WHERE framework_name = %s AND category = %s""", (framework, category))
             row = c.fetchone()
             if row and row['confirmation_rate']:
                 alpha = round((row['confirmation_rate'] - 0.5) * 100, 2)
-                c.execute("""UPDATE framework_performance SET total_alpha_pct = ?
-                             WHERE framework_name = ? AND category = ?""",
+                c.execute("""UPDATE framework_performance SET total_alpha_pct = %s
+                             WHERE framework_name = %s AND category = %s""",
                           (alpha, framework, category))
                 conn.commit()
 
@@ -627,14 +627,14 @@ class FrameworkPerformance:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT * FROM framework_performance
-                         WHERE observation_count >= ?
+                         WHERE observation_count >= %s
                          ORDER BY confirmation_rate DESC""", (min_observations,))
             rows = [dict(r) for r in c.fetchall()]
             c.execute("""SELECT category, COUNT(*) as cnt,
                                 AVG(confirmation_rate) as avg_conf_rate,
                                 SUM(total_alpha_pct) as total_alpha
                          FROM framework_performance
-                         WHERE observation_count >= ?
+                         WHERE observation_count >= %s
                          GROUP BY category ORDER BY avg_conf_rate DESC""", (min_observations,))
             by_category = [dict(r) for r in c.fetchall()]
             return {
@@ -656,9 +656,9 @@ class ReproducibilityTracker:
             import hashlib
             raw = f"{observation_id}|{filing_sources}|{financial_inputs}|{model_version}|{agent_version}"
             data_signature = hashlib.sha256(raw.encode()).hexdigest()[:16]
-            c.execute("""UPDATE observation_memory SET model_version = ?, agent_version = ?,
-                         data_sources = ?, filings_used = ?, calculations_used = ?
-                         WHERE id = ?""",
+            c.execute("""UPDATE observation_memory SET model_version = %s, agent_version = %s,
+                         data_sources = %s, filings_used = %s, calculations_used = %s
+                         WHERE id = %s""",
                       (model_version, agent_version,
                        json.dumps(filing_sources.split(",") if filing_sources else []),
                        json.dumps(earnings_call_sources.split(",") if earnings_call_sources else []),
@@ -667,7 +667,7 @@ class ReproducibilityTracker:
                          (observation_id, company_id, filing_sources, earnings_call_sources,
                           financial_inputs, calculations_used, model_version, agent_version,
                           data_signature)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                       (observation_id, company_id, filing_sources, earnings_call_sources,
                        financial_inputs, calculations_used, model_version, agent_version,
                        data_signature))
@@ -678,7 +678,7 @@ class ReproducibilityTracker:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT * FROM reproducibility_log
-                         WHERE observation_id = ? ORDER BY logged_at DESC LIMIT 1""",
+                         WHERE observation_id = %s ORDER BY logged_at DESC LIMIT 1""",
                       (observation_id,))
             row = c.fetchone()
             return dict(row) if row else None
@@ -694,7 +694,7 @@ class MemoEvolutionEngine:
             c = conn.cursor()
             failures = c.execute("""SELECT failure_category, root_cause, missed_signals,
                                            incorrect_assumption, lessons_learned
-                                    FROM failure_analysis WHERE company_id = ?
+                                    FROM failure_analysis WHERE company_id = %s
                                     ORDER BY analyzed_at DESC LIMIT 5""",
                                  (company_id,)).fetchall()
             lessons_applied = 0
@@ -715,7 +715,7 @@ class MemoEvolutionEngine:
                          (company_id, memo_reference, memo_type, prior_memo_reference,
                           quality_delta, new_insights_count, lessons_applied_count,
                           lessons_ignored_count, overall_quality_score)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                       (company_id, memo_reference, memo_type, prior_memo_reference,
                        quality_delta, new_insights, lessons_applied, lessons_ignored,
                        round(0.5 + quality_delta, 4)))
@@ -736,12 +736,12 @@ class MemoEvolutionEngine:
             if company_id:
                 c.execute("""SELECT me.*, c.ticker FROM memo_evolution me
                              JOIN companies c ON c.id = me.company_id
-                             WHERE me.company_id = ? ORDER BY me.generated_at DESC LIMIT ?""",
+                             WHERE me.company_id = %s ORDER BY me.generated_at DESC LIMIT %s""",
                           (company_id, limit))
             else:
                 c.execute("""SELECT me.*, c.ticker FROM memo_evolution me
                              JOIN companies c ON c.id = me.company_id
-                             ORDER BY me.generated_at DESC LIMIT ?""", (limit,))
+                             ORDER BY me.generated_at DESC LIMIT %s""", (limit,))
             return [dict(r) for r in c.fetchall()]
 
 
@@ -787,7 +787,7 @@ class AntiVanityFilter:
     def check_metric(self, metric_name: str, min_data_points: int = 3) -> Dict:
         with _get_db() as conn:
             c = conn.cursor()
-            c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE metric_name = ?",
+            c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE metric_name = %s",
                       (metric_name,))
             cnt = c.fetchone()['cnt']
             return {

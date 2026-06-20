@@ -19,7 +19,7 @@ RESEARCH_DB = BILLING_DIR / "research.db"
 def add_observation(ticker: str, company: str, obs_type: str, headline: str, severity: str, supporting_data: str = "", regime_relevance: str = "") -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO observations (ticker, company, type, headline, severity, supporting_data, regime_relevance) VALUES (?, ?, ?, ?, ?, ?, ?)", (ticker, company, obs_type, headline, severity, supporting_data, regime_relevance))
+        c.execute("INSERT INTO observations (ticker, company, type, headline, severity, supporting_data, regime_relevance) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ticker, company, obs_type, headline, severity, supporting_data, regime_relevance))
         conn.commit()
         return c.lastrowid
 
@@ -30,14 +30,14 @@ def get_recent_observations(limit: int = 50, severity: str = None, obs_type: str
         params = []
         where = []
         if severity:
-            where.append("severity = ?")
+            where.append("severity = %s")
             params.append(severity)
         if obs_type:
-            where.append("type = ?")
+            where.append("type = %s")
             params.append(obs_type)
         if where:
             query += " WHERE " + " AND ".join(where)
-        query += " ORDER BY timestamp DESC LIMIT ?"
+        query += " ORDER BY timestamp DESC LIMIT %s"
         params.append(limit)
         c.execute(query, params)
         return [dict(r) for r in c.fetchall()]
@@ -45,14 +45,14 @@ def get_recent_observations(limit: int = 50, severity: str = None, obs_type: str
 def get_observations_by_ticker(ticker: str, limit: int = 20) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM observations WHERE ticker = ? ORDER BY timestamp DESC LIMIT ?", (ticker, limit))
+        c.execute("SELECT * FROM observations WHERE ticker = %s ORDER BY timestamp DESC LIMIT %s", (ticker, limit))
         return [dict(r) for r in c.fetchall()]
 
 def get_high_severity_count(days: int = 7) -> int:
     with get_connection() as conn:
         c = conn.cursor()
         cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
-        c.execute("SELECT COUNT(*) as cnt FROM observations WHERE severity IN ('HIGH','CRITICAL') AND timestamp >= ?", (cutoff,))
+        c.execute("SELECT COUNT(*) as cnt FROM observations WHERE severity IN ('HIGH','CRITICAL') AND timestamp >= %s", (cutoff,))
         return c.fetchone()["cnt"]
 
 def generate_macro_alerts() -> List[Dict]:
