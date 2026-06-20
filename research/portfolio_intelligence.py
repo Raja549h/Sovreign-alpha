@@ -12,9 +12,6 @@ BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
 RESEARCH_DB = BILLING_DIR / "research.db"
 
-def get_connection():
-    conn = get_connection()
-    return conn
 
 def create_portfolio(name: str, description: str = "", strategy: str = "") -> int:
     with get_connection() as conn:
