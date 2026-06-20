@@ -8,14 +8,19 @@ class IntegrityError(psycopg2.IntegrityError): pass
 class OperationalError(psycopg2.OperationalError): pass
 class ConnectionError(psycopg2.OperationalError): pass
 
-NEON_URL = os.environ.get("NEON_URL", "")
-
 _PG_POOL = None
-if NEON_URL:
-    try:
-        _PG_POOL = pool.SimpleConnectionPool(1, 100, NEON_URL, cursor_factory=DictCursor)
-    except psycopg2.Error as e:
-        print(f"Failed to initialize Neon connection pool: {e}")
+
+def init_pool():
+    global _PG_POOL
+    if _PG_POOL is not None:
+        return
+    
+    neon_url = os.environ.get("NEON_URL", "")
+    if neon_url:
+        try:
+            _PG_POOL = pool.SimpleConnectionPool(1, 100, neon_url, cursor_factory=DictCursor)
+        except psycopg2.Error as e:
+            print(f"Failed to initialize Neon connection pool: {e}")
 
 class NeonRow:
     def __init__(self, d):
@@ -98,6 +103,7 @@ class NeonCursor:
 
 class DatabaseConnection:
     def __init__(self, db_name=None):
+        init_pool()
         if not _PG_POOL:
             raise ConnectionError("Neon connection pool not initialized. Is NEON_URL set?")
         
