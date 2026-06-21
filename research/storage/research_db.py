@@ -214,7 +214,7 @@ def save_flag(company_id: int, flag_type: str, severity: str, description: str, 
         conn.commit()
 
 
-def save_note(company_id: int, reference: str, title: str, content: str, scores: Dict, summary: str = None) -> int:
+def save_note(company_id: int, reference: str, title: str, content: str, scores: Dict, summary: str = None, run_id: str = None) -> int:
     """Save research note. Returns note id."""
     with get_connection() as conn:
         c = conn.cursor()
@@ -222,15 +222,17 @@ def save_note(company_id: int, reference: str, title: str, content: str, scores:
             """INSERT INTO research_notes 
                (company_id, note_reference, title, summary, full_content, 
                 risk_intensity_score, confidence_score, regime_sensitivity_score, 
-                structural_quality_score, forensic_flags_count) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                structural_quality_score, forensic_flags_count, run_id) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               RETURNING id""",
             (company_id, reference, title, summary, content,
              scores.get('risk_intensity'), scores.get('confidence'),
              scores.get('regime_sensitivity'), scores.get('structural_quality'),
-             scores.get('forensic_flags_count', 0))
+             scores.get('forensic_flags_count', 0), run_id)
         )
+        row = c.fetchone()
         conn.commit()
-        return c.lastrowid
+        return row['id'] if row else 0
 
 
 def update_note_pdf(note_id: int, pdf_path: str):
@@ -241,18 +243,18 @@ def update_note_pdf(note_id: int, pdf_path: str):
         conn.commit()
 
 
-def save_scores(company_id: int, period: str, scores: Dict, rationale: Dict = None):
+def save_scores(company_id: int, period: str, scores: Dict, rationale: Dict = None, run_id: str = None):
     """Save institutional scores."""
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
             """INSERT INTO institutional_scores 
                (company_id, period, risk_intensity, confidence, regime_sensitivity, 
-                structural_quality, composite_score, scoring_rationale) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                structural_quality, composite_score, scoring_rationale, run_id) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (company_id, period, scores.get('risk_intensity'), scores.get('confidence'),
              scores.get('regime_sensitivity'), scores.get('structural_quality'),
-             scores.get('composite'), json.dumps(rationale) if rationale else None)
+             scores.get('composite'), json.dumps(rationale) if rationale else None, run_id)
         )
         conn.commit()
 

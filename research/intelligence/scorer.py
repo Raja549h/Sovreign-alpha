@@ -210,7 +210,7 @@ def calculate_composite(risk: float, confidence: float, regime_sens: float, qual
     return round(min(max(composite, 0), 10), 1)
 
 
-def score_company(company_id: int, sector: str = 'NBFC') -> Dict:
+def score_company(company_id: int, sector: str = 'NBFC', run_id: str = None) -> Dict:
     """
     Run all four scores and save to database.
     
@@ -247,7 +247,7 @@ def score_company(company_id: int, sector: str = 'NBFC') -> Dict:
         'quality': quality['rationale']
     }
     
-    save_scores(company_id, 'current', scores, rationale)
+    save_scores(company_id, 'current', scores, rationale, run_id=run_id)
     
     return {
         **scores,

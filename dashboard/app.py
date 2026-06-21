@@ -55,6 +55,14 @@ from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+try:
+    from dashboard.worker import BackgroundEngine
+    bg_engine = BackgroundEngine()
+    bg_engine.start()
+except Exception as e:
+    print(f"Failed to start BackgroundEngine: {e}")
+
 FLASK_AVAILABLE = True
 IS_CLOUD = bool(os.environ.get("SPACE_ID")) or os.environ.get("RENDER", "false").lower() == "true"
 
@@ -4010,6 +4018,69 @@ except Exception as _ve:
     print(f"  [db] verification failed: {_ve}")
 
 print("=" * 60)
+
+# --- BACKGROUND RUNS ROUTES ---
+@app.route('/runs')
+@login_required
+def runs_view():
+    return render_template('runs.html')
+
+@app.route('/api/runs', methods=['GET'])
+@login_required
+def get_runs():
+    try:
+        with db_get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT * FROM analysis_runs ORDER BY created_at DESC LIMIT 50")
+            rows = [dict(r) for r in c.fetchall()]
+        for r in rows:
+            if 'created_at' in r and r['created_at']: r['created_at'] = str(r['created_at'])
+            if 'updated_at' in r and r['updated_at']: r['updated_at'] = str(r['updated_at'])
+            if 'heartbeat_at' in r and r['heartbeat_at']: r['heartbeat_at'] = str(r['heartbeat_at'])
+            if 'started_at' in r and r['started_at']: r['started_at'] = str(r['started_at'])
+            if 'completed_at' in r and r['completed_at']: r['completed_at'] = str(r['completed_at'])
+            if 'run_id' in r: r['run_id'] = str(r['run_id'])
+        return jsonify({"runs": rows})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/runs/submit', methods=['POST'])
+@login_required
+def submit_run():
+    data = request.json
+    ticker = data.get('ticker')
+    if not ticker: return jsonify({"error": "No ticker provided"}), 400
+    
+    try:
+        with db_get_connection() as conn:
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO analysis_runs (ticker, run_type, status, current_step) VALUES (%s, %s, %s, %s) RETURNING run_id",
+                (ticker, data.get('run_type', 'MANUAL'), 'PENDING', 'Queued')
+            )
+            run_id = c.fetchone()['run_id']
+            c.execute("INSERT INTO analysis_run_events (run_id, event_type, event_message) VALUES (%s, %s, %s)",
+                      (run_id, 'RUN_CREATED', f"Run created for {ticker}"))
+            conn.commit()
+        return jsonify({"run_id": str(run_id)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/runs/events/<run_id>', methods=['GET'])
+@login_required
+def get_run_events(run_id):
+    try:
+        with db_get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT * FROM analysis_run_events WHERE run_id = %s ORDER BY created_at ASC", (run_id,))
+            rows = [dict(r) for r in c.fetchall()]
+        for r in rows:
+            if 'created_at' in r and r['created_at']: r['created_at'] = str(r['created_at'])
+            if 'run_id' in r: r['run_id'] = str(r['run_id'])
+        return jsonify({"events": rows})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))

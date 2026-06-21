@@ -50,37 +50,35 @@ Produce a structured research note with these sections:
 Tone benchmark: This should read like Goldman Sachs equity research, not a startup pitch or retail blog."""
 
 
+_note_lock = threading.Lock()
+
 def _get_next_reference(ticker: str) -> str:
     """Generate next note reference number."""
-    year = datetime.now().strftime('%Y')
-    counter_file = NOTE_COUNTER_FILE
-    
-    counter = 0
-    if counter_file.exists():
+    with _note_lock:
+        year = datetime.now().strftime('%Y')
+        counter_file = NOTE_COUNTER_FILE
+        
+        counter = 0
+        counters = {}
+        if counter_file.exists():
+            try:
+                with open(counter_file, 'r') as f:
+                    counters = json.load(f)
+                counter = counters.get(ticker, 0)
+            except (json.JSONDecodeError, KeyError):
+                counter = 0
+        
+        counter += 1
+        
         try:
-            with open(counter_file, 'r') as f:
-                counters = json.load(f)
-            counter = counters.get(ticker, 0)
-        except (json.JSONDecodeError, KeyError):
-            counter = 0
-    
-    counter += 1
-    
-    try:
-        with open(counter_file, 'w') as f:
-            counters = {}
-            if counter_file.exists():
-                with open(counter_file, 'r') as rf:
-                    try:
-                        counters = json.load(rf)
-                    except json.JSONDecodeError:
-                        pass
             counters[ticker] = counter
-            json.dump(counters, f)
-    except Exception:
-        pass
-    
-    return f"SR-{year}-{ticker[:3].upper()}-{counter:03d}"
+            with open(counter_file, 'w') as f:
+                json.dump(counters, f)
+        except Exception:
+            pass
+            
+        short_ticker = ticker[:3].upper()
+        return f"SR-{year}-{short_ticker}-{counter:03d}"
 
 
 def _format_metrics_table(metrics: Dict) -> str:
@@ -118,7 +116,7 @@ def _sign_content(content: str) -> str:
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
-def generate_research_note(company_id: int, analyst_context: str = '') -> Dict:
+def generate_research_note(company_id: int, analyst_context: str = '', run_id: str = None) -> Dict:
     """
     Generate institutional research note using Groq.
     
@@ -233,10 +231,11 @@ Generate a forensic institutional research note."""
     
     note_id = save_note(
         company_id, reference,
-        f"Forensic Research Note — {company_name}",
+        f"Forensic Research Note - {company_name}",
         html_content,
         scores or {},
-        summary=note_content[:200] if note_content else ''
+        summary=note_content[:200] if note_content else '',
+        run_id=run_id
     )
     
     return {
