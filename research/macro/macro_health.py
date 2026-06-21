@@ -272,7 +272,7 @@ def build_macro_health_report(indicators: Dict = None) -> Dict:
             (snapshot_date, composite_score, status, gdp_growth, cpi_inflation, iip_growth,
              pmi_manufacturing, pmi_services, inr_change_pct, forex_reserves_change_pct,
              fiscal_deficit_pct, cad_pct, gsec_10y, indicator_details)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             datetime.utcnow().strftime('%Y-%m-%d'),
             report['composite_score'], report['status'],
@@ -302,7 +302,7 @@ def get_latest_snapshot() -> Optional[Dict]:
 def get_snapshot_history(limit: int = 12) -> List[Dict]:
     with _get_db() as conn:
         cur = conn.execute(
-            "SELECT * FROM macro_health_snapshots ORDER BY created_at DESC LIMIT ?",
+            "SELECT * FROM macro_health_snapshots ORDER BY created_at DESC LIMIT %s",
             (limit,)
         )
         return [dict(r) for r in cur.fetchall()]
