@@ -87,7 +87,7 @@ def record_flow_entry(date: str, flow_type: str, category: str,
         source_upper = 'EXTERNAL'
     with _get_db() as conn:
         conn.execute(
-            "INSERT INTO fii_flows (date, flow_type, category, amount_cr, source, notes) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO fii_flows (date, flow_type, category, amount_cr, source, notes) VALUES (%s, %s, %s, %s, %s, %s)",
             (date, flow_type, category, amount_cr, source_upper, notes)
         )
         conn.commit()
@@ -97,7 +97,7 @@ def get_recent_flows(days: int = 30) -> List[Dict]:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
     with _get_db() as conn:
         cur = conn.execute(
-            "SELECT * FROM fii_flows WHERE date >= ? ORDER BY date DESC", (cutoff,)
+            "SELECT * FROM fii_flows WHERE date >= %s ORDER BY date DESC", (cutoff,)
         )
         return [dict(r) for r in cur.fetchall()]
 
