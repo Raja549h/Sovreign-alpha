@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-ITC-97",
+  "proof_hash": "f97063165d5e75f835dc92e3b6458dc19790239131e4d59386699b1d06b5d31e",
+  "timestamp": "2026-06-20T16:20:48.851270Z",
+  "metadata": {
+    "decision_id": "ORG-ITC-97",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x97ab95ea46d46d58fa8be53f0bc836050da16c737ed9432a40c58206bda65d8b",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

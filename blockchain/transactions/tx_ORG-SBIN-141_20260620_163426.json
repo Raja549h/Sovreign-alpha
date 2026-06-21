@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-SBIN-141",
+  "proof_hash": "9fa946525b242c53aee472bea2fe188113e0ff3f18a6301453ccab8ce55463f1",
+  "timestamp": "2026-06-20T16:34:26.213372Z",
+  "metadata": {
+    "decision_id": "ORG-SBIN-141",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0xaea5999c72e50104398fb18ac99d0ef5f130a30d6357130cdb4dbc9d54503a5b",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

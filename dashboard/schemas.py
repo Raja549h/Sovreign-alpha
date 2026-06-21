@@ -147,6 +147,16 @@ CREATE TABLE IF NOT EXISTS analysis_run_events (
     event_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS scheduler_health (
+    scheduler_id TEXT PRIMARY KEY,
+    last_scheduler_tick TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_job_created TIMESTAMP,
+    jobs_created_today INTEGER DEFAULT 0,
+    scheduler_status TEXT DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 RESEARCH_TABLES_SQL = """

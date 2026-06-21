@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-TCS-92",
+  "proof_hash": "a1b1e1651d0b73bbd198d4b40ebcdf7cf70ffeaa39b4feb27c6fa796805cfc51",
+  "timestamp": "2026-06-20T16:20:18.381167Z",
+  "metadata": {
+    "decision_id": "ORG-TCS-92",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x71994421ee5862487415a72aaab8558008a9ba047c7fe97218a1394d472a4a87",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

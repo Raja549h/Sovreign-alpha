@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-HDFCBANK-91",
+  "proof_hash": "2cc9331fbfb7ae9b1e588bb98b34600bedeb51ce5468e8b5431dcdaebecfd6fa",
+  "timestamp": "2026-06-20T15:50:19.213809Z",
+  "metadata": {
+    "decision_id": "ORG-HDFCBANK-91",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x189aa20caff969d9680d28e525303e9e013adcd8c1ce4762ba1d33b0952360d7",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

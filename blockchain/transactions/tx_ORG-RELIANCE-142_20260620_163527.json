@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-RELIANCE-142",
+  "proof_hash": "03a18d784666d6f5679087c6e40397fcbe3823a278d3ef7db14ebf92c7d53147",
+  "timestamp": "2026-06-20T16:35:27.136632Z",
+  "metadata": {
+    "decision_id": "ORG-RELIANCE-142",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0xe05dba960f52be7440462079b2af16918e931e02394e9d3d6cc583107b46ac88",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

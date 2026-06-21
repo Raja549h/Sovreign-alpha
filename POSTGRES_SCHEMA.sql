@@ -680,6 +680,17 @@ CREATE TABLE IF NOT EXISTS analysis_run_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- scheduler_health
+CREATE TABLE IF NOT EXISTS scheduler_health (
+    scheduler_id TEXT PRIMARY KEY,
+    last_scheduler_tick TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_job_created TIMESTAMP,
+    jobs_created_today INTEGER DEFAULT 0,
+    scheduler_status TEXT DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE observation_memory ADD COLUMN IF NOT EXISTS run_id UUID;
 ALTER TABLE research_notes ADD COLUMN IF NOT EXISTS run_id UUID;
 ALTER TABLE institutional_scores ADD COLUMN IF NOT EXISTS run_id UUID;
