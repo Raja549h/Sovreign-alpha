@@ -841,8 +841,13 @@ def index():
         high_severity_7d = 0
         try:
             from research.observation_stream import build_live_feed
-            feed = build_live_feed(20)
+            feed = build_live_feed(40)
             observations = feed.get('observations', [])
+            
+            # Sort observations by severity
+            severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+            observations.sort(key=lambda x: severity_order.get(x.get('severity', 'LOW'), 99))
+            
             macro_alerts = feed.get('macro_alerts', [])
             high_severity_7d = feed.get('high_severity_7d', 0)
         except Exception:

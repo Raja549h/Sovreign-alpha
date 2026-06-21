@@ -22,7 +22,7 @@ RESEARCH_DB = BILLING_DIR / "research.db"
 
 FII_FLOW_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS fii_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     date TEXT NOT NULL,
     flow_type TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS fii_flows (
 );
 
 CREATE TABLE IF NOT EXISTS fii_flow_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     daily_net_cr REAL,
     weekly_net_cr REAL,
