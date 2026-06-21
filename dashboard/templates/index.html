@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container fade-in">
-    <div class="page-header">
-        <h1>System Dashboard</h1>
+        <h1 style="font-size: 1.5rem; letter-spacing: 1px; margin-bottom: 2px;">AUTONOMOUS FORENSIC INTELLIGENCE PLATFORM</h1>
+        <h2 style="font-size:0.85rem;color:var(--text-dim);font-weight:400;letter-spacing:1px;margin-top:2px;margin-bottom:0.5rem;">FOR INSTITUTIONAL ALLOCATORS & PMS</h2>
         <span class="timestamp">Last verified: {{ last_verified }}</span>
     </div>
 
     <!-- Section 2: Trust Panel — always visible, shows system maturity -->
     <div class="panel" style="margin-bottom:0.75rem;border-color:#1e1e1e;">
-        <div class="panel-header">
-            <h2>Trust Panel — System Maturity</h2>
-            <span class="timestamp">Evidence Quality: <strong>{{ trust.evidence_quality if trust.evidence_quality != 'INSUFFICIENT_DATA' else '<span style="color:#ff4444;">INSUFFICIENT DATA</span>'|safe }}</strong></span>
+        <div class="panel-header" style="border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+            <h2 style="font-size: 1rem; color: var(--text-muted); text-transform: uppercase;">Institutional Key Performance Indicators</h2>
+            <span class="timestamp">Evidence Quality: <strong>{{ trust.evidence_quality if trust.evidence_quality != 'INSUFFICIENT_DATA' else '<span style="color:#ffaa00;">LEARNING PHASE</span>'|safe }}</strong></span>
         </div>
         <div class="panel-body padded">
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
@@ -33,8 +33,8 @@
                 <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
             </div>
             {% if trust.total_validations < 10 %}
-            <div style="margin-top:0.5rem;padding:0.4rem;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.2);text-align:center;font-family:var(--font-mono);font-size:0.65rem;color:#ff4444;">
-                ⚠ LOW CONFIDENCE — Only {{ trust.total_validations }} validations recorded. All accuracy metrics are preliminary.
+            <div style="margin-top:0.5rem;padding:0.4rem;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.2);text-align:center;font-family:var(--font-mono);font-size:0.65rem;color:#ffaa00;">
+                LEARNING PHASE — Building validation history. Additional outcomes required for statistical significance.
             </div>
             {% endif %}
         </div>
@@ -81,11 +81,10 @@
     </div>
 
     {% if trust.total_validations < 10 %}
-    <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);padding:0.8rem;margin-bottom:0.75rem;text-align:center;">
-        <span style="color:#ff4444;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">⚠ INSUFFICIENT DATA</span>
-        <p style="color:#aa6666;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
-        This system is in learning phase. Only {{ trust.total_validations }} validated observations exist.
-        No performance claims are statistically supported. Do not use for investment decisions.
+    <div style="background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);padding:0.8rem;margin-bottom:0.75rem;text-align:center;">
+        <span style="color:#ffaa00;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">LEARNING PHASE</span>
+        <p style="color:#cc8800;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
+        Building validation history. Additional outcomes required for statistical significance.
         </p>
     </div>
     {% endif %}
@@ -194,7 +193,7 @@
                 {% else %}
                 <div class="empty-state">
                     <div class="icon">—</div>
-                    <div>No predictions recorded. Run analysis to begin.</div>
+                    <div>No validated outcomes yet.</div>
                 </div>
                 {% endif %}
             </div>
@@ -225,7 +224,7 @@
                 {% else %}
                 <div class="empty-state">
                     <div class="icon">—</div>
-                    <div>No vetoes recorded.</div>
+                    <div>No validated outcomes yet.</div>
                 </div>
                 {% endif %}
             </div>

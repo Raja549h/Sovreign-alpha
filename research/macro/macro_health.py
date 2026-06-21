@@ -33,7 +33,7 @@ RESEARCH_DB = BILLING_DIR / "research.db"
 
 MACRO_HEALTH_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS macro_health_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     snapshot_date TEXT NOT NULL,
     composite_score REAL,
     status TEXT,
