@@ -155,7 +155,10 @@ function submitRun() {
     
     fetch('/api/runs/submit', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
         body: JSON.stringify({ticker: ticker, run_type: 'MANUAL'})
     }).then(res => res.json()).then(data => {
         const modal = bootstrap.Modal.getInstance(document.getElementById('newRunModal'));

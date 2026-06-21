@@ -15,6 +15,7 @@ class BackgroundEngine:
         self.running = False
         self.poll_thread = None
         self.recovery_thread = None
+        self.scheduler_thread = None
         self.heartbeat_threads = {} # run_id -> threading.Event
 
     def start(self):
@@ -26,6 +27,8 @@ class BackgroundEngine:
         self.poll_thread.start()
         self.recovery_thread = threading.Thread(target=self._recovery_loop, daemon=True)
         self.recovery_thread.start()
+        self.scheduler_thread = threading.Thread(target=self._autonomous_scheduler_loop, daemon=True)
+        self.scheduler_thread.start()
 
     def stop(self):
         self.running = False
@@ -42,6 +45,75 @@ class BackgroundEngine:
                 conn.commit()
         except Exception as e:
             logger.error(f"Failed to log event for run {run_id}: {e}")
+
+    def _autonomous_scheduler_loop(self):
+        """Autonomous daemon: Enqueues jobs for active companies every 6 hours."""
+        scheduler_id = "main_scheduler"
+        while self.running:
+            try:
+                with db_get_connection() as conn:
+                    c = conn.cursor()
+                    
+                    # 1. Update/Initialize health record
+                    c.execute("""
+                        INSERT INTO scheduler_health (scheduler_id, last_scheduler_tick)
+                        VALUES (%s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (scheduler_id) DO UPDATE 
+                        SET last_scheduler_tick = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    """, (scheduler_id,))
+                    conn.commit()
+
+                    # 2. Check if we need to schedule jobs (Every 6 hours)
+                    c.execute("""
+                        SELECT last_job_created 
+                        FROM scheduler_health 
+                        WHERE scheduler_id = %s
+                    """, (scheduler_id,))
+                    row = c.fetchone()
+                    last_created = row['last_job_created'] if row and row['last_job_created'] else None
+                    
+                    # We schedule if last_created is NULL or > 6 hours ago
+                    should_schedule = False
+                    if not last_created:
+                        should_schedule = True
+                    else:
+                        # calculate difference
+                        diff = (datetime.now(timezone.utc).replace(tzinfo=None) - last_created).total_seconds()
+                        if diff >= 6 * 3600:
+                            should_schedule = True
+
+                    if should_schedule:
+                        logger.info("AutonomousSchedulerDaemon: Initiating 6-hour intelligence cycle.")
+                        c.execute("SELECT ticker FROM companies")
+                        companies = c.fetchall()
+                        
+                        jobs_created = 0
+                        for comp in companies:
+                            ticker = comp['ticker']
+                            # Ensure no active runs for this ticker
+                            c.execute("SELECT count(*) FROM analysis_runs WHERE ticker = %s AND status IN ('PENDING', 'RUNNING')", (ticker,))
+                            active_count = c.fetchone()[0]
+                            if active_count == 0:
+                                c.execute("INSERT INTO analysis_runs (ticker, run_type) VALUES (%s, 'AUTONOMOUS_CYCLE') RETURNING run_id", (ticker,))
+                                jobs_created += 1
+                        
+                        logger.info(f"AutonomousSchedulerDaemon: Enqueued {jobs_created} jobs.")
+                        
+                        # Update health record
+                        c.execute("""
+                            UPDATE scheduler_health 
+                            SET last_job_created = CURRENT_TIMESTAMP, 
+                                jobs_created_today = jobs_created_today + %s,
+                                updated_at = CURRENT_TIMESTAMP 
+                            WHERE scheduler_id = %s
+                        """, (jobs_created, scheduler_id))
+                        conn.commit()
+
+            except Exception as e:
+                logger.error(f"AutonomousSchedulerDaemon error: {e}")
+            
+            # Tick every 60 seconds to update health and check for 6 hour boundary
+            time.sleep(60)
 
     def _recovery_loop(self):
         """Sweeps stuck jobs every 60 seconds."""

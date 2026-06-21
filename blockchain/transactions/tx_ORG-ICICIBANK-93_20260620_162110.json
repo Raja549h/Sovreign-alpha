@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-ICICIBANK-93",
+  "proof_hash": "a29705f078ee77cdc79efc7904a3953a61e7b149f93f1d826037b7aabcb41e3e",
+  "timestamp": "2026-06-20T16:21:10.875595Z",
+  "metadata": {
+    "decision_id": "ORG-ICICIBANK-93",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x85d334fdf1ed70ec489645407c97f396cdc860ee7178a7fb94f70d3270ba1eb8",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

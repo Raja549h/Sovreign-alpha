@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-BHARTIARTL-99",
+  "proof_hash": "31aafcb36a23a6581f1df42044e194535be72589fb5c6c646e79b6c2326a90fd",
+  "timestamp": "2026-06-20T16:22:12.264885Z",
+  "metadata": {
+    "decision_id": "ORG-BHARTIARTL-99",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x8c788bda561686021578d20d918748434f6d64085b0bea0573222fe565c4655d",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-KOTAKBANK-98",
+  "proof_hash": "f4d3518675e49aba838df94d220a6edc96ea63cd1955cb63472ca96b44d1c75c",
+  "timestamp": "2026-06-20T16:22:12.887601Z",
+  "metadata": {
+    "decision_id": "ORG-KOTAKBANK-98",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x8353cb041a4f118c24d0a2b6660958ba8effc7700b7225d6e1220f7e9334345a",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

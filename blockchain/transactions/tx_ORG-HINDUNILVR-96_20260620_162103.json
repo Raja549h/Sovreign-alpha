@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-HINDUNILVR-96",
+  "proof_hash": "a67561eaa92693eab24b58d7a87c7274305fffb93c793232b91c697027bacb8e",
+  "timestamp": "2026-06-20T16:21:03.320169Z",
+  "metadata": {
+    "decision_id": "ORG-HINDUNILVR-96",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0x0aecb0953a858ec95c123e2fd68b01fb9593edc428940bc95ebd77279064fdd5",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}

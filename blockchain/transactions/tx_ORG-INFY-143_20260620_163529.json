@@ -1,0 +1,20 @@
+{
+  "decision_id": "ORG-INFY-143",
+  "proof_hash": "ce382c0e6cdb62de4b8b48cfdf43970d52dc559e70d9ac302a89a9998330d272",
+  "timestamp": "2026-06-20T16:35:29.770285Z",
+  "metadata": {
+    "decision_id": "ORG-INFY-143",
+    "agent_id": "analyst",
+    "risk_checks": {
+      "position_size_ok": true,
+      "sector_limit_ok": true,
+      "confidence_ok": true
+    },
+    "approved": true,
+    "decision_type": "trade_approval"
+  },
+  "tx_hash": "0xa051eed5aeee15517593117ff12855ecc6452a92063a4b0ef8e70193e0251caa",
+  "status": "local",
+  "block_number": null,
+  "network": "local"
+}
