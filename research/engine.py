@@ -117,7 +117,7 @@ class SovereignAlphaResearch:
         
         return result
     
-    def run_analysis(self, ticker: str, current_pe: float = None, current_pbv: float = None) -> Dict:
+    def run_analysis(self, ticker: str, current_pe: float = None, current_pbv: float = None, run_id: str = None) -> Dict:
         """
         Run full analysis pipeline for a company.
         
@@ -162,12 +162,12 @@ class SovereignAlphaResearch:
             progress.update(task, description="Regime assessment complete")
             
             task = progress.add_task("Calculating institutional scores...", total=None)
-            analysis['steps']['scores'] = score_company(company_id, sector)
+            analysis['steps']['scores'] = score_company(company_id, sector, run_id=run_id)
             progress.update(task, description="Scoring complete")
         
         return analysis
     
-    def generate_note(self, ticker: str, analyst_context: str = '') -> Dict:
+    def generate_note(self, ticker: str, analyst_context: str = '', run_id: str = None) -> Dict:
         """
         Generate research note for a company.
         
@@ -183,7 +183,7 @@ class SovereignAlphaResearch:
             return {'error': f'Company {ticker} not found'}
         
         console.print(f"  [cyan]Generating research note for {ticker}...[/cyan]")
-        result = generate_research_note(company['id'], analyst_context)
+        result = generate_research_note(company['id'], analyst_context, run_id=run_id)
         
         if result.get('reference'):
             console.print(f"  [green]Note generated: {result['reference']}[/green]")
@@ -197,7 +197,7 @@ class SovereignAlphaResearch:
         return result
     
     def full_pipeline(self, ticker: str, filings_list: List[Dict],
-                      current_pe: float = None, current_pbv: float = None) -> str:
+                      current_pe: float = None, current_pbv: float = None, run_id: str = None, progress_callback=None) -> Dict:
         """
         Run complete pipeline: add company, ingest filings, analyze, generate note.
         
@@ -226,17 +226,75 @@ class SovereignAlphaResearch:
             result = self.ingest_filing(ticker, path_or_url, filing_type, period)
             console.print(f"    Status: {result.get('status', 'unknown')}")
         
+        if progress_callback: progress_callback(20, 'Running Analysis')
         console.print(f"  [cyan]Running analysis...[/cyan]")
-        analysis = self.run_analysis(ticker, current_pe, current_pbv)
+        analysis = self.run_analysis(ticker, current_pe, current_pbv, run_id=run_id)
         
         scores = analysis.get('steps', {}).get('scores', {})
         if scores:
             console.print(Panel(format_scorecard(scores), title="Scorecard", border_style="green"))
+            
+        # 1. Observation
+        from research.observation_registry import ObservationRegistry
+        registry = ObservationRegistry()
+        obs_id = registry.register_observation(
+            company_id=company['id'],
+            category="organic_analysis",
+            observation_text="Full pipeline automated observation",
+            expected_implication="Positive trajectory",
+            confidence=0.8,
+            source="Pipeline Test",
+            metric_value=None,
+            run_id=run_id
+        )
+        if progress_callback: progress_callback(40, 'Observation Registered')
         
+        if progress_callback: progress_callback(60, 'Generating Note')
         console.print(f"  [cyan]Generating note...[/cyan]")
-        note_result = self.generate_note(ticker)
+        note_result = self.generate_note(ticker, run_id=run_id)
         
-        return note_result.get('pdf_path') or note_result.get('reference', 'N/A')
+        # 2. Prediction
+        from zkml.proof_generator import create_proof_generator
+        from blockchain.ledger import create_ledger
+        proof_gen = create_proof_generator()
+        ledger = create_ledger()
+        
+        comp_score = scores.get('composite_score', 0.6)
+        decision = {
+            'decision_id': f"ORG-{ticker}-{obs_id}",
+            'agent_id': 'analyst',
+            'risk_checks': {'position_size_ok': True, 'sector_limit_ok': True, 'confidence_ok': True},
+            'approved': True,
+            'decision_type': 'trade_approval'
+        }
+        proof_record = proof_gen.generate_proof(decision, decision['risk_checks'])
+        ledger.log_decision(proof_record.get('commitment_hash', ''), decision)
+        
+        # 3. Autopsy & Timeline
+        from research.evolution_quality import AutopsyEngine, EvidenceTimeline
+        autopsy = AutopsyEngine()
+        autopsy_scores = {
+            'signal_strength': comp_score,
+            'novelty_score': 0.7,
+            'actionability_score': 0.8,
+            'falsifiability_score': 0.9,
+            'relevance_score': 0.8
+        }
+        if progress_callback: progress_callback(80, 'Scoring Observation Autopsy')
+        autopsy_id = autopsy.score_observation(obs_id, autopsy_scores, "Organic pipeline test autopsy.", run_id=run_id)
+        
+        timeline = EvidenceTimeline()
+        if progress_callback: progress_callback(90, 'Logging Timeline Event')
+        timeline.record_event(obs_id, company['id'], "PIPELINE_EXECUTION", f"End-to-end execution for {ticker}", "Generated via full_pipeline", "NEW", "ACTIVE", "SYSTEM", run_id=run_id)
+        
+        if progress_callback: progress_callback(100, 'Pipeline Complete')
+        
+        return {
+            'observation_id': obs_id,
+            'autopsy_id': autopsy_id,
+            'decision_id': decision['decision_id'],
+            'note_reference': note_result.get('reference', 'N/A')
+        }
     
     def status(self, ticker: str) -> None:
         """

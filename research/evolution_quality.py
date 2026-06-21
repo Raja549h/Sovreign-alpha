@@ -42,7 +42,7 @@ def _get_db():
 class AutopsyEngine:
     """Phase 1: Score every observation on 5 quality dimensions."""
 
-    def score_observation(self, observation_id: int, scores: Dict[str, float], notes: str = "") -> int:
+    def score_observation(self, observation_id: int, scores: Dict[str, float], notes: str = "", run_id: str = None) -> int:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("SELECT company_id FROM observation_memory WHERE id = %s", (observation_id,))
@@ -62,12 +62,14 @@ class AutopsyEngine:
                 INSERT INTO observation_autopsy
                 (observation_id, company_id, signal_strength, novelty_score,
                  actionability_score, falsifiability_score, relevance_score,
-                 research_quality_score, autopsy_notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 research_quality_score, autopsy_notes, run_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
             """, (observation_id, company_id, signal, novelty, actionability,
-                  falsifiability, relevance, rqs, notes))
+                  falsifiability, relevance, rqs, notes, run_id))
+            row = c.fetchone()
             conn.commit()
-            return c.lastrowid
+            return row['id'] if row else 0
 
     def get_autopsy(self, observation_id: int) -> Optional[Dict]:
         with _get_db() as conn:
@@ -530,18 +532,20 @@ class EvidenceTimeline:
     def record_event(self, observation_id: int, company_id: int, event_type: str,
                      event_label: str = "", event_detail: str = "",
                      old_status: str = "", new_status: str = "",
-                     source: str = "system") -> int:
+                     source: str = "system", run_id: str = None) -> int:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""
                 INSERT INTO evidence_timeline
                 (observation_id, company_id, event_type, event_label, event_detail,
-                 old_status, new_status, source)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                 old_status, new_status, source, run_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
             """, (observation_id, company_id, event_type, event_label, event_detail,
-                  old_status, new_status, source))
+                  old_status, new_status, source, run_id))
+            row = c.fetchone()
             conn.commit()
-            return c.lastrowid
+            return row['id'] if row else 0
 
     def get_timeline(self, company_id: int = None, observation_id: int = None,
                      event_type: str = None, limit: int = 100) -> List[Dict]:

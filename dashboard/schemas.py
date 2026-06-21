@@ -122,6 +122,33 @@ CREATE TABLE IF NOT EXISTS monthly_summary (
 # db — core tables
 # ---------------------------------------------------------------------------
 
+ANALYSIS_RUNS_TABLES_SQL = """
+CREATE TABLE IF NOT EXISTS analysis_runs (
+    run_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticker TEXT NOT NULL,
+    run_type TEXT DEFAULT 'MANUAL',
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    progress_pct INTEGER DEFAULT 0,
+    current_step TEXT DEFAULT 'Initialized',
+    retry_count INTEGER DEFAULT 0,
+    heartbeat_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    result_data JSONB,
+    error_log TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS analysis_run_events (
+    event_id SERIAL PRIMARY KEY,
+    run_id UUID REFERENCES analysis_runs(run_id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    event_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
 RESEARCH_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS companies (
     id SERIAL PRIMARY KEY,
@@ -183,7 +210,8 @@ CREATE TABLE IF NOT EXISTS research_notes (
     forensic_flags_count INTEGER,
     generated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     pdf_path TEXT,
-    status TEXT DEFAULT 'draft'
+    status TEXT DEFAULT 'draft',
+    run_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS institutional_scores (
@@ -196,7 +224,8 @@ CREATE TABLE IF NOT EXISTS institutional_scores (
     structural_quality REAL,
     composite_score REAL,
     scoring_rationale TEXT,
-    scored_at TEXT DEFAULT CURRENT_TIMESTAMP
+    scored_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    run_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
@@ -293,7 +322,8 @@ CREATE TABLE IF NOT EXISTS observation_memory (
     calculations_used TEXT DEFAULT '',
     expected_outcome TEXT DEFAULT '',
     actual_outcome TEXT DEFAULT '',
-    is_immutable INTEGER DEFAULT 0
+    is_immutable INTEGER DEFAULT 0,
+    run_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS observation_validations (
@@ -319,7 +349,8 @@ CREATE TABLE IF NOT EXISTS evidence_timeline (
     description TEXT,
     source TEXT,
     link TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    run_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS multi_source_evidence (
@@ -372,7 +403,8 @@ CREATE TABLE IF NOT EXISTS observation_autopsy (
     relevance_score REAL,
     research_quality_score REAL,
     autopsy_notes TEXT,
-    scored_at TEXT DEFAULT CURRENT_TIMESTAMP
+    scored_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    run_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS reasoning_audit (
@@ -537,6 +569,7 @@ def init_research_db() -> any:
     conn.executescript(RESEARCH_TABLES_SQL)
     conn.executescript(OBSERVATION_TABLES_SQL)
     conn.executescript(EVOLUTION_TABLES_SQL)
+    conn.executescript(ANALYSIS_RUNS_TABLES_SQL)
     safe_migrate(conn, OBSERVATION_MIGRATIONS)
     conn.commit()
     return conn

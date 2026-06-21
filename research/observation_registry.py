@@ -35,7 +35,8 @@ class ObservationRegistry:
                              confidence: float,
                              source: str,
                              metric_name: str = None,
-                             metric_value: float = None) -> int:
+                             metric_value: float = None,
+                             run_id: str = None) -> int:
         today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         d30 = (datetime.now(timezone.utc) + timedelta(days=30)).strftime('%Y-%m-%d')
         d90 = (datetime.now(timezone.utc) + timedelta(days=90)).strftime('%Y-%m-%d')
@@ -48,14 +49,16 @@ class ObservationRegistry:
                    (company_id, observation_date, category, observation_text,
                     confidence, source, metric_name, metric_value,
                     expected_implication, review_date_30, review_date_90,
-                    review_date_180, validation_status)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ACTIVE')""",
+                    review_date_180, validation_status, run_id)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'ACTIVE', %s)
+                   RETURNING id""",
                 (company_id, today, category, observation_text,
                  confidence, source, metric_name, metric_value,
-                 expected_implication, d30, d90, d180)
+                 expected_implication, d30, d90, d180, run_id)
             )
+            row = c.fetchone()
             conn.commit()
-            return c.lastrowid
+            return row['id'] if row else 0
 
     def get_due_for_review(self, review_type: str = '30_day') -> List[Dict]:
         date_col = {'30_day': 'review_date_30', '90_day': 'review_date_90', '180_day': 'review_date_180'}

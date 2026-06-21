@@ -28,10 +28,10 @@
     {% endif %}
 
     <div class="stats-row" id="edge-stats">
-        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.edge_score) }}{% else %}<span style="color:#ff4444;font-size:0.6rem;">NO DATA</span>{% endif %}</div></div>
-        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.accuracy_rate * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
-        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.weighted_accuracy * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
-        <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">{{ "%.1f"|format(ed.avg_confidence * 100) }}%</div></div>
+        <div class="stat-box accent"><label>Edge Score</label><div class="value" id="edgeScore">{% if ed.has_validated_data %}{{ "%.1f"|format(ed.edge_score|default(0)) }}{% else %}<span style="color:#ff4444;font-size:0.6rem;">NO DATA</span>{% endif %}</div></div>
+        <div class="stat-box info"><label>Accuracy Rate</label><div class="value" id="accuracyRate">{% if ed.has_validated_data and ed.accuracy_rate is not none %}{{ "%.1f"|format(ed.accuracy_rate * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
+        <div class="stat-box accent"><label>Weighted Accuracy</label><div class="value" id="weightedAccuracy">{% if ed.has_validated_data and ed.weighted_accuracy is not none %}{{ "%.1f"|format(ed.weighted_accuracy * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
+        <div class="stat-box info"><label>Avg Confidence</label><div class="value" id="avgConfidence">{% if ed.avg_confidence is not none %}{{ "%.1f"|format(ed.avg_confidence * 100) }}%{% else %}<span style="color:#555;">—</span>{% endif %}</div></div>
         <div class="stat-box warning"><label>Total Observations</label><div class="value" id="totalObs">{{ ed.total }}</div></div>
     </div>
 

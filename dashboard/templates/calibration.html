@@ -46,7 +46,7 @@
                 {% for b in calibration_summary.by_bucket %}
                 {% set bucket_name = bucket_display.get(b.calibration_bucket, b.calibration_bucket) %}
                 {% set expected = bucket_midpoint.get(b.calibration_bucket, 0.5) %}
-                {% set actual = b.actual_success_rate|default(b.avg_abs_error) %}
+                {% set actual = b.actual_success_rate|default(0) %}
                 {% set cal_error = (expected - actual)|abs %}
                 <tr style="border-bottom:1px solid #0d0d0d;">
                     <td style="padding:0.4rem;color:var(--text-primary);font-weight:600;">{{ bucket_name }}</td>
@@ -81,11 +81,11 @@
                 <tr style="border-bottom:1px solid #0d0d0d;">
                     <td style="padding:0.4rem;color:#555;">{{ r.calibration_date[:10] if r.calibration_date else r.created_at[:10] }}</td>
                     <td style="padding:0.4rem;color:#00ff9f;font-weight:600;">{{ r.ticker }}</td>
-                    <td style="padding:0.4rem;text-align:center;color:var(--text-primary);">{{ (r.predicted_confidence * 100)|round(1) }}%</td>
-                    <td style="padding:0.4rem;text-align:center;color:#888;">{{ (r.actual_outcome * 100)|round(1) }}%</td>
-                    <td style="padding:0.4rem;text-align:center;{% if r.confidence_error > 0 %}color:#ff4444{% else %}color:#00ff9f{% endif %};">{{ (r.confidence_error * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:var(--text-primary);">{{ (r.predicted_confidence|default(0) * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#888;">{% if r.actual_outcome is not none %}{{ (r.actual_outcome * 100)|round(1) }}%{% else %}Pending{% endif %}</td>
+                    <td style="padding:0.4rem;text-align:center;{% if r.confidence_error is not none and r.confidence_error > 0 %}color:#ff4444{% else %}color:#00ff9f{% endif %};">{% if r.confidence_error is not none %}{{ (r.confidence_error * 100)|round(1) }}%{% else %}--{% endif %}</td>
                     <td style="padding:0.4rem;text-align:center;color:#888;">{{ bucket_display.get(r.calibration_bucket, r.calibration_bucket) }}</td>
-                    <td style="padding:0.4rem;text-align:center;color:#3399ff;">{{ (r.adjusted_confidence * 100)|round(1) }}%</td>
+                    <td style="padding:0.4rem;text-align:center;color:#3399ff;">{% if r.adjusted_confidence is not none %}{{ (r.adjusted_confidence * 100)|round(1) }}%{% else %}--{% endif %}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="7" style="text-align:center;padding:2rem;color:#555;">No calibration records available</td></tr>
