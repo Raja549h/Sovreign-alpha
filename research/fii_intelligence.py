@@ -199,9 +199,9 @@ class FIIIntelligence:
     def get_flow_history(self, days: int = 90) -> List[Dict]:
         with _get_db() as conn:
             c = conn.cursor()
-            cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
-            c.execute("""SELECT * FROM nsdl_fpi_flows WHERE flow_date >= ?
-                         ORDER BY flow_date DESC""", (cut,))
+            start_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
+            c.execute("""SELECT * FROM nsdl_fpi_flows WHERE flow_date >= %s
+                         ORDER BY flow_date ASC""", (start_date,))
             return [dict(r) for r in c.fetchall()]
 
     def _parse_cr(self, text: str) -> float:
