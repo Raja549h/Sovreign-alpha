@@ -745,7 +745,7 @@ def get_dashboard_stats():
             "SELECT COUNT(*) FROM veto_archive"
         ).fetchone()[0]
         correct_vetoes = conn.execute(
-            "SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1 OR veto_correct = 'YES'"
+            "SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1"
         ).fetchone()[0]
         resolved_outcomes = conn.execute(
             "SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''"
@@ -759,7 +759,8 @@ def get_dashboard_stats():
             'total_vetoes': total_vetoes, 'correct_vetoes': correct_vetoes,
             'resolved_predictions': resolved_outcomes,
         }
-    except Exception:
+    except Exception as e:
+        print("GET_DASHBOARD_STATS ERROR:", e)
         return {'total_predictions': 0, 'approved': 0, 'vetoed': 0,
                 'approval_rate': 0, 'veto_efficiency': 0,
                 'total_vetoes': 0, 'correct_vetoes': 0, 'resolved_predictions': 0}

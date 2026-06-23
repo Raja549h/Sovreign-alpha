@@ -1,0 +1,54 @@
+[seed] Seeding failed: relation "companies" already exists
+
+[db] Extended tables ready: portfolios, theses, thesis_checks, thesis_evolution, thesis_scorecard, watchlist, observations, shadow_portfolio, shadow_trades, edge_discovery_framework, credibility_evidence, research_quality_metrics, confidence_calibration, observation_autopsy, reasoning_audit, failure_analysis, calibration_history
+[SKIP] observation_memory already has 62 entries. Backfill skipped.
+[startup] Backfilled 62 observations into memory
+[seed] All tables seeded: 0 batches
+============================================================
+STARTUP VERIFICATION
+============================================================
+  [db] prediction_ledger: 61 rows
+  [db] veto_archive: 15 rows
+  [db] decisions: 136 rows
+  [db] performance_log: 25 rows
+  [db] inference_log: 0 rows
+  [db] monthly_summary: 0 rows
+  [db] companies: 50 rows
+  [db] filings: 5 rows
+  [db] financial_series: 125 rows
+  [db] forensic_flags: 15 rows
+  [db] research_notes: 29 rows
+  [db] institutional_scores: 8 rows
+  [db] nsdl_fpi_flows: 0 rows
+  [db] fii_flows: 30 rows
+  [db] fii_flow_snapshots: 10 rows
+  [db] edge_scorecard: 2 rows
+  [db] watchlist: 12 rows
+  [db] observation_memory: 62 rows
+  [db] observation_validations: 65 rows
+  [db] evidence_timeline: 124 rows
+  [db] multi_source_evidence: 0 rows
+  [db] framework_performance: 2 rows
+  [db] reproducibility_log: 21 rows
+  [db] observation_autopsy: 38 rows
+  [db] reasoning_audit: 17 rows
+  [db] failure_analysis: 35 rows
+  [db] calibration_history: 100 rows
+  [db] edge_discovery_framework: 13 rows
+  [db] shadow_portfolio: 18 rows
+  [db] credibility_evidence: 16 rows
+  [db] research_quality_metrics: 0 rows
+  [db] confidence_calibration: 35 rows
+  [db] portfolios: 5 rows
+  [db] portfolio_positions: 25 rows
+  [db] portfolio_scores: 8 rows
+  [db] portfolio_stress_results: 4 rows
+  [db] theses: 15 rows
+  [db] thesis_checks: 15 rows
+  [db] observations: 86 rows
+============================================================
+GET_DASHBOARD_STATS ERROR: invalid input syntax for type integer: "YES"
+LINE 1: ... veto_archive WHERE veto_correct = 1 OR veto_correct = 'YES'
+                                                                  ^
+
+Dashboard Stats: {'total_predictions': 0, 'approved': 0, 'vetoed': 0, 'approval_rate': 0, 'veto_efficiency': 0, 'total_vetoes': 0, 'correct_vetoes': 0, 'resolved_predictions': 0}
