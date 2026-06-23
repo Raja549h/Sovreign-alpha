@@ -143,7 +143,7 @@ def get_company(ticker: str, exchange: str = 'NSE') -> Optional[Dict]:
     """Get company by ticker and exchange."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM companies WHERE ticker = ? AND exchange = ?", (ticker, exchange))
+        c.execute("SELECT * FROM companies WHERE ticker = %s AND exchange = %s", (ticker, exchange))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -154,13 +154,13 @@ def add_company(ticker: str, name: str, exchange: str = 'NSE', sector: str = Non
         c = conn.cursor()
         try:
             c.execute(
-                "INSERT INTO companies (ticker, company_name, exchange, sector) VALUES (?, ?, ?, ?)",
+                "INSERT INTO companies (ticker, company_name, exchange, sector) VALUES (%s, %s, %s, %s)",
                 (ticker, name, exchange, sector)
             )
             conn.commit()
             return c.lastrowid
         except IntegrityError:
-            c.execute("SELECT id FROM companies WHERE ticker = ? AND exchange = ?", (ticker, exchange))
+            c.execute("SELECT id FROM companies WHERE ticker = %s AND exchange = %s", (ticker, exchange))
             return c.fetchone()['id']
 
 
@@ -169,7 +169,7 @@ def save_filing(company_id: int, filing_type: str, period: str, url: str = None,
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO filings (company_id, filing_type, period, source_url, local_path) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO filings (company_id, filing_type, period, source_url, local_path) VALUES (%s, %s, %s, %s, %s)",
             (company_id, filing_type, period, url, path)
         )
         conn.commit()
@@ -184,11 +184,11 @@ def update_filing(filing_id: int, **kwargs):
         values = []
         for key, value in kwargs.items():
             if key in ['extracted_text', 'extracted_tables', 'status']:
-                fields.append(f"{key} = ?")
+                fields.append(f"{key} = %s")
                 values.append(json.dumps(value) if isinstance(value, (dict, list)) else value)
         if fields:
             values.append(filing_id)
-            c.execute(f"UPDATE filings SET {', '.join(fields)} WHERE id = ?", values)
+            c.execute(f"UPDATE filings SET {', '.join(fields)} WHERE id = %s", values)
             conn.commit()
 
 
@@ -197,7 +197,7 @@ def save_metric(company_id: int, metric: str, period: str, value: float, unit: s
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO financial_series (company_id, metric_name, period, value, unit, source_filing_id) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO financial_series (company_id, metric_name, period, value, unit, source_filing_id) VALUES (%s, %s, %s, %s, %s, %s)",
             (company_id, metric, period, value, unit, filing_id)
         )
         conn.commit()
@@ -208,7 +208,7 @@ def save_flag(company_id: int, flag_type: str, severity: str, description: str, 
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "INSERT INTO forensic_flags (company_id, flag_type, severity, description, supporting_data, period, analyst_note) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO forensic_flags (company_id, flag_type, severity, description, supporting_data, period, analyst_note) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (company_id, flag_type, severity, description, json.dumps(data) if data else None, period, analyst_note)
         )
         conn.commit()
@@ -239,7 +239,7 @@ def update_note_pdf(note_id: int, pdf_path: str):
     """Update note with PDF path."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("UPDATE research_notes SET pdf_path = ? WHERE id = ?", (pdf_path, note_id))
+        c.execute("UPDATE research_notes SET pdf_path = %s WHERE id = %s", (pdf_path, note_id))
         conn.commit()
 
 
@@ -264,9 +264,9 @@ def get_financial_series(company_id: int, metric: str = None) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         if metric:
-            c.execute("SELECT * FROM financial_series WHERE company_id = ? AND metric_name = ? ORDER BY period", (company_id, metric))
+            c.execute("SELECT * FROM financial_series WHERE company_id = %s AND metric_name = %s ORDER BY period", (company_id, metric))
         else:
-            c.execute("SELECT * FROM financial_series WHERE company_id = ? ORDER BY metric_name, period", (company_id,))
+            c.execute("SELECT * FROM financial_series WHERE company_id = %s ORDER BY metric_name, period", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -274,7 +274,7 @@ def get_flags(company_id: int) -> List[Dict]:
     """Get all forensic flags for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM forensic_flags WHERE company_id = ? ORDER BY detected_at DESC", (company_id,))
+        c.execute("SELECT * FROM forensic_flags WHERE company_id = %s ORDER BY detected_at DESC", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -282,7 +282,7 @@ def get_latest_scores(company_id: int) -> Optional[Dict]:
     """Get latest institutional scores for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM institutional_scores WHERE company_id = ? ORDER BY scored_at DESC LIMIT 1", (company_id,))
+        c.execute("SELECT * FROM institutional_scores WHERE company_id = %s ORDER BY scored_at DESC LIMIT 1", (company_id,))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -441,7 +441,7 @@ def get_notes(company_id: int = None) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         if company_id:
-            c.execute("SELECT * FROM research_notes WHERE company_id = ? ORDER BY generated_at DESC", (company_id,))
+            c.execute("SELECT * FROM research_notes WHERE company_id = %s ORDER BY generated_at DESC", (company_id,))
         else:
             c.execute("SELECT * FROM research_notes ORDER BY generated_at DESC")
         return [dict(row) for row in c.fetchall()]
@@ -459,7 +459,7 @@ def get_filings(company_id: int) -> List[Dict]:
     """Get all filings for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM filings WHERE company_id = ? ORDER BY ingested_at DESC", (company_id,))
+        c.execute("SELECT * FROM filings WHERE company_id = %s ORDER BY ingested_at DESC", (company_id,))
         return [dict(row) for row in c.fetchall()]
 
 
@@ -467,7 +467,7 @@ def get_filings_count(company_id: int) -> int:
     """Get count of filings for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM filings WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM filings WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -475,7 +475,7 @@ def get_metrics_count(company_id: int) -> int:
     """Get count of metrics for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -483,7 +483,7 @@ def get_flags_count(company_id: int) -> int:
     """Get count of flags for a company."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM forensic_flags WHERE company_id = ?", (company_id,))
+        c.execute("SELECT COUNT(*) as cnt FROM forensic_flags WHERE company_id = %s", (company_id,))
         return c.fetchone()['cnt']
 
 
@@ -491,7 +491,7 @@ def get_flags_by_severity(company_id: int) -> Dict[str, int]:
     """Get flag counts by severity."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT severity, COUNT(*) as cnt FROM forensic_flags WHERE company_id = ? GROUP BY severity", (company_id,))
+        c.execute("SELECT severity, COUNT(*) as cnt FROM forensic_flags WHERE company_id = %s GROUP BY severity", (company_id,))
         return {row['severity']: row['cnt'] for row in c.fetchall()}
 
 
@@ -499,7 +499,7 @@ def get_note_by_reference(reference: str) -> Optional[Dict]:
     """Get note by reference number."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM research_notes WHERE note_reference = ?", (reference,))
+        c.execute("SELECT * FROM research_notes WHERE note_reference = %s", (reference,))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -508,7 +508,7 @@ def get_company_by_id(company_id: int) -> Optional[Dict]:
     """Get company by ID."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM companies WHERE id = ?", (company_id,))
+        c.execute("SELECT * FROM companies WHERE id = %s", (company_id,))
         row = c.fetchone()
         return dict(row) if row else None
 
@@ -518,7 +518,7 @@ def get_metric_series(company_id: int, metric: str) -> List[Dict]:
     with get_connection() as conn:
         c = conn.cursor()
         c.execute(
-            "SELECT period, value, unit FROM financial_series WHERE company_id = ? AND metric_name = ? ORDER BY period",
+            "SELECT period, value, unit FROM financial_series WHERE company_id = %s AND metric_name = %s ORDER BY period",
             (company_id, metric)
         )
         return [dict(row) for row in c.fetchall()]
@@ -540,12 +540,12 @@ def delete_company(company_id: int):
     """Delete company and all related data (cascade)."""
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("DELETE FROM institutional_scores WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM research_notes WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM forensic_flags WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM financial_series WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM filings WHERE company_id = ?", (company_id,))
-        c.execute("DELETE FROM companies WHERE id = ?", (company_id,))
+        c.execute("DELETE FROM institutional_scores WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM research_notes WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM forensic_flags WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM financial_series WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM filings WHERE company_id = %s", (company_id,))
+        c.execute("DELETE FROM companies WHERE id = %s", (company_id,))
         conn.commit()
 
 

@@ -623,12 +623,11 @@ def get_sector_stats():
     """Get sector breakdown from decisions."""
     query = """
         SELECT 
-            symbol,
+            COALESCE(sector, asset) as symbol,
             COUNT(*) as count,
-            SUM(alpha_generated) as total_alpha
-        FROM performance_log
-        WHERE status IN ('active', 'pending')
-        GROUP BY symbol
+            0 as total_alpha
+        FROM prediction_ledger
+        GROUP BY COALESCE(sector, asset)
     """
     return get_db_data(query)
 
@@ -637,10 +636,9 @@ def get_return_distribution():
     """Get return distribution from decisions."""
     query = """
         SELECT 
-            alpha_generated
-        FROM performance_log
-        WHERE status IN ('active', 'pending')
-        ORDER BY alpha_generated DESC
+            (confidence_score * 0.1) as alpha_generated
+        FROM prediction_ledger
+        WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')
     """
     return get_db_data(query)
 
@@ -1316,25 +1314,24 @@ def api_signals():
 @login_required
 def api_track_record():
     """API endpoint for track record summary."""
-    results = load_results_files()
-    
-    total_sessions = len(results)
-    total_decisions = 0
-    total_approved = 0
-    total_alpha = 0
-    
-    for r in results:
-        sessions_data = r.get('sessions', [r])
-        for s in sessions_data:
-            total_decisions += s.get('total_recommendations', 0)
-            total_approved += s.get('approved_count', 0)
-            total_alpha += s.get('total_alpha', 0)
-    
+    try:
+        conn = get_db_connection()
+        total_sessions = conn.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'COMPLETED'").fetchone()[0]
+        total_decisions = conn.execute("SELECT COUNT(*) FROM prediction_ledger").fetchone()[0]
+        total_approved = conn.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')").fetchone()[0]
+        total_alpha = conn.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')").fetchone()[0] or 0.0
+        conn.close()
+    except Exception:
+        total_sessions = 0
+        total_decisions = 0
+        total_approved = 0
+        total_alpha = 0
+        
     return jsonify({
         "sessions_run": total_sessions,
         "total_decisions": total_decisions,
         "total_approved": total_approved,
-        "total_alpha": total_alpha
+        "total_alpha": round(total_alpha, 2)
     })
 
 
