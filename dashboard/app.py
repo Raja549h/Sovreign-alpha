@@ -1144,7 +1144,8 @@ def performance():
         confidence_history = {'labels': [], 'values': []}
         for i, d in enumerate(decisions[:20]):
             confidence_history['labels'].append(f"D{i+1}")
-            confidence_history['values'].append(d.get('confidence', 0.0))
+            conf = d.get('confidence')
+            confidence_history['values'].append(conf if conf is not None else 0.0)
         
         sector_data = {'labels': [], 'approved': [], 'vetoed': []}
         sector_stats = get_sector_stats()
@@ -1174,7 +1175,9 @@ def performance():
         total_sessions = len(sessions)
         avg_confidence = 0.75
         if decisions:
-            avg_confidence = sum(d.get('confidence', 0.0) for d in decisions) / len(decisions)
+            valid_conf = [d.get('confidence') for d in decisions if d.get('confidence') is not None]
+            if valid_conf:
+                avg_confidence = sum(valid_conf) / len(valid_conf)
         
         ledger_stats = calculate_ledger_stats()
         
