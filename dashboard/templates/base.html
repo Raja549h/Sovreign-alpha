@@ -490,13 +490,12 @@
         <div class="clock" id="clock"></div>
     </div>
 
-    <!-- # TICKER_STRIP — removed pending live market data feed implementation
-    <div class="ticker-strip" id="ticker-strip">
+    <!-- TICKER_STRIP — removed pending live market data feed implementation -->
+    <!-- 
+    <div class="ticker-strip">
         <div class="ticker-item"><span class="sym">SPX</span><span class="price" id="t-spx">—</span><span class="change" id="t-spx-c"></span></div>
-        <div class="ticker-item"><span class="sym">VIX</span><span class="price" id="t-vix">—</span><span class="change" id="t-vix-c"></span></div>
-        <div class="ticker-item"><span class="sym">DXY</span><span class="price" id="t-dxy">—</span><span class="change" id="t-dxy-c"></span></div>
-        <div class="ticker-item"><span class="sym">10Y</span><span class="price" id="t-tnx">—</span><span class="change" id="t-tnx-c"></span></div>
-        <div class="ticker-item"><span class="sym">GOLD</span><span class="price" id="t-gc">—</span><span class="change" id="t-gc-c"></span></div>
+        <div class="ticker-item"><span class="sym">NDX</span><span class="price" id="t-ndx">—</span><span class="change" id="t-ndx-c"></span></div>
+        <div class="ticker-item"><span class="sym">US10Y</span><span class="price" id="t-us10y">—</span><span class="change" id="t-us10y-c"></span></div>
         <div class="ticker-item"><span class="sym">WTI</span><span class="price" id="t-cl">—</span><span class="change" id="t-cl-c"></span></div>
         <div class="ticker-item"><span class="sym">NSEI</span><span class="price" id="t-nsei">—</span><span class="change" id="t-nsei-c"></span></div>
         <div class="ticker-item"><span class="sym">INR/USD</span><span class="price" id="t-inr">—</span><span class="change" id="t-inr-c"></span></div>
@@ -507,23 +506,31 @@
         <div class="nav-brand">SOV ALPHA</div>
         <div class="nav-links">
             <a href="/" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
-            <a href="/system-health" class="{% if request.path == '/system-health' %}active{% endif %}">Health</a>
+            <!-- REMOVED: HEALTH — pending implementation or empty data -->
+            <!-- <a href="/system-health" class="{% if request.path == '/system-health' %}active{% endif %}">Health</a> -->
             <a href="/evidence" class="{% if request.path == '/evidence' %}active{% endif %}">Evidence</a>
-            <a href="/audit" class="{% if request.path == '/audit' %}active{% endif %}">Audit</a>
-            <a href="/calibration" class="{% if request.path == '/calibration' %}active{% endif %}">Calibration</a>
+            <!-- REMOVED: AUDIT — pending implementation or empty data -->
+            <!-- <a href="/audit" class="{% if request.path == '/audit' %}active{% endif %}">Audit</a> -->
+            <!-- REMOVED: CALIBRATION — pending implementation or empty data -->
+            <!-- <a href="/calibration" class="{% if request.path == '/calibration' %}active{% endif %}">Calibration</a> -->
             <a href="/predictions" class="{% if request.path == '/predictions' %}active{% endif %}">Predictions</a>
-            <a href="/failure-ledger" class="{% if request.path == '/failure-ledger' %}active{% endif %}">Graveyard</a>
-            <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Vetoes</a>
-            <a href="/proofs" class="{% if request.path == '/proofs' %}active{% endif %}">Proofs</a>
+            <!-- REMOVED: GRAVEYARD — pending implementation or empty data -->
+            <!-- <a href="/failure-ledger" class="{% if request.path == '/failure-ledger' %}active{% endif %}">Graveyard</a> -->
+            <!-- REMOVED: VETOES — pending implementation or empty data -->
+            <!-- <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Vetoes</a> -->
+            <!-- REMOVED: PROOFS — pending implementation or empty data -->
+            <!-- <a href="/proofs" class="{% if request.path == '/proofs' %}active{% endif %}">Proofs</a> -->
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
             <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
-            <!-- 
-            <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a>
-            <a href="/edge" class="{% if request.path == '/edge' %}active{% endif %}">Edge</a>
-            <a href="/challenge" class="{% if request.path == '/challenge' %}active{% endif %}">Challenge</a>
-            <a href="/research-quality" class="{% if request.path == '/research-quality' %}active{% endif %}">Quality</a>
-            -->
+            <!-- REMOVED: PORTFOLIO — pending implementation or empty data -->
+            <!-- <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a> -->
+            <!-- REMOVED: EDGE — pending implementation or empty data -->
+            <!-- <a href="/edge" class="{% if request.path == '/edge' %}active{% endif %}">Edge</a> -->
+            <!-- REMOVED: CHALLENGE — pending implementation or empty data -->
+            <!-- <a href="/challenge" class="{% if request.path == '/challenge' %}active{% endif %}">Challenge</a> -->
+            <!-- REMOVED: QUALITY — pending implementation or empty data -->
+            <!-- <a href="/research-quality" class="{% if request.path == '/research-quality' %}active{% endif %}">Quality</a> -->
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
