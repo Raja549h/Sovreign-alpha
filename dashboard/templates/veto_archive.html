@@ -65,7 +65,7 @@
                         <td class="mono" style="font-size:0.65rem;">{{ v.veto_id }}</td>
                         <td class="ticker-cell">{{ v.asset }}</td>
                         <td style="font-size:0.65rem;">{{ v.sector }}</td>
-                        <td class="tooltip-wrap" data-tip="{{ v.rejection_reason }}" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ (v.rejection_reason[:40] if v.rejection_reason else '—') }}{{ '...' if v.rejection_reason and v.rejection_reason|length > 40 }}</td>
+                        <td class="tooltip-wrap" data-tip="{{ v.rejection_reason }}" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ (v.rejection_reason[:40] if v.rejection_reason else '-') }}{{ '...' if v.rejection_reason and v.rejection_reason|length > 40 else '' }}</td>
                         <td class="value-negative">{{ v.expected_loss_pct | default('—') }}%</td>
                         <td class="{% if v.actual_return_pct and v.actual_return_pct > 0 %}value-positive{% elif v.actual_return_pct and v.actual_return_pct < 0 %}value-negative{% endif %}">{{ v.actual_return_pct | default('—') }}%</td>
                         <td>

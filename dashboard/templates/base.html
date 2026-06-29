@@ -490,6 +490,7 @@
         <div class="clock" id="clock"></div>
     </div>
 
+    <!-- # TICKER_STRIP — removed pending live market data feed implementation
     <div class="ticker-strip" id="ticker-strip">
         <div class="ticker-item"><span class="sym">SPX</span><span class="price" id="t-spx">—</span><span class="change" id="t-spx-c"></span></div>
         <div class="ticker-item"><span class="sym">VIX</span><span class="price" id="t-vix">—</span><span class="change" id="t-vix-c"></span></div>
@@ -500,6 +501,7 @@
         <div class="ticker-item"><span class="sym">NSEI</span><span class="price" id="t-nsei">—</span><span class="change" id="t-nsei-c"></span></div>
         <div class="ticker-item"><span class="sym">INR/USD</span><span class="price" id="t-inr">—</span><span class="change" id="t-inr-c"></span></div>
     </div>
+    -->
 
     <nav class="nav">
         <div class="nav-brand">SOV ALPHA</div>
@@ -516,10 +518,12 @@
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
             <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
+            <!-- 
             <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a>
             <a href="/edge" class="{% if request.path == '/edge' %}active{% endif %}">Edge</a>
             <a href="/challenge" class="{% if request.path == '/challenge' %}active{% endif %}">Challenge</a>
             <a href="/research-quality" class="{% if request.path == '/research-quality' %}active{% endif %}">Quality</a>
+            -->
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}

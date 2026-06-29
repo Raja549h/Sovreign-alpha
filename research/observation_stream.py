@@ -17,6 +17,11 @@ RESEARCH_DB = BILLING_DIR / "research.db"
 #     return conn
 
 def add_observation(ticker: str, company: str, obs_type: str, headline: str, severity: str, supporting_data: str = "", regime_relevance: str = "") -> int:
+    banned = ['stress test', 'test data', 'sample', 'placeholder', 'seed']
+    combined_text = f"{headline} {supporting_data}".lower()
+    if any(b in combined_text for b in banned):
+        return -1
+        
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("INSERT INTO observations (ticker, company, type, headline, severity, supporting_data, regime_relevance) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ticker, company, obs_type, headline, severity, supporting_data, regime_relevance))
