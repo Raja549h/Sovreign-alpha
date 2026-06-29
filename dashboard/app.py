@@ -4160,6 +4160,21 @@ def get_run_events(run_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/pipeline-health')
+@login_required
+def pipeline_health():
+    """Pipeline health diagnostic endpoint."""
+    try:
+        from pipeline_health import check_pipeline_health
+        result = check_pipeline_health()
+    except Exception as e:
+        result = {"status": "FAIL", "checks": {}, "verdict": f"Health check error: {e}"}
+
+    if request.headers.get('Accept', '').startswith('application/json'):
+        return jsonify(result)
+    return render_template('health_diagnostic.html', health=result)
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     

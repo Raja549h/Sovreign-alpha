@@ -118,29 +118,13 @@
             <a href="/macro-health" class="btn outline small">Full Report</a>
         </div>
         <div class="panel-body padded" id="macro-health-strip" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label" title="Weights: Financial Quality (25%), Management Credibility (25%), Earnings Predictability (25%), Regime Sensitivity (25%). Last updated: [Static placeholder - TODO: auto-update]">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
+            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label" data-tip="Score = FII Flow Pressure (30%) + Bond Yield Signal (25%) + Currency Momentum (25%) + Cross-Market Correlation (20%)">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
             <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Status</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
             <div class="intel-card" style="flex:2;min-width:200px;"><div class="label">Observation</div><div class="skeleton skeleton-value" style="width:70%;"></div></div>
         </div>
     </div>
 
-    <!-- FII_FLOW_SECTION — data feed broken, pending fix -->
-    <!--
-    <div class="panel" style="margin-bottom:0.5rem;">
-        <div class="panel-header">
-            <h2>FII Flow Intelligence</h2>
-            <span class="timestamp" id="fii-timestamp">Loading...</span>
-        </div>
-        <div class="panel-body padded" id="fii-flow-panel">
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;" id="fii-flow-strip">
-                <div class="intel-card"><div class="label">Daily Net (₹ Cr)</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
-                <div class="intel-card"><div class="label">5-Day Net (₹ Cr)</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
-                <div class="intel-card"><div class="label">30-Day Net (₹ Cr)</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
-                <div class="intel-card"><div class="label">Flow Regime</div><div class="skeleton skeleton-value" style="width:60%;"></div></div>
-            </div>
-        </div>
-    </div>
-    -->
+
 
     {% if macro_alerts %}
     <div class="panel" style="margin-bottom:0.75rem;">
@@ -274,43 +258,6 @@
 </div>
 
 <script>
-function formatCr(val) {
-    if (val == null) return '—';
-    var abs = Math.abs(val);
-    if (abs >= 1000) return (val / 1000).toFixed(1) + 'K';
-    return val.toFixed(0);
-}
-
-function loadFiiFlow() {
-    fetch('/api/macro/fii-flow/data')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (!data.success || !data.report) return;
-            var r = data.report;
-            var strip = document.getElementById('fii-flow-strip');
-            var ts = document.getElementById('fii-timestamp');
-            if (r.timestamp) ts.textContent = r.timestamp.substring(0, 19);
-            
-            var daily = r.monthly ? r.monthly.daily_net_cr : null;
-            var weekly = r.monthly ? r.monthly.weekly_net_cr : null;
-            var monthly = r.monthly ? r.monthly.monthly_net_cr : null;
-            var regime = r.flow_regime ? r.flow_regime.regime : 'NEUTRAL';
-            var regime_label = r.flow_regime ? r.flow_regime.label : '—';
-            
-            if (daily == null && weekly == null && monthly == null) {
-                strip.innerHTML = '<div style="color:var(--warning);font-family:var(--font-mono);font-size:0.75rem;grid-column:1/-1;">FII data unavailable — last updated: ' + (r.timestamp ? r.timestamp.substring(0, 10) : 'Unknown') + '</div>';
-                return;
-            }
-
-            strip.innerHTML =
-                '<div class="intel-card"><div class="label">Daily Net (\u20B9 Cr)</div><div class="stat ' + (daily >= 0 ? 'accent' : 'danger') + '">' + formatCr(daily) + '</div></div>' +
-                '<div class="intel-card"><div class="label">5-Day Net (\u20B9 Cr)</div><div class="stat ' + (weekly >= 0 ? 'accent' : 'danger') + '">' + formatCr(weekly) + '</div></div>' +
-                '<div class="intel-card"><div class="label">30-Day Net (\u20B9 Cr)</div><div class="stat ' + (monthly >= 0 ? 'accent' : 'danger') + '">' + formatCr(monthly) + '</div></div>' +
-                '<div class="intel-card"><div class="label">Flow Regime</div><div class="regime-badge ' + regime + '" style="font-size:10px;">' + regime_label + '</div></div>';
-        })
-        .catch(function() {});
-}
-
 function loadMacroHealth() {
     fetch('/api/macro/macro-health')
         .then(function(r) { return r.json(); })
@@ -321,16 +268,14 @@ function loadMacroHealth() {
             var statusClass = r.status === 'GREEN' ? 'accent' : (r.status === 'AMBER' ? 'warning' : 'danger');
             var statusColor = r.status === 'GREEN' ? 'var(--accent)' : (r.status === 'AMBER' ? 'var(--warning)' : 'var(--danger)');
             strip.innerHTML =
-                '<div class="intel-card" style="flex:1;min-width:140px;"><div class="label" data-tip="Aggregated view of FII flows, bond yields, and currency momentum.">Composite Score</div><div class="stat ' + statusClass + '" style="font-size:1.5rem;">' + r.composite_score + '</div></div>' +
+                '<div class="intel-card" style="flex:1;min-width:140px;"><div class="label" data-tip="Score = FII Flow Pressure (30%) + Bond Yield Signal (25%) + Currency Momentum (25%) + Cross-Market Correlation (20%)">Composite Score</div><div class="stat ' + statusClass + '" style="font-size:1.5rem;">' + r.composite_score + '</div></div>' +
                 '<div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Status</div><div style="font-size:1rem;font-weight:700;color:' + statusColor + ';font-family:var(--font-mono);margin-top:0.25rem;">' + r.status + '</div></div>' +
                 '<div class="intel-card" style="flex:2;min-width:200px;"><div class="label">Observation</div><div style="font-size:0.7rem;color:var(--text-secondary);font-family:var(--font-mono);margin-top:0.15rem;">' + (r.observation || '—') + '</div></div>';
         })
         .catch(function() {});
 }
 
-loadFiiFlow();
 loadMacroHealth();
-setInterval(loadFiiFlow, 120000);
 setInterval(loadMacroHealth, 120000);
 </script>
 {% endblock %}
