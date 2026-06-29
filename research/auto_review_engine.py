@@ -216,7 +216,7 @@ class AutoReviewEngine:
             from groq import Groq
             client = Groq(api_key=groq_key)
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are an institutional analyst validating research observations. Output JSON only."},
                     {"role": "user", "content": prompt}

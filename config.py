@@ -36,8 +36,8 @@ PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 COINBASE_AGENT_KIT_TOKEN = os.getenv("COINBASE_AGENT_KIT_TOKEN", "")
 WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "")
 
-LLM_MODEL = "llama-3.1-8b-instant"
-LLM_MODEL_FAST = "llama-3.1-8b-instant"
+LLM_MODEL = "llama-3.3-70b-versatile"
+LLM_MODEL_FAST = "llama-3.3-70b-versatile"
 
 llm_config = {
     "model": LLM_MODEL,

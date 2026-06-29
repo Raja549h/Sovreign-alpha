@@ -116,7 +116,7 @@ def _groq_web_search(query: str) -> str:
         from groq import Groq
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are a financial research assistant. Provide factual, data-based information about the company. If you don't know exact numbers, state that clearly. Never fabricate data."},
                 {"role": "user", "content": f"Find and summarize information about: {query}. Return specific numbers, dates, and facts where available. If data is unavailable, say so."}

@@ -325,7 +325,7 @@ class ThesisEvolutionEngine:
             from groq import Groq
             client = Groq(api_key=groq_key)
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": GROQ_CLASSIFY_PROMPT},
                     {"role": "user", "content": f"Prior: {prior_text}\n\nCurrent: {current_text}"}

@@ -3,6 +3,8 @@
 Sovereign Alpha Dashboard
 =======================
 
+from scheduler_instance import scheduler
+
 Flask-based web dashboard for the Sovereign Alpha system.
 Run with: python dashboard/app.py
 
@@ -421,7 +423,8 @@ def calculate_ledger_stats() -> dict:
         c = conn.cursor()
         
         c.execute("SELECT COUNT(*) FROM prediction_ledger")
-        total = c.fetchone()[0] or 0
+        total = c.fetchone()[0]
+        print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger -> {total}") or 0
         
         c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared'")
         approved = c.fetchone()[0] or 0
@@ -736,6 +739,7 @@ def get_dashboard_stats():
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM prediction_ledger")
         total = c.fetchone()[0]
+        print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger -> {total}")
         
         c.execute("""SELECT COUNT(*) FROM prediction_ledger
                  WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
@@ -751,8 +755,16 @@ def get_dashboard_stats():
         c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
         correct_vetoes = c.fetchone()[0]
         
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != '' OR status IN ('resolved', 'HIT', 'MISS', 'hit', 'miss')")
         resolved_outcomes = c.fetchone()[0]
+        print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
+        
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'hit') OR actual_outcome IN ('HIT', 'hit')")
+        hits = c.fetchone()[0]
+        
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('MISS', 'miss') OR actual_outcome IN ('MISS', 'miss')")
+        misses = c.fetchone()[0]
+
         
         c.close()
         conn.close()
@@ -762,7 +774,7 @@ def get_dashboard_stats():
             'total_predictions': total, 'approved': approved, 'vetoed': vetoed,
             'approval_rate': approval_rate, 'veto_efficiency': veto_accuracy,
             'total_vetoes': total_vetoes, 'correct_vetoes': correct_vetoes,
-            'resolved_predictions': resolved_outcomes,
+            'resolved_predictions': resolved_outcomes, 'hits': hits, 'misses': misses,
         }
     except Exception as e:
         print("GET_DASHBOARD_STATS ERROR:", e)
@@ -872,6 +884,7 @@ def index():
                            predictions=predictions_list,
                            vetoes=veto_list,
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
+                           data_verified_at=datetime.utcnow(),
                            progress=progress,
                            is_demo=is_demo_mode(),
                            certificates=count_proof_files() + len(list(CERTS_DIR.glob("*.json"))),
@@ -886,6 +899,7 @@ def index():
                            regime='NEUTRAL', regime_confidence='—',
                            predictions=[], vetoes=[],
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
+                           data_verified_at=datetime.utcnow(),
                            progress={'step1_done': True, 'step2_done': False, 'step3_done': False, 'step4_done': False, 'step5_done': False},
                            is_demo=False, certificates=0,
                            observations=[], macro_alerts=[], high_severity_7d=0)
@@ -930,6 +944,28 @@ def decisions():
                                stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
                                 is_demo=True)
 
+
+
+@app.route('/misses')
+def misses_ledger():
+    try:
+        from database import get_connection as db_get_connection
+        conn = db_get_connection()
+        c = conn.cursor()
+        c.execute("""
+            SELECT prediction_id, asset, thesis, outcome_notes, actual_return_pct, timestamp
+            FROM prediction_ledger 
+            WHERE status IN ('MISS', 'miss') OR actual_outcome IN ('MISS', 'miss')
+            ORDER BY timestamp DESC
+        """)
+        misses = c.fetchall()
+        c.close()
+        conn.close()
+    except Exception as e:
+        print('MISSES ERROR:', e)
+        misses = []
+    
+    return render_template('misses.html', misses=misses)
 
 @app.route('/predictions')
 @login_required
@@ -1148,6 +1184,23 @@ def api_proof_cert(decision_id):
 def performance():
     """Performance page."""
     try:
+        from database import get_connection as db_get_connection
+        conn = db_get_connection()
+        c = conn.cursor()
+        
+        # Calculate Prediction Maturity Breakdown
+        maturity_stats = {'<30': 0, '30-60': 0, '>60': 0}
+        c.execute("SELECT expected_timeline_days FROM prediction_ledger WHERE status NOT IN ('HIT', 'MISS', 'hit', 'miss', 'resolved')")
+        for row in c.fetchall():
+            days = row[0]
+            if days is not None:
+                if days < 30: maturity_stats['<30'] += 1
+                elif days <= 60: maturity_stats['30-60'] += 1
+                else: maturity_stats['>60'] += 1
+        
+        c.close()
+        conn.close()
+        
         stats = get_dashboard_stats()
         decisions = get_decisions()
         confidence_history = {'labels': [], 'values': []}
