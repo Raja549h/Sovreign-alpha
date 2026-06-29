@@ -13,13 +13,20 @@
             <span class="timestamp">Evidence Quality: <strong>{{ trust.evidence_quality if trust.evidence_quality != 'INSUFFICIENT_DATA' else '<span style="color:#ffaa00;">LEARNING PHASE</span>'|safe }}</strong></span>
         </div>
         <div class="panel-body padded">
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
-                <div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.research_notes }}</span></div>
-                <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions if stats.total_predictions > 0 else stats.get('total_predictions', 0) }}</span></div>
-                <div><span style="color:#555;">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
+            <!-- Row 1: Research Output -->
+            <div style="color:var(--text-dim);font-size:0.65rem;text-transform:uppercase;margin-bottom:0.4rem;border-bottom:1px solid #222;padding-bottom:0.2rem;">Research Output</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;margin-bottom:0.75rem;">
                 <div><span style="color:#555;">Observations Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.total_observations }}</span></div>
+                <div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.research_notes }}</span></div>
+                <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions }}</span></div>
                 <div><span style="color:#555;">Validated Outcomes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.resolved_observations }}</span></div>
-                
+                <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
+            </div>
+
+            <!-- Row 2: Prediction Performance -->
+            <div style="color:var(--text-dim);font-size:0.65rem;text-transform:uppercase;margin-bottom:0.4rem;border-bottom:1px solid #222;padding-bottom:0.2rem;">Prediction Performance</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
+                <div><span style="color:#555;">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
                 <div>
                     <span style="color:#555;">Validation Coverage</span><br>
                     <span style="font-size:1.1rem;font-weight:700;
@@ -29,10 +36,10 @@
                     {{ trust.validation_coverage_pct }}%</span>
                 </div>
                 <div><span style="color:#555;">Calibration Events</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.calibration_events }}</span></div>
-                <div><span style="color:#555;">Logged Misses</span><br><span style="font-size:1.1rem;font-weight:700;color:#ffaa00;">{{ trust.failure_records }}</span></div>
+                <div><span style="color:#555;">Logged Misses</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--warning);" title="Predictions that did not match the outcome. Logged transparently — not deleted.">{{ trust.failure_records }}</span></div>
                 <div><span style="color:#555;">Avg Research Quality</span><br><span style="font-size:1.1rem;font-weight:700;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</span></div>
-                <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
             </div>
+            
             {% if trust.total_validations < 10 %}
             <div style="margin-top:0.5rem;padding:0.4rem;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.2);text-align:center;font-family:var(--font-mono);font-size:0.65rem;color:#ffaa00;">
                 LEARNING PHASE — Building validation history. Additional outcomes required for statistical significance.
@@ -97,12 +104,14 @@
             <a href="/macro-health" class="btn outline small">Full Report</a>
         </div>
         <div class="panel-body padded" id="macro-health-strip" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label" data-tip="Aggregated view of FII flows, bond yields, and currency momentum.">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
+            <div class="intel-card" style="flex:1;min-width:140px;"><div class="label" title="Weights: Financial Quality (25%), Management Credibility (25%), Earnings Predictability (25%), Regime Sensitivity (25%). Last updated: [Static placeholder - TODO: auto-update]">Composite Score</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
             <div class="intel-card" style="flex:1;min-width:140px;"><div class="label">Status</div><div class="skeleton skeleton-value" style="width:50%;"></div></div>
             <div class="intel-card" style="flex:2;min-width:200px;"><div class="label">Observation</div><div class="skeleton skeleton-value" style="width:70%;"></div></div>
         </div>
     </div>
 
+    <!-- FII_FLOW_SECTION — data feed broken, pending fix -->
+    <!--
     <div class="panel" style="margin-bottom:0.5rem;">
         <div class="panel-header">
             <h2>FII Flow Intelligence</h2>
@@ -117,6 +126,7 @@
             </div>
         </div>
     </div>
+    -->
 
     {% if macro_alerts %}
     <div class="panel" style="margin-bottom:0.75rem;">
