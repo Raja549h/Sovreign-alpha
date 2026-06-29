@@ -893,9 +893,7 @@ def index():
         trust = get_evidence_trust_data()
         return render_template('index.html',
                            trust=trust,
-                           stats={'total_predictions': 0, 'approved': 0, 'vetoed': 0,
-                                  'approval_rate': 0, 'veto_efficiency': 0,
-                                  'total_vetoes': 0, 'correct_vetoes': 0, 'resolved_predictions': 0},
+                           stats=get_dashboard_stats(),
                            regime='NEUTRAL', regime_confidence='—',
                            predictions=[], vetoes=[],
                            last_verified=datetime.utcnow().strftime('%H:%M:%S'),
@@ -953,18 +951,19 @@ def misses_ledger():
         conn = db_get_connection()
         c = conn.cursor()
         c.execute("""
-            SELECT prediction_id, asset, thesis, outcome_notes, actual_return_pct, timestamp
+            SELECT timestamp, asset as ticker, thesis as prediction, 
+                   actual_outcome as outcome, outcome_notes as post_mortem
             FROM prediction_ledger 
             WHERE status IN ('MISS', 'miss') OR actual_outcome IN ('MISS', 'miss')
             ORDER BY timestamp DESC
         """)
-        misses = c.fetchall()
+        misses = [dict(row) for row in c.fetchall()]
         c.close()
         conn.close()
     except Exception as e:
-        print('MISSES ERROR:', e)
+        print(f"Error fetching misses: {e}")
         misses = []
-    
+        
     return render_template('misses.html', misses=misses)
 
 @app.route('/predictions')
