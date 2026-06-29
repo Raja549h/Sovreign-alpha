@@ -162,7 +162,7 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a senior institutional analyst. Write concise, evidence-driven market analysis in the style of Goldman Sachs research notes. No hype, no emoji, no retail language."},
                     {"role": "user", "content": prompt}

@@ -285,7 +285,7 @@ if __name__ == "__main__":
     
     meter.log_inference(
         agent_id="analyst",
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         input_tokens=512,
         output_tokens=1024,
         latency_ms=2500.0,
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     
     meter.log_inference(
         agent_id="risk_manager",
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         input_tokens=384,
         output_tokens=512,
         latency_ms=1800.0,

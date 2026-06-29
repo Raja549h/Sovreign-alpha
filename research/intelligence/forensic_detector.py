@@ -326,7 +326,7 @@ TRANSCRIPT 2 (Later):
 Identify narrative shifts. Output JSON array only."""
         
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": NARRATIVE_DRIFT_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message}
