@@ -57,7 +57,7 @@
                             {{ cell.ticker }}
                         </div>
                         <div style="color:var(--text-dim);font-size:0.6rem;margin-top:0.15rem;">
-                            {{ cell.flag_count }} flag{{ 's' if cell.flag_count != 1 }}
+                            {{ cell.flag_count }} flag{{ 's' if cell.flag_count != 1 else '' }}
                         </div>
                     </div>
                 </a>
@@ -140,7 +140,7 @@
                         {% for n in notes %}
                         <tr>
                             <td class="mono" style="font-size:0.65rem;">{{ n.note_reference }}</td>
-                            <td>{{ (n.title[:50] if n.title else '') }}{{ '...' if n.title and n.title|length > 50 }}</td>
+                            <td>{{ (n.title[:50] if n.title else '') }}{{ '...' if n.title and n.title|length > 50 else '' }}</td>
                             <td class="mono" style="font-size:0.65rem;">{{ (n.generated_at or '')[:10] }}</td>
                             <td>
                                 <a href="/research/note/{{ n.note_reference }}" class="btn outline small">View</a>

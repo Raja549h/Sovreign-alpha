@@ -420,29 +420,29 @@ def calculate_ledger_stats() -> dict:
         conn = get_db_connection()
         c = conn.cursor()
         
-        c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
-        total = c.fetchone()['total'] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger")
+        total = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE status = 'cleared'")
-        approved = c.fetchone()['approved'] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared'")
+        approved = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE status = 'risk-rejected'")
-        rejected = c.fetchone()['rejected'] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'risk-rejected'")
+        rejected = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as with_outcome FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
-        with_outcome = c.fetchone()['with_outcome'] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
+        with_outcome = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as correct FROM prediction_ledger WHERE actual_outcome = 'correct'")
-        correct = c.fetchone()['correct'] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome = 'correct'")
+        correct = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as veto_correct FROM veto_archive WHERE veto_correct = 1")
-        veto_correct_count = c.fetchone()['veto_correct'] or 0
+        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
+        veto_correct_count = c.fetchone()[0] or 0
         
-        c.execute("SELECT COUNT(*) as total_vetoes FROM veto_archive")
-        total_vetoes = c.fetchone()['total_vetoes'] or 0
+        c.execute("SELECT COUNT(*) FROM veto_archive")
+        total_vetoes = c.fetchone()[0] or 0
         
-        c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
-        total_avoided = c.fetchone()['total_avoided'] or 0
+        c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) FROM veto_archive")
+        total_avoided = c.fetchone()[0] or 0
         
         conn.close()
         
@@ -462,7 +462,10 @@ def calculate_ledger_stats() -> dict:
             'total_avoided_drawdown': total_avoided,
             'outcome_fill_rate': (with_outcome / total * 100) if total > 0 else 0
         }
-    except Exception:
+    except Exception as e:
+        import traceback
+        print(f"calculate_ledger_stats ERROR: {e}")
+        traceback.print_exc()
         # Return default stats if tables don't exist
         return {
             'total_predictions': 0,
@@ -730,26 +733,28 @@ def get_dashboard_stats():
     """Get real dashboard statistics from prediction_ledger and veto_archive."""
     try:
         conn = get_db_connection()
-        total = conn.execute(
-            "SELECT COUNT(*) FROM prediction_ledger"
-        ).fetchone()[0]
-        approved = conn.execute(
-            """SELECT COUNT(*) FROM prediction_ledger
-               WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')"""
-        ).fetchone()[0]
-        vetoed = conn.execute(
-            """SELECT COUNT(*) FROM prediction_ledger
-               WHERE status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')"""
-        ).fetchone()[0]
-        total_vetoes = conn.execute(
-            "SELECT COUNT(*) FROM veto_archive"
-        ).fetchone()[0]
-        correct_vetoes = conn.execute(
-            "SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1"
-        ).fetchone()[0]
-        resolved_outcomes = conn.execute(
-            "SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''"
-        ).fetchone()[0]
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM prediction_ledger")
+        total = c.fetchone()[0]
+        
+        c.execute("""SELECT COUNT(*) FROM prediction_ledger
+                 WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
+        approved = c.fetchone()[0]
+        
+        c.execute("""SELECT COUNT(*) FROM prediction_ledger
+                 WHERE status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
+        vetoed = c.fetchone()[0]
+        
+        c.execute("SELECT COUNT(*) FROM veto_archive")
+        total_vetoes = c.fetchone()[0]
+        
+        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
+        correct_vetoes = c.fetchone()[0]
+        
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
+        resolved_outcomes = c.fetchone()[0]
+        
+        c.close()
         conn.close()
         approval_rate = round(approved / total * 100, 1) if total > 0 else 0
         veto_accuracy = round(correct_vetoes / total_vetoes * 100, 1) if total_vetoes > 0 else 0
@@ -937,6 +942,7 @@ def predictions():
         return render_template('predictions.html',
                                predictions=predictions_list,
                                ledger_stats=ledger_stats,
+                               decisions=decisions,
                                is_demo=is_demo_mode())
     except Exception:
         return render_template('predictions.html',
@@ -951,7 +957,9 @@ def prediction_detail(prediction_id):
     """Audit-record style page for a single prediction."""
     try:
         conn = get_db_connection()
-        row = conn.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,)).fetchone()
+        c = conn.cursor()
+        c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
+        row = c.fetchone()
         conn.close()
         if not row:
             return render_template('prediction_detail.html',
@@ -995,6 +1003,7 @@ def veto_archive():
         return render_template('veto_archive.html',
                                vetoes=veto_list,
                                ledger_stats=ledger_stats,
+                               decisions=decisions,
                                is_demo=is_demo_mode())
     except Exception:
         return render_template('veto_archive.html',
@@ -1191,8 +1200,12 @@ def performance():
                              return_distribution=json.dumps(return_distribution),
                              stats=stats,
                              ledger_stats=ledger_stats,
+                             decisions=decisions,
                              is_demo=is_demo_mode())
-    except Exception:
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("PERFORMANCE_ROUTE_ERROR:", e)
         return render_template('performance.html',
                              total_sessions=0,
                              avg_confidence=0,
@@ -1320,10 +1333,15 @@ def api_track_record():
     """API endpoint for track record summary."""
     try:
         conn = get_db_connection()
-        total_sessions = conn.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'COMPLETED'").fetchone()[0]
-        total_decisions = conn.execute("SELECT COUNT(*) FROM prediction_ledger").fetchone()[0]
-        total_approved = conn.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')").fetchone()[0]
-        total_alpha = conn.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')").fetchone()[0] or 0.0
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'COMPLETED'")
+        total_sessions = c.fetchone()[0]
+        c.execute("SELECT COUNT(*) FROM prediction_ledger")
+        total_decisions = c.fetchone()[0]
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+        total_approved = c.fetchone()[0]
+        c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+        total_alpha = c.fetchone()[0] or 0.0
         conn.close()
     except Exception:
         total_sessions = 0
@@ -3030,6 +3048,7 @@ def research_home():
                              total_flags=total_flags, is_demo=is_demo_mode(),
                              heatmap=heatmap, watchlist_companies=watchlist)
     except Exception as e:
+        print("RESEARCH_ROUTE_ERROR:", e)
         return render_template('research_home.html',
                              companies=[], notes=[],
                              total_flags=0, error=str(e), is_demo=is_demo_mode())
@@ -3297,9 +3316,9 @@ def api_shadow_portfolio():
     """List shadow portfolio positions with P&L."""
     try:
         conn = db_get_connection()
-        positions = conn.execute(
-            "SELECT * FROM shadow_portfolio ORDER BY entry_date DESC"
-        ).fetchall()
+        c = conn.cursor()
+        c.execute("SELECT * FROM shadow_portfolio ORDER BY entry_date DESC")
+        positions = c.fetchall()
         conn.close()
         return jsonify({'success': True, 'data': [dict(r) for r in positions]})
     except Exception as e:
