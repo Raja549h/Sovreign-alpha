@@ -628,7 +628,7 @@ def send_email():
     msg.attach(MIMEText(body, 'plain'))
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
         server.starttls()
         server.login(DIGEST_EMAIL, DIGEST_PASSWORD)
         server.send_message(msg)
