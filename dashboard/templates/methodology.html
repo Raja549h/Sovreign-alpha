@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h1>Research Methodology</h1>
+        <span class="timestamp">Sovereign Alpha Autonomous Framework</span>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>The 4D Scoring System</h2>
+        </div>
+        <div class="panel-body padded">
+            <p>Our autonomous pipeline uses a rigorous 4D scoring mechanism to filter signals before they are logged as predictions:</p>
+            <ul>
+                <li><strong>Technical Structure (D1):</strong> Evaluation of price action, moving averages, relative strength, and volume context.</li>
+                <li><strong>Institutional Positioning (D2):</strong> Analysis of FII/DII flow changes, options open interest, and delivery volume.</li>
+                <li><strong>Macro Regime Context (D3):</strong> Classification of the broader market environment (e.g., Risk-On, Risk-Off) and its effect on the asset.</li>
+                <li><strong>Fundamental / Catalyst (D4):</strong> Assessment of recent earnings surprises, corporate actions, or sector momentum.</li>
+            </ul>
+            <p>Only assets scoring high conviction across multiple dimensions proceed to the risk manager.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>The Veto Mechanism</h2>
+        </div>
+        <div class="panel-body padded">
+            <p>Once a high-conviction signal is generated, it faces our automated <strong>Risk Governance (Veto) Engine</strong>.</p>
+            <p>The Veto Engine strictly checks for conditions such as extreme over-extension, opposing institutional flows, or adverse macro regimes. If a risk threshold is breached, the signal is <strong>Vetoed</strong> (Risk-Rejected) and logged in the Veto Archive to track capital preservation and avoided drawdowns.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>The Transparent Ledger</h2>
+        </div>
+        <div class="panel-body padded">
+            <p>The core ethos of Sovereign Alpha is extreme intellectual honesty and transparency.</p>
+            <p>Every cleared prediction is immutable. It is logged with a cryptographic hash and placed into the Prediction Ledger. We actively track the outcome of these predictions as <strong>HIT</strong> or <strong>MISS</strong>.</p>
+            <p><strong>Self-Auditing Rule:</strong> A MISS is never deleted. Every failed prediction receives a post-mortem note and remains on the public ledger.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

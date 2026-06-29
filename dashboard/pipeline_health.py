@@ -1,4 +1,7 @@
 import datetime
+import os
+import smtplib
+from email.mime.text import MIMEText
 from database import get_connection as db_get_connection
 
 try:
@@ -115,8 +118,53 @@ def check_pipeline_health():
         age_str = f"{checks['last_run_age_hours']} hours" if checks.get("last_run_age_hours") is not None else "recently"
         verdict = f"Pipeline running normally. Last run {age_str} ago."
         
+    # SLA Check: Send email alert if 08:45 IST run failed to produce new observations within 3 hours (by 11:45 IST)
+    ist_now = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
+    if ist_now.hour == 11 and ist_now.minute >= 45:
+        # Check today's observations specifically
+        try:
+            today_845_ist = datetime.datetime(ist_now.year, ist_now.month, ist_now.day, 8, 45)
+            today_845_utc = (today_845_ist - datetime.timedelta(hours=5, minutes=30)).isoformat() + 'Z'
+            
+            with db_get_connection() as conn:
+                c = conn.cursor()
+                c.execute("SELECT COUNT(*) FROM observations WHERE timestamp > %s", (today_845_utc,))
+                todays_obs = c.fetchone()[0]
+                
+            if todays_obs == 0:
+                # Need to send alert, ensure we only send once per day by checking a lockfile
+                lock_file = "/tmp/pipeline_alert_" + ist_now.strftime('%Y%m%d') + ".lock"
+                if not os.path.exists(lock_file):
+                    _send_alert_email("Sovereign Alpha: SLA Breach Alert", "The 08:45 IST pipeline run failed to produce any new observations within the 3-hour SLA window.")
+                    with open(lock_file, "w") as f:
+                        f.write(ist_now.isoformat())
+        except Exception as e:
+            print(f"Error checking SLA or sending alert: {e}")
+            
     return {
         "status": status,
         "checks": checks,
         "verdict": verdict
     }
+
+def _send_alert_email(subject, body):
+    digest_email = os.environ.get("DIGEST_EMAIL")
+    digest_password = os.environ.get("DIGEST_PASSWORD")
+    if not digest_email or not digest_password:
+        print("DIGEST_EMAIL or DIGEST_PASSWORD not configured. Cannot send alert.")
+        return
+        
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = digest_email
+        msg['To'] = digest_email
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(digest_email, digest_password)
+        server.send_message(msg)
+        server.quit()
+        print("SLA alert email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send SLA alert email: {e}")

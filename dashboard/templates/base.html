@@ -486,6 +486,7 @@
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
             <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
+            <a href="/methodology" class="{% if request.path == '/methodology' %}active{% endif %}">Methodology</a>
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
