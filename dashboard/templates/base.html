@@ -76,22 +76,7 @@
         .top-bar .brand { letter-spacing: 1.5px; }
         .top-bar .clock { color: var(--text-secondary); }
 
-        .ticker-strip {
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border);
-            padding: 0.3rem 1.25rem;
-            display: flex; gap: 1.75rem;
-            overflow-x: auto; font-family: var(--font-mono);
-            font-size: 0.7rem; height: 32px;
-            align-items: center;
-        }
-        .ticker-strip::-webkit-scrollbar { display: none; }
-        .ticker-item { display: flex; gap: 0.3rem; white-space: nowrap; }
-        .ticker-item .sym { color: var(--text-dim); font-weight: 600; }
-        .ticker-item .price { color: var(--text-primary); }
-        .ticker-item .change { font-weight: 600; }
-        .ticker-item .change.up { color: var(--accent); }
-        .ticker-item .change.down { color: var(--danger); }
+
 
         .nav {
             background: #0a0a0a;
@@ -480,7 +465,7 @@
             .stats-row { grid-template-columns: repeat(2, 1fr); }
             .nav { flex-wrap: wrap; height: auto; padding: 0.3rem 0.75rem; }
             .nav-links { flex-wrap: wrap; }
-            .ticker-strip { display: none; }
+
         }
     </style>
 </head>
@@ -490,47 +475,17 @@
         <div class="clock" id="clock"></div>
     </div>
 
-    <!-- TICKER_STRIP — removed pending live market data feed implementation -->
-    <!-- 
-    <div class="ticker-strip">
-        <div class="ticker-item"><span class="sym">SPX</span><span class="price" id="t-spx">—</span><span class="change" id="t-spx-c"></span></div>
-        <div class="ticker-item"><span class="sym">NDX</span><span class="price" id="t-ndx">—</span><span class="change" id="t-ndx-c"></span></div>
-        <div class="ticker-item"><span class="sym">US10Y</span><span class="price" id="t-us10y">—</span><span class="change" id="t-us10y-c"></span></div>
-        <div class="ticker-item"><span class="sym">WTI</span><span class="price" id="t-cl">—</span><span class="change" id="t-cl-c"></span></div>
-        <div class="ticker-item"><span class="sym">NSEI</span><span class="price" id="t-nsei">—</span><span class="change" id="t-nsei-c"></span></div>
-        <div class="ticker-item"><span class="sym">INR/USD</span><span class="price" id="t-inr">—</span><span class="change" id="t-inr-c"></span></div>
-    </div>
-    -->
+
 
     <nav class="nav">
         <div class="nav-brand">SOV ALPHA</div>
         <div class="nav-links">
             <a href="/" class="{% if request.path == '/' %}active{% endif %}">Dashboard</a>
-            <!-- REMOVED: HEALTH — pending implementation or empty data -->
-            <!-- <a href="/system-health" class="{% if request.path == '/system-health' %}active{% endif %}">Health</a> -->
             <a href="/evidence" class="{% if request.path == '/evidence' %}active{% endif %}">Evidence</a>
-            <!-- REMOVED: AUDIT — pending implementation or empty data -->
-            <!-- <a href="/audit" class="{% if request.path == '/audit' %}active{% endif %}">Audit</a> -->
-            <!-- REMOVED: CALIBRATION — pending implementation or empty data -->
-            <!-- <a href="/calibration" class="{% if request.path == '/calibration' %}active{% endif %}">Calibration</a> -->
             <a href="/predictions" class="{% if request.path == '/predictions' %}active{% endif %}">Predictions</a>
-            <!-- REMOVED: GRAVEYARD — pending implementation or empty data -->
-            <!-- <a href="/failure-ledger" class="{% if request.path == '/failure-ledger' %}active{% endif %}">Graveyard</a> -->
-            <!-- REMOVED: VETOES — pending implementation or empty data -->
-            <!-- <a href="/veto-archive" class="{% if request.path == '/veto-archive' %}active{% endif %}">Vetoes</a> -->
-            <!-- REMOVED: PROOFS — pending implementation or empty data -->
-            <!-- <a href="/proofs" class="{% if request.path == '/proofs' %}active{% endif %}">Proofs</a> -->
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
             <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
-            <!-- REMOVED: PORTFOLIO — pending implementation or empty data -->
-            <!-- <a href="/portfolio" class="{% if request.path == '/portfolio' %}active{% endif %}">Portfolio</a> -->
-            <!-- REMOVED: EDGE — pending implementation or empty data -->
-            <!-- <a href="/edge" class="{% if request.path == '/edge' %}active{% endif %}">Edge</a> -->
-            <!-- REMOVED: CHALLENGE — pending implementation or empty data -->
-            <!-- <a href="/challenge" class="{% if request.path == '/challenge' %}active{% endif %}">Challenge</a> -->
-            <!-- REMOVED: QUALITY — pending implementation or empty data -->
-            <!-- <a href="/research-quality" class="{% if request.path == '/research-quality' %}active{% endif %}">Quality</a> -->
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
@@ -550,46 +505,6 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
-
-        function updateTicker(id, price, change) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.textContent = price != null ? price : '—';
-            var cEl = document.getElementById(id + '-c');
-            if (!cEl) return;
-            if (change != null) {
-                var c = parseFloat(change);
-                cEl.textContent = (c > 0 ? '+' : '') + c.toFixed(2);
-                cEl.className = 'change ' + (c >= 0 ? 'up' : 'down');
-            } else { cEl.textContent = ''; }
-        }
-
-        var macroTickers = {{ macro_tickers | tojson | safe }};
-        if (macroTickers && Object.keys(macroTickers).length > 0) {
-            updateTicker('t-spx', macroTickers.spx_price, macroTickers.spx_change);
-            updateTicker('t-vix', macroTickers.vix, null);
-            updateTicker('t-dxy', macroTickers.dxy, macroTickers.dxy_change);
-            updateTicker('t-tnx', macroTickers.treasury_10y, null);
-            updateTicker('t-gc', macroTickers.gold, macroTickers.gold_change);
-            updateTicker('t-cl', macroTickers.oil_wti, macroTickers.oil_change);
-            updateTicker('t-nsei', macroTickers.nsei, macroTickers.nsei_change);
-        }
-
-        setInterval(function() {
-            fetch('/api/ticker-refresh', {method:'POST'})
-                .then(function(r) { if (!r.ok) return; r.json().then(function(data) {
-                    if (!data || !data.tickers) return;
-                    var t = data.tickers;
-                    updateTicker('t-spx', t.spx_price, t.spx_change);
-                    updateTicker('t-vix', t.vix, null);
-                    updateTicker('t-dxy', t.dxy, t.dxy_change);
-                    updateTicker('t-tnx', t.treasury_10y, null);
-                    updateTicker('t-gc', t.gold, t.gold_change);
-                    updateTicker('t-cl', t.oil_wti, t.oil_change);
-                    updateTicker('t-nsei', t.nsei, t.nsei_change);
-            updateTicker('t-inr', t.inr, t.inr_change);
-                });}).catch(function(){});
-        }, 60000);
 
         document.addEventListener('click', function(e) {
             var el = e.target.closest('.hash');
