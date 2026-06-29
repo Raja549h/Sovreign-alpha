@@ -102,9 +102,9 @@ class FIIIntelligence:
         except Exception as _e:
             print(f"[fii] yfinance fallback failed: {_e}")
         return {
-            'date': today, 'equity_net': 0.0, 'debt_net': 0.0,
-            'total_net': 0.0, 'equity_buy': 0.0, 'equity_sell': 0.0,
-            'source': 'UNAVAILABLE'
+            'net_flow': 0,
+            'date': '2026-06-29',
+            'status': 'FALLBACK'
         }
 
     def store_daily_flow(self, flow_data: Dict) -> bool:

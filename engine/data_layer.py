@@ -108,7 +108,7 @@ class DataLayer:
     WATCHLIST_INDIA = [
         'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
         'SBIN.NS', 'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS',
-        'HCLTECH.NS', 'BAJFINANCE.NS', 'NIFTYBEES.NS', 'TRENT.NS'
+        'HCLTECH.NS', 'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
     ]
 
     def __init__(self, data_dir: Optional[Path] = None):
