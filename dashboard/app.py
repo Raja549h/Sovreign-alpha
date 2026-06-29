@@ -1282,7 +1282,8 @@ def performance():
                              sector_data=json.dumps({'labels': [], 'approved': [], 'vetoed': []}),
                              return_distribution=json.dumps({'labels': [], 'values': []}),
                              stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
-                             ledger_stats={},
+                             ledger_stats={'total_predictions': 0, 'hits': 0, 'misses': 0, 'cleared': 0, 'veto_efficiency': 0},
+                             maturity_stats={'<30': 0, '30-60': 0, '>60': 0},
                              is_demo=is_demo_mode())
 
 

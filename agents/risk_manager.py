@@ -108,7 +108,7 @@ class RiskManager:
                 veto.actual_outcome,
                 veto.actual_return_pct,
                 veto.avoided_drawdown,
-                veto.veto_correct,
+                1 if veto.veto_correct else 0,
                 "",
                 "",
                 datetime.utcnow().isoformat() + 'Z'
