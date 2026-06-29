@@ -19,6 +19,10 @@
             <label>Total Predictions</label>
             <div class="value">{{ ledgers_stats.total_predictions if ledgers_stats is defined else (ledger_stats.total_predictions | default(0)) }}</div>
         </div>
+        <div class="stat-box info">
+            <label>Hit/Miss Ratio</label>
+            <div class="value">{{ ledger_stats.hits | default(0) }} / {{ ledger_stats.misses | default(0) }}</div>
+        </div>
         <div class="stat-box accent">
             <label>Cleared</label>
             <div class="value">{{ ledger_stats.cleared | default(0) }}</div>
