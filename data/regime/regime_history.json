@@ -1974,5 +1974,31 @@
       "treasury_10y_20d_chg": -0.097
     },
     "timestamp": "2026-06-29T13:12:53.725480Z"
+  },
+  {
+    "regime": "NEUTRAL",
+    "confidence": 0.94,
+    "vix_signal": "neutral",
+    "credit_signal": "neutral",
+    "yield_signal": "risk_on",
+    "trend_signal": "neutral",
+    "dollar_signal": "neutral",
+    "summary": "10Y 4.38% (risk_on)",
+    "indicators": {
+      "vix": 18.25,
+      "vix_20d_avg": 18.07,
+      "hy_oas": 0.0,
+      "ig_oas": 0.0,
+      "treasury_10y": 4.378,
+      "treasury_2y": 0.486,
+      "yield_curve_slope": 3.892,
+      "fed_funds_rate": 0.0,
+      "dxy": 101.24,
+      "sp500_current": 7354.02,
+      "sp500_ma50": 7363.43,
+      "sp500_ma200": 6924.97,
+      "treasury_10y_20d_chg": -0.097
+    },
+    "timestamp": "2026-06-29T13:15:00.008215Z"
   }
 ]
