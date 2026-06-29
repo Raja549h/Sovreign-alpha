@@ -1284,6 +1284,7 @@ def performance():
                              stats={'approval_rate': 0, 'approved': 0, 'vetoed': 0, 'total_alpha': 0, 'total_fees': 0, 'total_decisions': 0},
                              ledger_stats={'total_predictions': 0, 'hits': 0, 'misses': 0, 'cleared': 0, 'veto_efficiency': 0},
                              maturity_stats={'<30': 0, '30-60': 0, '>60': 0},
+                             decisions=[],
                              is_demo=is_demo_mode())
 
 
