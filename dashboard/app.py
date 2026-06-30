@@ -320,12 +320,14 @@ def update_prediction_outcome(prediction_id: str, outcome_data: dict) -> bool:
             actual_outcome = %s,
             actual_return_pct = %s,
             outcome_notes = %s,
+            status = %s,
             updated_at = %s
             WHERE prediction_id = %s
         """, (
             outcome_data.get('outcome', ''),
             outcome_data.get('actual_return_pct', 0.0),
             outcome_data.get('notes', ''),
+            'HIT' if outcome_data.get('outcome', '').lower() == 'correct' else 'MISS',
             datetime.utcnow().isoformat() + 'Z',
             prediction_id
         ))
