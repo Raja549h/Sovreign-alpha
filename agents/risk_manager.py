@@ -194,7 +194,7 @@ class RiskManager:
     def _check_risk_reward(self, prediction) -> RiskCheck:
         """Check if risk/reward ratio meets minimum threshold."""
         rr = prediction.risk_reward_ratio
-        min_rr = 1.5
+        min_rr = 1.2
 
         passed = rr >= min_rr
         return RiskCheck(

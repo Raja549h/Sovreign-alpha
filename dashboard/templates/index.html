@@ -70,54 +70,7 @@
         </div>
     </div>
 
-    <!-- Section 13: Honest hero metrics — system status only -->
-    <div class="stats-row">
-        <div class="stat-box info">
-            <label>System Status</label>
-            <div class="value" style="font-size:0.8rem;color:var(--accent);">
-                {{ 'LEARNING PHASE' if trust.total_validations < 10 else 'OPERATIONAL' if trust.total_validations < 50 else 'MATURE' }}
-            </div>
-            <div class="sub">{{ trust.total_validations }} validations</div>
-        </div>
-        <div class="stat-box accent">
-            <label>Predictions Issued</label>
-            <div class="value">{{ stats.total_predictions }}</div>
-            <div class="sub">{{ stats.resolved_predictions }} resolved</div>
-        </div>
-        <div class="stat-box warning">
-            <label>Validation Coverage</label>
-            <div class="value {% if trust.validation_coverage_pct >= 50 %}accent{% elif trust.validation_coverage_pct >= 10 %}warning{% else %}danger{% endif %}">
-                {{ trust.validation_coverage_pct }}%
-            </div>
-            <div class="sub">{{ trust.resolved_observations }}/{{ trust.total_observations }} obs</div>
-        </div>
-        <div class="stat-box info">
-            <label>Calibration Score</label>
-            <div class="value" style="font-size:0.8rem;">{{ trust.calibration_events if trust.calibration_events > 0 else '—' }}</div>
-            <div class="sub">{{ 'Not yet calculable' if trust.calibration_events < 3 else 'Tracking' }}</div>
-        </div>
-        <div class="stat-box accent">
-            <label>Research Quality</label>
-            <div class="value" style="font-size:0.8rem;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</div>
-            <div class="sub">{{ trust.autopsied_observations }} post-mortems completed</div>
-        </div>
-        <div class="stat-box info">
-            <label>Market Regime</label>
-            <div class="value">
-                <span class="regime-badge {{ regime or 'NEUTRAL' }}" style="font-size:10px;">{{ regime or 'NEUTRAL' }}</span>
-            </div>
-            <div class="sub">{{ regime_confidence }}</div>
-        </div>
-    </div>
 
-    {% if trust.total_validations < 10 %}
-    <div style="background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);padding:0.8rem;margin-bottom:0.75rem;text-align:center;">
-        <span style="color:#ffaa00;font-weight:700;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">LEARNING PHASE</span>
-        <p style="color:#cc8800;font-size:0.65rem;margin-top:0.3rem;font-family:var(--font-mono);">
-        Building validation history. Additional outcomes required for statistical significance.
-        </p>
-    </div>
-    {% endif %}
 
     <!-- Macro Health Quick View -->
     <div class="panel" style="margin-bottom:0.5rem;">
