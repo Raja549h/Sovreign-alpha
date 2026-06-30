@@ -1267,6 +1267,7 @@ def performance():
                              return_distribution=json.dumps(return_distribution),
                              stats=stats,
                              ledger_stats=ledger_stats,
+                             maturity_stats=maturity_stats,
                              decisions=decisions,
                              is_demo=is_demo_mode())
     except Exception as e:
