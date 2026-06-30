@@ -72,9 +72,10 @@ function loadMacroHealth() {
                 var statusLabel = 'RED';
                 if (ind.status === 'GREEN') { statusColor = 'var(--accent)'; statusLabel = 'GREEN'; }
                 else if (ind.status === 'AMBER') { statusColor = 'var(--warning)'; statusLabel = 'AMBER'; }
-                var arrow = ind.direction === 'up' ? '▲' : ind.direction === 'down' ? '▼' : '—';
+                else if (ind.status === 'NO_DATA') { statusColor = '#555'; statusLabel = 'NO DATA'; }
+                var arrow = ind.direction === 'up' ? '↑' : ind.direction === 'down' ? '↓' : '→';
                 var arrowColor = ind.direction === 'up' ? 'var(--danger)' : ind.direction === 'down' ? 'var(--accent)' : '#555';
-                var valDisplay = ind.value != null ? ind.value : '—';
+                var valDisplay = ind.value != null ? ind.value : 'Data Unavailable';
                 var nameDisplay = (ind.name || ind.key || 'Indicator').replace(/_/g, ' ');
                 grid.innerHTML += '<div class="indicator-card" style="background:#0d0d0d;border:1px solid #1e1e1e;padding:0.75rem;border-left:3px solid ' + statusColor + ';">' +
                     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">' +
