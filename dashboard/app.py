@@ -89,6 +89,20 @@ if IS_CLOUD and PERSISTENT_DIR != BASE_DIR:
         if (BASE_DIR / "zkml" / "proofs").exists():
             (PERSISTENT_DIR / "zkml").mkdir(parents=True, exist_ok=True)
             shutil.copytree(BASE_DIR / "zkml" / "proofs", PERSISTENT_DIR / "zkml" / "proofs", dirs_exist_ok=True)
+        if (BASE_DIR / "data").exists():
+            shutil.copytree(BASE_DIR / "data", PERSISTENT_DIR / "data", dirs_exist_ok=True)
+            print(f"[startup] Copied data/ to {PERSISTENT_DIR / 'data'}")
+    else:
+        # Even if billing exists (not first boot), ensure data files are refreshed from git
+        import shutil
+        if (BASE_DIR / "data").exists():
+            for _json_file in ["live_market_data.json", "live_signals.json", "sample_positions.csv"]:
+                _src = BASE_DIR / "data" / _json_file
+                _dst = PERSISTENT_DIR / "data" / _json_file
+                if _src.exists() and not _dst.exists():
+                    (PERSISTENT_DIR / "data").mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(str(_src), str(_dst))
+                    print(f"[startup] Copied missing {_json_file} to persistent storage")
 
 DATA_DIR = PERSISTENT_DIR / "data"
 BILLING_DIR = PERSISTENT_DIR / "billing"
@@ -1370,18 +1384,26 @@ def normalize_market_data(data):
 @login_required
 def live_market():
     """Live market data page."""
-    try:
-        with open(DATA_DIR / "live_market_data.json", "r") as f:
-            raw = json.load(f)
-        market_data = normalize_market_data(raw)
-    except Exception:
-        market_data = {'tickers': {}, 'fetched_at': None}
+    market_data = {'tickers': {}, 'fetched_at': None}
+    for data_path in [DATA_DIR, BASE_DIR / "data"]:
+        try:
+            with open(data_path / "live_market_data.json", "r") as f:
+                raw = json.load(f)
+            market_data = normalize_market_data(raw)
+            if market_data.get('tickers'):
+                break
+        except Exception:
+            continue
     
-    try:
-        with open(DATA_DIR / "live_signals.json", "r") as f:
-            signals = json.load(f)
-    except Exception:
-        signals = {}
+    signals = {}
+    for data_path in [DATA_DIR, BASE_DIR / "data"]:
+        try:
+            with open(data_path / "live_signals.json", "r") as f:
+                signals = json.load(f)
+            if signals:
+                break
+        except Exception:
+            continue
     
     demo = is_demo_mode()
     has_data = len(market_data.get('tickers', {})) > 0
@@ -1396,22 +1418,26 @@ def live_market():
 @login_required
 def api_live_data():
     """API endpoint for live market data."""
-    try:
-        with open(DATA_DIR / "live_market_data.json", "r") as f:
-            return jsonify(json.load(f))
-    except Exception:
-        return jsonify({"error": "No data available"})
+    for data_path in [DATA_DIR, BASE_DIR / "data"]:
+        try:
+            with open(data_path / "live_market_data.json", "r") as f:
+                return jsonify(json.load(f))
+        except Exception:
+            continue
+    return jsonify({"error": "No data available"})
 
 
 @app.route('/api/signals')
 @login_required
 def api_signals():
     """API endpoint for market signals."""
-    try:
-        with open(DATA_DIR / "live_signals.json", "r") as f:
-            return jsonify(json.load(f))
-    except Exception:
-        return jsonify({"error": "No signals available"})
+    for data_path in [DATA_DIR, BASE_DIR / "data"]:
+        try:
+            with open(data_path / "live_signals.json", "r") as f:
+                return jsonify(json.load(f))
+        except Exception:
+            continue
+    return jsonify({"error": "No signals available"})
 
 
 @app.route('/api/track_record')
