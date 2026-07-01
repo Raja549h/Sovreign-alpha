@@ -1340,14 +1340,29 @@ def api_ticker_refresh():
 
 def normalize_market_data(data):
     """Normalize flat or nested market data into {tickers: {...}, fetched_at: ...}."""
-    if 'tickers' in data and isinstance(data['tickers'], dict):
-        return data
-    fetched = data.pop('fetched_at', None) if isinstance(data, dict) else None
+    fetched = data.get('fetched_at', None) if isinstance(data, dict) else None
+    raw_tickers = data.get('tickers', data) if isinstance(data, dict) else {}
+    
     tickers = {}
-    if isinstance(data, dict):
-        for k, v in data.items():
-            if isinstance(v, dict) and 'price' in v:
-                tickers[k] = v
+    if isinstance(raw_tickers, dict):
+        for k, v in raw_tickers.items():
+            if isinstance(v, dict):
+                # Map old schema
+                if 'price' in v:
+                    tickers[k] = v
+                # Map new schema from market_feed.py
+                elif 'current_price' in v:
+                    curr = v.get('current_price', 0)
+                    prev = v.get('previous_close', 0)
+                    chg_pct = round(((curr / prev) - 1) * 100, 2) if prev else 0.0
+                    tickers[k] = {
+                        'price': curr,
+                        'change_pct': chg_pct,
+                        'volume': v.get('daily_volume', 0),
+                        'market_cap': 'N/A',
+                        'pe_ratio': 'N/A',
+                    }
+                    
     return {'tickers': tickers, 'fetched_at': fetched}
 
 
