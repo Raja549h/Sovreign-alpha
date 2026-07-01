@@ -85,13 +85,20 @@ class FIIIntelligence:
         except Exception as _e:
             print(f"[fii] Primary NSDL fetch failed: {_e}")
         try:
+            import pandas as pd
             import yfinance as yf
             nsei = yf.download('^NSEI', period='5d', interval='1d', progress=False)
             if not nsei.empty:
-                latest = nsei.iloc[-1]
-                prev = nsei.iloc[-2] if len(nsei) > 1 else nsei.iloc[-1]
-                price_change = float(latest['Close'] - prev['Close'])
-                volume = int(latest['Volume']) if 'Volume' in nsei.columns else 0
+                if isinstance(nsei.columns, pd.MultiIndex):
+                    ticker = nsei.columns.get_level_values(1)[0]
+                    cur = float(nsei[('Close', ticker)].iloc[-1])
+                    prev = float(nsei[('Close', ticker)].iloc[-2]) if len(nsei) > 1 else cur
+                    volume = int(nsei[('Volume', ticker)].iloc[-1]) if ('Volume', ticker) in nsei.columns else 0
+                else:
+                    cur = float(nsei['Close'].iloc[-1])
+                    prev = float(nsei['Close'].iloc[-2]) if len(nsei) > 1 else cur
+                    volume = int(nsei['Volume'].iloc[-1]) if 'Volume' in nsei.columns else 0
+                price_change = cur - prev
                 est_flow = round(price_change * volume / 1e8, 2)
                 return {
                     'date': today, 'equity_net': est_flow, 'debt_net': 0.0,

@@ -224,7 +224,7 @@ def run_pipeline():
             [sys.executable, str(BASE_DIR / "automation" / "email_digest.py")],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=300
         )
         if subprocess_result.returncode == 0:
             results["steps"]["email"] = "OK"

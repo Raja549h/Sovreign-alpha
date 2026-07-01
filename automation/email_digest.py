@@ -5,16 +5,19 @@ Falls back gracefully on any failure -- email always sends with whatever data is
 """
 
 import os
+import sys
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
 import smtplib
 from database import IntegrityError, get_connection
 import random
 import uuid
 from datetime import datetime, timedelta
-from pathlib import Path
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-BASE_DIR = Path(__file__).parent.parent
 BILLING_DIR = BASE_DIR / "billing"
 
 def load_env():
