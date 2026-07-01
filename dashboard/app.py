@@ -3962,9 +3962,9 @@ def seed_database_on_startup():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret))
             print(f"[seed] Inserted {len(samples)} sample predictions")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'incorrect', actual_return_pct = -3.2 WHERE prediction_id = 'pred-003' AND (actual_outcome IS NULL OR actual_outcome = '')")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', actual_return_pct = 4.1 WHERE prediction_id = 'pred-004' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', status = 'HIT', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'incorrect', status = 'MISS', actual_return_pct = -3.2 WHERE prediction_id = 'pred-003' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', status = 'HIT', actual_return_pct = 4.1 WHERE prediction_id = 'pred-004' AND (actual_outcome IS NULL OR actual_outcome = '')")
 
         c.execute("SELECT COUNT(*) FROM veto_archive")
         if c.fetchone()[0] == 0:

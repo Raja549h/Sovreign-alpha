@@ -317,15 +317,15 @@ class ThesisEvolutionEngine:
             return c.lastrowid
 
     def _classify_via_groq(self, prior_text: str, current_text: str) -> Dict:
-        groq_key = os.environ.get('GROQ_API_KEY', '')
+        groq_key = os.environ.get('LLM_API_KEY', '')
         if not groq_key:
             return self._classify_fallback(prior_text, current_text)
 
         try:
-            from groq import Groq
+            from openai import OpenAI
             client = Groq(api_key=groq_key)
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=LLM_MODEL,
                 messages=[
                     {"role": "system", "content": GROQ_CLASSIFY_PROMPT},
                     {"role": "user", "content": f"Prior: {prior_text}\n\nCurrent: {current_text}"}

@@ -19,9 +19,9 @@ except ImportError:
     YFINANCE_AVAILABLE = False
 
 try:
-    GROQ_AVAILABLE = True
+    OPENAI_AVAILABLE = True
 except ImportError:
-    GROQ_AVAILABLE = False
+    OPENAI_AVAILABLE = False
 
 
 class HistoricalDataLoader:

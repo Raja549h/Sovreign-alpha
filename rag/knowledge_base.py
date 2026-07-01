@@ -23,9 +23,9 @@ except ImportError:
         print("WARNING: LlamaIndex not available, using simple fallback")
 
 try:
-    GROQ_AVAILABLE = True
+    OPENAI_AVAILABLE = True
 except ImportError:
-    GROQ_AVAILABLE = False
+    OPENAI_AVAILABLE = False
 
 from config import (
     DATA_DIR, CHROMA_PERSIST_DIR, logger

@@ -25,7 +25,7 @@ NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 
 # Load environment at module level so dotenv works
 load_dotenv(BASE_DIR / ".env")
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+LLM_API_KEY = os.environ.get('LLM_API_KEY', '')
 
 NOTE_COUNTER_FILE = BASE_DIR / "research" / "data" / ".note_counter"
 
@@ -193,13 +193,13 @@ Generate a forensic institutional research note."""
     except Exception:
         pass
 
-    if GROQ_API_KEY:
+    if LLM_API_KEY:
         try:
-            from groq import Groq
-            client = Groq(api_key=GROQ_API_KEY)
+            from openai import OpenAI
+            client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
             
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=LLM_MODEL,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_message}

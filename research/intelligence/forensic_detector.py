@@ -13,7 +13,7 @@ from research.storage.research_db import (
     get_metric_series, save_flag, get_flags
 )
 
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+LLM_API_KEY = os.environ.get('LLM_API_KEY', '')
 
 NARRATIVE_DRIFT_SYSTEM_PROMPT = """You are an institutional forensic analyst examining earnings call transcripts for a concentrated equity research firm. Your task is to identify narrative drift — cases where management language has shifted meaningfully from prior periods in ways that may signal underlying business changes before they appear in financial metrics.
 
@@ -303,8 +303,8 @@ def detect_narrative_drift(company_id: int, transcript_texts: List[str]) -> List
     """
     findings = []
     
-    if not GROQ_API_KEY:
-        findings.append({'type': 'info', 'description': 'GROQ_API_KEY not set — skipping narrative drift analysis'})
+    if not LLM_API_KEY:
+        findings.append({'type': 'info', 'description': 'LLM_API_KEY not set — skipping narrative drift analysis'})
         return findings
     
     if len(transcript_texts) < 2:
@@ -312,8 +312,8 @@ def detect_narrative_drift(company_id: int, transcript_texts: List[str]) -> List
         return findings
     
     try:
-        from groq import Groq
-        client = Groq(api_key=GROQ_API_KEY)
+        from openai import OpenAI
+        client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
         
         user_message = f"""Compare these two earnings call transcripts for narrative drift:
 
@@ -326,7 +326,7 @@ TRANSCRIPT 2 (Later):
 Identify narrative shifts. Output JSON array only."""
         
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=LLM_MODEL,
             messages=[
                 {"role": "system", "content": NARRATIVE_DRIFT_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message}

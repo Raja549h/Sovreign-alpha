@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).parent.parent
 NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 load_dotenv(BASE_DIR / ".env")
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+LLM_API_KEY = os.environ.get('LLM_API_KEY', '')
 
 EVOLUTION_SYSTEM_PROMPT = """You are a senior institutional equity analyst tracking changes in a company's business quality, governance, and financial trajectory over time.
 
@@ -95,7 +95,7 @@ SECTION_LABELS = {
 }
 
 def _generate_section(section_key: str, company: str, ticker: str, context: Dict) -> str:
-    if not GROQ_API_KEY:
+    if not LLM_API_KEY:
         return "Section generation unavailable. Groq API key not configured."
     prompt = SECTION_PROMPTS.get(section_key, "Analyse {company} ({ticker})").format(
         company=company, ticker=ticker,
@@ -108,10 +108,10 @@ def _generate_section(section_key: str, company: str, ticker: str, context: Dict
         observation_data=json.dumps(context.get("observation_data", {}), indent=2)[:2000],
     )
     try:
-        from groq import Groq
-        client = Groq(api_key=GROQ_API_KEY)
+        from openai import OpenAI
+        client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=LLM_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}

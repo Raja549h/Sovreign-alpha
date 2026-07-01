@@ -18,15 +18,15 @@ from dataclasses import dataclass, asdict
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import GROQ_API_KEY, logger
+from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, logger
 from engine.regime import MarketRegimeEngine
 from engine.data_layer import DataLayer
 
 try:
-    from groq import Groq
-    GROQ_AVAILABLE = True
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
 except ImportError:
-    GROQ_AVAILABLE = False
+    OPENAI_AVAILABLE = False
 
 
 @dataclass
@@ -69,8 +69,8 @@ class AnalystAgent:
         self.data_layer = DataLayer()
         self.regime_engine = MarketRegimeEngine()
         self.groq_client = None
-        if GROQ_AVAILABLE and GROQ_API_KEY:
-            self.groq_client = Groq(api_key=GROQ_API_KEY)
+        if OPENAI_AVAILABLE and LLM_API_KEY:
+            self.groq_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
     def _build_technical_summary(self, profile) -> Dict[str, Any]:
         """Build technical structure summary from asset profile."""
@@ -162,7 +162,7 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=LLM_MODEL,
                 messages=[
                     {"role": "system", "content": "You are a senior institutional analyst. Write concise, evidence-driven market analysis in the style of Goldman Sachs research notes. No hype, no emoji, no retail language."},
                     {"role": "user", "content": prompt}
