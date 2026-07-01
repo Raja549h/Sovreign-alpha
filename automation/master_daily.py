@@ -73,6 +73,13 @@ def run_pipeline():
         macro = dl.fetch_macro_snapshot()
         india = dl.fetch_nse_india()
         commodities = dl.fetch_commodities()
+        
+        # Generate JSON data for the dashboard live market page
+        log("      Generating live_market_data.json...")
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_feed.py")])
+        log("      Generating live_signals.json...")
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_signals.py")])
+        
         results["steps"]["market_data"] = "OK"
         log(f"      VIX: {macro.vix} | 10Y: {macro.treasury_10y}% | DXY: {macro.dxy}")
         log(f"      Gold: ${macro.gold} | Oil: ${macro.oil_wti}")
