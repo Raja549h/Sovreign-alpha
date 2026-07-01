@@ -27,28 +27,33 @@ ZKML_DIR = BASE_DIR / "zkml"
 BLOCKCHAIN_DIR = BASE_DIR / "blockchain"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-if not GROQ_API_KEY:
-    print("WARNING: GROQ_API_KEY not found. Copy .env.example to .env and add your key.")
+LLM_PROVIDER = "cerebras"
+LLM_API_KEY = os.environ.get("CEREBRAS_API_KEY", "")
+LLM_BASE_URL = "https://api.cerebras.ai/v1"
+
+if not LLM_API_KEY:
+    print("WARNING: CEREBRAS_API_KEY not found. Copy .env.example to .env and add your key.")
 
 WEB3_RPC_URL = os.getenv("WEB3_RPC_URL", "https://sepolia.base.org")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 COINBASE_AGENT_KIT_TOKEN = os.getenv("COINBASE_AGENT_KIT_TOKEN", "")
 WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "")
 
-LLM_MODEL = "llama-3.3-70b-versatile"
-LLM_MODEL_FAST = "llama-3.3-70b-versatile"
+LLM_MODEL = os.environ.get("CEREBRAS_MODEL", "gpt-oss-120b")
+LLM_MODEL_FAST = os.environ.get("CEREBRAS_MODEL_FAST", "gpt-oss-120b")
 
 llm_config = {
     "model": LLM_MODEL,
-    "api_key": GROQ_API_KEY,
+    "api_key": LLM_API_KEY,
+    "base_url": LLM_BASE_URL,
     "temperature": 0.3,
     "max_tokens": 2048
 }
 
 quick_llm_config = {
     "model": LLM_MODEL_FAST,
-    "api_key": GROQ_API_KEY,
+    "api_key": LLM_API_KEY,
+    "base_url": LLM_BASE_URL,
     "temperature": 0.1,
     "max_tokens": 1024
 }

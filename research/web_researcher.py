@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 load_dotenv(BASE_DIR / ".env")
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+LLM_API_KEY = os.environ.get('LLM_API_KEY', '')
 
 HISTORICAL_METRICS = [
     "Revenue", "EBITDA", "PAT", "ROE", "ROA", "ROCE",
@@ -110,13 +110,13 @@ def _fetch_yfinance_data(ticker: str) -> Dict:
     return data
 
 def _groq_web_search(query: str) -> str:
-    if not GROQ_API_KEY:
+    if not LLM_API_KEY:
         return ""
     try:
-        from groq import Groq
-        client = Groq(api_key=GROQ_API_KEY)
+        from openai import OpenAI
+        client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=LLM_MODEL,
             messages=[
                 {"role": "system", "content": "You are a financial research assistant. Provide factual, data-based information about the company. If you don't know exact numbers, state that clearly. Never fabricate data."},
                 {"role": "user", "content": f"Find and summarize information about: {query}. Return specific numbers, dates, and facts where available. If data is unavailable, say so."}
@@ -160,7 +160,7 @@ def research_company(ticker: str, company_name: str, sector: str) -> Dict:
     sector_context = search_results[5] if len(search_results) > 5 else ""
     competitive_position = search_results[4] if len(search_results) > 4 else ""
     sources = [f"yfinance: {ticker}.NS"]
-    if GROQ_API_KEY:
+    if LLM_API_KEY:
         sources.append("groq-web-search")
     data_confidence = _calculate_data_confidence(financial_data, search_results)
     warnings = []
@@ -168,8 +168,8 @@ def research_company(ticker: str, company_name: str, sector: str) -> Dict:
         warnings.append("yfinance package not installed. Financial data limited.")
     elif "error" in financial_data.get("data_quality", ""):
         warnings.append(f"yfinance error: {financial_data['data_quality']}")
-    if not GROQ_API_KEY:
-        warnings.append("GROQ_API_KEY not set. Web search unavailable.")
+    if not LLM_API_KEY:
+        warnings.append("LLM_API_KEY not set. Web search unavailable.")
     macro_context = {}
     try:
         from research.intelligence.regime_connector import get_regime_context, assess_regime_sensitivity

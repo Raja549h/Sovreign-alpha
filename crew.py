@@ -23,7 +23,7 @@ from typing import Dict, Any, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import BASE_DIR, GROQ_API_KEY, logger
+from config import BASE_DIR, LLM_API_KEY, logger
 from engine.regime import MarketRegimeEngine
 from engine.data_layer import DataLayer
 from agents.analyst import AnalystAgent, InstitutionalPrediction
@@ -50,8 +50,8 @@ class SovereignAlphaPipeline:
         print("SOVEREIGN ALPHA — Institutional Intelligence Pipeline")
         print("=" * 70)
 
-        if not GROQ_API_KEY:
-            print("WARNING: GROQ_API_KEY not set — using rule-based analysis only")
+        if not LLM_API_KEY:
+            print("WARNING: LLM_API_KEY not set — using rule-based analysis only")
 
         self.regime_engine = MarketRegimeEngine()
         logger.info("Market Regime Engine initialized")

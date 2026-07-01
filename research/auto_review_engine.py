@@ -198,7 +198,7 @@ class AutoReviewEngine:
 
     def _classify_via_groq(self, date: str, text: str, expected: str,
                            metrics: Dict, news: List) -> Dict:
-        groq_key = os.environ.get('GROQ_API_KEY', '')
+        groq_key = os.environ.get('LLM_API_KEY', '')
         if not groq_key:
             return {'status': 'MONITORING', 'evidence': '',
                     'reasoning': 'Groq unavailable for classification.',
@@ -213,10 +213,10 @@ class AutoReviewEngine:
         )
 
         try:
-            from groq import Groq
+            from openai import OpenAI
             client = Groq(api_key=groq_key)
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=LLM_MODEL,
                 messages=[
                     {"role": "system", "content": "You are an institutional analyst validating research observations. Output JSON only."},
                     {"role": "user", "content": prompt}
