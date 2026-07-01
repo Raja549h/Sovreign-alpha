@@ -10,11 +10,11 @@ venv/
 node_modules/
 README.md
 SUMMARY.md
-data/
+data/chroma_db/
+data/__pycache__/
 results/
 zkml/proofs/
 zkml/certificates/
 billing/*.db
 Dockerfile
 docker-compose.yml
-*.md
