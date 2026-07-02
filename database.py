@@ -16,11 +16,44 @@ def init_pool():
         return
     
     neon_url = os.environ.get("NEON_URL", "")
-    if neon_url:
+    if not neon_url or len(neon_url) < 10:
+        print("WARNING: NEON_URL missing or malformed. Running without DB.")
+        return
+
+    import time
+    import socket
+    import urllib.parse
+    
+    parsed = urllib.parse.urlparse(neon_url)
+    host = parsed.hostname
+    
+    retries = 3
+    for attempt in range(1, retries + 1):
         try:
-            _PG_POOL = pool.ThreadedConnectionPool(1, 100, neon_url, cursor_factory=DictCursor)
-        except psycopg2.Error as e:
-            print(f"Failed to initialize Neon connection pool: {e}")
+            # Add keepalives to connection string
+            if "?" not in neon_url:
+                conn_url = neon_url + "?connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
+            else:
+                conn_url = neon_url + "&connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
+                
+            _PG_POOL = pool.ThreadedConnectionPool(1, 100, conn_url, cursor_factory=DictCursor)
+            return # Success
+            
+        except psycopg2.OperationalError as e:
+            if "could not translate host name" in str(e) and host:
+                try:
+                    # Try to resolve IP dynamically
+                    ip = socket.gethostbyname(host)
+                    neon_url = neon_url.replace(host, ip)
+                    print(f"[DB Retry] Resolved {host} to {ip}")
+                except socket.gaierror:
+                    pass
+            
+            if attempt < retries:
+                print(f"[DB Retry] Connection failed, retrying {attempt}/{retries} in 2s...")
+                time.sleep(2)
+            else:
+                raise ConnectionError("CRITICAL: Database unreachable after 3 attempts.") from e
 
 class NeonRow:
     def __init__(self, d):
