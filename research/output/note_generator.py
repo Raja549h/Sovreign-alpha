@@ -208,10 +208,12 @@ Generate a forensic institutional research note."""
                 max_tokens=2500
             )
             
-            note_content = response.choices[0].message.content
+            note_content = response.choices[0].message.content or ""
+            if not note_content:
+                note_content = _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime)
             
         except Exception as e:
-            note_content = f"[Groq API Error: {e}]\n\nNote generation failed. Manual analysis required."
+            note_content = f"[LLM API Error: {e}]\n\nNote generation failed. Manual analysis required."
     else:
         note_content = _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime) + "\n\n" + thesis_evolution_html if thesis_evolution_html else _generate_fallback_note(company_name, ticker, sector, metrics, flags, scores, regime)
     

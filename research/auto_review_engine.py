@@ -198,10 +198,10 @@ class AutoReviewEngine:
 
     def _classify_via_groq(self, date: str, text: str, expected: str,
                            metrics: Dict, news: List) -> Dict:
-        groq_key = os.environ.get('LLM_API_KEY', '')
-        if not groq_key:
+        from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
+        if not LLM_API_KEY:
             return {'status': 'MONITORING', 'evidence': '',
-                    'reasoning': 'Groq unavailable for classification.',
+                    'reasoning': 'LLM API key unavailable for classification.',
                     'confidence': 0.5}
 
         prompt = GROQ_VALIDATION_PROMPT.format(
@@ -214,7 +214,7 @@ class AutoReviewEngine:
 
         try:
             from openai import OpenAI
-            client = Groq(api_key=groq_key)
+            client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
             response = client.chat.completions.create(
                 model=LLM_MODEL,
                 messages=[
@@ -222,18 +222,22 @@ class AutoReviewEngine:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                max_tokens=300
+                max_tokens=500
             )
-            text = response.choices[0].message.content
-            text = text.replace("'", '"')
-            result = json.loads(text)
+            resp_text = response.choices[0].message.content
+            if not resp_text:
+                return {'status': 'MONITORING', 'evidence': '',
+                        'reasoning': 'LLM returned empty response. Remains MONITORING.',
+                        'confidence': 0.5}
+            resp_text = resp_text.replace("'", '"')
+            result = json.loads(resp_text)
             for key in ['status', 'evidence', 'reasoning']:
                 if key not in result:
                     result[key] = 'MONITORING' if key == 'status' else ''
             return result
         except Exception:
             return {'status': 'MONITORING', 'evidence': '',
-                    'reasoning': 'Groq classification failed. Remains MONITORING.',
+                    'reasoning': 'LLM classification failed. Remains MONITORING.',
                     'confidence': 0.5}
 
     def _determine_review_type(self, observation: Dict) -> str:

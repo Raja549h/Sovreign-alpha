@@ -170,10 +170,12 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
                 temperature=0.3,
                 max_tokens=500
             )
-            thesis = response.choices[0].message.content.strip()
-            return thesis
+            thesis = response.choices[0].message.content
+            if thesis:
+                return thesis.strip()
+            return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
         except Exception as e:
-            logger.warning(f"Groq thesis generation failed: {e}")
+            logger.warning(f"LLM thesis generation failed: {e}")
             return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
 
     def _generate_simple_thesis(self, ticker: str, profile, regime: str, macro: Dict, tech: Dict) -> str:
