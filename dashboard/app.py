@@ -1156,24 +1156,28 @@ def api_export_predictions():
     predictions = get_predictions(1000)
     ledger_stats = calculate_ledger_stats()
     
-    csv_lines = ['prediction_id,timestamp,asset,sector,thesis,confidence_score,status,expected_timeline_days,actual_outcome,actual_return_pct,proof_hash']
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['prediction_id','timestamp','asset','sector','thesis','confidence_score','status','expected_timeline_days','actual_outcome','actual_return_pct','proof_hash'])
     
     for p in predictions:
-        csv_lines.append(','.join([
+        writer.writerow([
             p.get('prediction_id', ''),
             p.get('timestamp', ''),
             p.get('asset', ''),
             p.get('sector', ''),
-            f'"{p.get("thesis", "")}"',
-            str(p.get('confidence_score', 0)),
+            p.get('thesis', ''),
+            p.get('confidence_score', 0),
             p.get('status', ''),
-            str(p.get('expected_timeline_days', 0)),
+            p.get('expected_timeline_days', 0),
             p.get('actual_outcome', ''),
-            str(p.get('actual_return_pct', 0)),
+            p.get('actual_return_pct', 0),
             p.get('proof_hash', '')
-        ]))
+        ])
     
-    csv_data = '\n'.join(csv_lines)
+    csv_data = output.getvalue()
     resp = make_response(csv_data)
     resp.headers['Content-Type'] = 'text/csv'
     resp.headers['Content-Disposition'] = f'attachment; filename=prediction_ledger_{datetime.utcnow().strftime("%Y%m%d")}.csv'
