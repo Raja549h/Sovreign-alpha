@@ -244,6 +244,25 @@ def run_pipeline():
         results["errors"].append(f"email: {str(e)}")
         log(f"      ERROR: {e}")
 
+    # Step 9: Validation Status Update
+    log("[9/9] Updating prediction validation statuses...")
+    try:
+        from database import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")
+            hits = c.rowcount
+            c.execute("UPDATE prediction_ledger SET status = 'MISS' WHERE actual_outcome = 'incorrect' AND status NOT IN ('HIT', 'MISS');")
+            misses = c.rowcount
+            c.execute("UPDATE prediction_ledger SET status = 'PENDING' WHERE actual_outcome IS NULL AND status NOT IN ('HIT', 'MISS', 'PENDING');")
+            conn.commit()
+            results["steps"]["validation"] = f"Hits: {hits}, Misses: {misses}"
+            log(f"      Validation updated: {hits} HITs, {misses} MISSes resolved.")
+    except Exception as e:
+        results["steps"]["validation"] = f"FAIL: {str(e)}"
+        results["errors"].append(f"validation: {str(e)}")
+        log(f"      ERROR: {e}")
+
     # Summary
     results["summary"] = {
         "total_predictions": len(predictions),
