@@ -28,7 +28,7 @@ NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 load_dotenv(BASE_DIR / ".env")
 LLM_API_KEY = os.environ.get('CEREBRAS_API_KEY') or os.environ.get('LLM_API_KEY', '')
 LLM_BASE_URL = "https://api.cerebras.ai/v1"
-LLM_MODEL = "llama3.1-8b"
+LLM_MODEL = "gpt-oss-120b"
 
 NOTE_COUNTER_FILE = BASE_DIR / "research" / "data" / ".note_counter"
 
