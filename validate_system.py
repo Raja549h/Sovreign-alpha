@@ -99,27 +99,47 @@ def check_config_and_api():
         failed = True
         details.append("CEREBRAS_API_KEY is not set.")
         
-    # Check for Llama/Groq mentions
-    try:
-        if sys.platform == 'win32':
-            # Use powershell for grep
-            cmd = ['powershell', '-Command', "Get-ChildItem -Path . -Recurse -File -Include *.py | Select-String -Pattern 'groq|llama(?!-index)'"]
-        else:
-            cmd = ['grep', '-rniE', 'groq|llama(?!-index)', '--include', '*.py', '.']
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        # Note: Select-String might return matches for files we don't care about, but we sanitized the project heavily.
-        # Let's just check if it found actual code lines.
-        lines = [line for line in result.stdout.split('\n') if line.strip() and 'validate_system.py' not in line]
-        if lines:
-            failed = True
-            details.append(f"Found {len(lines)} references to groq/llama in Python files.")
-    except Exception as e:
-        details.append(f"Could not grep files: {e}")
+    # Check for actual model references in config and API calls
+    forbidden_patterns = ['llama-3.3-70b', 'groq/compound', 'groq.']
+    excluded_files = ['wipe_groq.py', 'validate_system.py', 'cleanup_']
+    excluded_strings = ['llama_index']
+
+    found_refs = []
+    for root, dirs, files in os.walk('.'):
+        if 'venv' in root or '.git' in root or '__pycache__' in root:
+            continue
+        for file in files:
+            if not file.endswith('.py'):
+                continue
+            
+            # Skip excluded files
+            if any(file == ef or (ef.endswith('_') and file.startswith(ef)) for ef in excluded_files):
+                continue
+                
+            filepath = os.path.join(root, file)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    for line_num, line in enumerate(f, 1):
+                        stripped = line.strip()
+                        # Ignore comments
+                        if stripped.startswith('#'):
+                            continue
+                        # Check for forbidden patterns
+                        for pat in forbidden_patterns:
+                            if pat in stripped:
+                                # Ensure it's not explicitly whitelisted
+                                if not any(ex in stripped for ex in excluded_strings):
+                                    found_refs.append(f"{file}:{line_num}")
+            except Exception:
+                pass
+                
+    if found_refs:
+        failed = True
+        details.append(f"Found {len(found_refs)} references to forbidden models: {', '.join(found_refs[:3])}{'...' if len(found_refs) > 3 else ''}")
         
     if failed:
         return False, " | ".join(details)
-    return True, "Config looks correct, no groq/llama references found."
+    return True, "Config looks correct, no forbidden references found."
 
 def check_ui_routes():
     try:

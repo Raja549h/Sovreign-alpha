@@ -4054,42 +4054,7 @@ def seed_database_on_startup():
 
 seed_database_on_startup()
 
-if is_demo_mode():
-    print("[seed] SAFETY NET: Demo mode active — inserting emergency data...")
-    try:
-        import uuid as _uuid
-        _conn = db_get_connection()
-        _c = _conn.cursor()
-        _now = datetime.utcnow()
-        _c.execute("""
-            INSERT INTO prediction_ledger
-            (prediction_id, timestamp, asset, sector, thesis, confidence_score,
-             status, expected_timeline_days, proof_hash, created_at, updated_at,
-             actual_outcome, actual_return_pct)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, ("safety-001", (_now - timedelta(days=1)).isoformat() + 'Z',
-              "NIFTY50", "Index", "Emergency seed — system recovery", 0.65,
-              "cleared", 30, "0x" + _uuid.uuid4().hex[:40],
-              _now.isoformat(), _now.isoformat(), "correct", 2.5))
-        _c.execute("""
-            INSERT INTO prediction_ledger
-            (prediction_id, timestamp, asset, sector, thesis, confidence_score,
-             status, expected_timeline_days, proof_hash, created_at, updated_at,
-             actual_outcome, actual_return_pct)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, ("safety-002", (_now - timedelta(days=2)).isoformat() + 'Z',
-              "BANKNIFTY", "Index", "Emergency seed — system recovery", 0.70,
-              "cleared", 30, "0x" + _uuid.uuid4().hex[:40],
-              _now.isoformat(), _now.isoformat(), "incorrect", -1.8))
-        _c.execute("DELETE FROM decisions")
-        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT prediction_id, asset, 'approve', status, confidence_score, timestamp FROM prediction_ledger")
-        _c.execute("INSERT INTO decisions (decision_id, symbol, action, status, confidence, timestamp) SELECT veto_id, asset, 'veto', 'vetoed', COALESCE(1.0 - risk_score, 0.5), timestamp FROM veto_archive")
-        _conn.commit()
-        _conn.close()
-        _ledger = calculate_ledger_stats()
-        print(f"[seed] Safety net: {_ledger['total_predictions']} predictions, {_ledger['with_outcome']} outcomes")
-    except Exception as _e:
-        print(f"[seed] Safety net also failed: {_e}")
+# SAFETY NET REMOVED - No demo data insertion.
 
 try:
     from dashboard.schemas import init_research_db

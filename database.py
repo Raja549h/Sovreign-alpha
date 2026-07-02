@@ -30,13 +30,11 @@ def init_pool():
     retries = 3
     for attempt in range(1, retries + 1):
         try:
-            # Add keepalives to connection string
-            if "?" not in neon_url:
-                conn_url = neon_url + "?connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
-            else:
-                conn_url = neon_url + "&connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
+            # Enforce max 5 connections to avoid overwhelming free tier
+            base = neon_url.split('?')[0] if '?' in neon_url else neon_url
+            conn_url = base + "?sslmode=require&connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
                 
-            _PG_POOL = pool.ThreadedConnectionPool(1, 100, conn_url, cursor_factory=DictCursor)
+            _PG_POOL = pool.ThreadedConnectionPool(1, 5, conn_url, cursor_factory=DictCursor)
             return # Success
             
         except psycopg2.OperationalError as e:
@@ -214,10 +212,19 @@ class DatabaseConnection:
             pass
 
 def get_db_connection(*args, **kwargs):
-    return DatabaseConnection()
+    try:
+        return DatabaseConnection()
+    except Exception:
+        return None
 
 def get_connection(*args, **kwargs):
-    return DatabaseConnection()
+    try:
+        return DatabaseConnection()
+    except Exception:
+        return None
 
 def transaction(*args, **kwargs):
-    return DatabaseConnection()
+    try:
+        return DatabaseConnection()
+    except Exception:
+        return None
