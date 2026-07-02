@@ -68,9 +68,9 @@ class AnalystAgent:
     def __init__(self):
         self.data_layer = DataLayer()
         self.regime_engine = MarketRegimeEngine()
-        self.groq_client = None
+        self.cerebras_client = None
         if OPENAI_AVAILABLE and LLM_API_KEY:
-            self.groq_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
+            self.cerebras_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
     def _build_technical_summary(self, profile) -> Dict[str, Any]:
         """Build technical structure summary from asset profile."""
@@ -116,8 +116,8 @@ class AnalystAgent:
         }
 
     def _generate_thesis(self, ticker: str, profile, regime: str, macro: Dict, tech: Dict, sec_data: Dict) -> str:
-        """Generate institutional thesis using Groq LLM."""
-        if not self.groq_client:
+        """Generate institutional thesis using Cerebras LLM."""
+        if not self.cerebras_client:
             return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
 
         signal = self._determine_signal(profile, regime, tech)
@@ -161,7 +161,7 @@ Write a single paragraph thesis (2-3 sentences) that:
 Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs research note."""
 
         try:
-            response = self.groq_client.chat.completions.create(
+            response = self.cerebras_client.chat.completions.create(
                 model=LLM_MODEL,
                 messages=[
                     {"role": "system", "content": "You are a senior institutional analyst. Write concise, evidence-driven market analysis in the style of Goldman Sachs research notes. No hype, no emoji, no retail language."},

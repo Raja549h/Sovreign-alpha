@@ -346,7 +346,7 @@ CREATE TABLE IF NOT EXISTS observation_validations (
     new_status TEXT,
     validation_method TEXT,
     supporting_data TEXT,
-    groq_reasoning TEXT,
+    cerebras_reasoning TEXT,
     accuracy_contribution REAL,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

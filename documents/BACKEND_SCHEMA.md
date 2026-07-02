@@ -337,7 +337,7 @@ Normalized server-side to: `{'tickers': {...}, 'fetched_at': '...'}`
 |----------|----------|---------|---------|
 | `FUND_PASSWORD` | Yes | `""` | Login authentication |
 | `JWT_SECRET` | Yes | `"change-this-secret-in-production"` | Session signing, CSP secret |
-| `GROQ_API_KEY` | Yes | `""` | LLM research generation |
+| `CEREBRAS_API_KEY` | Yes | `""` | LLM research generation |
 | `FRED_API_KEY` | No | `""` | Macro data |
 | `WEB3_RPC_URL` | No | `"https://sepolia.base.org"` | Blockchain |
 | `RENDER` | No | `"false"` | Cloud mode detection |

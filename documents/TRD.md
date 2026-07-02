@@ -194,7 +194,7 @@ POST /research/analyze → validate ticker → engine.run_analysis()
 | FRED API | Fed funds rate, HY/IG OAS | API key (optional) | Returns 0.0 |
 | SEC EDGAR | 13F filings | None | Returns hardcoded holdings |
 | World Bank | India GDP, inflation, CAD | None | Returns hardcoded defaults |
-| Groq API | LLM research generation | API key (required) | Prints warning if missing |
+| Cerebras API | LLM research generation | API key (required) | Prints warning if missing |
 | Base Sepolia | Blockchain ledger | Private key (optional) | Falls back to local DB |
 
 ---

@@ -36,7 +36,7 @@ def load_security_logs() -> Dict:
 
 
 def generate_auditor_statement() -> str:
-    """Generate auditor statement using Groq."""
+    """Generate auditor statement using Cerebras."""
     statement = """
 INDEPENDENT SECURITY AUDITOR STATEMENT
 

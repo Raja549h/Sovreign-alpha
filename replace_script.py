@@ -28,8 +28,8 @@ for file in files:
         content = content.replace('LLM_API_KEY', 'LLM_API_KEY')
         changed = True
 
-    if 'self.groq_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)' in content:
-        content = content.replace('self.groq_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)', 'self.groq_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)')
+    if 'self.cerebras_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)' in content:
+        content = content.replace('self.cerebras_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)', 'self.cerebras_client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)')
         changed = True
     
     if 'client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)' in content:
@@ -40,8 +40,8 @@ for file in files:
         content = content.replace('model=LLM_MODEL', 'model=LLM_MODEL')
         changed = True
         
-    if 'model=\"llama-3.3-70b-versatile\"' in content:
-        content = content.replace('model=\"llama-3.3-70b-versatile\"', 'model=LLM_MODEL')
+    if 'model=\"gpt-oss-120b\"' in content:
+        content = content.replace('model=\"gpt-oss-120b\"', 'model=LLM_MODEL')
         changed = True
 
     if changed:

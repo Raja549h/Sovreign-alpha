@@ -12,7 +12,7 @@
 
 Before starting the demo, ensure:
 - [ ] Dashboard is not already running on port 5000
-- [ ] GROQ_API_KEY is set (or use fallback mode)
+- [ ] CEREBRAS_API_KEY is set (or use fallback mode)
 - [ ] Results directory has some session data
 
 ---
@@ -168,7 +168,7 @@ Before starting the demo, ensure:
 
 | Component | Technology |
 |-----------|------------|
-| AI Brain | Groq API (Llama 3.3) |
+| AI Brain | Cerebras API (Llama 3.3) |
 | Agents | CrewAI |
 | RAG | ChromaDB |
 | Market Data | yfinance |
