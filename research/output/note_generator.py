@@ -8,6 +8,7 @@ Produces HTML-formatted notes with cryptographic signing.
 import os
 import json
 import hashlib
+import threading
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -25,7 +26,9 @@ NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 
 # Load environment at module level so dotenv works
 load_dotenv(BASE_DIR / ".env")
-LLM_API_KEY = os.environ.get('LLM_API_KEY', '')
+LLM_API_KEY = os.environ.get('CEREBRAS_API_KEY') or os.environ.get('LLM_API_KEY', '')
+LLM_BASE_URL = "https://api.cerebras.ai/v1"
+LLM_MODEL = "llama3.1-8b"
 
 NOTE_COUNTER_FILE = BASE_DIR / "research" / "data" / ".note_counter"
 
