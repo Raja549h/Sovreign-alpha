@@ -13,7 +13,7 @@ from typing import Dict, List
 
 BASE_DIR = Path(__file__).parent.parent
 
-GROQ_VALIDATION_PROMPT = """You are an institutional analyst validating a prior research observation.
+CEREBRAS_VALIDATION_PROMPT = """You are an institutional analyst validating a prior research observation.
 
 Original observation (made {date}):
 {observation_text}
@@ -90,7 +90,7 @@ class AutoReviewEngine:
         current_metrics = self._fetch_current_metrics(ticker, company_id)
         recent_news = self._fetch_recent_news(ticker)
 
-        classification = self._classify_via_groq(
+        classification = self._classify_via_cerebras(
             obs_date, obs_text, expected,
             current_metrics, recent_news
         )
@@ -98,7 +98,7 @@ class AutoReviewEngine:
         new_status = classification.get('status', 'MONITORING')
         evidence = classification.get('evidence', '')
         reasoning = classification.get('reasoning', '')
-        groq_confidence = classification.get('confidence', 0.5)
+        cerebras_confidence = classification.get('confidence', 0.5)
 
         review_type = self._determine_review_type(observation)
 
@@ -120,7 +120,7 @@ class AutoReviewEngine:
                 """INSERT INTO observation_validations
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
-                    supporting_data, groq_reasoning, accuracy_contribution)
+                    supporting_data, cerebras_reasoning, accuracy_contribution)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (obs_id, company_id,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'),
@@ -139,7 +139,7 @@ class AutoReviewEngine:
             'new_status': new_status,
             'evidence': evidence,
             'reasoning': reasoning,
-            'confidence': groq_confidence,
+            'confidence': cerebras_confidence,
         }
 
     def trigger_review(self, company_id: int, trigger: str) -> List[Dict]:
@@ -196,7 +196,7 @@ class AutoReviewEngine:
             pass
         return news
 
-    def _classify_via_groq(self, date: str, text: str, expected: str,
+    def _classify_via_cerebras(self, date: str, text: str, expected: str,
                            metrics: Dict, news: List) -> Dict:
         from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
         if not LLM_API_KEY:
@@ -204,7 +204,7 @@ class AutoReviewEngine:
                     'reasoning': 'LLM API key unavailable for classification.',
                     'confidence': 0.5}
 
-        prompt = GROQ_VALIDATION_PROMPT.format(
+        prompt = CEREBRAS_VALIDATION_PROMPT.format(
             date=date or 'unknown date',
             observation_text=text or 'No observation text',
             expected_implication=expected or 'Not specified',

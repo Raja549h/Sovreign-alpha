@@ -57,7 +57,7 @@ def _get_company_name(company_id: int) -> str:
         return r['company_name'] if r else str(company_id)
 
 
-GROQ_CLASSIFY_PROMPT = (
+CEREBRAS_CLASSIFY_PROMPT = (
     "You are an institutional analyst comparing two observations about the "
     "same company made at different times.\n\n"
     "Classify the evolution as exactly one of:\n"
@@ -122,7 +122,7 @@ class ThesisEvolutionEngine:
                 'evidence': 'No prior observation exists for this category.',
             }
 
-        result = self._classify_via_groq(prior['observation_text'], new_observation)
+        result = self._classify_via_cerebras(prior['observation_text'], new_observation)
 
         evolution_id = self._save_evolution(
             company_id, category,
@@ -316,18 +316,18 @@ class ThesisEvolutionEngine:
             conn.commit()
             return c.lastrowid
 
-    def _classify_via_groq(self, prior_text: str, current_text: str) -> Dict:
-        groq_key = os.environ.get('LLM_API_KEY', '')
-        if not groq_key:
+    def _classify_via_cerebras(self, prior_text: str, current_text: str) -> Dict:
+        cerebras_key = os.environ.get('LLM_API_KEY', '')
+        if not cerebras_key:
             return self._classify_fallback(prior_text, current_text)
 
         try:
             from openai import OpenAI
-            client = Groq(api_key=groq_key)
+            client = Cerebras(api_key=cerebras_key)
             response = client.chat.completions.create(
                 model=LLM_MODEL,
                 messages=[
-                    {"role": "system", "content": GROQ_CLASSIFY_PROMPT},
+                    {"role": "system", "content": CEREBRAS_CLASSIFY_PROMPT},
                     {"role": "user", "content": f"Prior: {prior_text}\n\nCurrent: {current_text}"}
                 ],
                 temperature=0.1,

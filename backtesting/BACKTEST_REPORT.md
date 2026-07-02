@@ -8,7 +8,7 @@
 
 This report compares two investment approaches over 50+ historical trading days:
 
-- **Approach A (Single LLM):** Raw market data sent directly to Groq
+- **Approach A (Single LLM):** Raw market data sent directly to Cerebras
 - **Approach B (Council):** Full Analyst -> Risk Manager -> Auditor pipeline
 
 ---
@@ -38,7 +38,7 @@ This represents a **39.6%** effectiveness rate in catching bad trades before the
 ## Detailed Comparison
 
 ### Single LLM (Baseline)
-- Sends raw market data directly to Groq
+- Sends raw market data directly to Cerebras
 - No risk checks or verification
 - Decision based purely on LLM interpretation
 - Win Rate: **28.2%**

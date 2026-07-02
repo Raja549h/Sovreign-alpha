@@ -44,7 +44,7 @@ class BillingMeter:
                      status: str = "completed") -> int:
         """
         Log an inference call to the database.
-        Estimates cost based on Groq pricing (approximate).
+        Estimates cost based on Cerebras pricing (approximate).
         """
         total_tokens = input_tokens + output_tokens
         

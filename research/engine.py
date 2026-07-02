@@ -50,10 +50,10 @@ class SovereignAlphaResearch:
         """Initialize all modules and database."""
         load_dotenv()
         init_db()
-        self.groq_key = os.environ.get('LLM_API_KEY', '')
+        self.cerebras_key = os.environ.get('LLM_API_KEY', '')
         console.print(Panel(
             "[bold cyan]Sovereign Alpha Research Engine — Ready[/bold cyan]\n"
-            f"Groq API: {'[green]Configured[/green]' if self.groq_key else '[yellow]Not configured[/yellow]'}",
+            f"Cerebras API: {'[green]Configured[/green]' if self.cerebras_key else '[yellow]Not configured[/yellow]'}",
             title="Research Engine",
             border_style="cyan"
         ))

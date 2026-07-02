@@ -110,7 +110,7 @@ class ObservationRegistry:
                 """INSERT INTO observation_validations
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
-                    supporting_data, groq_reasoning, accuracy_contribution)
+                    supporting_data, cerebras_reasoning, accuracy_contribution)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (observation_id, prior.get('company_id'), today, 'triggered',
                  prior.get('validation_status', 'ACTIVE'), new_status,
@@ -369,7 +369,7 @@ class ObservationRegistry:
                                 om.validation_status as prior_status,
                                 'auto' as validation_method,
                                 COALESCE(om.validation_evidence, 'No evidence recorded') as supporting_data,
-                                '' as groq_reasoning,
+                                '' as cerebras_reasoning,
                                 om.confidence as accuracy_contribution,
                                 c.ticker, c.company_name, om.category, om.observation_text,
                                 om.created_at

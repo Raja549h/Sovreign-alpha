@@ -96,7 +96,7 @@ SECTION_LABELS = {
 
 def _generate_section(section_key: str, company: str, ticker: str, context: Dict) -> str:
     if not LLM_API_KEY:
-        return "Section generation unavailable. Groq API key not configured."
+        return "Section generation unavailable. Cerebras API key not configured."
     prompt = SECTION_PROMPTS.get(section_key, "Analyse {company} ({ticker})").format(
         company=company, ticker=ticker,
         financial_data=json.dumps(context.get("financial_data", {}), indent=2)[:2000],

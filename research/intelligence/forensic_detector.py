@@ -2,7 +2,7 @@
 Forensic Detector — Structural anomaly detection
 =================================================
 Detects anomalies in financial data using rule-based quantitative checks
-and Groq-powered qualitative narrative analysis.
+and Cerebras-powered qualitative narrative analysis.
 """
 
 import os
@@ -292,7 +292,7 @@ def detect_valuation_fragility(company_id: int, current_pe: float = None, curren
 
 def detect_narrative_drift(company_id: int, transcript_texts: List[str]) -> List[Dict]:
     """
-    Detect narrative drift using Groq API analysis.
+    Detect narrative drift using Cerebras API analysis.
     
     Args:
         company_id: Company ID

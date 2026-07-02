@@ -1,7 +1,7 @@
 """
 Web Researcher — Automatic public data collection for deep research
 ===================================================================
-Uses yfinance for financial data and Groq web search for qualitative context.
+Uses yfinance for financial data and Cerebras web search for qualitative context.
 """
 
 import os
@@ -109,7 +109,7 @@ def _fetch_yfinance_data(ticker: str) -> Dict:
         data["data_quality"] = f"error: {str(e)}"
     return data
 
-def _groq_web_search(query: str) -> str:
+def _cerebras_web_search(query: str) -> str:
     if not LLM_API_KEY:
         return ""
     try:
@@ -154,14 +154,14 @@ def research_company(ticker: str, company_name: str, sector: str) -> Dict:
     search_results = []
     for template in SEARCH_TEMPLATES:
         query = template.format(ticker=ticker, company=company_name)
-        result = _groq_web_search(query)
+        result = _cerebras_web_search(query)
         search_results.append(result)
     management_commentary = search_results[1] if len(search_results) > 1 else ""
     sector_context = search_results[5] if len(search_results) > 5 else ""
     competitive_position = search_results[4] if len(search_results) > 4 else ""
     sources = [f"yfinance: {ticker}.NS"]
     if LLM_API_KEY:
-        sources.append("groq-web-search")
+        sources.append("cerebras-web-search")
     data_confidence = _calculate_data_confidence(financial_data, search_results)
     warnings = []
     if financial_data.get("data_quality") == "unavailable":

@@ -1,7 +1,7 @@
 """
 Note Generator — Institutional research note composer
 =====================================================
-Generates forensic research notes using Groq API.
+Generates forensic research notes using Cerebras API.
 Produces HTML-formatted notes with cryptographic signing.
 """
 
@@ -121,7 +121,7 @@ def _sign_content(content: str) -> str:
 
 def generate_research_note(company_id: int, analyst_context: str = '', run_id: str = None) -> Dict:
     """
-    Generate institutional research note using Groq.
+    Generate institutional research note using Cerebras.
     
     Args:
         company_id: Company ID
@@ -255,7 +255,7 @@ Generate a forensic institutional research note."""
 
 def _generate_fallback_note(company_name: str, ticker: str, sector: str,
                             metrics: Dict, flags: List, scores: Dict, regime: Dict) -> str:
-    """Generate a basic note when Groq is unavailable."""
+    """Generate a basic note when Cerebras is unavailable."""
     lines = [
         f"# FORENSIC RESEARCH NOTE — {company_name} ({ticker})",
         f"Sector: {sector}",
