@@ -39,7 +39,7 @@
         </div>
         <div class="panel-body">
             {% if predictions and predictions|length > 0 %}
-            <div class="filter-bar" style="margin-bottom:0.75rem;display:flex;gap:6px;flex-wrap:wrap;">
+            <div id="pred-filter" class="filter-bar" style="margin-bottom:0.75rem;display:flex;gap:6px;flex-wrap:wrap;">
                 <button class="filter-btn active" data-filter="ALL">ALL</button>
                 <button class="filter-btn" data-filter="cleared">CLEARED</button>
                 <button class="filter-btn" data-filter="risk-rejected">REJECTED</button>
