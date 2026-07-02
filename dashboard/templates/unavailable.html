@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Alpha - Unavailable</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            text-align: center;
+        }
+        .container {
+            border: 1px solid #00ff00;
+            padding: 40px;
+            box-shadow: 0 0 10px #00ff00;
+            max-width: 600px;
+        }
+        h1 {
+            color: #ff0000;
+            text-transform: uppercase;
+        }
+        .timestamp {
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        .retry-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            color: #000;
+            background-color: #00ff00;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .retry-btn:hover {
+            background-color: #00cc00;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Offline</h1>
+        <p>Sovereign Alpha is currently offline. Our database is undergoing maintenance. Please check back shortly.</p>
+        <p class="timestamp" id="ts"></p>
+        {% if error_code %}
+            <p style="color: #ff0000; font-size: 0.8em;">ERR: {{ error_code }}</p>
+        {% endif %}
+        <a href="javascript:window.location.reload(true)" class="retry-btn">Retry Connection</a>
+    </div>
+    <script>
+        document.getElementById('ts').innerText = "Timestamp: " + new Date().toISOString();
+    </script>
+</body>
+</html>
