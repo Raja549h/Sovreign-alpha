@@ -29,7 +29,9 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << EOF
-          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}
+          CEREBRAS_MODEL=gpt-oss-120b
+          CEREBRAS_MODEL_FAST=gpt-oss-120b
           DIGEST_EMAIL=${{ secrets.DIGEST_EMAIL }}
           DIGEST_PASSWORD=${{ secrets.DIGEST_PASSWORD }}
           FERNET_KEY=${{ secrets.FERNET_KEY }}
@@ -41,7 +43,7 @@ jobs:
       - name: Run daily pipeline
         run: python automation/master_daily.py
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
           DIGEST_EMAIL: ${{ secrets.DIGEST_EMAIL }}
           DIGEST_PASSWORD: ${{ secrets.DIGEST_PASSWORD }}
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
@@ -65,7 +67,16 @@ jobs:
           import json; print(json.dumps(results, indent=2))
           '
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+
+      - name: Commit and push live data updates
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/live_market_data.json data/live_signals.json
+          git commit -m "chore(data): auto-update live market intelligence [skip ci]" || echo "No changes to commit"
+          git push
+
 
       - name: Run edge scorecard calculation
         run: |
