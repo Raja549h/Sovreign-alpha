@@ -554,7 +554,10 @@ class EvidenceTimeline:
             parts = ["SELECT et.*, om.observation_text, c.ticker FROM evidence_timeline et"]
             parts.append("LEFT JOIN observation_memory om ON om.id = et.observation_id")
             parts.append("LEFT JOIN companies c ON c.id = et.company_id")
-            where = ["UPPER(et.event_type) NOT IN ('STRESS_TEST', 'SIMULATED')"]
+            where = [
+                "et.event_type NOT ILIKE ANY(ARRAY['%test%', '%simulated%', '%stress%', '%verification%', '%e2e%'])",
+                "et.created_at >= '2026-01-01'"
+            ]
             params = []
             if company_id:
                 where.append("et.company_id = %s")
