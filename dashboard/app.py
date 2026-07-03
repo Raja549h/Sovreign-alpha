@@ -166,6 +166,24 @@ def get_macro_tickers():
         }
 
 app = Flask(__name__, template_folder='templates')
+
+@app.before_request
+def check_db_availability():
+    from flask import request, render_template, abort
+    if request.endpoint == "static":
+        return
+    try:
+        from database import get_connection
+        conn = get_connection()
+        if conn is None:
+            raise Exception("DB connection returned None")
+        conn.close()
+    except Exception as e:
+        print("[DB_ERROR]", e)
+        try:
+            return render_template('unavailable.html', message="Database is currently unavailable. Please try again later.", error_code="DB_CONNECTION_FAILED"), 503
+        except Exception:
+            abort(503, description="Database unavailable — Sovereign Alpha is offline for maintenance.")
 if IS_CLOUD:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
