@@ -17,7 +17,10 @@ FIX LOG:
 - FIX 8: Upload portal for fund managers
 """
 
-from scheduler_instance import scheduler
+try:
+    from dashboard.scheduler_instance import scheduler
+except ImportError:
+    from scheduler_instance import scheduler
 import os
 import sys
 import json
@@ -29,7 +32,7 @@ project_dir = dashboard_dir.parent
 sys.path.insert(0, str(project_dir))
 
 from database import get_connection as db_get_connection
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import time
 import hmac
@@ -2760,6 +2763,14 @@ def api_calibration_dashboard():
         from research.evolution_quality import ConfidenceCalibrator
         cc = ConfidenceCalibrator()
         summary = cc.get_calibration_summary()
+        
+        import math
+        if summary.get('mean_absolute_error') == math.inf:
+            summary['mean_absolute_error'] = "Insufficient Data"
+        for b in summary.get('by_bucket', []):
+            if b.get('avg_abs_error') == math.inf:
+                b['avg_abs_error'] = "Insufficient Data"
+        
         from research.storage.research_db import get_connection
         with get_connection() as conn:
             c = conn.cursor()
