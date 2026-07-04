@@ -38,6 +38,7 @@ jobs:
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           FUND_PASSWORD=${{ secrets.FUND_PASSWORD }}
           LOG_LEVEL=WARNING
+          NEON_URL=${{ secrets.NEON_URL }}
           EOF
 
       - name: Run daily pipeline
@@ -49,6 +50,7 @@ jobs:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           FUND_PASSWORD: ${{ secrets.FUND_PASSWORD }}
+          NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Init validation tables
         run: |
