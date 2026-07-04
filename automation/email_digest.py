@@ -456,6 +456,19 @@ def init_research_tables():
         pass
 
 
+def get_today_observations():
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute("SELECT timestamp, headline FROM observations WHERE timestamp::timestamp > NOW() - INTERVAL '24 hours' ORDER BY timestamp DESC LIMIT 10")
+        rows = c.fetchall()
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"Error fetching observations: {e}")
+        return []
+
+
 def build_email_body():
     """Assemble a rich daily intelligence report with live data."""
     init_research_tables()
@@ -465,7 +478,7 @@ def build_email_body():
     lines.append("|     SOVEREIGN ALPHA -- DAILY INTELLIGENCE REPORT            |")
     lines.append("+" + "=" * 58 + "+")
     lines.append(f"  Date: {today}")
-    lines.append(f"  Generated: {datetime.now().strftime('%H:%M:%S IST')}")
+    lines.append(f"  Last Run Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}")
     lines.append("")
     lines.append("-" * 60)
     lines.append("  MARKET SNAPSHOT")
@@ -603,6 +616,17 @@ def build_email_body():
     lines.append(f"  BUY Accuracy:      {stats['accuracy']:.1f}%")
     lines.append(f"  Drawdown Avoided:  ${stats['avoided']:,.0f}")
     lines.append(f"  Live Days:         {(datetime.now() - datetime(2026, 1, 2)).days}")
+
+    lines.append("")
+    lines.append("-" * 60)
+    lines.append("  NEW OBSERVATIONS TODAY")
+    lines.append("-" * 60)
+    today_obs = get_today_observations()
+    if not today_obs:
+        lines.append(f"  No new divergences detected. Pipeline ran successfully at {datetime.now().strftime('%H:%M:%S IST')}.")
+    else:
+        for obs in today_obs:
+            lines.append(f"  [{obs[0][:16]}] {obs[1][:100]}")
 
     lines.append("")
     lines.append("-" * 60)
