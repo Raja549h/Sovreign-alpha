@@ -3,8 +3,6 @@
 Sovereign Alpha Dashboard
 =======================
 
-from scheduler_instance import scheduler
-
 Flask-based web dashboard for the Sovereign Alpha system.
 Run with: python dashboard/app.py
 
@@ -19,6 +17,7 @@ FIX LOG:
 - FIX 8: Upload portal for fund managers
 """
 
+from scheduler_instance import scheduler
 import os
 import sys
 import json
