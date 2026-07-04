@@ -14,3 +14,5 @@ openpyxl==3.1.2
 xhtml2pdf>=0.2.17
 rich>=13.7.0
 # Seed DB on deploy - 2026-05-20
+APScheduler>=3.10.0
+pytz>=2024.1
