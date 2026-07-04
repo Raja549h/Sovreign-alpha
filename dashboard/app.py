@@ -4222,6 +4222,43 @@ def pipeline_health():
     return render_template('health_diagnostic.html', health=result)
 
 
+# --- SCHEDULER INITIALIZATION (Survives HF Reboots) ---
+from apscheduler.triggers.cron import CronTrigger
+import pytz
+
+if not scheduler.running:
+    scheduler.start()
+
+# Remove existing jobs to avoid duplication on reloads
+for job in scheduler.get_jobs():
+    scheduler.remove_job(job.id)
+
+def run_pipeline_job():
+    script_path = os.path.join(project_dir, 'automation', 'master_daily.py')
+    print(f"[Scheduler] Triggering daily pipeline: {script_path}")
+    import subprocess
+    subprocess.Popen([sys.executable, script_path])
+
+scheduler.add_job(
+    run_pipeline_job,
+    CronTrigger(hour=8, minute=45, timezone=pytz.timezone('Asia/Kolkata')),
+    id='daily_pipeline',
+    replace_existing=True
+)
+print("[Scheduler] Job 'daily_pipeline' configured for 08:45 AM Asia/Kolkata.")
+
+@app.route('/trigger-pipeline', methods=['GET', 'POST'])
+@login_required
+def trigger_pipeline():
+    """Manual trigger to force the pipeline to run immediately."""
+    try:
+        run_pipeline_job()
+        return jsonify({"status": "ok", "message": "Pipeline triggered successfully in background."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+# ------------------------------------------------------
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 7860))
     
