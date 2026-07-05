@@ -6,7 +6,7 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    - cron: '15 3 * * 1-5'  # 08:45 IST Mon-Fri (03:15 UTC)
+    - cron: '15 3 * * *'  # 08:45 IST Every day (03:15 UTC)
 
 jobs:
   run-pipeline:

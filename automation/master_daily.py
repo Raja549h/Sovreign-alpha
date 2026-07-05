@@ -1,7 +1,7 @@
 """
-MASTER DAILY — Sovereign Alpha Weekday Pipeline
+MASTER DAILY — Sovereign Alpha Daily Pipeline
 =================================================
-Runs every weekday at 08:45 IST.
+Runs every day at 08:45 IST.
 
 Orchestrates:
 1. Fetch live market data (yfinance, FRED, NSE India)
