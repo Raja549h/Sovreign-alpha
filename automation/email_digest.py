@@ -274,8 +274,17 @@ def get_market_snapshot():
         return None
 
 
-def get_market_snapshot_v2():
-    """Pull live market data via individual yfinance tickers (more reliable)."""
+import concurrent.futures
+
+def _with_timeout(fn, *args, timeout_sec=15, default=None):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+        try:
+            return ex.submit(fn, *args).result(timeout=timeout_sec)
+        except Exception as e:
+            print(f"[TIMEOUT/ERROR] {fn.__name__} failed: {e}")
+            return default
+
+def _get_market_snapshot_v2_impl():
     import yfinance as yf
     snap = {}
     pairs = [
@@ -304,9 +313,10 @@ def get_market_snapshot_v2():
             snap[f'{key}_chg'] = None
     return snap if any(v is not None for v in snap.values()) else None
 
+def get_market_snapshot_v2():
+    return _with_timeout(_get_market_snapshot_v2_impl, timeout_sec=20)
 
-def get_regime():
-    """Try MarketRegimeEngine, fallback to simple VIX/DXY/SPX heuristic."""
+def _get_regime_impl(m):
     try:
         from engine.regime import MarketRegimeEngine
         engine = MarketRegimeEngine()
@@ -319,7 +329,6 @@ def get_regime():
     except Exception:
         pass
     try:
-        m = get_market_snapshot_v2()
         if not m:
             return None
         signals = []
@@ -342,9 +351,10 @@ def get_regime():
     except Exception:
         return None
 
+def get_regime(m):
+    return _with_timeout(_get_regime_impl, m, timeout_sec=20)
 
-def get_fii_flow_summary():
-    """Pull FII flow data."""
+def _get_fii_flow_summary_impl():
     try:
         from research.fii_intelligence import FIIIntelligence
         fii = FIIIntelligence()
@@ -369,9 +379,13 @@ def get_fii_flow_summary():
         'regime': 'NEUTRAL', 'source': 'fallback',
     }
 
+def get_fii_flow_summary():
+    return _with_timeout(_get_fii_flow_summary_impl, timeout_sec=15, default={
+        'daily_net_cr': 0, 'weekly_net_cr': 0, 'monthly_net_cr': 0,
+        'regime': 'NEUTRAL', 'source': 'fallback_timeout',
+    })
 
-def get_edge_score():
-    """Pull edge scorecard."""
+def _get_edge_score_impl():
     try:
         from research.observation_registry import ObservationRegistry
         from research.storage.research_db import init_evolution_tables, init_validation_tables
@@ -392,9 +406,10 @@ def get_edge_score():
         'worst_categories': [],
     }
 
+def get_edge_score():
+    return _with_timeout(_get_edge_score_impl, timeout_sec=15)
 
-def get_macro_health():
-    """Pull macro health composite."""
+def _get_macro_health_impl():
     try:
         from research.macro.macro_health import build_macro_health_report
         report = build_macro_health_report()
@@ -408,10 +423,12 @@ def get_macro_health():
         pass
     return {'composite_score': 62, 'status': 'MODERATE', 'observation': 'Macro conditions stable with moderate inflation and steady growth indicators.'}
 
+def get_macro_health():
+    return _with_timeout(_get_macro_health_impl, timeout_sec=15)
 
-def get_featured_observation():
-    """Pick a random high-confidence observation from the registry."""
+def _get_featured_observation_impl():
     try:
+        import random
         from research.observation_registry import ObservationRegistry
         reg = ObservationRegistry()
         all_obs = reg.get_validations_feed(limit=50)
@@ -426,10 +443,12 @@ def get_featured_observation():
         pass
     return None
 
+def get_featured_observation():
+    return _with_timeout(_get_featured_observation_impl, timeout_sec=10)
 
-def get_currency_flag():
-    """Generate a random sector flag from currency sensitivity."""
+def _get_currency_flag_impl():
     try:
+        import random
         from research.currency_sensitivity import CurrencySensitivity
         cs = CurrencySensitivity()
         sectors = list(cs.SECTOR_PROFILES.keys())
@@ -440,6 +459,9 @@ def get_currency_flag():
     except Exception:
         pass
     return None
+
+def get_currency_flag():
+    return _with_timeout(_get_currency_flag_impl, timeout_sec=10)
 
 
 def init_research_tables():
@@ -515,7 +537,7 @@ def build_email_body():
     lines.append("-" * 60)
     lines.append("  REGIME CLASSIFICATION")
     lines.append("-" * 60)
-    regime = get_regime()
+    regime = get_regime(market)
     if regime:
         lines.append(f"  Regime: {regime.get('regime', 'N/A')}")
         lines.append(f"  Confidence: {regime.get('confidence', 'N/A')}")
