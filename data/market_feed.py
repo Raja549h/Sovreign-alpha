@@ -134,12 +134,12 @@ def fetch_market_data(tickers: List[str]) -> Dict[str, Any]:
     return market_data
 
 
-def load_tickers_from_csv() -> List[str]:
-    """Load tickers from sample_positions.csv."""
-    csv_path = DATA_DIR / "sample_positions.csv"
+def load_tickers_from_excel() -> List[str]:
+    """Load tickers from sample_positions.xlsx."""
+    xlsx_path = DATA_DIR / "sample_positions.xlsx"
     tickers = set()
     
-    with open(csv_path, "r") as f:
+    with open(xlsx_path, "r") as f:
         lines = f.readlines()[1:]
         for line in lines:
             parts = line.strip().split(",")
@@ -155,8 +155,8 @@ def main():
     print("SOVEREIGN ALPHA - Market Data Feed")
     print("=" * 60)
     
-    tickers = load_tickers_from_csv()
-    print(f"Loaded {len(tickers)} tickers from CSV")
+    tickers = load_tickers_from_excel()
+    print(f"Loaded {len(tickers)} tickers from Excel")
     
     market_data = fetch_market_data(tickers)
     

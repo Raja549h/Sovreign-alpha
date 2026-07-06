@@ -98,7 +98,7 @@ if IS_CLOUD and PERSISTENT_DIR != BASE_DIR:
         # Even if billing exists (not first boot), ensure data files are refreshed from git
         import shutil
         if (BASE_DIR / "data").exists():
-            for _json_file in ["live_market_data.json", "live_signals.json", "sample_positions.csv"]:
+            for _json_file in ["live_market_data.json", "live_signals.json", "sample_positions.xlsx"]:
                 _src = BASE_DIR / "data" / _json_file
                 _dst = PERSISTENT_DIR / "data" / _json_file
                 if _src.exists() and not _dst.exists():
@@ -1172,35 +1172,38 @@ def update_outcome():
 @app.route('/api/export-predictions')
 @login_required
 def api_export_predictions():
-    """Export predictions as CSV for audit."""
+    """Export predictions as Excel for audit."""
     predictions = get_predictions(1000)
     ledger_stats = calculate_ledger_stats()
     
-    import csv
     import io
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['prediction_id','timestamp','asset','sector','thesis','confidence_score','status','expected_timeline_days','actual_outcome','actual_return_pct','proof_hash'])
+    import pandas as pd
     
+    data = []
     for p in predictions:
-        writer.writerow([
-            p.get('prediction_id', ''),
-            p.get('timestamp', ''),
-            p.get('asset', ''),
-            p.get('sector', ''),
-            p.get('thesis', ''),
-            p.get('confidence_score', 0),
-            p.get('status', ''),
-            p.get('expected_timeline_days', 0),
-            p.get('actual_outcome', ''),
-            p.get('actual_return_pct', 0),
-            p.get('proof_hash', '')
-        ])
+        data.append({
+            'prediction_id': p.get('prediction_id', ''),
+            'timestamp': p.get('timestamp', ''),
+            'asset': p.get('asset', ''),
+            'sector': p.get('sector', ''),
+            'thesis': p.get('thesis', ''),
+            'confidence_score': p.get('confidence_score', 0),
+            'status': p.get('status', ''),
+            'expected_timeline_days': p.get('expected_timeline_days', 0),
+            'actual_outcome': p.get('actual_outcome', ''),
+            'actual_return_pct': p.get('actual_return_pct', 0),
+            'proof_hash': p.get('proof_hash', '')
+        })
+    df = pd.DataFrame(data)
     
-    csv_data = output.getvalue()
-    resp = make_response(csv_data)
-    resp.headers['Content-Type'] = 'text/csv'
-    resp.headers['Content-Disposition'] = f'attachment; filename=prediction_ledger_{datetime.utcnow().strftime("%Y%m%d")}.csv'
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Predictions')
+    
+    excel_data = output.getvalue()
+    resp = make_response(excel_data)
+    resp.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    resp.headers['Content-Disposition'] = f'attachment; filename=prediction_ledger_{datetime.utcnow().strftime("%Y%m%d")}.xlsx'
     return resp
 
 
@@ -1616,7 +1619,7 @@ def upload_page():
 @login_required
 @limiter.limit("5 per minute")
 def upload_positions():
-    """Handle positions CSV upload with flexible column validation."""
+    """Handle positions Excel upload with flexible column validation."""
     from dashboard.security import InputValidator
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'No file provided'})
@@ -1629,38 +1632,13 @@ def upload_positions():
     try:
         content = file.read()
         
-        # Try CSV with different delimiters first
-        df = None
-        for sep in [',', ';', '\t']:
-            try:
-                lines = content.decode('utf-8', errors='ignore').strip().split('\n')
-                # Skip empty lines at start
-                start_idx = 0
-                for i, line in enumerate(lines):
-                    if line.strip():
-                        start_idx = i
-                        break
-                
-                cleaned_content = '\n'.join(lines[start_idx:])
-                df = pd.read_csv(pd.io.common.StringIO(cleaned_content), sep=sep, header=0)
-                
-                # Normalize column names - lowercase and strip
-                df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-                
-                print(f"Uploaded file columns: {list(df.columns)}")
-                break
-            except Exception:
-                continue
-        
-        # If CSV failed, try Excel
-        if df is None:
-            try:
-                import io
-                df = pd.read_excel(io.BytesIO(content))
-                df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-                print(f"Uploaded Excel file columns: {list(df.columns)}")
-            except Exception:
-                return jsonify({'success': False, 'error': 'Invalid file format. Please upload CSV or Excel (.xlsx, .xls)'})
+        try:
+            import io
+            df = pd.read_excel(io.BytesIO(content))
+            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+            print(f"Uploaded Excel file columns: {list(df.columns)}")
+        except Exception:
+            return jsonify({'success': False, 'error': 'Invalid file format. Please upload Excel (.xlsx, .xls)'})
         
         # Define column aliases (case-insensitive matching)
         col_aliases = {
@@ -1808,7 +1786,7 @@ def upload_research():
 @app.route('/download/positions-template')
 @login_required
 def download_positions_template():
-    """Download positions CSV template."""
+    """Download positions Excel template."""
     template = """ticker,company,sector,shares,avg_cost,current_price,weight_pct
 NVDA,NVIDIA Corp,Technology,2000,450.00,892.40,3.5
 AAPL,Apple Inc,Technology,1500,175.00,189.25,2.8
@@ -1817,8 +1795,8 @@ JPM,JPMorgan Chase,Financial,1200,165.00,185.20,2.2
 LLY,Eli Lilly,Healthcare,500,650.00,812.60,4.0"""
     
     response = make_response(template)
-    response.headers['Content-Type'] = 'text/csv'
-    response.headers['Content-Disposition'] = 'attachment; filename=positions_template.csv'
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = 'attachment; filename=positions_template.xlsx'
     return response
 
 
@@ -1881,9 +1859,10 @@ def api_run():
         
         if fund_positions:
             try:
-                df = pd.read_csv(fund_positions.decode('utf-8'))
-                sample_csv = DATA_DIR / "sample_positions.csv"
-                df.to_csv(sample_csv, index=False)
+                import io
+                df = pd.read_excel(io.BytesIO(fund_positions))
+                sample_xlsx = DATA_DIR / "sample_positions.xlsx"
+                df.to_excel(sample_xlsx, index=False, engine='openpyxl')
             except Exception:
                 pass
         
@@ -2003,9 +1982,10 @@ def run_analysis_page():
         
         if fund_positions:
             try:
-                df = pd.read_csv(fund_positions.decode('utf-8'))
-                sample_csv = DATA_DIR / "sample_positions.csv"
-                df.to_csv(sample_csv, index=False)
+                import io
+                df = pd.read_excel(io.BytesIO(fund_positions))
+                sample_xlsx = DATA_DIR / "sample_positions.xlsx"
+                df.to_excel(sample_xlsx, index=False, engine='openpyxl')
             except Exception:
                 pass
         

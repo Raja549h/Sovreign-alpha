@@ -13,15 +13,15 @@
                 {% if has_positions %}<span class="signal-badge BUY">LOADED</span>{% endif %}
             </div>
             <div class="panel-body padded">
-                <p style="font-size:10px;color:#555;font-family:var(--font-mono);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.05em;">Upload fund positions as CSV or Excel.</p>
+                <p style="font-size:10px;color:#555;font-family:var(--font-mono);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.05em;">Upload fund positions as Excel.</p>
                 <div class="drag-zone" id="positions-drag">
-                    <div>Drop CSV / Excel Here</div>
+                    <div>Drop Excel Here</div>
                     <div style="margin-top:8px;font-size:9px;color:#333;">or</div>
                     <button type="button" class="btn outline" style="margin-top:8px;background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;padding:6px 12px;cursor:pointer;" onclick="document.getElementById('positions-file').click()">Select File</button>
                     <div id="positions-filename" class="filename" style="display:none;"></div>
                 </div>
                 <form id="positions-form" enctype="multipart/form-data" style="display:none;">
-                    <input type="file" id="positions-file" accept=".csv,.xlsx,.xls">
+                    <input type="file" id="positions-file" accept=".xlsx,.xls">
                 </form>
                 <div id="positions-status" style="margin-top:8px;font-size:9px;color:#555;font-family:var(--font-mono);"></div>
                 <a href="/download/positions-template" class="btn outline" style="margin-top:8px;background:transparent;border:1px solid #333;color:#555;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;padding:6px 12px;display:inline-block;">Download Template</a>
