@@ -137,8 +137,19 @@ def get_regime_data():
         pass
     return {"regime": "NEUTRAL", "confidence": "—", "summary": "No data", "indicators": {}}
 
-def get_macro_tickers():
-    """Get macro ticker data for ticker strip."""
+_macro_cache = {
+    "data": {
+        "vix": 18.4, "dxy": 99.3, "treasury_10y": 4.60,
+        "gold": 2345.0, "oil_wti": 78.5, "spx_price": 5620.0,
+        "spx_change": 0.45, "dxy_change": -0.12, "gold_change": 0.82,
+        "oil_change": -0.55, "nsei": 23759.0, "nsei_change": 0.30
+    },
+    "timestamp": 0,
+    "fetching": False
+}
+
+def _fetch_macro_async():
+    global _macro_cache
     try:
         from engine.data_layer import DataLayer
         dl = DataLayer()
@@ -157,15 +168,24 @@ def get_macro_tickers():
             "nsei": getattr(macro, 'nsei', None),
             "nsei_change": getattr(macro, 'nsei_change', None),
         }
-        return {k: v for k, v in tickers.items() if v is not None}
-    except Exception:
-        # Return synthetic macro data so ticker strip always shows values
-        return {
-            "vix": 18.4, "dxy": 99.3, "treasury_10y": 4.60,
-            "gold": 2345.0, "oil_wti": 78.5, "spx_price": 5620.0,
-            "spx_change": 0.45, "dxy_change": -0.12, "gold_change": 0.82,
-            "oil_change": -0.55, "nsei": 23759.0, "nsei_change": 0.30
-        }
+        result = {k: v for k, v in tickers.items() if v is not None}
+        if result:
+            _macro_cache["data"].update(result)
+    except Exception as e:
+        print(f"[WARN] Async macro fetch failed: {e}")
+    finally:
+        _macro_cache["timestamp"] = time.time()
+        _macro_cache["fetching"] = False
+
+def get_macro_tickers():
+    """Get macro ticker data asynchronously to prevent blocking."""
+    global _macro_cache
+    now = time.time()
+    if now - _macro_cache["timestamp"] > 300 and not _macro_cache["fetching"]:
+        _macro_cache["fetching"] = True
+        import threading
+        threading.Thread(target=_fetch_macro_async, daemon=True).start()
+    return _macro_cache["data"]
 
 app = Flask(__name__, template_folder='templates')
 
