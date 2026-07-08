@@ -668,7 +668,28 @@ def send_email():
         return False
 
     today = datetime.now().strftime('%Y-%m-%d')
-    body = build_email_body()
+
+    try:
+        body = build_email_body()
+    except Exception as e:
+        print(f"[WARN] build_email_body failed: {e}")
+        body = f"""
+======================================================================
+  SOVEREIGN ALPHA -- Daily Intelligence [{today}]
+======================================================================
+
+  [WARNING] Email body generation failed: {e}
+
+  The daily pipeline completed but the digest could not fetch
+  all required data. Please check the dashboard directly:
+
+    https://svrn-alpha-sovereignalpha.hf.space
+
+----------------------------------------------------------------------
+  This is an automated institutional research digest.
+  Not investment advice. For qualified investor evaluation only.
+----------------------------------------------------------------------
+"""
 
     msg = MIMEMultipart()
     msg['From'] = DIGEST_EMAIL
@@ -676,18 +697,34 @@ def send_email():
     msg['Subject'] = f"Sovereign Alpha -- Daily Intelligence [{today}]"
     msg.attach(MIMEText(body, 'plain'))
 
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
-        server.starttls()
-        server.login(DIGEST_EMAIL, DIGEST_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-        print(f"[OK] Email digest sent to {DIGEST_EMAIL}")
-        return True
-    except Exception as e:
-        print(f"[ERROR] Failed to send email: {e}")
-        return False
+    # Retry SMTP up to 3 times
+    last_error = None
+    for attempt in range(1, 4):
+        try:
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
+            server.starttls()
+            server.login(DIGEST_EMAIL, DIGEST_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+            print(f"[OK] Email digest sent to {DIGEST_EMAIL}")
+            return True
+        except Exception as e:
+            last_error = e
+            print(f"[RETRY {attempt}/3] SMTP failed: {e}")
+            import time
+            time.sleep(2 * attempt)
+
+    print(f"[ERROR] Failed to send email after 3 attempts: {last_error}")
+    return False
 
 
 if __name__ == '__main__':
-    send_email()
+    try:
+        send_email()
+    except Exception as e:
+        print(f"[FATAL] email_digest.py crashed: {e}")
+        import traceback
+        traceback.print_exc()
+        # Exit 0 so the pipeline doesn't fail on email errors
+        sys.exit(0)
+
