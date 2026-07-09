@@ -102,13 +102,17 @@ class AutoReviewEngine:
 
         review_type = self._determine_review_type(observation)
 
-        with self.registry._get_db() as conn:
+        conn = self.registry._get_db()
+        if not conn:
+            return {'observation_id': obs_id, 'prior_status': observation.get('validation_status', 'ACTIVE'),
+                    'new_status': 'MONITORING', 'evidence': 'DB unavailable', 'reasoning': 'DB unavailable', 'confidence': 0.0}
+        try:
             c = conn.cursor()
             c.execute(
                 """UPDATE observation_memory
-                   SET validation_status = ?, validation_evidence = ?,
-                       validated_at = ?, validated_by = 'auto_engine'
-                   WHERE id = ?""",
+                   SET validation_status = %s, validation_evidence = %s,
+                       validated_at = %s, validated_by = 'auto_engine'
+                   WHERE id = %s""",
                 (new_status, evidence,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'), obs_id)
             )
@@ -121,7 +125,7 @@ class AutoReviewEngine:
                    (observation_id, company_id, validation_date, review_type,
                     prior_status, new_status, validation_method,
                     supporting_data, cerebras_reasoning, accuracy_contribution)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (obs_id, company_id,
                  datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                  review_type, observation.get('validation_status', 'ACTIVE'),
@@ -130,6 +134,10 @@ class AutoReviewEngine:
                  reasoning, accuracy.get(new_status, 0.0))
             )
             conn.commit()
+        except Exception as e:
+            print(f"[auto_review] DB update failed: {e}")
+        finally:
+            conn.close()
 
         self.registry.calculate_edge_score(company_id)
 

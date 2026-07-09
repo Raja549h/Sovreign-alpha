@@ -17,7 +17,7 @@ RESEARCH_DB = BILLING_DIR / "research.db"
 
 NSDL_FPI_FLOWS_SQL = """
 CREATE TABLE IF NOT EXISTS nsdl_fpi_flows (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     flow_date TEXT UNIQUE,
     equity_net REAL,
     debt_net REAL,
@@ -44,9 +44,16 @@ def _get_db():
 
 
 def init_fii_tables():
-    with _get_db() as conn:
+    conn = _get_db()
+    if not conn:
+        return
+    try:
         conn.execute(NSDL_FPI_FLOWS_SQL)
         conn.commit()
+    except Exception as e:
+        print(f"[fii] init_fii_tables failed: {e}")
+    finally:
+        conn.close()
 
 
 class FIIIntelligence:
@@ -117,31 +124,40 @@ class FIIIntelligence:
     def store_daily_flow(self, flow_data: Dict) -> bool:
         init_fii_tables()
         try:
-            with _get_db() as conn:
-                c = conn.cursor()
-                c.execute(
-                    """INSERT OR IGNORE INTO nsdl_fpi_flows
-                       (flow_date, equity_net, debt_net, total_net,
-                        equity_buy, equity_sell, source)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (flow_data.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
-                     flow_data.get('equity_net', 0.0), flow_data.get('debt_net', 0.0),
-                     flow_data.get('total_net', 0.0), flow_data.get('equity_buy', 0.0),
-                     flow_data.get('equity_sell', 0.0), flow_data.get('source', 'UNKNOWN'))
-                )
-                conn.commit()
-                return c.rowcount > 0
+            conn = _get_db()
+            if not conn:
+                return False
+            c = conn.cursor()
+            c.execute(
+                """INSERT INTO nsdl_fpi_flows
+                   (flow_date, equity_net, debt_net, total_net,
+                    equity_buy, equity_sell, source)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT (flow_date) DO NOTHING""",
+                (flow_data.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                 flow_data.get('equity_net', 0.0), flow_data.get('debt_net', 0.0),
+                 flow_data.get('total_net', 0.0), flow_data.get('equity_buy', 0.0),
+                 flow_data.get('equity_sell', 0.0), flow_data.get('source', 'UNKNOWN'))
+            )
+            conn.commit()
+            result = c.rowcount > 0
+            conn.close()
+            return result
         except Exception as _e:
             print(f"[fii] store_daily_flow failed: {_e}")
             return False
 
     def get_flow_summary(self, days: int = 30) -> Dict:
-        with _get_db() as conn:
-            c = conn.cursor()
-            cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
-            c.execute("""SELECT flow_date, equity_net, debt_net, total_net
-                         FROM nsdl_fpi_flows WHERE flow_date >= ? ORDER BY flow_date ASC""", (cut,))
-            rows = c.fetchall()
+        conn = _get_db()
+        if not conn:
+            return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
+                    'trend': 'MIXED', 'pressure': 'LOW', 'alert': False}
+        c = conn.cursor()
+        cut = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
+        c.execute("""SELECT flow_date, equity_net, debt_net, total_net
+                     FROM nsdl_fpi_flows WHERE flow_date >= %s ORDER BY flow_date ASC""", (cut,))
+        rows = c.fetchall()
+        conn.close()
         if not rows:
             return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
                     'trend': 'MIXED', 'pressure': 'LOW', 'alert': False}

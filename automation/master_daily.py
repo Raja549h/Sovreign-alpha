@@ -76,9 +76,11 @@ def run_pipeline():
         
         # Generate JSON data for the dashboard live market page
         log("      Generating live_market_data.json...")
-        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_feed.py")])
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_feed.py")],
+                                     capture_output=True, timeout=120)
         log("      Generating live_signals.json...")
-        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_signals.py")])
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_signals.py")],
+                                     capture_output=True, timeout=120)
         
         results["steps"]["market_data"] = "OK"
         log(f"      VIX: {macro.vix} | 10Y: {macro.treasury_10y}% | DXY: {macro.dxy}")
@@ -174,21 +176,36 @@ def run_pipeline():
     # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from dashboard.app import save_prediction
+        from database import get_connection
+        conn = get_connection()
+        if not conn:
+            raise Exception("Database connection unavailable")
+        c = conn.cursor()
         for pred in predictions:
             status = 'cleared' if any(a.ticker == pred.ticker for a in approved) else 'risk-rejected'
-            pred_data = {
-                'prediction_id': pred.prediction_id,
-                'timestamp': pred.timestamp,
-                'asset': pred.ticker,
-                'sector': pred.institutional_positioning.get('sector', ''),
-                'thesis': pred.thesis,
-                'confidence_score': pred.confidence,
-                'status': status,
-                'expected_timeline_days': pred.expected_timeline_days,
-                'proof_hash': certificates[0].commitment_hash if certificates else ''
-            }
-            save_prediction(pred_data)
+            try:
+                c.execute("""
+                    INSERT INTO prediction_ledger 
+                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
+                     status, expected_timeline_days, proof_hash, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    pred.prediction_id,
+                    pred.timestamp,
+                    pred.ticker,
+                    pred.institutional_positioning.get('sector', ''),
+                    pred.thesis,
+                    pred.confidence,
+                    status,
+                    pred.expected_timeline_days,
+                    certificates[0].commitment_hash if certificates else '',
+                    datetime.utcnow().isoformat() + 'Z',
+                    datetime.utcnow().isoformat() + 'Z'
+                ))
+            except Exception as insert_err:
+                log(f"      WARN: Could not insert prediction {pred.prediction_id}: {insert_err}")
+        conn.commit()
+        conn.close()
 
         results["steps"]["ledger"] = f"{len(predictions)} recorded"
         log(f"      Recorded {len(predictions)} predictions to ledger (vetoes already saved by Risk Manager)")
