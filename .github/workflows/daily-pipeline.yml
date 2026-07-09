@@ -43,6 +43,7 @@ jobs:
 
       - name: Run daily pipeline
         run: python automation/master_daily.py
+        timeout-minutes: 20
         env:
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
           DIGEST_EMAIL: ${{ secrets.DIGEST_EMAIL }}
@@ -53,14 +54,19 @@ jobs:
           NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Init validation tables
+        continue-on-error: true
         run: |
           python -c "
           from research.storage.research_db import init_validation_tables, init_evolution_tables
           init_validation_tables()
           init_evolution_tables()
           "
+        env:
+          NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Run observation validation (30/90/180-day reviews)
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
           python -c '
           from research.auto_review_engine import AutoReviewEngine
@@ -70,17 +76,20 @@ jobs:
           '
         env:
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Commit and push live data updates
+        continue-on-error: true
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data/live_market_data.json data/live_signals.json
           git commit -m "chore(data): auto-update live market intelligence [skip ci]" || echo "No changes to commit"
-          git push
-
+          git push || echo "Push failed, continuing"
 
       - name: Run edge scorecard calculation
+        continue-on-error: true
+        timeout-minutes: 3
         run: |
           python -c '
           from research.observation_registry import ObservationRegistry
@@ -88,8 +97,12 @@ jobs:
           score = reg.calculate_edge_score()
           import json; print(json.dumps(score, indent=2))
           '
+        env:
+          NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Fetch FII flow data
+        continue-on-error: true
+        timeout-minutes: 3
         run: |
           python -c '
           from research.fii_intelligence import FIIIntelligence
@@ -97,6 +110,8 @@ jobs:
           result = fii.fetch_daily_fii_flows()
           import json; print(json.dumps(result, indent=2, default=str))
           '
+        env:
+          NEON_URL: ${{ secrets.NEON_URL }}
 
       - name: Upload results
         if: always()

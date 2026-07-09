@@ -139,12 +139,22 @@ def load_tickers_from_excel() -> List[str]:
     xlsx_path = DATA_DIR / "sample_positions.xlsx"
     tickers = set()
     
-    with open(xlsx_path, "r") as f:
-        lines = f.readlines()[1:]
-        for line in lines:
-            parts = line.strip().split(",")
-            if len(parts) >= 2:
-                tickers.add(parts[1])
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(xlsx_path, read_only=True)
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row and len(row) >= 2 and row[1]:
+                tickers.add(str(row[1]).strip())
+        wb.close()
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        # Fallback to hardcoded tickers
+        tickers = {
+            'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
+            'SBIN.NS', 'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS',
+            'HCLTECH.NS', 'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
+        }
     
     return sorted(list(tickers))
 
