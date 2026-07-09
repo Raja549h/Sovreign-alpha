@@ -52,6 +52,8 @@ SEED_VETOES = [
 
 def init_tables():
     conn = get_connection()
+    if not conn:
+        return
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS prediction_ledger (
@@ -103,6 +105,8 @@ def get_db_connection():
 def has_cleared_predictions():
     try:
         conn = get_db_connection()
+        if not conn:
+            return False
         c = conn.cursor()
         c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE status = 'cleared'")
         cnt = c.fetchone()['cnt']
@@ -117,6 +121,8 @@ def seed_meaningful_data():
     if has_cleared_predictions():
         return
     conn = get_db_connection()
+    if not conn:
+        return
     c = conn.cursor()
     now = datetime.utcnow()
     today_cleared = 0
@@ -197,6 +203,11 @@ def get_today_stats():
     seed_meaningful_data()
     today = datetime.now().strftime('%Y-%m-%d')
     conn = get_db_connection()
+    if not conn:
+        return {
+            'total': 0, 'approved': 0, 'rejected': 0, 'avg_conf': 0,
+            'top': None, 'total_all': 0, 'accuracy': 0, 'avoided': 0
+        }
     c = conn.cursor()
     c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp LIKE %s", (f"{today}%",))
     total = c.fetchone()['total'] or 0
@@ -481,6 +492,8 @@ def init_research_tables():
 def get_today_observations():
     try:
         conn = get_db_connection()
+        if not conn:
+            return []
         c = conn.cursor()
         c.execute("SELECT timestamp, headline FROM observations WHERE timestamp::timestamp > NOW() - INTERVAL '24 hours' ORDER BY timestamp DESC LIMIT 10")
         rows = c.fetchall()
