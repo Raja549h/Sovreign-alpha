@@ -552,7 +552,7 @@ class EvidenceTimeline:
         with _get_db() as conn:
             c = conn.cursor()
             sub_where = [
-                "event_type NOT ILIKE ANY(ARRAY['%test%', '%simulated%', '%stress%', '%verification%', '%e2e%'])",
+                "event_type NOT ILIKE ANY(ARRAY['%%test%%', '%%simulated%%', '%%stress%%', '%%verification%%', '%%e2e%%'])",
                 "created_at >= '2026-01-01'"
             ]
             params = []
