@@ -551,28 +551,32 @@ class EvidenceTimeline:
                      event_type: str = None, limit: int = 100) -> List[Dict]:
         with _get_db() as conn:
             c = conn.cursor()
-            parts = ["SELECT et.*, om.observation_text, c.ticker FROM evidence_timeline et"]
-            parts.append("LEFT JOIN observation_memory om ON om.id = et.observation_id")
-            parts.append("LEFT JOIN companies c ON c.id = et.company_id")
-            where = [
-                "et.event_type NOT ILIKE ANY(ARRAY['%test%', '%simulated%', '%stress%', '%verification%', '%e2e%'])",
-                "et.created_at >= '2026-01-01'"
+            sub_where = [
+                "event_type NOT ILIKE ANY(ARRAY['%test%', '%simulated%', '%stress%', '%verification%', '%e2e%'])",
+                "created_at >= '2026-01-01'"
             ]
             params = []
             if company_id:
-                where.append("et.company_id = %s")
+                sub_where.append("company_id = %s")
                 params.append(company_id)
             if observation_id:
-                where.append("et.observation_id = %s")
+                sub_where.append("observation_id = %s")
                 params.append(observation_id)
             if event_type:
-                where.append("et.event_type = %s")
+                sub_where.append("event_type = %s")
                 params.append(event_type)
-            if where:
-                parts.append("WHERE " + " AND ".join(where))
-            parts.append("ORDER BY et.created_at DESC LIMIT %s")
+            
+            subquery = f"SELECT * FROM evidence_timeline WHERE {' AND '.join(sub_where)} ORDER BY created_at DESC LIMIT %s"
             params.append(limit)
-            c.execute(" ".join(parts), params)
+            
+            sql = f"""
+                SELECT et.*, om.observation_text, c.ticker 
+                FROM ({subquery}) et
+                LEFT JOIN observation_memory om ON om.id = et.observation_id
+                LEFT JOIN companies c ON c.id = et.company_id
+                ORDER BY et.created_at DESC
+            """
+            c.execute(sql, params)
             return [dict(r) for r in c.fetchall()]
 
 

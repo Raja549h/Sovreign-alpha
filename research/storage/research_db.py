@@ -385,6 +385,9 @@ CREATE TABLE IF NOT EXISTS evidence_timeline (
     source TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_evidence_timeline_created_at ON evidence_timeline (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_evidence_timeline_company_id ON evidence_timeline (company_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_timeline_observation_id ON evidence_timeline (observation_id);
 
 CREATE TABLE IF NOT EXISTS framework_performance (
     id SERIAL PRIMARY KEY,
