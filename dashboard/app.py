@@ -191,8 +191,8 @@ app = Flask(__name__, template_folder='templates')
 
 @app.before_request
 def check_db_availability():
-    from flask import request, render_template, abort
-    if request.endpoint == "static":
+    from flask import request, render_template, abort, jsonify
+    if request.endpoint == "static" or request.path.startswith('/api/'):
         return
     try:
         from database import get_connection

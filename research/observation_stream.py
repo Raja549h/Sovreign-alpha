@@ -114,7 +114,7 @@ def ingest_flags_as_observations() -> int:
                 SELECT c.ticker, c.company_name, 'forensic_flag', f.description, f.severity, f.supporting_data, 'TBD'
                 FROM forensic_flags f
                 JOIN companies c ON c.id = f.company_id
-                WHERE f.detected_at >= datetime('now', '-7 days')
+                WHERE f.detected_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
                 AND NOT EXISTS (SELECT 1 FROM observations o WHERE o.supporting_data = f.supporting_data AND o.headline = f.description AND o.ticker = c.ticker)
             """)
             conn.commit()

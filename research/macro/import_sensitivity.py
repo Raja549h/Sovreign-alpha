@@ -233,7 +233,7 @@ def assess_import_sensitivity(company_id: int, company_name: str, ticker: str,
                 (company_id, ticker, sector, import_dependency_score,
                  raw_material_import_pct, capex_import_pct,
                  currency_headwind_risk, observation)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 company_id, ticker, sector, base_score,
                 _pct_from_dependency(profile['raw_material_dependency']),

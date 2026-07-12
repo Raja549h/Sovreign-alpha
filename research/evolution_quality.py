@@ -835,10 +835,10 @@ class WeeklyICReport:
                          FROM failure_analysis GROUP BY failure_category ORDER BY cnt DESC""")
             report['sections']['failure_patterns'] = [dict(r) for r in c.fetchall()]
             c.execute("""SELECT COUNT(*) as cnt FROM observation_validations
-                         WHERE validation_date >= date('now', '-7 days')""")
+                         WHERE validation_date >= CURRENT_DATE - INTERVAL '7 days'""")
             report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()['cnt']}
             c.execute("""SELECT COUNT(*) as cnt FROM shadow_trades
-                         WHERE trade_date >= date('now', '-7 days')""")
+                         WHERE trade_date >= CURRENT_DATE - INTERVAL '7 days'""")
             report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()['cnt']}
             reg = ObservationRegistry()
             score = reg.calculate_edge_score()

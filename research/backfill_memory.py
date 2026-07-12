@@ -158,7 +158,7 @@ def backfill():
                 """INSERT INTO observation_memory
                    (company_id, observation_date, category, observation_text,
                     confidence, source, direction)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 (company_id, obs_date, category, description,
                  confidence, source, direction)
             )
