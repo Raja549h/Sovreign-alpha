@@ -30,11 +30,11 @@ def init_pool():
     retries = 3
     for attempt in range(1, retries + 1):
         try:
-            # Enforce max 5 connections to avoid overwhelming free tier
+            # Enforce max 30 connections to avoid pool exhaustion during concurrent API requests
             base = neon_url.split('?')[0] if '?' in neon_url else neon_url
             conn_url = base + "?sslmode=require&connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
                 
-            _PG_POOL = pool.ThreadedConnectionPool(1, 5, conn_url, cursor_factory=DictCursor)
+            _PG_POOL = pool.ThreadedConnectionPool(1, 30, conn_url, cursor_factory=DictCursor)
             return # Success
             
         except psycopg2.OperationalError as e:

@@ -138,6 +138,8 @@ async function loadTimeline() {
                 `<span style="color:#888">${t.ticker || ''}</span></div>`
             ).join('');
             document.getElementById('evidence-timeline').innerHTML = html || '<div style="color:#555;text-align:center;">No timeline events yet</div>';
+        } else {
+            throw new Error('Timeline fetch failed');
         }
     } catch(e) {
         document.getElementById('evidence-timeline').textContent = 'Data Unavailable';

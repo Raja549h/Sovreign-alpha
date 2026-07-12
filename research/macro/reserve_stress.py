@@ -228,7 +228,7 @@ def build_reserve_stress_report(
                 (snapshot_date, reserve_level_usd_bn, stress_level, stress_score,
                  three_month_change_pct, six_month_change_pct, twelve_month_change_pct,
                  import_cover_months, short_term_debt_coverage, reserve_volatility, details)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 datetime.utcnow().strftime('%Y-%m-%d'), reserve_usd_bn,
                 stress_info['level'], round(composite_stress, 1),

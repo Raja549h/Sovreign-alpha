@@ -102,7 +102,7 @@ def save_prediction(prediction_data: dict) -> bool:
             INSERT INTO prediction_ledger 
             (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
              status, expected_timeline_days, proof_hash, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             prediction_data.get('prediction_id'),
             prediction_data.get('timestamp'),
@@ -134,7 +134,7 @@ def save_veto(veto_data: dict) -> bool:
             INSERT INTO veto_archive
             (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
              expected_loss_pct, proof_hash, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             veto_data.get('veto_id'),
             veto_data.get('prediction_id', ''),

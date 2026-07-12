@@ -201,7 +201,7 @@ def seed_meaningful_data():
 def get_today_stats():
     init_tables()
     seed_meaningful_data()
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = datetime.utcnow().strftime('%Y-%m-%d')
     conn = get_db_connection()
     if not conn:
         return {
