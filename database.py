@@ -217,14 +217,25 @@ def get_db_connection(*args, **kwargs):
     except Exception:
         return None
 
+import time
+
 def get_connection(*args, **kwargs):
-    try:
-        return DatabaseConnection()
-    except Exception:
-        return None
+    for attempt in range(5):
+        try:
+            return DatabaseConnection()
+        except Exception as e:
+            if attempt == 4:
+                print(f"[database] All 5 connection attempts failed: {e}")
+                return None
+            time.sleep(1)
+    return None
 
 def transaction(*args, **kwargs):
-    try:
-        return DatabaseConnection()
-    except Exception:
-        return None
+    for attempt in range(5):
+        try:
+            return DatabaseConnection()
+        except Exception as e:
+            if attempt == 4:
+                return None
+            time.sleep(1)
+    return None
