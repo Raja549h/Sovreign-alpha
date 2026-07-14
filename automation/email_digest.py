@@ -205,8 +205,9 @@ def get_today_stats():
     conn = get_db_connection()
     if not conn:
         return {
-            'total': 0, 'approved': 0, 'rejected': 0, 'avg_conf': 0,
-            'top': None, 'total_all': 0, 'accuracy': 0, 'avoided': 0
+            'total': -1, 'approved': -1, 'rejected': -1, 'avg_conf': -1,
+            'top': {'asset': 'DB_ERROR', 'confidence_score': 0, 'thesis': 'DATABASE CONNECTION FAILED. Check NEON_URL in your GitHub Secrets.'},
+            'total_all': -1, 'accuracy': -1, 'avoided': -1
         }
     c = conn.cursor()
     c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp >= %s", (cutoff,))

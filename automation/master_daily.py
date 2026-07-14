@@ -271,7 +271,7 @@ def run_pipeline():
             hits = c.rowcount
             c.execute("UPDATE prediction_ledger SET status = 'MISS' WHERE actual_outcome = 'incorrect' AND status NOT IN ('HIT', 'MISS');")
             misses = c.rowcount
-            c.execute("UPDATE prediction_ledger SET status = 'PENDING' WHERE actual_outcome IS NULL AND status NOT IN ('HIT', 'MISS', 'PENDING');")
+            c.execute("UPDATE prediction_ledger SET status = 'PENDING' WHERE actual_outcome IS NULL AND status = 'cleared';")
             conn.commit()
             results["steps"]["validation"] = f"Hits: {hits}, Misses: {misses}"
             log(f"      Validation updated: {hits} HITs, {misses} MISSes resolved.")
