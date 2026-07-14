@@ -577,7 +577,16 @@ class EvidenceTimeline:
                 ORDER BY et.created_at DESC
             """
             c.execute(sql, params)
-            return [dict(r) for r in c.fetchall()]
+            
+            import uuid
+            results = []
+            for r in c.fetchall():
+                d = dict(r)
+                for k, v in d.items():
+                    if isinstance(v, uuid.UUID):
+                        d[k] = str(v)
+                results.append(d)
+            return results
 
 
 class FrameworkPerformance:
@@ -835,10 +844,10 @@ class WeeklyICReport:
                          FROM failure_analysis GROUP BY failure_category ORDER BY cnt DESC""")
             report['sections']['failure_patterns'] = [dict(r) for r in c.fetchall()]
             c.execute("""SELECT COUNT(*) as cnt FROM observation_validations
-                         WHERE validation_date >= CURRENT_DATE - INTERVAL '7 days'""")
+                         WHERE CAST(validation_date AS DATE) >= CURRENT_DATE - INTERVAL '7 days'""")
             report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()['cnt']}
             c.execute("""SELECT COUNT(*) as cnt FROM shadow_trades
-                         WHERE trade_date >= CURRENT_DATE - INTERVAL '7 days'""")
+                         WHERE CAST(trade_date AS DATE) >= CURRENT_DATE - INTERVAL '7 days'""")
             report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()['cnt']}
             reg = ObservationRegistry()
             score = reg.calculate_edge_score()
