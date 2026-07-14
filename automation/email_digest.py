@@ -201,7 +201,7 @@ def seed_meaningful_data():
 def get_today_stats():
     init_tables()
     seed_meaningful_data()
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
     conn = get_db_connection()
     if not conn:
         return {
@@ -209,20 +209,20 @@ def get_today_stats():
             'top': None, 'total_all': 0, 'accuracy': 0, 'avoided': 0
         }
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp LIKE %s", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp >= %s", (cutoff,))
     total = c.fetchone()['total'] or 0
-    c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp >= %s AND status = 'cleared'", (cutoff,))
     approved = c.fetchone()['approved'] or 0
-    c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'risk-rejected'", (f"{today}%",))
+    c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp >= %s AND status = 'risk-rejected'", (cutoff,))
     rejected = c.fetchone()['rejected'] or 0
-    c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp LIKE %s", (f"{today}%",))
+    c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp >= %s", (cutoff,))
     avg_conf = c.fetchone()['avg_conf'] or 0
     c.execute("""
         SELECT asset, status, confidence_score, thesis
-        FROM prediction_ledger
-        WHERE timestamp LIKE %s AND status = 'cleared'
+        FROM prediction_ledger 
+        WHERE timestamp >= %s AND status = 'cleared'
         ORDER BY confidence_score DESC LIMIT 1
-    """, (f"{today}%",))
+    """, (cutoff,))
     top = c.fetchone()
     c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
     total_all = c.fetchone()['total'] or 0

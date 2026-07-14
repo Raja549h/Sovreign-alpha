@@ -24,6 +24,14 @@ except ImportError:
 import os
 import sys
 import json
+import decimal
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
 import pandas as pd
 from pathlib import Path
 
@@ -1325,14 +1333,15 @@ def performance():
                              avg_confidence=avg_confidence,
                              total_alpha=0,
                              total_fees=0,
-                             confidence_history=json.dumps(confidence_history),
-                             sector_data=json.dumps(sector_data),
-                             return_distribution=json.dumps(return_distribution),
+                             confidence_history=json.dumps(confidence_history, cls=DecimalEncoder),
+                             sector_data=json.dumps(sector_data, cls=DecimalEncoder),
+                             return_distribution=json.dumps(return_distribution, cls=DecimalEncoder),
                              stats=stats,
                              ledger_stats=ledger_stats,
                              maturity_stats=maturity_stats,
                              decisions=decisions,
                              is_demo=is_demo_mode())
+
     except Exception as e:
         import traceback
         traceback.print_exc()
