@@ -28,7 +28,7 @@ jobs:
 
       - name: Create .env file
         run: |
-          cat > .env << EOF
+          cat > .env << 'EOF'
           CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}
           CEREBRAS_MODEL=gpt-oss-120b
           CEREBRAS_MODEL_FAST=gpt-oss-120b
@@ -40,6 +40,8 @@ jobs:
           LOG_LEVEL=WARNING
           NEON_URL=${{ secrets.NEON_URL }}
           EOF
+          # Strip leading whitespace from .env lines
+          sed -i 's/^[[:space:]]*//' .env
 
       - name: Run daily pipeline
         run: python automation/master_daily.py
