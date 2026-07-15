@@ -241,43 +241,43 @@ def run_pipeline():
             results["errors"].append(f"git_sync: {str(e)}")
             log(f"      ERROR: {e}")
 
-    # Step 8: Email digest
-    log("[8/8] Sending email digest...")
+    # Step 8: Update prediction validation statuses (BEFORE email so email has latest data)
+    log("[8/9] Updating prediction validation statuses...")
     try:
-        subprocess_result = __import__('subprocess').run(
-            [sys.executable, str(BASE_DIR / "automation" / "email_digest.py")],
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
-        if subprocess_result.returncode == 0:
-            results["steps"]["email"] = "OK"
-            log("      Email digest sent")
-        else:
-            results["steps"]["email"] = f"FAIL: {subprocess_result.stderr[:100]}"
-            log(f"      ERROR: {subprocess_result.stderr[:100]}")
-    except Exception as e:
-        results["steps"]["email"] = f"FAIL: {str(e)}"
-        results["errors"].append(f"email: {str(e)}")
-        log(f"      ERROR: {e}")
-
-    # Step 9: Validation Status Update
-    log("[9/9] Updating prediction validation statuses...")
-    try:
-        from database import get_connection
-        with get_connection() as conn:
-            c = conn.cursor()
-            c.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")
-            hits = c.rowcount
-            c.execute("UPDATE prediction_ledger SET status = 'MISS' WHERE actual_outcome = 'incorrect' AND status NOT IN ('HIT', 'MISS');")
-            misses = c.rowcount
-            c.execute("UPDATE prediction_ledger SET status = 'PENDING' WHERE actual_outcome IS NULL AND status = 'cleared';")
-            conn.commit()
+        from database import get_connection as _get_conn
+        _vconn = _get_conn()
+        if _vconn:
+            _vc = _vconn.cursor()
+            _vc.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")
+            hits = _vc.rowcount
+            _vc.execute("UPDATE prediction_ledger SET status = 'MISS' WHERE actual_outcome = 'incorrect' AND status NOT IN ('HIT', 'MISS');")
+            misses = _vc.rowcount
+            _vconn.commit()
+            _vconn.close()
             results["steps"]["validation"] = f"Hits: {hits}, Misses: {misses}"
             log(f"      Validation updated: {hits} HITs, {misses} MISSes resolved.")
+        else:
+            results["steps"]["validation"] = "SKIP: no DB connection"
+            log("      SKIP: no DB connection for validation")
     except Exception as e:
         results["steps"]["validation"] = f"FAIL: {str(e)}"
         results["errors"].append(f"validation: {str(e)}")
+        log(f"      ERROR: {e}")
+
+    # Step 9: Email digest (called directly, not as subprocess, to inherit DB connection)
+    log("[9/9] Sending email digest...")
+    try:
+        from automation.email_digest import send_email as _send_email
+        email_ok = _send_email()
+        if email_ok:
+            results["steps"]["email"] = "OK"
+            log("      Email digest sent")
+        else:
+            results["steps"]["email"] = "FAIL: send_email returned False"
+            log("      WARN: send_email returned False")
+    except Exception as e:
+        results["steps"]["email"] = f"FAIL: {str(e)}"
+        results["errors"].append(f"email: {str(e)}")
         log(f"      ERROR: {e}")
 
     # Summary
