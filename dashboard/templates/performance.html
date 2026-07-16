@@ -8,10 +8,6 @@
 
     <div class="stats-row">
         <div class="stat-box accent">
-            <label>Sessions Run</label>
-            <div class="value">{{ total_sessions | default(0) }}</div>
-        </div>
-        <div class="stat-box accent">
             <label>Avg Confidence</label>
             <div class="value">{{ (avg_confidence | default(0)) | pct }}</div>
         </div>
@@ -23,12 +19,8 @@
             <label>Hit/Miss Ratio</label>
             <div class="value">{{ ledger_stats.hits | default(0) }} / {{ ledger_stats.misses | default(0) }}</div>
         </div>
-        <div class="stat-box accent">
-            <label>Cleared</label>
-            <div class="value">{{ ledger_stats.cleared | default(0) }}</div>
-        </div>
         <div class="stat-box info">
-            <label>Veto Efficiency</label>
+            <label>Veto Accuracy</label>
             <div class="value info">{{ (ledger_stats.veto_efficiency | default(0)) | round(1) }}%</div>
         </div>
     </div>

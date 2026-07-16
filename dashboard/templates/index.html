@@ -27,7 +27,7 @@
                 <div><span style="color:#555;">Observations Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.total_observations }}</span></div>
                 <div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.research_notes }}</span></div>
                 <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions }}</span></div>
-                <div><span style="color:#555;">Validated Outcomes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.resolved_observations }}</span></div>
+                <div><span style="color:#555;">Validated Observations</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.resolved_observations }}</span></div>
                 <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
             </div>
 
@@ -43,9 +43,9 @@
             <!-- Row 2: Prediction Performance -->
             <div style="color:var(--text-dim);font-size:0.65rem;text-transform:uppercase;margin-bottom:0.4rem;border-bottom:1px solid #222;padding-bottom:0.2rem;">Prediction Performance</div>
             <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
-                <div><span style="color:#555;">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
+                <div><span style="color:#555;" class="tooltip-wrap" data-tip="Predictions whose review date has passed and have been marked HIT or MISS.">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
                 <div>
-                    <span style="color:#555;">Validation Coverage</span><br>
+                    <span style="color:#555;">Observation Validation Coverage</span><br>
                     <span style="font-size:1.1rem;font-weight:700;
                     {% if trust.validation_coverage_pct < 10 %}color:#ff4444;
                     {% elif trust.validation_coverage_pct < 50 %}color:#ffaa00;
