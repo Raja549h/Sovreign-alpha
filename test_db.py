@@ -1,9 +1,15 @@
-import sys
-sys.path.insert(0, 'C:/Users/lokes/Downloads/project/sovereign-alpha')
-from database import get_connection, init_pool
-init_pool()
-from dashboard.app import get_decisions
-decisions = get_decisions()
-print("Decisions length:", len(decisions))
-if decisions:
-    print(decisions[0])
+import config
+from database import get_connection
+conn = get_connection()
+if conn:
+    c = conn.cursor()
+    sql = """
+        SELECT * FROM evidence_timeline 
+        WHERE event_type NOT ILIKE ANY(ARRAY['%%test%%', '%%simulated%%', '%%stress%%', '%%verification%%', '%%e2e%%'])
+        LIMIT %s
+    """
+    try:
+        c.execute(sql, [2])
+        print('SUCCESS:', len(c.fetchall()))
+    except Exception as e:
+        print('ERROR:', e)

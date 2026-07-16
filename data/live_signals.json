@@ -1,14 +1,100 @@
 {
-  "generated_at": "2026-07-01T12:59:15.531689Z",
-  "oversold": [],
-  "overbought": [],
+  "generated_at": "2026-07-15T06:29:36.430959Z",
+  "oversold": [
+    {
+      "symbol": "ITC.NS",
+      "rsi": 26.7,
+      "price": 277.0,
+      "reason": "RSI below 30 - oversold"
+    },
+    {
+      "symbol": "TRENT.NS",
+      "rsi": 22.3,
+      "price": 2877.9,
+      "reason": "RSI below 30 - oversold"
+    }
+  ],
+  "overbought": [
+    {
+      "symbol": "SUNPHARMA.NS",
+      "rsi": 75.1,
+      "price": 1957.1,
+      "reason": "RSI above 70 - overbought"
+    }
+  ],
   "unusual_volume": [],
-  "below_target": [],
-  "near_high": [],
-  "near_low": [],
+  "below_target": [
+    {
+      "symbol": "BHARTIARTL.NS",
+      "current_price": 1936.9,
+      "analyst_target": 2294.879,
+      "pct_below": 15.6,
+      "reason": "15.6% below analyst target"
+    },
+    {
+      "symbol": "HDFCBANK.NS",
+      "current_price": 817.85,
+      "analyst_target": 1039.625,
+      "pct_below": 21.33,
+      "reason": "21.3% below analyst target"
+    },
+    {
+      "symbol": "INFY.NS",
+      "current_price": 1078.4,
+      "analyst_target": 1325.7,
+      "pct_below": 18.65,
+      "reason": "18.7% below analyst target"
+    },
+    {
+      "symbol": "ITC.NS",
+      "current_price": 277.0,
+      "analyst_target": 343.51514,
+      "pct_below": 19.36,
+      "reason": "19.4% below analyst target"
+    },
+    {
+      "symbol": "KOTAKBANK.NS",
+      "current_price": 379.3,
+      "analyst_target": 464.14594,
+      "pct_below": 18.28,
+      "reason": "18.3% below analyst target"
+    },
+    {
+      "symbol": "RELIANCE.NS",
+      "current_price": 1305.4,
+      "analyst_target": 1694.8064,
+      "pct_below": 22.98,
+      "reason": "23.0% below analyst target"
+    }
+  ],
+  "near_high": [
+    {
+      "symbol": "SUNPHARMA.NS",
+      "price": 1957.1,
+      "52_week_high": 1962.7,
+      "pct_from_high": 0.29,
+      "reason": "Within 5% of 52-week high"
+    }
+  ],
+  "near_low": [
+    {
+      "symbol": "ITC.NS",
+      "price": 277.0,
+      "52_week_low": 275.05,
+      "pct_from_low": 0.71,
+      "reason": "Within 5% of 52-week low"
+    },
+    {
+      "symbol": "RELIANCE.NS",
+      "price": 1305.4,
+      "52_week_low": 1253.2,
+      "pct_from_low": 4.17,
+      "reason": "Within 5% of 52-week low"
+    }
+  ],
   "summary": {
-    "total_signals": 0,
-    "buy_signals": 0,
-    "sell_signals": 0
+    "total_signals": 12,
+    "buy_signals": 10,
+    "sell_signals": 2
   }
 }
