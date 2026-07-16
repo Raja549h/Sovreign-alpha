@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Challenge Memo — CM-2026-BAF-001</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 25mm 22mm 20mm 22mm;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.7;
+            color: #1a1a1a;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* HEADER */
+        .header {
+            background: #0a2540;
+            color: white;
+            padding: 22px 28px 18px 28px;
+            margin-bottom: 18px;
+        }
+        .header h1 {
+            font-size: 15pt;
+            margin: 0 0 2px 0;
+            letter-spacing: 3px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .header .sub {
+            font-size: 9pt;
+            color: #7ab5e0;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        .header .ref {
+            font-size: 7.5pt;
+            color: #5a9ac5;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* META LINE */
+        .meta-line {
+            font-size: 8pt;
+            color: #6a7a8a;
+            border-bottom: 1px solid #d0d8e0;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+        .meta-line strong {
+            color: #1a2a3a;
+        }
+
+        /* SECTION HEADERS */
+        h2 {
+            font-size: 10.5pt;
+            color: #0a2540;
+            margin: 20px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1.5px solid #0a2540;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* OBSERVATION BLOCKS */
+        .observation {
+            margin: 10px 0;
+            padding: 0;
+        }
+        .obs-label {
+            font-size: 7.5pt;
+            color: #0a2540;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        .obs-text {
+            font-size: 9.5pt;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .obs-falsifiable {
+            font-size: 8pt;
+            color: #c0392b;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        /* QUESTION BOX */
+        .question-box {
+            background: #f0f4f8;
+            border-left: 4px solid #0a2540;
+            padding: 14px 18px;
+            margin: 16px 0;
+        }
+        .question-box .q-label {
+            font-size: 7.5pt;
+            color: #0a2540;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .question-box p {
+            margin: 0;
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1a2a3a;
+        }
+
+        /* CLOSING */
+        .closing {
+            margin-top: 22px;
+            padding-top: 14px;
+            border-top: 1.5px solid #0a2540;
+            text-align: center;
+        }
+        .closing p {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #0a2540;
+            font-style: italic;
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        /* FOOTER */
+        .footer {
+            font-size: 7pt;
+            color: #999;
+            margin-top: 18px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        p { margin: 4px 0; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>CHALLENGE MEMO</h1>
+    <p class="sub">Bajaj Finance Limited (NSE: BAJFINANCE)</p>
+    <p class="ref">CM-2026-BAF-001 &nbsp;|&nbsp; 08 July 2026 &nbsp;|&nbsp; CIO Desk — Sovereign Alpha</p>
+</div>
+
+<div class="meta-line">
+    <strong>Sector:</strong> NBFC — Consumer Lending &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>CMP:</strong> &#8377;8,450 &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>P/BV:</strong> 4.6x &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>ROE (FY25):</strong> 17.4% &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Prior Ref:</strong> SR-2026-BAJ-002
+</div>
+
+<h2>Three Falsifiable Observations</h2>
+
+<div class="observation">
+    <div class="obs-label">Observation 1 — Credit Cost Trajectory</div>
+    <p class="obs-text">
+        Bajaj Finance's credit cost has accelerated from 1.25% (FY23) to 2.05% (FY25) — a 64% increase over two years — while management has guided for normalization at 1.7–1.8% for three consecutive quarters. The gap between guided and actual credit cost has widened every quarter since Q2FY25.
+    </p>
+    <p class="obs-falsifiable">Falsifiable by: Credit cost falling below 1.70% for any two consecutive quarters in FY26.</p>
+</div>
+
+<div class="observation">
+    <div class="obs-label">Observation 2 — Valuation vs. Realized Returns</div>
+    <p class="obs-text">
+        At the current P/BV of 4.6x, a reverse Gordon Growth Model implies a sustainable ROE of ~78%. The company's actual ROE is 17.4% and declining (peak: 22.5% in FY23). No Indian NBFC has sustained a ROE above 25% at this AUM scale (&#8377;3.5L Cr+). The stock is priced for a level of profitability that has never existed.
+    </p>
+    <p class="obs-falsifiable">Falsifiable by: ROE inflecting above 22% in any quarter of FY26, or P/BV de-rating below 3.5x.</p>
+</div>
+
+<div class="observation">
+    <div class="obs-label">Observation 3 — Funding Cost Outpacing Growth</div>
+    <p class="obs-text">
+        Interest expense growth (32.3% YoY) has exceeded AUM growth (28.0% YoY) in FY25, creating negative operating leverage on the liability side. NIM has compressed 70 bps in two years (10.8% → 10.1%). If funding costs continue to rise faster than asset yields, each incremental rupee of AUM will be margin-dilutive.
+    </p>
+    <p class="obs-falsifiable">Falsifiable by: NIM expanding above 10.5% in H1FY26 while AUM growth stays above 25%.</p>
+</div>
+
+<h2>Analytical Question</h2>
+
+<div class="question-box">
+    <div class="q-label">The Core Question for the Investment Committee</div>
+    <p>If Bajaj Finance's ROE has structurally shifted from 22% to 17% due to competitive NIM compression and credit cost normalization at a higher base, what is the correct steady-state P/BV for a franchise that is growing AUM at 28% but funding that growth at negative incremental spreads — and at what price does the risk-reward become asymmetric again?</p>
+</div>
+
+<div class="closing">
+    <p>"A one-line disagreement would be more useful to me than any agreement."</p>
+</div>
+
+<div class="footer">
+    CM-2026-BAF-001 &nbsp;|&nbsp; Sovereign Alpha Autonomous Research Engine &nbsp;|&nbsp; Confidential — Internal Distribution Only
+</div>
+
+</body>
+</html>

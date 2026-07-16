@@ -1,16 +1,25 @@
-import sys
-sys.path.insert(0, 'C:/Users/lokes/Downloads/project/sovereign-alpha')
+import os
+import psycopg2
 from dotenv import load_dotenv
+
 load_dotenv()
-from database import get_connection, init_pool
+neon_url = os.environ.get('NEON_URL')
 
-def check_observations():
-    init_pool()
-    conn = get_connection()
+try:
+    conn = psycopg2.connect(neon_url)
     c = conn.cursor()
-    c.execute("SELECT * FROM observations LIMIT 0")
-    print("Observations columns:", [desc[0] for desc in c.description])
+    
+    print('--- Query 1: Recent Observations Count ---')
+    c.execute("SELECT COUNT(*) FROM observations WHERE timestamp::timestamp > NOW() - INTERVAL '2 days';")
+    count = c.fetchone()[0]
+    print(f'Count: {count}')
+    
+    print('\n--- Query 2: Last 5 Observations ---')
+    c.execute("SELECT timestamp, headline FROM observations ORDER BY timestamp DESC LIMIT 5;")
+    rows = c.fetchall()
+    for row in rows:
+        print(f'{row[0]} | {row[1]}')
+        
     conn.close()
-
-if __name__ == '__main__':
-    check_observations()
+except Exception as e:
+    print(f'Error: {e}')

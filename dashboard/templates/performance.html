@@ -51,7 +51,6 @@
                 </div>
 
                 <div class="key-val"><span class="key">Total Predictions</span><span class="val">{{ ledger_stats.total_predictions | default(0) }}</span></div>
-                <div class="key-val"><span class="key">Cleared</span><span class="val accent">{{ ledger_stats.cleared | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Risk Rejected</span><span class="val danger">{{ ledger_stats.risk_rejected | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Total Vetoes</span><span class="val">{{ ledger_stats.total_vetoes | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Correct Vetoes</span><span class="val">{{ ledger_stats.veto_correct_count | default(0) }}</span></div>
