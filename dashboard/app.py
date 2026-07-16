@@ -516,6 +516,8 @@ def calculate_ledger_stats() -> dict:
         
         c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) FROM veto_archive")
         total_avoided = c.fetchone()[0] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'MISS')")
+        resolved_count = c.fetchone()[0] or 0
         
         conn.close()
         
@@ -533,7 +535,8 @@ def calculate_ledger_stats() -> dict:
             'total_vetoes': total_vetoes,
             'veto_correct_count': veto_correct_count,
             'total_avoided_drawdown': total_avoided,
-            'outcome_fill_rate': (with_outcome / total * 100) if total > 0 else 0,
+            'outcome_fill_rate': (resolved_count / total * 100) if total > 0 else 0,
+            'resolved_count': resolved_count,
             'hits': hits,
             'misses': misses
         }
@@ -554,6 +557,7 @@ def calculate_ledger_stats() -> dict:
             'veto_correct_count': 0,
             'total_avoided_drawdown': 0,
             'outcome_fill_rate': 0,
+            'resolved_count': 0,
             'hits': 0,
             'misses': 0
         }

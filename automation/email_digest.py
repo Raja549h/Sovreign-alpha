@@ -496,7 +496,7 @@ def get_today_observations():
         if not conn:
             return []
         c = conn.cursor()
-        c.execute("SELECT timestamp, headline FROM observations WHERE timestamp::timestamp > NOW() - INTERVAL '24 hours' ORDER BY timestamp DESC LIMIT 10")
+        c.execute("SELECT timestamp, headline FROM observations WHERE timestamp::timestamp > (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day' ORDER BY timestamp DESC LIMIT 10")
         rows = c.fetchall()
         conn.close()
         return rows
@@ -658,6 +658,7 @@ def build_email_body():
     lines.append("  NEW OBSERVATIONS TODAY")
     lines.append("-" * 60)
     today_obs = get_today_observations()
+    print(f"Email Digest: Found {len(today_obs)} new observations.")
     if not today_obs:
         lines.append(f"  No new divergences detected. Pipeline ran successfully at {datetime.now().strftime('%H:%M:%S IST')}.")
     else:
@@ -686,24 +687,11 @@ def send_email():
     try:
         body = build_email_body()
     except Exception as e:
-        print(f"[WARN] build_email_body failed: {e}")
-        body = f"""
-======================================================================
-  SOVEREIGN ALPHA -- Daily Intelligence [{today}]
-======================================================================
-
-  [WARNING] Email body generation failed: {e}
-
-  The daily pipeline completed but the digest could not fetch
-  all required data. Please check the dashboard directly:
-
-    https://svrn-alpha-sovereignalpha.hf.space
-
-----------------------------------------------------------------------
-  This is an automated institutional research digest.
-  Not investment advice. For qualified investor evaluation only.
-----------------------------------------------------------------------
-"""
+        err_msg = f"[WARN] build_email_body failed: {e}"
+        print(err_msg)
+        with open("email_errors.log", "a") as f:
+            f.write(f"{datetime.now().isoformat()} - {err_msg}\n")
+        return False
 
     msg = MIMEMultipart()
     msg['From'] = DIGEST_EMAIL
