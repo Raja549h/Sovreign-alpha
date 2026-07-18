@@ -1,4 +1,4 @@
-﻿"""
+"""
 EMAIL DIGEST -- Daily intelligence report with live market data
 Pulls fresh data every run so each email contains unique, current information.
 Falls back gracefully on any failure -- email always sends with whatever data is available.
@@ -42,8 +42,10 @@ def init_tables():
 
 
 def get_db_connection():
-    conn = get_connection()
-    return conn
+    try:
+        return DatabaseConnection()
+    except Exception as e:
+        raise Exception(f"Database connection failed: {e}")
 
 
 def has_cleared_predictions():
