@@ -15,7 +15,7 @@ import pytz
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from database import get_connection
+from database import get_connection, DatabaseConnection
 
 # Setup logging
 logging.basicConfig(
@@ -39,9 +39,10 @@ DIGEST_EMAIL = os.environ.get("DIGEST_EMAIL", "")
 DIGEST_PASSWORD = os.environ.get("DIGEST_PASSWORD", "")
 
 def get_new_observations():
-    conn = get_connection()
-    if not conn:
-        raise Exception("Database connection failed")
+    try:
+        conn = DatabaseConnection()
+    except Exception as e:
+        raise Exception(f"Database connection failed: {e}")
     
     try:
         c = conn.cursor()

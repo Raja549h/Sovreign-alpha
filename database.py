@@ -136,15 +136,34 @@ class NeonCursor:
 class DatabaseConnection:
     def __init__(self, db_name=None):
         init_pool()
-        if not _PG_POOL:
-            raise ConnectionError("Neon connection pool not initialized. Is NEON_URL set?")
-        
         self.pool_key = id(self)
-        try:
-            self.conn = _PG_POOL.getconn(key=self.pool_key)
-            self.conn.autocommit = False
-        except psycopg2.Error as e:
-            raise ConnectionError(f"Failed to get connection from pool: {e}")
+        self.is_pooled = False
+        self.conn = None
+        last_err = None
+        
+        if _PG_POOL:
+            try:
+                self.conn = _PG_POOL.getconn(key=self.pool_key)
+                self.is_pooled = True
+            except psycopg2.Error as e:
+                last_err = f"Pool getconn failed: {e}"
+        else:
+            last_err = "Pool not initialized."
+            
+        if not self.conn:
+            # Hardcore fallback: direct unpooled connection
+            neon_url = os.environ.get("NEON_URL", "")
+            if not neon_url:
+                raise ConnectionError(f"{last_err} NEON_URL missing.")
+            base = neon_url.split('?')[0] if '?' in neon_url else neon_url
+            conn_url = base + "?sslmode=require&connect_timeout=15"
+            try:
+                import psycopg2
+                self.conn = psycopg2.connect(conn_url)
+            except psycopg2.Error as e:
+                raise ConnectionError(f"{last_err} | Direct fallback failed: {e}")
+                
+        self.conn.autocommit = False
 
     @property
     def row_factory(self):
@@ -186,13 +205,21 @@ class DatabaseConnection:
         self.conn.rollback()
 
     def close(self):
-        if hasattr(self, 'conn') and self.conn and _PG_POOL:
-            try:
-                _PG_POOL.putconn(self.conn, key=self.pool_key)
-            except KeyError:
-                pass
-            except Exception as e:
-                print(f"Error putting connection back to pool: {e}")
+        if hasattr(self, 'conn') and self.conn:
+            if getattr(self, 'is_pooled', False) and _PG_POOL:
+                try:
+                    _PG_POOL.putconn(self.conn, key=self.pool_key)
+                except Exception as e:
+                    print(f"Error putting connection back to pool: {e}")
+                    try:
+                        self.conn.close()
+                    except Exception:
+                        pass
+            else:
+                try:
+                    self.conn.close()
+                except Exception:
+                    pass
             self.conn = None
 
     def __enter__(self):
