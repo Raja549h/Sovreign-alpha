@@ -9,32 +9,6 @@
     "dollar_signal": "neutral",
     "summary": "10Y 4.58% (risk_on) | SPX 7575 vs MA200 6965 (risk_on)",
     "indicators": {
-      "vix": 16.39,
-      "vix_20d_avg": 17.03,
-      "hy_oas": 0.0,
-      "ig_oas": 0.0,
-      "treasury_10y": 4.577,
-      "treasury_2y": 0.508,
-      "yield_curve_slope": 4.069,
-      "fed_funds_rate": 0.0,
-      "dxy": 100.9,
-      "sp500_current": 7575.39,
-      "sp500_ma50": 7433.12,
-      "sp500_ma200": 6965.14,
-      "treasury_10y_20d_chg": 0.09
-    },
-    "timestamp": "2026-07-13T13:13:31.303512Z"
-  },
-  {
-    "regime": "NEUTRAL",
-    "confidence": 0.887,
-    "vix_signal": "neutral",
-    "credit_signal": "neutral",
-    "yield_signal": "risk_on",
-    "trend_signal": "risk_on",
-    "dollar_signal": "neutral",
-    "summary": "10Y 4.58% (risk_on) | SPX 7575 vs MA200 6965 (risk_on)",
-    "indicators": {
       "vix": 16.33,
       "vix_20d_avg": 17.02,
       "hy_oas": 0.0,
@@ -2259,7 +2233,7 @@
       "sp500_ma200": 6987.23,
       "treasury_10y_20d_chg": 0.09
     },
-    "timestamp": "2026-07-19T06:52:35.986118Z"
+    "timestamp": "2026-07-19T06:53:24.664285Z"
   },
   {
     "regime": "NEUTRAL",
@@ -2285,7 +2259,7 @@
       "sp500_ma200": 6987.23,
       "treasury_10y_20d_chg": 0.09
     },
-    "timestamp": "2026-07-19T06:52:43.298222Z"
+    "timestamp": "2026-07-19T06:53:26.487124Z"
   },
   {
     "regime": "NEUTRAL",
@@ -2311,7 +2285,7 @@
       "sp500_ma200": 6987.23,
       "treasury_10y_20d_chg": 0.09
     },
-    "timestamp": "2026-07-19T06:52:49.991110Z"
+    "timestamp": "2026-07-19T06:54:25.613700Z"
   },
   {
     "regime": "NEUTRAL",
@@ -2337,6 +2311,32 @@
       "sp500_ma200": 6987.23,
       "treasury_10y_20d_chg": 0.09
     },
-    "timestamp": "2026-07-19T06:52:51.566516Z"
+    "timestamp": "2026-07-19T06:54:32.941057Z"
+  },
+  {
+    "regime": "NEUTRAL",
+    "confidence": 0.94,
+    "vix_signal": "neutral",
+    "credit_signal": "neutral",
+    "yield_signal": "risk_on",
+    "trend_signal": "neutral",
+    "dollar_signal": "neutral",
+    "summary": "10Y 4.54% (risk_on)",
+    "indicators": {
+      "vix": 18.77,
+      "vix_20d_avg": 17.01,
+      "hy_oas": 0.0,
+      "ig_oas": 0.0,
+      "treasury_10y": 4.541,
+      "treasury_2y": 0.506,
+      "yield_curve_slope": 4.035,
+      "fed_funds_rate": 0.0,
+      "dxy": 100.75,
+      "sp500_current": 7457.69,
+      "sp500_ma50": 7464.88,
+      "sp500_ma200": 6987.23,
+      "treasury_10y_20d_chg": 0.09
+    },
+    "timestamp": "2026-07-19T06:54:36.488774Z"
   }
 ]
