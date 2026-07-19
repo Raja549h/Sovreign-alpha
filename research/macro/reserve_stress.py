@@ -67,7 +67,7 @@ STRESS_LEVELS = [
 
 def init_reserve_tables():
     with get_connection() as conn:
-        conn.executescript(RESERVE_STRESS_TABLES_SQL)
+        conn.cursor().execute(RESERVE_STRESS_TABLES_SQL)
 
 
 def _get_db():

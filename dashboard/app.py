@@ -3992,7 +3992,7 @@ def seed_database_on_startup():
         if schema_path.exists():
             schema_sql = schema_path.read_text()
             schema_conn = db_get_connection()
-            schema_conn.executescript(schema_sql)
+            schema_conn.cursor().execute(schema_sql)
             schema_conn.commit()
             schema_conn.close()
             print("[seed] All tables created from POSTGRES_SCHEMA.sql")

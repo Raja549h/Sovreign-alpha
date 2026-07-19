@@ -71,7 +71,7 @@ def init_fii_tables():
         return
     _INIT_DONE = True
     with get_connection() as conn:
-        conn.executescript(FII_FLOW_TABLES_SQL)
+        conn.cursor().execute(FII_FLOW_TABLES_SQL)
 
 
 def _get_db():

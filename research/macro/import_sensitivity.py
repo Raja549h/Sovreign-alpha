@@ -174,7 +174,7 @@ RISK_THRESHOLDS = [
 
 def init_import_tables():
     with get_connection() as conn:
-        conn.executescript(IMPORT_SENSITIVITY_TABLES_SQL)
+        conn.cursor().execute(IMPORT_SENSITIVITY_TABLES_SQL)
 
 
 def _get_db():
