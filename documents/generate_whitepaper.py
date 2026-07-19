@@ -56,7 +56,7 @@ def get_ledger_stats():
     c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
     total_avoided = c.fetchone()['total_avoided'] or 0
     
-    conn.close()
+    # conn.close()
     
     success_rate = (correct / with_outcome * 100) if with_outcome > 0 else 0
     veto_efficiency = (veto_correct / total_vetoes * 100) if total_vetoes > 0 else 0
@@ -81,7 +81,7 @@ def get_predictions(limit=100):
     c = conn.cursor()
     c.execute("SELECT * FROM prediction_ledger ORDER BY timestamp DESC LIMIT ?", (limit,))
     rows = c.fetchall()
-    conn.close()
+    # conn.close()
     return [dict(row) for row in rows]
 
 
@@ -91,7 +91,7 @@ def get_vetoes(limit=50):
     c = conn.cursor()
     c.execute("SELECT * FROM veto_archive ORDER BY timestamp DESC LIMIT ?", (limit,))
     rows = c.fetchall()
-    conn.close()
+    # conn.close()
     return [dict(row) for row in rows]
 
 

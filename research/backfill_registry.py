@@ -53,7 +53,7 @@ def backfill():
             updated += c.rowcount
             conn.commit()
         finally:
-            conn.close()
+            # conn.close()
 
     reg.calculate_edge_score()
 

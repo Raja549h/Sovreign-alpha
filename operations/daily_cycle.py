@@ -81,7 +81,7 @@ def init_db():
         )
     """)
     conn.commit()
-    conn.close()
+    # conn.close()
 
 
 init_db()
@@ -122,7 +122,7 @@ def save_prediction(prediction_data: dict) -> bool:
         print(f"Error saving prediction: {e}")
         return False
     finally:
-        conn.close()
+        # conn.close()
 
 
 def save_veto(veto_data: dict) -> bool:
@@ -152,7 +152,7 @@ def save_veto(veto_data: dict) -> bool:
         print(f"Error saving veto: {e}")
         return False
     finally:
-        conn.close()
+        # conn.close()
 
 
 def generate_proof_hash(decision_id: str, timestamp: str) -> str:
