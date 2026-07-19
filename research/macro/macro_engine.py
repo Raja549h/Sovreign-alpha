@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS macro_portfolio_links (
 
 def init_macro_tables():
     with get_connection() as conn:
-        conn.executescript(ALL_MACRO_TABLES_SQL)
+        conn.cursor().execute(ALL_MACRO_TABLES_SQL)
     fii_flow.init_fii_tables()
     macro_health.init_macro_tables()
     import_sensitivity.init_import_tables()

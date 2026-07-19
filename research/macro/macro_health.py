@@ -79,7 +79,7 @@ INDICATOR_THRESHOLDS = {
 
 def init_macro_tables():
     with get_connection() as conn:
-        conn.executescript(MACRO_HEALTH_TABLES_SQL)
+        conn.cursor().execute(MACRO_HEALTH_TABLES_SQL)
 
 
 def _get_db():

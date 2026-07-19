@@ -88,33 +88,22 @@ class RiskManager:
     def _save_veto(self, veto: VetoRecord) -> bool:
         """Persist veto to database."""
         try:
-            conn = get_connection()
-            c = conn.cursor()
-            c.execute("""
+            with get_connection() as conn:
+                c = conn.cursor()
+                c.execute("""
                 INSERT INTO veto_archive
-                (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
-                 risk_score, expected_loss_pct, actual_outcome, actual_return_pct,
-                 avoided_drawdown, veto_correct, proof_hash, notes, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (veto_id, prediction_id, timestamp, asset, sector, rejection_reason, expected_loss_pct, proof_hash)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                veto.veto_id,
-                veto.prediction_id,
-                veto.timestamp,
-                veto.ticker,
-                "",
-                veto.veto_reason,
-                1.0 - getattr(veto, 'rejected_confidence', 0.5), # Add risk_score (1 - confidence)
-                veto.expected_loss_pct,
-                veto.actual_outcome,
-                veto.actual_return_pct,
-                veto.avoided_drawdown,
-                1 if veto.veto_correct else 0,
-                "",
-                "",
-                datetime.utcnow().isoformat() + 'Z'
+                veto.get('veto_id', str(uuid.uuid4())),
+                veto.get('prediction_id', ''),
+                veto.get('timestamp', datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')),
+                veto.get('asset', ''),
+                veto.get('sector', ''),
+                veto.get('rejection_reason', ''),
+                veto.get('expected_loss_pct', 0.0),
+                veto.get('proof_hash', '')
             ))
-            conn.commit()
-            conn.close()
             return True
         except Exception as e:
             logger.warning(f"Veto save failed: {e}")

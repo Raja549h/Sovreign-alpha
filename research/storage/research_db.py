@@ -125,14 +125,14 @@ def init_fii_tables():
     """Initialize FII flow tracking tables."""
     BILLING_DIR.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
-        conn.executescript(FII_TABLES_SQL)
+        conn.cursor().execute(FII_TABLES_SQL)
 
 
 def init_db():
     """Initialize database tables."""
     BILLING_DIR.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
-        conn.executescript(TABLES_SQL)
+        conn.cursor().execute(TABLES_SQL)
     return RESEARCH_DB
 
 
@@ -436,7 +436,7 @@ CREATE TABLE IF NOT EXISTS memo_evolution (
 def init_evolution_quality_tables():
     """Initialize evolution quality tracking tables."""
     with get_connection() as conn:
-        conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
+        conn.cursor().execute(EVOLUTION_QUALITY_TABLES_SQL)
 
 
 def get_notes(company_id: int = None) -> List[Dict]:
@@ -646,7 +646,7 @@ CREATE TABLE IF NOT EXISTS observations (
 def init_extended_tables():
     """Initialize new extended tables."""
     with get_connection() as conn:
-        conn.executescript(EXTENDED_TABLES_SQL)
+        conn.cursor().execute(EXTENDED_TABLES_SQL)
         conn.execute("""CREATE TABLE IF NOT EXISTS calibration_history (
             id SERIAL PRIMARY KEY,
             observation_id INTEGER REFERENCES observation_memory(id),
@@ -708,7 +708,7 @@ CREATE TABLE IF NOT EXISTS thesis_scorecard (
 def init_evolution_tables():
     """Initialize thesis evolution tracking tables."""
     with get_connection() as conn:
-        conn.executescript(EVOLUTION_TABLES_SQL)
+        conn.cursor().execute(EVOLUTION_TABLES_SQL)
 
 
 VALIDATION_TABLES_SQL = """
@@ -823,7 +823,7 @@ EVIDENCE_TIMELINE_MIGRATIONS = [
 def init_validation_tables():
     """Initialize validation tracking tables and migrate observation_memory."""
     with get_connection() as conn:
-        conn.executescript(VALIDATION_TABLES_SQL)
+        conn.cursor().execute(VALIDATION_TABLES_SQL)
         for migration in VALIDATION_MIGRATIONS:
             try:
                 conn.execute(migration)
@@ -835,14 +835,14 @@ def init_validation_tables():
 def init_shadow_portfolio_tables():
     """Initialize shadow portfolio and credibility evidence tables."""
     with get_connection() as conn:
-        conn.executescript(SHADOW_PORTFOLIO_TABLES_SQL)
+        conn.cursor().execute(SHADOW_PORTFOLIO_TABLES_SQL)
         conn.commit()
 
 
 def init_evidence_tables():
     """Initialize evidence timeline, framework performance, reproducibility tables with migrations."""
     with get_connection() as conn:
-        conn.executescript(EVOLUTION_QUALITY_TABLES_SQL)
+        conn.cursor().execute(EVOLUTION_QUALITY_TABLES_SQL)
         for migration in REPRODUCIBILITY_MIGRATIONS:
             try:
                 conn.execute(migration)

@@ -568,7 +568,7 @@ def safe_migrate(conn: any, migrations: list) -> None:
 def init_billing_db() -> any:
     """Create/verify db tables."""
     conn = get_connection()
-    conn.executescript(BILLING_TABLES_SQL)
+    conn.cursor().execute(BILLING_TABLES_SQL)
     conn.commit()
     return conn
 
@@ -576,10 +576,10 @@ def init_billing_db() -> any:
 def init_research_db() -> any:
     """Create/verify db tables + run migrations."""
     conn = get_connection()
-    conn.executescript(RESEARCH_TABLES_SQL)
-    conn.executescript(OBSERVATION_TABLES_SQL)
-    conn.executescript(EVOLUTION_TABLES_SQL)
-    conn.executescript(ANALYSIS_RUNS_TABLES_SQL)
+    conn.cursor().execute(RESEARCH_TABLES_SQL)
+    conn.cursor().execute(OBSERVATION_TABLES_SQL)
+    conn.cursor().execute(EVOLUTION_TABLES_SQL)
+    conn.cursor().execute(ANALYSIS_RUNS_TABLES_SQL)
     safe_migrate(conn, OBSERVATION_MIGRATIONS)
     conn.commit()
     return conn
@@ -588,6 +588,6 @@ def init_research_db() -> any:
 def init_fund_data_db() -> any:
     """Create/verify db tables."""
     conn = get_connection()
-    conn.executescript(FUND_DATA_TABLES_SQL)
+    conn.cursor().execute(FUND_DATA_TABLES_SQL)
     conn.commit()
     return conn
