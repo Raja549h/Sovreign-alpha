@@ -567,27 +567,31 @@ def safe_migrate(conn: any, migrations: list) -> None:
 
 def init_billing_db() -> any:
     """Create/verify db tables."""
-    conn = get_connection()
-    conn.cursor().execute(BILLING_TABLES_SQL)
-    conn.commit()
-    return conn
+    with get_connection() as conn:
+        conn.cursor().execute(BILLING_TABLES_SQL)
+        conn.commit()
+    return None
 
 
 def init_research_db() -> any:
     """Create/verify db tables + run migrations."""
-    conn = get_connection()
-    conn.cursor().execute(RESEARCH_TABLES_SQL)
-    conn.cursor().execute(OBSERVATION_TABLES_SQL)
-    conn.cursor().execute(EVOLUTION_TABLES_SQL)
-    conn.cursor().execute(ANALYSIS_RUNS_TABLES_SQL)
-    safe_migrate(conn, OBSERVATION_MIGRATIONS)
-    conn.commit()
-    return conn
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute(RESEARCH_TABLES_SQL)
+        c.execute(OBSERVATION_TABLES_SQL)
+        c.execute(EVOLUTION_TABLES_SQL)
+        c.execute(ANALYSIS_RUNS_TABLES_SQL)
+        try:
+            safe_migrate(c, OBSERVATION_MIGRATIONS)
+        except Exception:
+            pass
+        conn.commit()
+    return None
 
 
 def init_fund_data_db() -> any:
     """Create/verify db tables."""
-    conn = get_connection()
-    conn.cursor().execute(FUND_DATA_TABLES_SQL)
-    conn.commit()
-    return conn
+    with get_connection() as conn:
+        conn.cursor().execute(FUND_DATA_TABLES_SQL)
+        conn.commit()
+    return None

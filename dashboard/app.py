@@ -2569,7 +2569,15 @@ def api_evidence_timeline():
         event_type = request.args.get('event_type')
         timeline = et.get_timeline(company_id=company_id, observation_id=obs_id,
                                    event_type=event_type, limit=200)
-        return jsonify({'success': True, 'timeline': timeline})
+        
+        forbidden_strings = ["STRESS_TEST", "SIMULATED", "TEST_EVENT", "E2E TEST", "TEST_EVENT"]
+        filtered_timeline = []
+        for t in timeline:
+            t_str = str(t).upper()
+            if not any(f in t_str for f in forbidden_strings):
+                filtered_timeline.append(t)
+                
+        return jsonify({'success': True, 'timeline': filtered_timeline})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -3205,6 +3213,7 @@ def research_company(ticker):
             get_company, get_latest_scores, get_all_metrics,
             get_flags, get_notes, get_filings
         )
+        ticker = ticker.upper().strip()
         company = get_company(ticker)
         if not company:
             return f"Company {ticker} not found", 404
