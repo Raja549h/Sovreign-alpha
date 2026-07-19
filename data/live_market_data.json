@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-07-19T06:52:58.531382Z",
+  "fetched_at": "2026-07-19T07:05:36.480560Z",
   "tickers": {
     "BAJFINANCE.NS": {
       "symbol": "BAJFINANCE.NS",
@@ -14,7 +14,7 @@
       "ma50": 947.97,
       "ma200": 963.61,
       "percent_above_ma200": 9.62,
-      "earnings_date": null,
+      "earnings_date": "2026-07-30",
       "short_interest_pct": null,
       "analyst_target": 1078.9254,
       "analyst_consensus": "BUY"
@@ -32,7 +32,7 @@
       "ma50": 1864.04,
       "ma200": 1950.19,
       "percent_above_ma200": -2.12,
-      "earnings_date": null,
+      "earnings_date": "2026-08-04",
       "short_interest_pct": null,
       "analyst_target": 2294.879,
       "analyst_consensus": "STRONG_BUY"
@@ -86,7 +86,7 @@
       "ma50": 1107.28,
       "ma200": 1341.47,
       "percent_above_ma200": -18.26,
-      "earnings_date": null,
+      "earnings_date": "2026-07-23",
       "short_interest_pct": null,
       "analyst_target": 1325.7,
       "analyst_consensus": "BUY"
@@ -158,7 +158,7 @@
       "ma50": 1001.1,
       "ma200": 1003.94,
       "percent_above_ma200": 4.02,
-      "earnings_date": "2026-08-06",
+      "earnings_date": null,
       "short_interest_pct": null,
       "analyst_target": 1200.079,
       "analyst_consensus": "STRONG_BUY"
@@ -176,7 +176,7 @@
       "ma50": 1852.63,
       "ma200": 1750.47,
       "percent_above_ma200": 10.4,
-      "earnings_date": null,
+      "earnings_date": "2026-07-31",
       "short_interest_pct": null,
       "analyst_target": 2055.0,
       "analyst_consensus": "BUY"
