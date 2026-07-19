@@ -16,14 +16,14 @@ class ConnectionError(psycopg2.OperationalError): pass
 _PG_POOL = None
 
 def _create_pool():
-    neon_url = os.environ.get("NEON_URL")
-    if not neon_url or len(neon_url) < 10:
-        raise ConnectionError("CRITICAL: NEON_URL environment variable is not set.")
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url or len(db_url) < 10:
+        raise ConnectionError("CRITICAL: DATABASE_URL environment variable is not set.")
         
-    parsed = urllib.parse.urlparse(neon_url)
+    parsed = urllib.parse.urlparse(db_url)
     host = parsed.hostname
     
-    base = neon_url.split('?')[0] if '?' in neon_url else neon_url
+    base = db_url.split('?')[0] if '?' in db_url else db_url
     conn_url = base + "?sslmode=require&connect_timeout=10&keepalives_idle=5&keepalives_interval=2&keepalives_count=2"
     
     retries = 5

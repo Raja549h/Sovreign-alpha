@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-print(f"NEON_URL present: {bool(os.environ.get('NEON_URL'))}")
+print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
 """
 content = content.replace(env_print.strip(), new_env_print.strip())
 

@@ -3,10 +3,10 @@ import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
-neon_url = os.environ.get('NEON_URL')
+db_url = os.environ.get('DATABASE_URL')
 
 try:
-    conn = psycopg2.connect(neon_url)
+    conn = psycopg2.connect(db_url)
     c = conn.cursor()
     
     print('--- Query 1: Recent Observations Count ---')

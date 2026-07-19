@@ -78,8 +78,8 @@ old_stats = """def get_today_stats():
     cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
     conn = get_db_connection()
     if not conn:
-        print("[ERROR] get_today_stats: Database connection failed! NEON_URL may be missing.")
-        print(f"[DEBUG] NEON_URL present: {bool(os.environ.get('NEON_URL'))}")
+        print("[ERROR] get_today_stats: Database connection failed! DATABASE_URL may be missing.")
+        print(f"[DEBUG] DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
         return {
             'total': 0, 'approved': 0, 'rejected': 0, 'avg_conf': 0,
             'top': None, 'total_all': 0, 'accuracy': 0, 'avoided': 0
