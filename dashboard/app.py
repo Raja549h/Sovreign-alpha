@@ -794,48 +794,44 @@ def pct_filter(value):
 def get_dashboard_stats():
     """Get real dashboard statistics from prediction_ledger and veto_archive."""
     try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM prediction_ledger")
-        total = c.fetchone()[0]
-        print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger -> {total}")
-        
-        c.execute("""SELECT COUNT(*) FROM prediction_ledger
-                 WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
-        approved = c.fetchone()[0]
-        
-        c.execute("""SELECT COUNT(*) FROM prediction_ledger
-                 WHERE status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
-        vetoed = c.fetchone()[0]
-        
-        c.execute("SELECT COUNT(*) FROM veto_archive")
-        total_vetoes = c.fetchone()[0]
-        
-        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
-        correct_vetoes = c.fetchone()[0]
-        
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != '' OR status IN ('resolved', 'HIT', 'MISS', 'hit', 'miss')")
-        resolved_outcomes = c.fetchone()[0]
-        print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
-        
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'hit') OR actual_outcome IN ('HIT', 'hit')")
-        hits = c.fetchone()[0]
-        
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('MISS', 'miss') OR actual_outcome IN ('MISS', 'miss')")
-        misses = c.fetchone()[0]
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM prediction_ledger")
+            total = c.fetchone()[0]
+            print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger -> {total}")
+            
+            c.execute("""SELECT COUNT(*) FROM prediction_ledger
+                     WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
+            approved = c.fetchone()[0]
+            
+            c.execute("""SELECT COUNT(*) FROM prediction_ledger
+                     WHERE status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')""")
+            vetoed = c.fetchone()[0]
+            
+            c.execute("SELECT COUNT(*) FROM veto_archive")
+            total_vetoes = c.fetchone()[0]
+            
+            c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
+            correct_vetoes = c.fetchone()[0]
+            
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'MISS', 'hit', 'miss')")
+            resolved_outcomes = c.fetchone()[0]
+            print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
+            
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'hit')")
+            hits = c.fetchone()[0]
+            
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('MISS', 'miss')")
+            misses = c.fetchone()[0]
 
-        
-        c.close()
-        pass
-        # # conn.close()
-        approval_rate = round(approved / total * 100, 1) if total > 0 else 0
-        veto_accuracy = round(correct_vetoes / total_vetoes * 100, 1) if total_vetoes > 0 else 0
-        return {
-            'total_predictions': total, 'approved': approved, 'vetoed': vetoed,
-            'approval_rate': approval_rate, 'veto_efficiency': veto_accuracy,
-            'total_vetoes': total_vetoes, 'correct_vetoes': correct_vetoes,
-            'resolved_predictions': resolved_outcomes, 'hits': hits, 'misses': misses,
-        }
+            approval_rate = round(approved / total * 100, 1) if total > 0 else 0
+            veto_accuracy = round(correct_vetoes / total_vetoes * 100, 1) if total_vetoes > 0 else 0
+            return {
+                'total_predictions': total, 'approved': approved, 'vetoed': vetoed,
+                'approval_rate': approval_rate, 'veto_efficiency': veto_accuracy,
+                'total_vetoes': total_vetoes, 'correct_vetoes': correct_vetoes,
+                'resolved_predictions': resolved_outcomes, 'hits': hits, 'misses': misses,
+            }
     except Exception as e:
         print("GET_DASHBOARD_STATS ERROR:", e)
         return {'total_predictions': 0, 'approved': 0, 'vetoed': 0,
