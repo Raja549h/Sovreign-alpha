@@ -266,7 +266,7 @@ def seed_research_db():
     print("  [ok] Research note SR-2026-BAF-001 inserted")
 
     conn.commit()
-    conn.close()
+    # conn.close()
     print("  [done] db seeded")
 
 
@@ -310,7 +310,7 @@ def seed_fund_db():
         print(f"  [ok] {key} = {value}")
 
     conn.commit()
-    conn.close()
+    # conn.close()
     print("  [done] db seeded")
 
 

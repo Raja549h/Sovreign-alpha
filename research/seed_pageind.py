@@ -253,7 +253,7 @@ def seed_pageind():
     print(f"[seed] {len(flags)} forensic flags inserted")
 
     conn.commit()
-    conn.close()
+    # conn.close()
     print("[seed] PAGEIND seed complete")
 
 
