@@ -618,7 +618,7 @@ def is_demo_mode():
 
 
 def get_db_data(query, params=None):
-    """Get data from Neon PostgreSQL database."""
+    """Get data from PostgreSQL database."""
     
     conn = db_get_connection()
     cursor = conn.cursor()
