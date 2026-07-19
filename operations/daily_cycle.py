@@ -81,6 +81,7 @@ def init_db():
         )
     """)
     conn.commit()
+    pass
     # conn.close()
 
 
@@ -122,6 +123,7 @@ def save_prediction(prediction_data: dict) -> bool:
         print(f"Error saving prediction: {e}")
         return False
     finally:
+        pass
         # conn.close()
 
 
@@ -152,6 +154,7 @@ def save_veto(veto_data: dict) -> bool:
         print(f"Error saving veto: {e}")
         return False
     finally:
+        pass
         # conn.close()
 
 

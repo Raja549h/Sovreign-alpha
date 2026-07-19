@@ -137,6 +137,7 @@ class AutoReviewEngine:
         except Exception as e:
             print(f"[auto_review] DB update failed: {e}")
         finally:
+            pass
             # conn.close()
 
         self.registry.calculate_edge_score(company_id)
