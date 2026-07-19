@@ -37,6 +37,12 @@ load_env()
 DIGEST_EMAIL = os.environ.get("DIGEST_EMAIL", "")
 DIGEST_PASSWORD = os.environ.get("DIGEST_PASSWORD", "")
 
+neon_present = bool(os.environ.get('NEON_URL'))
+import logging
+if neon_present:
+    print(f"NEON_URL present at email time: {neon_present}")
+
+
 def init_tables():
     pass
 
@@ -50,14 +56,11 @@ def get_db_connection():
 
 def has_cleared_predictions():
     try:
-        conn = get_db_connection()
-        if not conn:
-            return False
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE status = 'cleared'")
-        cnt = c.fetchone()['cnt']
-        conn.close()
-        return cnt > 0
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE status = 'cleared'")
+            cnt = c.fetchone()['cnt']
+            return cnt > 0
     except Exception:
         return False
 
@@ -66,82 +69,66 @@ def seed_meaningful_data():
     init_tables()
     if has_cleared_predictions():
         return
-    conn = get_db_connection()
-    if not conn:
-        return
-    c = conn.cursor()
-    now = datetime.utcnow()
-    today_cleared = 0
-    c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'",
-              (f"{now.strftime('%Y-%m-%d')}%",))
-    row = c.fetchone()
-    if row:
-        today_cleared = row['cnt'] or 0
-    c.execute("SELECT COUNT(*) as cnt FROM veto_archive")
-    veto_count = c.fetchone()['cnt'] or 0
-    if today_cleared == 0:
-        cleared_count = 0
-        outcomes = ['correct', 'correct', 'correct', 'correct', 'incorrect']
-        returns = [8.5, 6.2, 4.8, 7.1, -3.2]
-        notes = [
-            'prediction validated by subsequent price action',
-            'BFSI recovery played out as expected',
-            'margin normalization on track',
-            'AUM growth accelerating, opex ratio improving',
-            'missed on margin headwinds from wage inflation',
-        ]
-        random.seed(datetime.now().toordinal())
-        shuffled = list(zip(SEED_PREDICTIONS, outcomes, returns, notes))
-        random.shuffle(shuffled)
-        for i, (pred, outcome, ret, note) in enumerate(shuffled):
-            ts = (now - timedelta(hours=i)).isoformat() + 'Z'
-            pid = f"seed-{uuid.uuid4().hex[:12]}"
-            try:
-                c.execute("""
-                    INSERT INTO prediction_ledger
-                    (prediction_id, timestamp, asset, sector, thesis, confidence_score,
-                     status, expected_timeline_days, actual_outcome, actual_return_pct,
-                     outcome_notes, proof_hash, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    pid, ts, pred['asset'], pred['sector'], pred['thesis'],
-                    pred['confidence'], pred['status'], 30,
-                    outcome, ret, note,
-                    f"0x{uuid.uuid4().hex[:40]}", ts, ts,
-                ))
-                cleared_count += 1
-            except IntegrityError:
-                pass
-        if cleared_count > 0:
-            print(f"[seed] Inserted {cleared_count} cleared predictions (shuffled)")
-    if veto_count == 0:
-        seeded_vetoes = 0
-        for i, veto in enumerate(SEED_VETOES):
-            vid = f"seed-veto-{uuid.uuid4().hex[:12]}"
-            ts = (now - timedelta(days=i + 1)).isoformat() + 'Z'
-            try:
-                c.execute("""
-                    INSERT INTO veto_archive
-                    (veto_id, prediction_id, timestamp, asset, sector, rejection_reason,
-                     expected_loss_pct, actual_outcome, actual_return_pct, avoided_drawdown,
-                     veto_correct, notes, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    vid, '', ts, veto['asset'], veto['sector'], veto['reason'],
-                    veto['risk_score'] * 10, veto['outcome'],
-                    -12.5 if veto['outcome'] == 'correct' else None,
-                    veto['avoided_drawdown'],
-                    1 if veto['outcome'] == 'correct' else None,
-                    f'Veto validated: stock declined after signal',
-                    ts,
-                ))
-                seeded_vetoes += 1
-            except IntegrityError:
-                pass
-        if seeded_vetoes > 0:
-            print(f"[seed] Inserted {seeded_vetoes} veto records")
-    conn.commit()
-    conn.close()
+    try:
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            now = datetime.utcnow()
+            today_cleared = 0
+            c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'",
+                      (f"{now.strftime('%Y-%m-%d')}%",))
+            row = c.fetchone()
+            if row:
+                today_cleared = row['cnt'] or 0
+            c.execute("SELECT COUNT(*) as cnt FROM veto_archive")
+            veto_count = c.fetchone()['cnt'] or 0
+            if today_cleared == 0:
+                cleared_count = 0
+                for i in range(3):
+                    try:
+                        c.execute("""
+                            INSERT INTO prediction_ledger 
+                            (prediction_id, timestamp, asset, sector, thesis, confidence_score, status, expected_timeline_days, created_at, updated_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """, (
+                            str(uuid.uuid4()),
+                            (now - timedelta(hours=i)).isoformat() + "Z",
+                            random.choice(['NVDA', 'AAPL', 'RELIANCE.NS', 'TCS.NS', 'BTC-USD']),
+                            'Technology',
+                            f"Sample intelligence generated for layout visualization {i}",
+                            round(random.uniform(70.0, 95.0), 1),
+                            'cleared',
+                            30,
+                            now.isoformat() + "Z",
+                            now.isoformat() + "Z"
+                        ))
+                        cleared_count += 1
+                    except Exception:
+                        pass
+                print(f"[seed] Inserted {cleared_count} cleared predictions")
+            if veto_count < 10:
+                seeded_vetoes = 0
+                for i in range(5):
+                    try:
+                        c.execute("""
+                            INSERT INTO veto_archive 
+                            (veto_id, timestamp, asset, sector, rejection_reason, expected_loss_pct, created_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """, (
+                            str(uuid.uuid4()),
+                            (now - timedelta(hours=i*2)).isoformat() + "Z",
+                            random.choice(['TSLA', 'GME', 'AMC', 'ZOMATO.NS', 'PAYTM.NS']),
+                            'Volatile',
+                            f"Sample risk veto for excessive volatility {i}",
+                            round(random.uniform(5.0, 15.0), 1),
+                            now.isoformat() + "Z"
+                        ))
+                        seeded_vetoes += 1
+                    except Exception:
+                        pass
+                if seeded_vetoes > 0:
+                    print(f"[seed] Inserted {seeded_vetoes} veto records")
+    except Exception as e:
+        print(f"[seed] Error seeding: {e}")
 
 
 def get_today_stats():
@@ -437,18 +424,21 @@ def init_research_tables():
 
 
 def get_today_observations():
-    conn = get_db_connection()
     try:
-        c = conn.cursor()
-        cutoff_time = datetime.now(timezone.utc) - timedelta(days=1)
-        c.execute("SELECT timestamp, headline FROM observations WHERE timestamp >= %s ORDER BY timestamp DESC LIMIT 10", (cutoff_time.isoformat(),))
-        return c.fetchall()
-    finally:
-        conn.close()
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            cutoff_time = datetime.now(timezone.utc) - timedelta(days=1)
+            c.execute("SELECT timestamp, headline FROM observations WHERE timestamp >= %s ORDER BY timestamp DESC LIMIT 10", (cutoff_time.isoformat(),))
+            return c.fetchall()
+    except Exception as e:
+        print(f"[ERROR] get_today_observations failed: {e}")
+        return []
 
 
 def build_email_body():
     """Assemble a rich daily intelligence report with live data."""
+    if not os.environ.get('NEON_URL'):
+        return "CRITICAL: NEON_URL environment variable is missing. Pipeline cannot connect to database."
     init_research_tables()
     ist_tz = pytz.timezone('Asia/Kolkata')
     run_timestamp = datetime.now(timezone.utc).astimezone(ist_tz).strftime('%Y-%m-%d %H:%M:%S IST')
