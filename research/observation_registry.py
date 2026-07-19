@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 Observation Registry — Validation and edge tracking
 =====================================================

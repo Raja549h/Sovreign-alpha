@@ -1,7 +1,7 @@
 import sys
 from automation.email_digest import load_env
 load_env()
-from database import get_connection as db_get_connection
+from dashboard.gateway import get_connection as db_get_connection
 import json
 
 try:

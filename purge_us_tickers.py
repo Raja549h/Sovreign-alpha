@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'C:/Users/lokes/Downloads/project/sovereign-alpha')
 from dotenv import load_dotenv
 load_dotenv()
-from database import get_connection, init_pool
+from dashboard.gateway import get_connection, init_pool
 
 def purge_us_tickers():
     init_pool()

@@ -15,7 +15,7 @@ Databases:
   db: fund_params, fund_uploads
 """
 
-from database import OperationalError, get_connection
+from dashboard.gateway import OperationalError, get_connection
 
 # ---------------------------------------------------------------------------
 # db

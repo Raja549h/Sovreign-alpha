@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 DAILY ANALYSIS CYCLE
 Sovereign Alpha - Institutional Intelligence System

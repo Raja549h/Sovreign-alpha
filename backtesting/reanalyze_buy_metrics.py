@@ -9,7 +9,7 @@ Reads the backtest checkpoint data and generates:
 import sys
 import json
 
-from database import get_connection
+from dashboard.gateway import get_connection
 from datetime import datetime
 from pathlib import Path
 import numpy as np

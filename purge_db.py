@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, '.')
 from dotenv import load_dotenv
 load_dotenv()
-from database import get_connection
+from dashboard.gateway import get_connection
 
 approved_tickers = ('RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS','SBIN.NS','BHARTIARTL.NS','ITC.NS','KOTAKBANK.NS','HCLTECH.NS','BAJFINANCE.NS','TRENT.NS','SUNPHARMA.NS')
 approved_assets = tuple([t.replace('.NS', '') for t in approved_tickers])

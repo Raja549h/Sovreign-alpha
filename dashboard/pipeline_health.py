@@ -2,7 +2,7 @@ import datetime
 import os
 import smtplib
 from email.mime.text import MIMEText
-from database import get_connection as db_get_connection
+from dashboard.gateway import get_connection as db_get_connection
 
 try:
     from scheduler_instance import scheduler

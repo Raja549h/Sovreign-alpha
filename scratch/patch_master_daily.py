@@ -28,7 +28,7 @@ content = re.sub(r"(subprocess\.run\(\s*\[.*?\],\s*cwd=str\(BASE_DIR\),)", r"\g<
 old_step_6 = """    # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from database import get_connection
+        from dashboard.gateway import get_db_connection, get_connection
         conn = get_connection()
         if not conn:
             raise Exception("Database connection unavailable")
@@ -62,7 +62,7 @@ old_step_6 = """    # Step 6: Record to prediction ledger
 new_step_6 = """    # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from database import get_connection
+        from dashboard.gateway import get_db_connection, get_connection
         with get_connection() as conn:
             c = conn.cursor()
             for pred in predictions:
@@ -94,7 +94,7 @@ content = content.replace(old_step_6, new_step_6)
 old_step_8 = """    # Step 8: Update prediction validation statuses (BEFORE email so email has latest data)
     log("[8/9] Updating prediction validation statuses...")
     try:
-        from database import get_connection as _get_conn
+        from dashboard.gateway import get_connection as _get_conn
         _vconn = _get_conn()
         if _vconn:
             _vc = _vconn.cursor()
@@ -113,7 +113,7 @@ old_step_8 = """    # Step 8: Update prediction validation statuses (BEFORE emai
 new_step_8 = """    # Step 8: Update prediction validation statuses (BEFORE email so email has latest data)
     log("[8/9] Updating prediction validation statuses...")
     try:
-        from database import get_connection as _get_conn
+        from dashboard.gateway import get_connection as _get_conn
         with _get_conn() as _vconn:
             _vc = _vconn.cursor()
             _vc.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")

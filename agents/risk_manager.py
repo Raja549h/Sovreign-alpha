@@ -15,7 +15,7 @@ All vetoes stored permanently for outcome tracking.
 """
 
 import sys
-from database import get_connection
+from dashboard.gateway import get_connection
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List

@@ -36,7 +36,7 @@ print("=" * 100)
 # ============================================================
 print("\n── DATABASE CONNECTIVITY ──")
 try:
-    from database import get_connection, init_pool, _PG_POOL
+    from dashboard.gateway import get_connection, init_pool, _PG_POOL
     init_pool()
     if _PG_POOL:
         log("DB", "Pool initialized", "PASS", f"maxconn={_PG_POOL.maxconn}")
@@ -372,7 +372,7 @@ except Exception as e:
 # ============================================================
 print("\n── CONNECTION POOL STRESS TEST ──")
 try:
-    from database import get_connection
+    from dashboard.gateway import get_connection
     conns = []
     opened = 0
     for i in range(15):

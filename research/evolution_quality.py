@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 Research Evolution Engine — Phases 1,3,4,5,6,7,8
 ==================================================

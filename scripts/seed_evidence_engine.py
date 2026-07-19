@@ -8,7 +8,7 @@ import sys
 import json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from database import get_connection
+from dashboard.gateway import get_connection
 
 from research.storage.research_db import get_connection
 from research.evolution_quality import (

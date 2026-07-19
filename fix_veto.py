@@ -1,7 +1,7 @@
 import random
 from automation.email_digest import load_env
 load_env()
-from database import get_connection
+from dashboard.gateway import get_connection
 
 def fix_veto_efficiency():
     conn = get_connection()

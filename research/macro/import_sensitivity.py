@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 Import Sensitivity Overlay — Portfolio-level import dependency intelligence
 ============================================================================

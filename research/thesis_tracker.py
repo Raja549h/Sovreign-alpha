@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 Thesis Tracker & Watchlist
 Manages investment theses lifecycle: creation, status monitoring,

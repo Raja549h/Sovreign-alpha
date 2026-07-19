@@ -1,7 +1,7 @@
 import sys, os
 sys.path.insert(0, '.')
 from dotenv import load_dotenv; load_dotenv()
-from database import get_connection
+from dashboard.gateway import get_connection
 
 try:
     with get_connection() as conn:

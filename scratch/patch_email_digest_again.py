@@ -8,7 +8,7 @@ with open('email_digest_old.py', 'r', encoding='utf-16le') as f:
 # 1. Replace imports and setup
 old_setup = """
 import smtplib
-from database import IntegrityError, get_connection
+from dashboard.gateway import IntegrityError, get_connection
 import random
 import uuid
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ def load_env():
 """
 new_setup = """
 import smtplib
-from database import DatabaseConnection
+from dashboard.gateway import DatabaseConnection
 import random
 import uuid
 from datetime import datetime, timedelta, timezone

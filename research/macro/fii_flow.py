@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 FII Flow Intelligence — Institutional risk awareness for FII-driven volatility
 =============================================================================

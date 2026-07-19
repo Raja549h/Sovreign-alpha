@@ -6,7 +6,7 @@ load_dotenv()
 # database is in root
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from database import get_db_connection
+from dashboard.gateway import get_db_connection
 
 def run_deletions():
     print("Deleting US tickers from prediction_ledger and observations...")

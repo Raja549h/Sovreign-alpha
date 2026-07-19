@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """Seed all 15 tables currently empty in db."""
 
 from pathlib import Path

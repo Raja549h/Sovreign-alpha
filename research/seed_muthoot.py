@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 #!/usr/bin/env python3
 """
 Seed Muthoot Finance (MUTHOOTFIN) data into research.db.
