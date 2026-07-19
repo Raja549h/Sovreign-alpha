@@ -252,7 +252,7 @@ def main():
         print(f"\nWarning: Could not save results: {e}")
 
     try:
-        from database import get_connection
+        from dashboard.gateway import get_connection
         db_path = None
         conn = get_connection()
         c = conn.cursor()

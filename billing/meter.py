@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta

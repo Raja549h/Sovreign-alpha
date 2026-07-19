@@ -39,7 +39,7 @@ dashboard_dir = Path(__file__).parent
 project_dir = dashboard_dir.parent
 sys.path.insert(0, str(project_dir))
 
-from database import get_connection as db_get_connection
+from dashboard.gateway import get_connection as db_get_connection
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 import time
@@ -203,7 +203,7 @@ def check_db_availability():
     if request.endpoint == "static" or request.path.startswith('/api/'):
         return
 #    try:
-#        from database import get_connection
+#        from dashboard.gateway import get_db_connection, get_connection
 #        conn = get_connection()
 #        if conn is None:
 #            raise Exception("DB connection returned None")
@@ -1003,7 +1003,7 @@ def decisions():
 @app.route('/misses')
 def misses_ledger():
     try:
-        from database import get_connection as db_get_connection
+        from dashboard.gateway import get_connection as db_get_connection
         conn = db_get_connection()
         c = conn.cursor()
         c.execute("""
@@ -1253,7 +1253,7 @@ def methodology():
 def performance():
     """Performance page."""
     try:
-        from database import get_connection as db_get_connection
+        from dashboard.gateway import get_connection as db_get_connection
         conn = db_get_connection()
         c = conn.cursor()
         

@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 Observation Stream
 Cross-company forensic intelligence feed with macro-triggered alerts.

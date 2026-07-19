@@ -1,5 +1,5 @@
 import config, json
-from database import get_connection
+from dashboard.gateway import get_connection
 conn = get_connection()
 if conn:
     c = conn.cursor()

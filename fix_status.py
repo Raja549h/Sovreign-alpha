@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, '.')
 from dotenv import load_dotenv
 load_dotenv()
-from database import get_connection
+from dashboard.gateway import get_connection
 
 queries = [
     "UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');",

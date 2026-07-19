@@ -1,1 +1,1 @@
-﻿from automation.email_digest import load_env; load_env(); from database import get_connection; c = get_connection().cursor(); c.execute('SELECT timestamp, created_at, status FROM prediction_ledger WHERE timestamp LIKE \'2026-07-13%\' LIMIT 5'); print([dict(r) for r in c.fetchall()])
+﻿from automation.email_digest import load_env; load_env(); from dashboard.gateway import get_connection; c = get_connection().cursor(); c.execute('SELECT timestamp, created_at, status FROM prediction_ledger WHERE timestamp LIKE \'2026-07-13%\' LIMIT 5'); print([dict(r) for r in c.fetchall()])

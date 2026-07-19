@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 
 from config import logger
-from database import get_connection as db_get_connection
+from dashboard.gateway import get_connection as db_get_connection
 
 class BackgroundEngine:
     def __init__(self, max_workers=5):

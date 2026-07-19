@@ -14,7 +14,7 @@ sys.modules['apscheduler.triggers'] = MagicMock()
 sys.modules['apscheduler.triggers.cron'] = MagicMock()
 
 from app import app
-from database import get_db_connection
+from dashboard.gateway import get_db_connection
 import privacy
 
 def main():

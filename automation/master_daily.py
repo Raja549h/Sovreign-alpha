@@ -178,7 +178,7 @@ def run_pipeline():
     # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from database import get_connection
+        from dashboard.gateway import get_db_connection, get_connection
         with get_connection() as conn:
             c = conn.cursor()
             for pred in predictions:
@@ -244,7 +244,7 @@ def run_pipeline():
     # Step 8: Update prediction validation statuses (BEFORE email so email has latest data)
     log("[8/9] Updating prediction validation statuses...")
     try:
-        from database import get_connection as _get_conn
+        from dashboard.gateway import get_connection as _get_conn
         with _get_conn() as _vconn:
             _vc = _vconn.cursor()
             _vc.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")

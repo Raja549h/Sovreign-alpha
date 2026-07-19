@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    from database import get_connection
+    from dashboard.gateway import get_connection
 except ImportError:
     print("Failed to import project dependencies. Run from project root.")
     sys.exit(1)

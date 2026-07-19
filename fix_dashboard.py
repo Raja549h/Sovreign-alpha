@@ -12,7 +12,7 @@ def check_db_availability():
     if request.endpoint == "static":
         return
     try:
-        from database import get_connection
+        from dashboard.gateway import get_connection
         with get_connection() as conn:
             pass
     except Exception as e:

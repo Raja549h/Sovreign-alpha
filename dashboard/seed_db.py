@@ -15,7 +15,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from database import get_connection
+from dashboard.gateway import get_connection
 import json
 from datetime import datetime
 BILLING_DIR = BASE_DIR / "billing"

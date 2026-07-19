@@ -1,4 +1,4 @@
-from database import get_connection, IntegrityError, OperationalError
+from dashboard.gateway import get_connection, IntegrityError, OperationalError
 """
 Research Database Schema and Operations
 ========================================

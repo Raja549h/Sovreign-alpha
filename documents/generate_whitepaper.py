@@ -1,4 +1,4 @@
-from database import get_connection
+from dashboard.gateway import get_connection
 """
 WHITEPAPER GENERATOR
 Sovereign Alpha - Institutional Intelligence System
