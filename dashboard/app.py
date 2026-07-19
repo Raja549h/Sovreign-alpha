@@ -561,6 +561,7 @@ def save_fund_file(file_type: str, content: bytes):
     c.execute("INSERT INTO fund_uploads (file_type, file_content, uploaded_at) VALUES (%s, %s, %s)",
               (file_type, content, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
+    pass
     # # conn.close()
 
 def get_fund_file(file_type: str) -> bytes:
@@ -568,6 +569,7 @@ def get_fund_file(file_type: str) -> bytes:
     c = conn.cursor()
     c.execute("SELECT file_content FROM fund_uploads WHERE file_type = %s", (file_type,))
     row = c.fetchone()
+    pass
     # # conn.close()
     return row[0] if row else None
 
@@ -577,6 +579,7 @@ def save_fund_param(key: str, value: str):
     c.execute("INSERT INTO fund_params (param_key, param_value, updated_at) VALUES (%s, %s, %s)",
               (key, value, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
+    pass
     # # conn.close()
 
 def get_fund_params() -> dict:
@@ -584,6 +587,7 @@ def get_fund_params() -> dict:
     c = conn.cursor()
     c.execute("SELECT param_key, param_value FROM fund_params")
     rows = c.fetchall()
+    pass
     # # conn.close()
     return {row[0]: row[1] for row in rows}
 
@@ -631,6 +635,7 @@ def get_db_data(query, params=None):
         print(f"DB Error: {e}")
         return []
     finally:
+        pass
         # # conn.close()
 
 
@@ -821,6 +826,7 @@ def get_dashboard_stats():
 
         
         c.close()
+        pass
         # # conn.close()
         approval_rate = round(approved / total * 100, 1) if total > 0 else 0
         veto_accuracy = round(correct_vetoes / total_vetoes * 100, 1) if total_vetoes > 0 else 0
@@ -1013,6 +1019,7 @@ def misses_ledger():
         """)
         misses = [dict(row) for row in c.fetchall()]
         c.close()
+        pass
         # # conn.close()
     except Exception as e:
         print(f"Error fetching misses: {e}")
@@ -1049,6 +1056,7 @@ def prediction_detail(prediction_id):
         c = conn.cursor()
         c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
         row = c.fetchone()
+        pass
         # # conn.close()
         if not row:
             return render_template('prediction_detail.html',
@@ -1264,6 +1272,7 @@ def performance():
                 else: maturity_stats['>60'] += 1
         
         c.close()
+        pass
         # # conn.close()
         
         stats = get_dashboard_stats()
@@ -1491,6 +1500,7 @@ def api_track_record():
         total_approved = c.fetchone()[0]
         c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
         total_alpha = c.fetchone()[0] or 0.0
+        pass
         # # conn.close()
     except Exception:
         total_sessions = 0
@@ -2114,6 +2124,7 @@ def debug_db():
             count = c.execute("SELECT COUNT(*) FROM [{}]".format(name.replace(']', ']]'))).fetchone()[0]
             table_info[name] = count
         
+        pass
         # # conn.close()
         
         return jsonify({
@@ -2496,6 +2507,7 @@ def api_system_health():
         c.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'")
         table_count = c.fetchone()[0]
         
+        pass
         # # conn.close()
 
         db_research_size_kb = table_count * 8  # Mock KB based on tables
@@ -3453,6 +3465,7 @@ def api_shadow_portfolio():
         c = conn.cursor()
         c.execute("SELECT * FROM shadow_portfolio ORDER BY entry_date DESC")
         positions = c.fetchall()
+        pass
         # # conn.close()
         return jsonify({'success': True, 'data': [dict(r) for r in positions]})
     except Exception as e:
@@ -3483,6 +3496,7 @@ def api_shadow_portfolio_open():
              entry_price, thesis, expected_outcome, confidence))
         conn.commit()
         pos_id = c.lastrowid
+        pass
         # # conn.close()
         return jsonify({'success': True, 'position_id': pos_id})
     except Exception as e:
@@ -3522,6 +3536,7 @@ def api_shadow_portfolio_close():
              exit_price, return_pct, benchmark_return_pct,
              alpha_pct, outcome, lessons, position_id))
         conn.commit()
+        pass
         # # conn.close()
         return jsonify({'success': True, 'return_pct': return_pct, 'alpha_pct': alpha_pct})
     except Exception as e:
@@ -4064,6 +4079,7 @@ def seed_database_on_startup():
         """)
 
         conn.commit()
+        pass
         # # conn.close()
         print("[seed] Billing DB seeding complete")
     except Exception as e:

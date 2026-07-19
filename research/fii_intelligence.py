@@ -53,6 +53,7 @@ def init_fii_tables():
     except Exception as e:
         print(f"[fii] init_fii_tables failed: {e}")
     finally:
+        pass
         # conn.close()
 
 
@@ -141,6 +142,7 @@ class FIIIntelligence:
             )
             conn.commit()
             result = c.rowcount > 0
+            pass
             # conn.close()
             return result
         except Exception as _e:
@@ -157,6 +159,7 @@ class FIIIntelligence:
         c.execute("""SELECT flow_date, equity_net, debt_net, total_net
                      FROM nsdl_fpi_flows WHERE flow_date >= %s ORDER BY flow_date ASC""", (cut,))
         rows = c.fetchall()
+        pass
         # conn.close()
         if not rows:
             return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
