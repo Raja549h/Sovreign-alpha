@@ -21,42 +21,16 @@
             <span class="timestamp">Evidence Quality: <strong>{{ trust.evidence_quality if trust.evidence_quality != 'INSUFFICIENT_DATA' else '<span style="color:#ffaa00;">LEARNING PHASE</span>'|safe }}</strong></span>
         </div>
         <div class="panel-body padded">
-            <!-- Row 1: Research Output -->
-            <div style="color:var(--text-dim);font-size:0.65rem;text-transform:uppercase;margin-bottom:0.4rem;border-bottom:1px solid #222;padding-bottom:0.2rem;">Research Output</div>
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;margin-bottom:0.75rem;">
+            <!-- Row 1: Key Metrics -->
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;margin-bottom:0.75rem;">
                 <div><span style="color:#555;">Observations Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.total_observations }}</span></div>
-                <div><span style="color:#555;">Research Notes</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.research_notes }}</span></div>
                 <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions }}</span></div>
-                <div><span style="color:#555;">Validated Observations</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.resolved_observations }}</span></div>
-                <div><span style="color:#555;">Evidence Timeline</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.timeline_events }}</span></div>
-            </div>
-
-            <div style="margin-bottom:0.5rem;">
-                <span style="background:#1a3a2a;color:#5fe3a1;padding:0.2rem 0.6rem;border-radius:3px;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.04rem;border:1px solid #5fe3a1;">Self-Auditing: Misses Never Deleted</span>
-            </div>
-            <!-- Validation Ledger Summary Widget (B3) -->
-            <div style="display:flex; gap: 1rem; margin-bottom:1rem; padding:0.5rem; background:#1a1a1a; border-left:3px solid var(--accent);">
-                <div style="flex:1;font-family:var(--font-mono);font-size:0.75rem;"><span style="color:#888;">Predictions Issued</span><br><strong style="font-size:1.1rem;">{{ stats.total_predictions }}</strong></div>
-                <div style="flex:1;font-family:var(--font-mono);font-size:0.75rem;"><span style="color:#888;">Verified (HIT)</span><br><strong style="font-size:1.1rem;color:var(--accent);">{{ stats.hits }}</strong></div>
-                <div style="flex:1;font-family:var(--font-mono);font-size:0.75rem;"><span style="color:#888;">Verified (MISS)</span><br><strong style="font-size:1.1rem;color:var(--warning);">{{ stats.misses }}</strong></div>
-            </div>
-            <!-- Row 2: Prediction Performance -->
-            <div style="color:var(--text-dim);font-size:0.65rem;text-transform:uppercase;margin-bottom:0.4rem;border-bottom:1px solid #222;padding-bottom:0.2rem;">Prediction Performance</div>
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;">
-                <div><span style="color:#555;" class="tooltip-wrap" data-tip="Predictions whose review date has passed and have been marked HIT or MISS.">Predictions Resolved</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.resolved_predictions }}</span></div>
-                <div>
-                    <span style="color:#555;">Observation Validation Coverage</span><br>
-                    <span style="font-size:1.1rem;font-weight:700;
-                    {% if trust.validation_coverage_pct < 10 %}color:#ff4444;
-                    {% elif trust.validation_coverage_pct < 50 %}color:#ffaa00;
-                    {% else %}color:#00ff9f;{% endif %}">
-                    {{ trust.validation_coverage_pct }}%</span>
-                </div>
-                <div><span style="color:#555;">Calibration Events</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.calibration_events }}</span></div>
+                <div><span style="color:#555;">Verified (HIT)</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--accent);">{{ stats.hits }}</span></div>
+                <div><span style="color:#555;">Verified (MISS)</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--warning);">{{ stats.misses }}</span></div>
                 <div>
                     <span style="color:#555;">Logged Misses</span><br>
                     <a href="/misses" style="text-decoration:none;color:inherit;" title="Click to view all transparently logged misses with post-mortems">
-                        <span style="font-size:1.1rem;font-weight:700;color:var(--warning); border-bottom: 1px dotted var(--warning);">{{ trust.failure_records }}</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:var(--warning); border-bottom: 1px dotted var(--warning);">{{ stats.misses }}</span>
                     </a>
                 </div>
                 <div><span style="color:#555;">Avg Research Quality</span><br><span style="font-size:1.1rem;font-weight:700;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</span></div>

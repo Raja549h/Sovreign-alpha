@@ -37,7 +37,7 @@ def get_pool(force_reinit=False):
     retries = 3
     for attempt in range(1, retries + 1):
         try:
-            _PG_POOL = pool.ThreadedConnectionPool(1, 5, conn_url, cursor_factory=DictCursor)
+            _PG_POOL = pool.ThreadedConnectionPool(1, 20, conn_url, cursor_factory=DictCursor)
             return _PG_POOL
         except psycopg2.OperationalError as e:
             if "could not translate host name" in str(e) and host:
@@ -86,5 +86,46 @@ def get_db_connection():
             except Exception:
                 pass
 
+class LegacyConnectionWrapper:
+    def __init__(self):
+        self._pool = get_pool()
+        self._conn = self._pool.getconn()
+        self._conn.autocommit = True
+
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+    
+    def commit(self):
+        self._conn.commit()
+    
+    def rollback(self):
+        self._conn.rollback()
+
+    def execute(self, *args, **kwargs):
+        with self._conn.cursor() as c:
+            c.execute(*args, **kwargs)
+            
+    def close(self):
+        try:
+            if getattr(self, '_closed', False):
+                return
+            self._pool.putconn(self._conn)
+            self._closed = True
+        except Exception:
+            pass
+            
+    def __del__(self):
+        self.close()
+            
+    def __enter__(self):
+        self._conn.__enter__()
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._conn.__exit__(exc_type, exc_val, exc_tb)
+
+def get_legacy_connection():
+    return LegacyConnectionWrapper()
+
 # Backward compatibility aliases
-get_connection = get_db_connection
+get_connection = get_legacy_connection
