@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-07-19T07:05:36.480560Z",
+  "fetched_at": "2026-07-19T07:10:28.103004Z",
   "tickers": {
     "BAJFINANCE.NS": {
       "symbol": "BAJFINANCE.NS",
@@ -50,7 +50,7 @@
       "ma50": 1137.23,
       "ma200": 1378.4,
       "percent_above_ma200": -12.66,
-      "earnings_date": "2026-10-12",
+      "earnings_date": null,
       "short_interest_pct": null,
       "analyst_target": 1265.7,
       "analyst_consensus": "HOLD"
@@ -158,7 +158,7 @@
       "ma50": 1001.1,
       "ma200": 1003.94,
       "percent_above_ma200": 4.02,
-      "earnings_date": null,
+      "earnings_date": "2026-08-06",
       "short_interest_pct": null,
       "analyst_target": 1200.079,
       "analyst_consensus": "STRONG_BUY"
@@ -194,7 +194,7 @@
       "ma50": 2176.46,
       "ma200": 2650.3,
       "percent_above_ma200": -14.39,
-      "earnings_date": "2026-10-08",
+      "earnings_date": null,
       "short_interest_pct": null,
       "analyst_target": 2481.0476,
       "analyst_consensus": "BUY"
