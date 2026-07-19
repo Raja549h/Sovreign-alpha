@@ -1,24 +1,18 @@
 {
-  "generated_at": "2026-07-15T06:29:36.430959Z",
+  "generated_at": "2026-07-19T06:52:35.083907Z",
   "oversold": [
     {
-      "symbol": "ITC.NS",
-      "rsi": 26.7,
-      "price": 277.0,
-      "reason": "RSI below 30 - oversold"
-    },
-    {
       "symbol": "TRENT.NS",
-      "rsi": 22.3,
-      "price": 2877.9,
+      "rsi": 14.6,
+      "price": 2842.4,
       "reason": "RSI below 30 - oversold"
     }
   ],
   "overbought": [
     {
-      "symbol": "SUNPHARMA.NS",
-      "rsi": 75.1,
-      "price": 1957.1,
+      "symbol": "BAJFINANCE.NS",
+      "rsi": 70.7,
+      "price": 1056.3,
       "reason": "RSI above 70 - overbought"
     }
   ],
@@ -26,75 +20,75 @@
   "below_target": [
     {
       "symbol": "BHARTIARTL.NS",
-      "current_price": 1936.9,
+      "current_price": 1908.8,
       "analyst_target": 2294.879,
-      "pct_below": 15.6,
-      "reason": "15.6% below analyst target"
+      "pct_below": 16.82,
+      "reason": "16.8% below analyst target"
     },
     {
       "symbol": "HDFCBANK.NS",
-      "current_price": 817.85,
-      "analyst_target": 1039.625,
-      "pct_below": 21.33,
-      "reason": "21.3% below analyst target"
+      "current_price": 819.6,
+      "analyst_target": 1040.625,
+      "pct_below": 21.24,
+      "reason": "21.2% below analyst target"
     },
     {
       "symbol": "INFY.NS",
-      "current_price": 1078.4,
+      "current_price": 1096.5,
       "analyst_target": 1325.7,
-      "pct_below": 18.65,
-      "reason": "18.7% below analyst target"
+      "pct_below": 17.29,
+      "reason": "17.3% below analyst target"
     },
     {
       "symbol": "ITC.NS",
-      "current_price": 277.0,
+      "current_price": 280.7,
       "analyst_target": 343.51514,
-      "pct_below": 19.36,
-      "reason": "19.4% below analyst target"
-    },
-    {
-      "symbol": "KOTAKBANK.NS",
-      "current_price": 379.3,
-      "analyst_target": 464.14594,
-      "pct_below": 18.28,
+      "pct_below": 18.29,
       "reason": "18.3% below analyst target"
     },
     {
+      "symbol": "KOTAKBANK.NS",
+      "current_price": 389.95,
+      "analyst_target": 464.6865,
+      "pct_below": 16.08,
+      "reason": "16.1% below analyst target"
+    },
+    {
       "symbol": "RELIANCE.NS",
-      "current_price": 1305.4,
+      "current_price": 1327.2,
       "analyst_target": 1694.8064,
-      "pct_below": 22.98,
-      "reason": "23.0% below analyst target"
+      "pct_below": 21.69,
+      "reason": "21.7% below analyst target"
     }
   ],
   "near_high": [
     {
+      "symbol": "BAJFINANCE.NS",
+      "price": 1056.3,
+      "52_week_high": 1102.5,
+      "pct_from_high": 4.19,
+      "reason": "Within 5% of 52-week high"
+    },
+    {
       "symbol": "SUNPHARMA.NS",
-      "price": 1957.1,
+      "price": 1932.6,
       "52_week_high": 1962.7,
-      "pct_from_high": 0.29,
+      "pct_from_high": 1.53,
       "reason": "Within 5% of 52-week high"
     }
   ],
   "near_low": [
     {
       "symbol": "ITC.NS",
-      "price": 277.0,
-      "52_week_low": 275.05,
-      "pct_from_low": 0.71,
-      "reason": "Within 5% of 52-week low"
-    },
-    {
-      "symbol": "RELIANCE.NS",
-      "price": 1305.4,
-      "52_week_low": 1253.2,
-      "pct_from_low": 4.17,
+      "price": 280.7,
+      "52_week_low": 275.0,
+      "pct_from_low": 2.07,
       "reason": "Within 5% of 52-week low"
     }
   ],
   "summary": {
-    "total_signals": 12,
-    "buy_signals": 10,
-    "sell_signals": 2
+    "total_signals": 11,
+    "buy_signals": 8,
+    "sell_signals": 3
   }
 }

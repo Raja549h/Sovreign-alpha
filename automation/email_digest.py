@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 import smtplib
-from database import DatabaseConnection
+from database import get_db_connection
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -47,11 +47,6 @@ def init_tables():
     pass
 
 
-def get_db_connection():
-    try:
-        return DatabaseConnection()
-    except Exception as e:
-        raise Exception(f"Database connection failed: {e}")
 
 
 def has_cleared_predictions():
