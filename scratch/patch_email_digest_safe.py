@@ -7,21 +7,21 @@ with open('automation/email_digest.py', 'r', encoding='utf-8') as f:
 env_check_old = "DIGEST_PASSWORD = os.environ.get(\"DIGEST_PASSWORD\", \"\")"
 env_check_new = """DIGEST_PASSWORD = os.environ.get("DIGEST_PASSWORD", "")
 
-neon_present = bool(os.environ.get('NEON_URL'))
+db_present = bool(os.environ.get('DATABASE_URL'))
 import logging
-if neon_present:
-    print(f"NEON_URL present at email time: {neon_present}")
+if db_present:
+    print(f"DATABASE_URL present at email time: {db_present}")
 """
 content = content.replace(env_check_old, env_check_new)
 
-# Modify email body generation to check if NEON_URL is missing
+# Modify email body generation to check if DATABASE_URL is missing
 old_email_send = """def build_email_body():
     \"\"\"Assemble a rich daily intelligence report with live data.\"\"\"
     init_research_tables()"""
 new_email_send = """def build_email_body():
     \"\"\"Assemble a rich daily intelligence report with live data.\"\"\"
-    if not os.environ.get('NEON_URL'):
-        return "CRITICAL: NEON_URL environment variable is missing. Pipeline cannot connect to database."
+    if not os.environ.get('DATABASE_URL'):
+        return "CRITICAL: DATABASE_URL environment variable is missing. Pipeline cannot connect to database."
     init_research_tables()"""
 content = content.replace(old_email_send, new_email_send)
 
@@ -131,8 +131,8 @@ old_stats = """def get_today_stats():
     cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
     conn = get_db_connection()
     if not conn:
-        print("[ERROR] get_today_stats: Database connection failed! NEON_URL may be missing.")
-        print(f"[DEBUG] NEON_URL present: {bool(os.environ.get('NEON_URL'))}")
+        print("[ERROR] get_today_stats: Database connection failed! DATABASE_URL may be missing.")
+        print(f"[DEBUG] DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
         return {
             'total': 0, 'approved': 0, 'rejected': 0, 'avg_conf': 0,
             'top': None, 'total_all': 0, 'accuracy': 0, 'avoided': 0

@@ -37,10 +37,10 @@ load_env()
 DIGEST_EMAIL = os.environ.get("DIGEST_EMAIL", "")
 DIGEST_PASSWORD = os.environ.get("DIGEST_PASSWORD", "")
 
-neon_present = bool(os.environ.get('NEON_URL'))
+db_present = bool(os.environ.get('DATABASE_URL'))
 import logging
-if neon_present:
-    print(f"NEON_URL present at email time: {neon_present}")
+if db_present:
+    print(f"DATABASE_URL present at email time: {db_present}")
 
 
 def init_tables():
@@ -432,8 +432,8 @@ def get_today_observations():
 
 def build_email_body():
     """Assemble a rich daily intelligence report with live data."""
-    if not os.environ.get('NEON_URL'):
-        return "CRITICAL: NEON_URL environment variable is missing. Pipeline cannot connect to database."
+    if not os.environ.get('DATABASE_URL'):
+        return "CRITICAL: DATABASE_URL environment variable is missing. Pipeline cannot connect to database."
     init_research_tables()
     ist_tz = pytz.timezone('Asia/Kolkata')
     run_timestamp = datetime.now(timezone.utc).astimezone(ist_tz).strftime('%Y-%m-%d %H:%M:%S IST')

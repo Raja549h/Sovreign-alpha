@@ -2,10 +2,10 @@ import psycopg2
 import os
 from psycopg2.extras import RealDictCursor
 
-NEON_URL = 'postgresql://neondb_owner:npg_HxbKeITV73Gl@ep-super-art-adot6eyq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require'
+DATABASE_URL = 'postgresql://neondb_owner:npg_HxbKeITV73Gl@ep-super-art-adot6eyq-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require'
 
 try:
-    conn = psycopg2.connect(NEON_URL)
+    conn = psycopg2.connect(DATABASE_URL)
     conn.autocommit = True
     c = conn.cursor(cursor_factory=RealDictCursor)
     

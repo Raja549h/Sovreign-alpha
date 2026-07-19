@@ -23,7 +23,7 @@ import os
 import sys
 import json
 
-print(f"NEON_URL present: {bool(os.environ.get('NEON_URL'))}")
+print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
 import traceback
 from pathlib import Path
 from datetime import datetime

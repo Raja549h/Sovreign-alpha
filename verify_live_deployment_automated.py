@@ -27,12 +27,12 @@ def print_header(title):
     print(f"{'='*60}")
 
 def get_db_connection():
-    neon_url = os.environ.get("NEON_URL")
-    if not neon_url:
-        print("[FAIL] No NEON_URL in .env")
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        print("[FAIL] No DATABASE_URL in .env")
         sys.exit(1)
     try:
-        conn = psycopg2.connect(neon_url)
+        conn = psycopg2.connect(db_url)
         return conn
     except Exception as e:
         print(f"[FAIL] Could not connect to database: {e}")

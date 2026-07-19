@@ -412,7 +412,7 @@ for tmpl in TEMPLATES_TO_CHECK:
 # 12. CONFIG & ENVIRONMENT
 # ============================================================
 print("\n── CONFIG & ENVIRONMENT ──")
-env_vars = ["NEON_URL", "JWT_SECRET", "CEREBRAS_API_KEY", "OPENAI_API_KEY", "FRED_API_KEY"]
+env_vars = ["DATABASE_URL", "JWT_SECRET", "CEREBRAS_API_KEY", "OPENAI_API_KEY", "FRED_API_KEY"]
 for var in env_vars:
     val = os.environ.get(var, "")
     if val and len(val) > 5:
@@ -433,10 +433,10 @@ if os.path.exists(workflow_path):
     log("WORKFLOW", "daily-pipeline.yml exists", "PASS", f"{len(wf)} bytes")
     
     # Check for common issues
-    if "NEON_URL" in wf:
-        log("WORKFLOW", "NEON_URL secret referenced", "PASS")
+    if "DATABASE_URL" in wf:
+        log("WORKFLOW", "DATABASE_URL secret referenced", "PASS")
     else:
-        log("WORKFLOW", "NEON_URL secret referenced", "FAIL", "missing")
+        log("WORKFLOW", "DATABASE_URL secret referenced", "FAIL", "missing")
     
     if "psycopg2" in wf or "requirements" in wf:
         log("WORKFLOW", "dependencies install step", "PASS")

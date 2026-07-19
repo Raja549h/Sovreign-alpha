@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS veto_archive (
     actual_outcome TEXT,
     actual_return_pct REAL,
     avoided_drawdown REAL,
-    veto_correct BOOLEAN,
+    veto_correct INTEGER,
     proof_hash TEXT,
     notes TEXT,
     created_at TEXT NOT NULL

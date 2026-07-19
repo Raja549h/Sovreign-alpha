@@ -25,11 +25,11 @@ def print_header(title):
     print(f"{'='*60}")
 
 def get_db_connection():
-    neon_url = os.environ.get("NEON_URL")
-    if not neon_url:
-        neon_url = input("Enter your NEON_URL: ").strip()
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        db_url = input("Enter your DATABASE_URL: ").strip()
     try:
-        conn = psycopg2.connect(neon_url)
+        conn = psycopg2.connect(db_url)
         return conn
     except Exception as e:
         print(f"[FAIL] Could not connect to database: {e}")
@@ -130,7 +130,7 @@ def task_b_ui_walkthrough():
 def task_c_safety_net_test(conn, initial_row_count):
     print_header("Task C â€” Safety Net Destruction Test")
     
-    input("Please temporarily break your NEON_URL secret in Hugging Face settings (e.g., add a random character).\nPress Enter when done...")
+    input("Please temporarily break your DATABASE_URL secret in Hugging Face settings (e.g., add a random character).\nPress Enter when done...")
     
     print("\nPolling homepage for 503 error...")
     success_503 = False
@@ -157,7 +157,7 @@ def task_c_safety_net_test(conn, initial_row_count):
         print("\n[FAIL] Could not confirm 503 Unavailable state. Is the safety net still active?")
         sys.exit(1)
         
-    input("\nPlease revert the NEON_URL secret back to the correct value in Hugging Face.\nPress Enter when done...")
+    input("\nPlease revert the DATABASE_URL secret back to the correct value in Hugging Face.\nPress Enter when done...")
     
     print("\nPolling homepage for recovery...")
     recovered = False
@@ -174,7 +174,7 @@ def task_c_safety_net_test(conn, initial_row_count):
         time.sleep(5)
         
     if not recovered:
-        print("\n[FAIL] Service did not recover. Check NEON_URL.")
+        print("\n[FAIL] Service did not recover. Check DATABASE_URL.")
         sys.exit(1)
         
     print("\nRe-checking database to ensure no fake data was inserted...")
