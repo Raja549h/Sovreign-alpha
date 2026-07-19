@@ -14,7 +14,7 @@
 
 | Principle | Description |
 |-----------|-------------|
-| **Calm** | No flashing elements, no neon gradients, no crypto-casino aesthetic |
+| **Calm** | No flashing elements, no fluorescent gradients, no crypto-casino aesthetic |
 | **Expensive** | Sparse whitespace, deliberate typography, muted authority |
 | **Analytical** | Every pixel serves a data purpose. No decoration for its own sake |
 | **High-Trust** | Immutable timestamps, confidence scores, audit indicators visible |
