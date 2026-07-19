@@ -22,6 +22,8 @@ All errors handled gracefully — partial failures do not stop the pipeline.
 import os
 import sys
 import json
+
+print(f"NEON_URL present: {bool(os.environ.get('NEON_URL'))}")
 import traceback
 from pathlib import Path
 from datetime import datetime
@@ -76,10 +78,10 @@ def run_pipeline():
         
         # Generate JSON data for the dashboard live market page
         log("      Generating live_market_data.json...")
-        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_feed.py")],
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_feed.py")], env=os.environ.copy(),
                                      capture_output=True, timeout=120)
         log("      Generating live_signals.json...")
-        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_signals.py")],
+        __import__('subprocess').run([sys.executable, str(BASE_DIR / "data" / "market_signals.py")], env=os.environ.copy(),
                                      capture_output=True, timeout=120)
         
         results["steps"]["market_data"] = "OK"
@@ -177,35 +179,31 @@ def run_pipeline():
     log("[6/8] Recording to prediction ledger...")
     try:
         from database import get_connection
-        conn = get_connection()
-        if not conn:
-            raise Exception("Database connection unavailable")
-        c = conn.cursor()
-        for pred in predictions:
-            status = 'cleared' if any(a.ticker == pred.ticker for a in approved) else 'risk-rejected'
-            try:
-                c.execute("""
-                    INSERT INTO prediction_ledger 
-                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
-                     status, expected_timeline_days, proof_hash, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    pred.prediction_id,
-                    pred.timestamp,
-                    pred.ticker,
-                    pred.institutional_positioning.get('sector', ''),
-                    pred.thesis,
-                    pred.confidence,
-                    status,
-                    pred.expected_timeline_days,
-                    certificates[0].commitment_hash if certificates else '',
-                    datetime.utcnow().isoformat() + 'Z',
-                    datetime.utcnow().isoformat() + 'Z'
-                ))
-            except Exception as insert_err:
-                log(f"      WARN: Could not insert prediction {pred.prediction_id}: {insert_err}")
-        conn.commit()
-        conn.close()
+        with get_connection() as conn:
+            c = conn.cursor()
+            for pred in predictions:
+                status = 'cleared' if any(a.ticker == pred.ticker for a in approved) else 'risk-rejected'
+                try:
+                    c.execute("""
+                        INSERT INTO prediction_ledger 
+                        (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
+                         status, expected_timeline_days, proof_hash, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        pred.prediction_id,
+                        pred.timestamp,
+                        pred.ticker,
+                        pred.institutional_positioning.get('sector', ''),
+                        pred.thesis,
+                        pred.confidence,
+                        status,
+                        pred.expected_timeline_days,
+                        certificates[0].commitment_hash if certificates else '',
+                        datetime.utcnow().isoformat() + 'Z',
+                        datetime.utcnow().isoformat() + 'Z'
+                    ))
+                except Exception as insert_err:
+                    log(f"      WARN: Could not insert prediction {pred.prediction_id}: {insert_err}")
 
         results["steps"]["ledger"] = f"{len(predictions)} recorded"
         log(f"      Recorded {len(predictions)} predictions to ledger (vetoes already saved by Risk Manager)")
@@ -225,12 +223,14 @@ def run_pipeline():
             subprocess.run(
                 ['git', 'add', 'data/regime/', 'engine/', 'agents/', 'results/'],
                 cwd=str(BASE_DIR),
+                env=os.environ.copy(),
                 capture_output=True,
                 timeout=30
             )
             subprocess.run(
                 ['git', 'commit', '-m', f'Daily pipeline {datetime.utcnow().strftime("%Y-%m-%d")} automated'],
                 cwd=str(BASE_DIR),
+                env=os.environ.copy(),
                 capture_output=True,
                 timeout=30
             )
@@ -245,20 +245,17 @@ def run_pipeline():
     log("[8/9] Updating prediction validation statuses...")
     try:
         from database import get_connection as _get_conn
-        _vconn = _get_conn()
-        if _vconn:
+        with _get_conn() as _vconn:
             _vc = _vconn.cursor()
             _vc.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")
             hits = _vc.rowcount
             _vc.execute("UPDATE prediction_ledger SET status = 'MISS' WHERE actual_outcome = 'incorrect' AND status NOT IN ('HIT', 'MISS');")
             misses = _vc.rowcount
-            _vconn.commit()
-            _vconn.close()
             results["steps"]["validation"] = f"Hits: {hits}, Misses: {misses}"
             log(f"      Validation updated: {hits} HITs, {misses} MISSes resolved.")
-        else:
-            results["steps"]["validation"] = "SKIP: no DB connection"
-            log("      SKIP: no DB connection for validation")
+    except Exception as e:
+        results["steps"]["validation"] = f"FAIL: {str(e)}"
+        log(f"      ERROR: {str(e)}")
     except Exception as e:
         results["steps"]["validation"] = f"FAIL: {str(e)}"
         results["errors"].append(f"validation: {str(e)}")
