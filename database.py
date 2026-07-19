@@ -65,6 +65,7 @@ def get_db_connection():
             conn.autocommit = False
             break
         except Exception as e:
+            print(f"DB ERROR: {e}")
             last_err = e
             if attempt < 3:
                 time.sleep(2)
