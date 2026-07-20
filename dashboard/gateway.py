@@ -31,17 +31,12 @@ def _create_pool():
         try:
             return pool.ThreadedConnectionPool(1, 20, conn_url, cursor_factory=DictCursor)
         except psycopg2.OperationalError as e:
-            if "could not translate host name" in str(e) and host:
-                try:
-                    ip = socket.gethostbyname(host)
-                    conn_url = conn_url.replace(host, ip)
-                except socket.gaierror:
-                    pass
+            # We don't replace hostname with IP because Aiven requires SNI for SSL
             
             if attempt < retries:
                 time.sleep(3)
             else:
-                raise ConnectionError("CRITICAL: Database unreachable after 5 attempts.") from e
+                raise ConnectionError(f"CRITICAL: Database unreachable after 5 attempts. Last error: {e}") from e
     return None
 
 def get_pool():

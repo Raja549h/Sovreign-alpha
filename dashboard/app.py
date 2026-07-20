@@ -197,6 +197,20 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
+@app.route('/debug-env')
+def debug_env():
+    import os
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        return {"error": "DATABASE_URL missing"}
+    
+    masked = db_url
+    if "@" in db_url:
+        creds = db_url.split("@")[0].split("://")[1]
+        user = creds.split(":")[0]
+        masked = db_url.replace(creds, f"{user}:********")
+    return {"DATABASE_URL_masked": masked[:40]}
+
 @app.before_request
 def check_db_availability():
     from flask import request, render_template, abort, jsonify
@@ -4014,7 +4028,7 @@ def seed_database_on_startup():
             schema_conn = db_get_connection()
             schema_conn.cursor().execute(schema_sql)
             schema_conn.commit()
-            schema_# # conn.close()
+            pass # schema_conn.close()
             print("[seed] All tables created from POSTGRES_SCHEMA.sql")
         else:
             # Fallback to schemas.py if schema file missing
@@ -4104,7 +4118,7 @@ except Exception as e:
 
 try:
     _fconn = db_get_connection()
-    _f# # conn.close()
+    pass # _fconn.close()
 except Exception as _fe:
     pass
 
@@ -4132,7 +4146,7 @@ try:
         _vc.execute(f"SELECT COUNT(*) FROM {_tbl}")
         _cnt = _vc.fetchone()[0]
         print(f"  [db] {_tbl}: {_cnt} rows")
-    _v# # conn.close()
+    pass # _vconn.close()
 except Exception as _ve:
     print(f"  [db] verification failed: {_ve}")
 
