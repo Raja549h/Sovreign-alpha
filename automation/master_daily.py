@@ -261,17 +261,22 @@ def run_pipeline():
         results["errors"].append(f"validation: {str(e)}")
         log(f"      ERROR: {e}")
 
-    # Step 9: Email digest (called directly, not as subprocess, to inherit DB connection)
+    # Step 9: Email digest
     log("[9/9] Sending email digest...")
     try:
-        from automation.email_digest import send_email as _send_email
-        email_ok = _send_email()
-        if email_ok:
+        import subprocess
+        import sys
+        print(f"[DEBUG] DATABASE_URL present in master: {bool(os.environ.get('DATABASE_URL'))}")
+        print(f"[DEBUG] Env keys passed to subprocess: {list(os.environ.keys())[:10]}")
+        result = subprocess.run([sys.executable, "automation/email_digest.py"], env=os.environ.copy(), capture_output=True, text=True)
+        if result.returncode == 0:
             results["steps"]["email"] = "OK"
             log("      Email digest sent")
+            if result.stdout:
+                log(f"      Stdout: {result.stdout}")
         else:
-            results["steps"]["email"] = "FAIL: send_email returned False"
-            log("      WARN: send_email returned False")
+            results["steps"]["email"] = "FAIL: subprocess returned non-zero"
+            log(f"      WARN: send_email failed. Stdout: {result.stdout}, Stderr: {result.stderr}")
     except Exception as e:
         results["steps"]["email"] = f"FAIL: {str(e)}"
         results["errors"].append(f"email: {str(e)}")
