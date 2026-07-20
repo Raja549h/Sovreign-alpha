@@ -7,6 +7,9 @@ Falls back gracefully on any failure -- email always sends with whatever data is
 import os
 import sys
 
+if len(sys.argv) > 1 and sys.argv[1]:
+    os.environ['DATABASE_URL'] = sys.argv[1]
+
 print(f"[DEBUG] DATABASE_URL present in email: {bool(os.environ.get('DATABASE_URL'))}")
 if not os.environ.get("DATABASE_URL"):
     print("[DEBUG] Environment keys available:")
