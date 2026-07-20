@@ -6,6 +6,14 @@ Falls back gracefully on any failure -- email always sends with whatever data is
 
 import os
 import sys
+
+print(f"[DEBUG] DATABASE_URL present in email: {bool(os.environ.get('DATABASE_URL'))}")
+if not os.environ.get("DATABASE_URL"):
+    print("[DEBUG] Environment keys available:")
+    print(list(os.environ.keys()))
+    print("[ERROR] DATABASE_URL missing in email script. Please check subprocess inheritance.")
+    sys.exit(1)
+
 from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -192,7 +200,7 @@ def get_market_snapshot():
     """Pull live market data via yfinance. Returns dict or None."""
     try:
         import yfinance as yf
-        tickers = yf.Tickers("^VIX ^NSEI GC=F CL=F DX-Y.NYB ^TNX USDINR=X ^GSPC ^BSESN")
+        tickers = yf.Tickers("^VIX ^NSEBI GC=F CL=F DX-Y.NYB ^TNX USDINR=X ^GSPC ^BSESN")
         hist = tickers.history(period="5d", interval="1d")
         if hist.empty:
             return None
