@@ -126,7 +126,7 @@ def init_db_tables():
         )
     """)
     conn.commit()
-    conn.close()
+    pass # conn.close()
     print("[DB] Tables initialized")
 
 
@@ -1166,7 +1166,7 @@ def populate_dashboard(predictions, vetoes):
             pass
     
     conn.commit()
-    conn.close()
+    pass # conn.close()
     
     print(f"  Inserted {inserted_preds} predictions")
     print(f"  Inserted {inserted_vetoes} vetoes")

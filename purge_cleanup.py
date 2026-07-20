@@ -37,7 +37,7 @@ def purge_non_indian_tickers():
         print("Error deleting STRESS_TEST from evidence_timeline:", e)
         
     conn.commit()
-    conn.close()
+    pass # conn.close()
     print("Done.")
 
 if __name__ == '__main__':

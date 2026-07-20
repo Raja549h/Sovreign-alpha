@@ -130,7 +130,7 @@ def backfill():
 
     if existing > 0:
         print(f"[SKIP] observation_memory already has {existing} entries. Backfill skipped.")
-        # conn.close()
+        pass # conn.close()
         return existing
 
     inserted = 0
@@ -169,7 +169,7 @@ def backfill():
                 print(f"[backfill] Skipped row {company_id}/{flag_type}: {_e}")
 
     conn.commit()
-    # conn.close()
+    pass # conn.close()
 
     print(f"[BACKFILL] Complete: {inserted} observations created from {len(flags)} forensic flags ({skipped} skipped)")
     return inserted

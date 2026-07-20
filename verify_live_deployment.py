@@ -241,6 +241,6 @@ if __name__ == "__main__":
     task_d_error_log_scan()
     
     if conn:
-        conn.close()
+        pass # conn.close()
         
     print_header("VERIFICATION COMPLETE - ALL TESTS PASSED")

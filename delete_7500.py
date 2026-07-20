@@ -16,7 +16,7 @@ def delete_7500_days():
     c.execute("SELECT expected_timeline_days FROM veto_archive WHERE expected_timeline_days >= 7000")
     print("Found >7000 in veto_archive:", c.fetchall())
 
-    conn.close()
+    pass # conn.close()
 
 if __name__ == '__main__':
     delete_7500_days()

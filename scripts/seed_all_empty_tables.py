@@ -203,7 +203,7 @@ def seed_all_empty_tables(db_path=None, quiet=False):
             log(f"Updated research note SR-2026-BAF-001 with content ({c.rowcount} row)")
 
     conn.commit()
-    conn.close()
+    pass # conn.close()
     if not quiet:
         print(f"[seed] All tables seeded: {len(results)} batches")
     return results

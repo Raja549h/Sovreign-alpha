@@ -8,4 +8,4 @@ for table in tables:
     print(table[0])
     cursor.execute(f"SELECT COUNT(*) FROM {table[0]};")
     print(f"  Count: {cursor.fetchone()[0]}")
-conn.close()
+pass # conn.close()

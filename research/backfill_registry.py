@@ -54,7 +54,7 @@ def backfill():
             conn.commit()
         finally:
             pass
-            # conn.close()
+            pass # conn.close()
 
     reg.calculate_edge_score()
 

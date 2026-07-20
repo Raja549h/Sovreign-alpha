@@ -52,6 +52,6 @@ try:
             c.execute(f"DELETE FROM veto_archive WHERE {col} IN %s", (us_tickers,))
             print(f"Deleted {c.rowcount} rows from veto_archive using column {col}")
             
-    conn.close()
+    pass # conn.close()
 except Exception as e:
     print('Error:', e)

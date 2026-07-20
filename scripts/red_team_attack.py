@@ -51,7 +51,7 @@ def run_red_team_attacks():
     except Exception as e:
         print(f"    -> Blocked invalid timestamp: {e}")
 
-    conn.close()
+    pass # conn.close()
     
     # 4. Schema mismatch simulation
     print("[4] Attack: Schema Mismatch")

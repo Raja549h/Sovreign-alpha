@@ -54,7 +54,7 @@ def init_fii_tables():
         print(f"[fii] init_fii_tables failed: {e}")
     finally:
         pass
-        # conn.close()
+        pass # conn.close()
 
 
 class FIIIntelligence:
@@ -143,7 +143,7 @@ class FIIIntelligence:
             conn.commit()
             result = c.rowcount > 0
             pass
-            # conn.close()
+            pass # conn.close()
             return result
         except Exception as _e:
             print(f"[fii] store_daily_flow failed: {_e}")
@@ -160,7 +160,7 @@ class FIIIntelligence:
                      FROM nsdl_fpi_flows WHERE flow_date >= %s ORDER BY flow_date ASC""", (cut,))
         rows = c.fetchall()
         pass
-        # conn.close()
+        pass # conn.close()
         if not rows:
             return {'1d': 0.0, '5d': 0.0, '10d': 0.0, '30d': 0.0,
                     'trend': 'MIXED', 'pressure': 'LOW', 'alert': False}

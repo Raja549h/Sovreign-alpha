@@ -202,5 +202,5 @@ c.execute("""INSERT INTO credibility_evidence
      'confirmed', 'https://example.com/audit/1'))
 conn.commit()
 
-conn.close()
+pass # conn.close()
 print("\nSeed complete! Evidence engine populated.")

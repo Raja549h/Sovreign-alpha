@@ -53,7 +53,7 @@ def get_ledger_stats():
     c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
     total_avoided = c.fetchone()['total_avoided'] or 0
     
-    # conn.close()
+    pass # conn.close()
     
     success_rate = (correct / with_outcome * 100) if with_outcome > 0 else 0
     veto_efficiency = (veto_correct / total_vetoes * 100) if total_vetoes > 0 else 0

@@ -16,7 +16,7 @@ def purge_us_tickers():
     print(f"Deleted {c.rowcount} rows from observations.")
             
     conn.commit()
-    conn.close()
+    pass # conn.close()
     print("Done.")
 
 if __name__ == '__main__':

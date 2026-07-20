@@ -74,7 +74,7 @@ def init_db_tables():
         )
     """)
     conn.commit()
-    conn.close()
+    pass # conn.close()
 
 
 def calculate_buy_metrics(predictions, vetoes):
@@ -281,7 +281,7 @@ def push_predictions_to_db(predictions, vetoes):
             pass
     
     conn.commit()
-    conn.close()
+    pass # conn.close()
     
     print(f"  Inserted {inserted_preds} predictions")
     print(f"  Inserted {inserted_vetoes} vetoes")
