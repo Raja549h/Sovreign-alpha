@@ -267,8 +267,8 @@ def run_pipeline():
         import subprocess
         import sys
         print(f"[DEBUG] DATABASE_URL present in master: {bool(os.environ.get('DATABASE_URL'))}")
-        print(f"[DEBUG] Env keys passed to subprocess: {list(os.environ.keys())[:10]}")
-        result = subprocess.run([sys.executable, "automation/email_digest.py"], env=os.environ.copy(), capture_output=True, text=True)
+        db_url = os.environ.get('DATABASE_URL', '')
+        result = subprocess.run([sys.executable, "automation/email_digest.py", db_url], env=os.environ.copy(), capture_output=True, text=True)
         if result.returncode == 0:
             results["steps"]["email"] = "OK"
             log("      Email digest sent")
