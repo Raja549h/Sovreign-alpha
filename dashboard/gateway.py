@@ -123,7 +123,7 @@ class LegacyConnectionWrapper:
         self._conn.rollback()
         
     def close(self):
-        if self._conn and self._pool:
+        if hasattr(self, '_conn') and hasattr(self, '_pool') and self._conn is not None:
             try:
                 self._pool.putconn(self._conn)
             except Exception:

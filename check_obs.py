@@ -20,6 +20,6 @@ try:
     for row in rows:
         print(f'{row[0]} | {row[1]}')
         
-    conn.close()
+    pass # conn.close()
 except Exception as e:
     print(f'Error: {e}')

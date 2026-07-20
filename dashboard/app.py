@@ -562,7 +562,7 @@ def save_fund_file(file_type: str, content: bytes):
               (file_type, content, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
     pass
-    # # conn.close()
+    pass # conn.close()
 
 def get_fund_file(file_type: str) -> bytes:
     conn = db_get_connection()
@@ -570,7 +570,7 @@ def get_fund_file(file_type: str) -> bytes:
     c.execute("SELECT file_content FROM fund_uploads WHERE file_type = %s", (file_type,))
     row = c.fetchone()
     pass
-    # # conn.close()
+    pass # conn.close()
     return row[0] if row else None
 
 def save_fund_param(key: str, value: str):
@@ -580,7 +580,7 @@ def save_fund_param(key: str, value: str):
               (key, value, datetime.utcnow().isoformat() + 'Z'))
     conn.commit()
     pass
-    # # conn.close()
+    pass # conn.close()
 
 def get_fund_params() -> dict:
     conn = db_get_connection()
@@ -588,7 +588,7 @@ def get_fund_params() -> dict:
     c.execute("SELECT param_key, param_value FROM fund_params")
     rows = c.fetchall()
     pass
-    # # conn.close()
+    pass # conn.close()
     return {row[0]: row[1] for row in rows}
 
 def check_setup_progress() -> dict:
@@ -636,7 +636,7 @@ def get_db_data(query, params=None):
         return []
     finally:
         pass
-        # # conn.close()
+        pass # conn.close()
 
 
 def get_decisions():
@@ -1016,7 +1016,7 @@ def misses_ledger():
         misses = [dict(row) for row in c.fetchall()]
         c.close()
         pass
-        # # conn.close()
+        pass # conn.close()
     except Exception as e:
         print(f"Error fetching misses: {e}")
         misses = []
@@ -1053,7 +1053,7 @@ def prediction_detail(prediction_id):
         c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
         row = c.fetchone()
         pass
-        # # conn.close()
+        pass # conn.close()
         if not row:
             return render_template('prediction_detail.html',
                                    prediction={'id': prediction_id, 'status': 'NOT_FOUND', 'timestamp': '', 'error': 'Prediction not found in ledger'})
@@ -1269,7 +1269,7 @@ def performance():
         
         c.close()
         pass
-        # # conn.close()
+        pass # conn.close()
         
         stats = get_dashboard_stats()
         decisions = get_decisions()
@@ -1497,7 +1497,7 @@ def api_track_record():
         c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
         total_alpha = c.fetchone()[0] or 0.0
         pass
-        # # conn.close()
+        pass # conn.close()
     except Exception:
         total_sessions = 0
         total_decisions = 0
@@ -1950,7 +1950,7 @@ def api_run():
             else:
                 vetoed_count += 1
         
-        billing.close()
+        pass # billing.close()
         
         after_decisions = get_decisions()
         after_proofs = count_proof_files()
@@ -2069,7 +2069,7 @@ def run_analysis_page():
                     status='active'
                 )
         
-        billing.close()
+        pass # billing.close()
     except Exception as e:
         print(f"Run error: {e}")
     
@@ -2121,7 +2121,7 @@ def debug_db():
             table_info[name] = count
         
         pass
-        # # conn.close()
+        pass # conn.close()
         
         return jsonify({
             'db_exists': DB_PATH.exists(),
@@ -2504,7 +2504,7 @@ def api_system_health():
         table_count = c.fetchone()[0]
         
         pass
-        # # conn.close()
+        pass # conn.close()
 
         db_research_size_kb = table_count * 8  # Mock KB based on tables
         db_fund_size_kb = table_count * 8      # Mock KB based on tables
@@ -3471,7 +3471,7 @@ def api_shadow_portfolio():
         c.execute("SELECT * FROM shadow_portfolio ORDER BY entry_date DESC")
         positions = c.fetchall()
         pass
-        # # conn.close()
+        pass # conn.close()
         return jsonify({'success': True, 'data': [dict(r) for r in positions]})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -3502,7 +3502,7 @@ def api_shadow_portfolio_open():
         conn.commit()
         pos_id = c.lastrowid
         pass
-        # # conn.close()
+        pass # conn.close()
         return jsonify({'success': True, 'position_id': pos_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -3542,7 +3542,7 @@ def api_shadow_portfolio_close():
              alpha_pct, outcome, lessons, position_id))
         conn.commit()
         pass
-        # # conn.close()
+        pass # conn.close()
         return jsonify({'success': True, 'return_pct': return_pct, 'alpha_pct': alpha_pct})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -4085,7 +4085,7 @@ def seed_database_on_startup():
 
         conn.commit()
         pass
-        # # conn.close()
+        pass # conn.close()
         print("[seed] Billing DB seeding complete")
     except Exception as e:
         print(f"[seed] Seeding failed: {e}")
@@ -4158,7 +4158,7 @@ try:
             print(f"  [db] {_tbl}: {_cnt} rows")
         except Exception:
             print(f"  [db] {_tbl}: MISSING")
-    _vconn2.close()
+    pass # _vconn2.close()
 except Exception as _ve:
     print(f"  [db] verification failed: {_ve}")
 

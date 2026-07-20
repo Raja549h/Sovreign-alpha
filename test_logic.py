@@ -18,7 +18,7 @@ try:
             else: maturity_stats['>60'] += 1
     
     c.close()
-    conn.close()
+    pass # conn.close()
     print("Maturity Stats OK")
 except Exception as e:
     print("Maturity Stats ERROR:", e)

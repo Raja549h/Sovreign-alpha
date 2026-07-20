@@ -288,7 +288,7 @@ class RiskManager:
             c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as total_avoided FROM veto_archive")
             avoided = c.fetchone()[0] or 0
 
-            conn.close()
+            pass # conn.close()
 
             return {
                 "total_vetoes": total,

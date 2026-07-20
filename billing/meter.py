@@ -270,7 +270,7 @@ class BillingMeter:
     def close(self):
         """Close database connection."""
         if self.conn:
-            self.conn.close()
+            pass # self.conn.close()
             logger.info("Billing database connection closed")
 
 

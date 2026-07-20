@@ -232,7 +232,7 @@ def seed_muthoot():
     print("[seed] Research note SR-2026-MFL-001 created")
 
     conn.commit()
-    # conn.close()
+    pass # conn.close()
     print("[seed] MUTHOOTFIN seed complete")
 
 

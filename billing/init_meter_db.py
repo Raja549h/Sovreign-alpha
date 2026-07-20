@@ -58,7 +58,7 @@ def init_meter_db():
     """)
     
     conn.commit()
-    conn.close()
+    pass # conn.close()
     print(f"OK: Created {DB_PATH}")
 
 

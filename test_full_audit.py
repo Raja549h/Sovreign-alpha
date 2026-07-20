@@ -49,7 +49,7 @@ try:
     conn = get_connection()
     if conn:
         log("DB", "get_connection()", "PASS")
-        conn.close()
+        pass # conn.close()
     else:
         log("DB", "get_connection()", "FAIL", "returned None")
 except Exception as e:
@@ -87,7 +87,7 @@ try:
                 log("TABLE", tbl, "WARN", "0 rows (empty)")
         except Exception as e:
             log("TABLE", tbl, "FAIL", str(e)[:60])
-    conn.close()
+    pass # conn.close()
 except Exception as e:
     log("TABLE", "connection", "FAIL", str(e)[:80])
 

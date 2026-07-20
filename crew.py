@@ -282,7 +282,7 @@ def main():
                 datetime.utcnow().isoformat() + 'Z'
             ))
         conn.commit()
-        conn.close()
+        pass # conn.close()
         print(f"Persisted predictions to {db_path}")
     except Exception as e:
         print(f"Warning: Could not persist to billing DB: {e}")
