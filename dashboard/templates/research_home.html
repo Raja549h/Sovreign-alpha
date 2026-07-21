@@ -13,33 +13,7 @@
     </div>
     {% endif %}
 
-    {% if watchlist_companies %}
-    <div class="panel" style="margin-bottom:0.75rem;">
-        <div class="panel-header">
-            <h2>Watchlist Summary</h2>
-            <a href="/watchlist" class="btn outline small">Manage</a>
-        </div>
-        <div class="panel-body" style="padding:0;">
-            <table>
-                <thead>
-                    <tr><th>Ticker</th><th>Company</th><th>Sector</th><th>Threshold</th></tr>
-                </thead>
-                <tbody>
-                    {% for w in watchlist_companies %}
-                    <tr>
-                        <td class="ticker-cell">{{ w.ticker }}</td>
-                        <td>{{ w.company_name }}</td>
-                        <td style="font-size:0.65rem;">{{ w.sector or '—' }}</td>
-                        <td><span class="severity-tag {{ w.alert_threshold|lower }}">{{ w.alert_threshold }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if heatmap %}
+        {% if heatmap %}
     <div class="panel" style="margin-bottom:0.75rem;">
         <div class="panel-header">
             <h2>Signal Heatmap</h2>
@@ -99,6 +73,7 @@
                             <th>Ticker</th>
                             <th>Company</th>
                             <th>Sector</th>
+                            <th>Threshold</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -108,6 +83,7 @@
                             <td class="ticker-cell">{{ c.ticker }}</td>
                             <td>{{ c.company_name }}</td>
                             <td style="font-size:0.65rem;">{{ c.sector or '—' }}</td>
+                            <td><span class="severity-tag {{ (c.alert_threshold|lower) if c.alert_threshold != 'N/A' else 'low' }}">{{ c.alert_threshold }}</span></td>
                             <td><a href="/research/{{ c.ticker }}" class="btn outline small">View</a></td>
                         </tr>
                         {% endfor %}
