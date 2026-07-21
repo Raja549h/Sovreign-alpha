@@ -22,13 +22,13 @@
         </div>
         <div class="panel-body padded">
             <!-- Row 1: Key Metrics -->
-            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;margin-bottom:0.75rem;">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;font-family:var(--font-mono);font-size:0.65rem;margin-bottom:0.75rem;">
                 <div><span style="color:#555;">Observations Tracked</span><br><span style="font-size:1.1rem;font-weight:700;">{{ trust.total_observations }}</span></div>
                 <div><span style="color:#555;">Predictions Issued</span><br><span style="font-size:1.1rem;font-weight:700;">{{ stats.total_predictions }}</span></div>
                 <div><span style="color:#555;">Verified (HIT)</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--accent);">{{ stats.hits }}</span></div>
-                <div><span style="color:#555;">Verified (MISS)</span><br><span style="font-size:1.1rem;font-weight:700;color:var(--warning);">{{ stats.misses }}</span></div>
+
                 <div>
-                    <span style="color:#555;">Logged Misses</span><br>
+                    <span style="color:#555;">Verified (MISS)</span><br>
                     <a href="/misses" style="text-decoration:none;color:inherit;" title="Click to view all transparently logged misses with post-mortems">
                         <span style="font-size:1.1rem;font-weight:700;color:var(--warning); border-bottom: 1px dotted var(--warning);">{{ stats.misses }}</span>
                     </a>

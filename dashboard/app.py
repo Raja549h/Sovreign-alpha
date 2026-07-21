@@ -658,7 +658,7 @@ def get_decisions():
     query = """
         SELECT 
             prediction_id AS decision_id,
-            asset AS symbol,
+            asset,
             CASE WHEN status IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED') 
                  THEN 'veto' ELSE 'approve' END AS action,
             status,
@@ -670,7 +670,7 @@ def get_decisions():
         UNION ALL
         SELECT 
             veto_id AS decision_id,
-            asset AS symbol,
+            asset,
             'veto' AS action,
             'vetoed' AS status,
             1.0 - risk_score AS confidence,
@@ -926,18 +926,23 @@ def index():
         macro_alerts = []
         high_severity_7d = 0
         try:
-            from research.observation_stream import build_live_feed
-            feed = build_live_feed(40)
-            observations = feed.get('observations', [])
-            
-            # Sort observations by severity
-            severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
-            observations.sort(key=lambda x: severity_order.get(x.get('severity', 'LOW'), 99))
-            
-            macro_alerts = feed.get('macro_alerts', [])
-            high_severity_7d = feed.get('high_severity_7d', 0)
-        except Exception:
-            pass
+            from dashboard.gateway import get_connection as db_get_connection
+            with db_get_connection() as conn:
+                c = conn.cursor()
+                c.execute("SELECT id, timestamp, ticker, source, headline, severity, confidence FROM observations ORDER BY timestamp DESC LIMIT 10")
+                rows = c.fetchall()
+                for row in rows:
+                    observations.append({
+                        'id': row[0],
+                        'timestamp': row[1],
+                        'ticker': row[2],
+                        'source': row[3],
+                        'headline': row[4],
+                        'severity': row[5],
+                        'confidence': row[6]
+                    })
+        except Exception as e:
+            print("ERROR FETCHING FEED:", e)
 
         trust = get_evidence_trust_data()
         stats = get_dashboard_stats()
@@ -1281,6 +1286,20 @@ def performance():
                 elif days <= 60: maturity_stats['30-60'] += 1
                 else: maturity_stats['>60'] += 1
         
+        # Calculate hits, misses, and vetoes dynamically
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'HIT'")
+        hit_count = c.fetchone()[0] or 0
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'MISS'")
+        miss_count = c.fetchone()[0] or 0
+        resolved_outcomes = hit_count + miss_count
+
+        c.execute("SELECT COUNT(*) FROM veto_archive")
+        total_vetoes = c.fetchone()[0] or 0
+        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1 OR veto_correct = TRUE")
+        correct_vetoes = c.fetchone()[0] or 0
+        
+        veto_accuracy = (correct_vetoes / total_vetoes * 100) if total_vetoes > 0 else 0
+
         c.close()
         pass
         pass # conn.close()
@@ -1339,6 +1358,10 @@ def performance():
                              ledger_stats=ledger_stats,
                              maturity_stats=maturity_stats,
                              decisions=decisions,
+                             hit_count=hit_count,
+                             miss_count=miss_count,
+                             resolved_outcomes=resolved_outcomes,
+                             veto_accuracy=veto_accuracy,
                              is_demo=is_demo_mode())
 
     except Exception as e:
