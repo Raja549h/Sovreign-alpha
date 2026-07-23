@@ -1295,7 +1295,7 @@ def performance():
 
         c.execute("SELECT COUNT(*) FROM veto_archive")
         total_vetoes = c.fetchone()[0] or 0
-        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1 OR veto_correct = TRUE")
+        c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
         correct_vetoes = c.fetchone()[0] or 0
         
         veto_accuracy = (correct_vetoes / total_vetoes * 100) if total_vetoes > 0 else 0
@@ -1347,10 +1347,6 @@ def performance():
         ledger_stats = calculate_ledger_stats()
         
         return render_template('performance.html',
-                             hit_count=hit_count,
-                             miss_count=miss_count,
-                             resolved_outcomes=resolved_outcomes,
-                             veto_accuracy=veto_accuracy,
                              total_sessions=total_sessions,
                              avg_confidence=avg_confidence,
                              total_alpha=0,
@@ -1373,10 +1369,6 @@ def performance():
         traceback.print_exc()
         print("PERFORMANCE_ROUTE_ERROR:", e)
         return render_template('performance.html',
-                             hit_count=0,
-                             miss_count=0,
-                             resolved_outcomes=0,
-                             veto_accuracy=0,
                              total_sessions=0,
                              avg_confidence=0,
                              total_alpha=0,
