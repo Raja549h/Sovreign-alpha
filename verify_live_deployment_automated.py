@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-LIVE_URL = "https://svrn-alpha-soverignalpha.hf.space"
+LIVE_URL = "https://svrn-alpha-sovereignalpha.hf.space"
 INDIAN_TICKERS = [
     'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'SBIN', 'BHARTIARTL',
     'ITC', 'KOTAKBANK', 'HCLTECH', 'BAJFINANCE', 'TRENT', 'SUNPHARMA'
