@@ -38,7 +38,7 @@ jobs:
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           FUND_PASSWORD=${{ secrets.FUND_PASSWORD }}
           LOG_LEVEL=WARNING
-          NEON_URL=${{ secrets.NEON_URL }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
           # Strip leading whitespace from .env lines
           sed -i 's/^[[:space:]]*//' .env
@@ -53,7 +53,7 @@ jobs:
           FERNET_KEY: ${{ secrets.FERNET_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           FUND_PASSWORD: ${{ secrets.FUND_PASSWORD }}
-          NEON_URL: ${{ secrets.NEON_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Init validation tables
         continue-on-error: true
@@ -64,7 +64,7 @@ jobs:
           init_evolution_tables()
           "
         env:
-          NEON_URL: ${{ secrets.NEON_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run observation validation (30/90/180-day reviews)
         continue-on-error: true
@@ -78,7 +78,7 @@ jobs:
           '
         env:
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
-          NEON_URL: ${{ secrets.NEON_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Commit and push live data updates
         continue-on-error: true
@@ -100,7 +100,7 @@ jobs:
           import json; print(json.dumps(score, indent=2))
           '
         env:
-          NEON_URL: ${{ secrets.NEON_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Fetch FII flow data
         continue-on-error: true
@@ -113,7 +113,7 @@ jobs:
           import json; print(json.dumps(result, indent=2, default=str))
           '
         env:
-          NEON_URL: ${{ secrets.NEON_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Upload results
         if: always()
