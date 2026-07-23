@@ -1347,6 +1347,10 @@ def performance():
         ledger_stats = calculate_ledger_stats()
         
         return render_template('performance.html',
+                             hit_count=hit_count,
+                             miss_count=miss_count,
+                             resolved_outcomes=resolved_outcomes,
+                             veto_accuracy=veto_accuracy,
                              total_sessions=total_sessions,
                              avg_confidence=avg_confidence,
                              total_alpha=0,
@@ -1369,6 +1373,10 @@ def performance():
         traceback.print_exc()
         print("PERFORMANCE_ROUTE_ERROR:", e)
         return render_template('performance.html',
+                             hit_count=0,
+                             miss_count=0,
+                             resolved_outcomes=0,
+                             veto_accuracy=0,
                              total_sessions=0,
                              avg_confidence=0,
                              total_alpha=0,
