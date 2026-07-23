@@ -48,7 +48,7 @@ jobs:
 
           print("Verifying HF token access... (skipped whoami due to rate limit)")
 
-          repo_id = "svrn-alpha/soverignalpha"
+          repo_id = "svrn-alpha/sovereignalpha"
 
           print(f"Ensuring HF Space exists: {repo_id}...")
           try:
