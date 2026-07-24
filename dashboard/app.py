@@ -3211,6 +3211,7 @@ def research_home():
         from research.thesis_tracker import get_watchlist_companies
         companies = get_all_companies()
         notes = get_notes()
+        watchlist = get_watchlist_companies()
         watchlist_dict = {w['ticker']: w['alert_threshold'] for w in watchlist} if watchlist else {}
         for c in companies:
             c['alert_threshold'] = watchlist_dict.get(c['ticker'], 'N/A')
@@ -3233,7 +3234,6 @@ def research_home():
                 heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': len(flags), 'severity': severity, 'severity_label': label})
             else:
                 heatmap.append({'ticker': c['ticker'], 'company_name': c['company_name'], 'flag_count': 0, 'severity': 'NONE', 'severity_label': 'No flags'})
-        watchlist = get_watchlist_companies()
         if not companies and not notes:
             companies = []
             notes = []
