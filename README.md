@@ -1,4 +1,15 @@
-<![CDATA[<div align="center">
+---
+title: Sovereign Alpha
+emoji: 🏛️
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+python_version: "3.11"
+app_file: dashboard/app.py
+pinned: false
+---
+
+<div align="center">
 
 # 🏛️ Sovereign Alpha
 
@@ -521,4 +532,3 @@ Build freely. Research rigorously. Pitch boldly.
 *Sovereign Alpha — Where private intelligence meets provable compliance.*
 
 </div>
-]]>
