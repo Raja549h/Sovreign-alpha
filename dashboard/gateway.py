@@ -16,7 +16,7 @@ class ConnectionError(psycopg2.OperationalError): pass
 _PG_POOL = None
 
 def _create_pool():
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.environ.get("DATABASE_URL", "").strip()
     if not db_url or len(db_url) < 10:
         raise ConnectionError("CRITICAL: DATABASE_URL environment variable is not set.")
         

@@ -9,7 +9,7 @@ except ImportError:
     pass
 
 def main():
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.environ.get("DATABASE_URL", "").strip()
     if not db_url:
         print("DATABASE_URL environment variable is not set. Migration skipped.")
         sys.exit(0)
