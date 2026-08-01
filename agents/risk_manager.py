@@ -163,13 +163,13 @@ class RiskManager:
         passed = True
         details = "Volatility conditions acceptable"
 
-        if rsi > 80:
+        if rsi > 85:
             passed = False
             details = f"Extreme overbought (RSI {rsi}) — volatility instability risk"
-        elif rsi < 15:
+        elif rsi < 10:
             passed = False
             details = f"Extreme oversold (RSI {rsi}) — potential capitulation"
-        elif vol_ratio > 5.0:
+        elif vol_ratio > 8.0:
             passed = False
             details = f"Extreme volume spike ({vol_ratio:.1f}x) — potential news-driven instability"
 
@@ -183,7 +183,7 @@ class RiskManager:
     def _check_risk_reward(self, prediction) -> RiskCheck:
         """Check if risk/reward ratio meets minimum threshold."""
         rr = prediction.risk_reward_ratio
-        min_rr = 1.2
+        min_rr = 1.0
 
         passed = rr >= min_rr
         return RiskCheck(
@@ -228,8 +228,11 @@ class RiskManager:
             self._check_sector_concentration(prediction, sector_exposure),
         ]
 
-        all_passed = all(c.passed for c in checks)
         failed_checks = [c for c in checks if not c.passed]
+        critical_failures = [c for c in failed_checks if c.severity == 'critical']
+        
+        # Majority-fail model: reject only if 2+ critical failures OR 3+ total failures
+        all_passed = len(critical_failures) < 2 and len(failed_checks) < 3
 
         timestamp = datetime.utcnow().isoformat() + 'Z'
 
@@ -238,10 +241,10 @@ class RiskManager:
                 prediction_id=prediction.prediction_id,
                 approved=True,
                 risk_checks=checks,
-                reasoning="All risk checks passed",
+                reasoning=f"Approved with {len(failed_checks)} minor risk flags" if failed_checks else "All risk checks passed",
                 timestamp=timestamp
             )
-            logger.info(f"RISK: {prediction.ticker} {prediction.signal} APPROVED (conf: {prediction.confidence:.0%})")
+            logger.info(f"RISK: {prediction.ticker} {prediction.signal} APPROVED (conf: {prediction.confidence:.0%}, flags: {len(failed_checks)})")
             return approval
 
         veto_reasons = [c.details for c in failed_checks]

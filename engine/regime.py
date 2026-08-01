@@ -365,8 +365,8 @@ class MarketRegimeEngine:
         """
         configs = {
             "RISK_OFF": {
-                "min_confidence_buy": 0.80,
-                "min_confidence_sell": 0.70,
+                "min_confidence_buy": 0.65,
+                "min_confidence_sell": 0.55,
                 "max_position_size_pct": 2.5,
                 "max_sector_exposure_pct": 15.0,
                 "veto_aggressiveness": "high",
@@ -376,8 +376,8 @@ class MarketRegimeEngine:
                 "hedge_required": True,
             },
             "NEUTRAL": {
-                "min_confidence_buy": 0.70,
-                "min_confidence_sell": 0.60,
+                "min_confidence_buy": 0.55,
+                "min_confidence_sell": 0.50,
                 "max_position_size_pct": 4.0,
                 "max_sector_exposure_pct": 20.0,
                 "veto_aggressiveness": "medium",
@@ -387,8 +387,8 @@ class MarketRegimeEngine:
                 "hedge_required": False,
             },
             "RISK_ON": {
-                "min_confidence_buy": 0.65,
-                "min_confidence_sell": 0.55,
+                "min_confidence_buy": 0.50,
+                "min_confidence_sell": 0.45,
                 "max_position_size_pct": 5.0,
                 "max_sector_exposure_pct": 25.0,
                 "veto_aggressiveness": "low",

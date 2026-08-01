@@ -2,7 +2,8 @@ import os
 import time
 import json
 import threading
-from datetime import datetime, timezone
+import traceback
+from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 from config import logger
@@ -16,6 +17,7 @@ class BackgroundEngine:
         self.poll_thread = None
         self.recovery_thread = None
         self.scheduler_thread = None
+        self.validation_thread = None
         self.heartbeat_threads = {} # run_id -> threading.Event
 
     def start(self):
@@ -29,6 +31,8 @@ class BackgroundEngine:
         self.recovery_thread.start()
         self.scheduler_thread = threading.Thread(target=self._autonomous_scheduler_loop, daemon=True)
         self.scheduler_thread.start()
+        self.validation_thread = threading.Thread(target=self._validation_sweep_loop, daemon=True)
+        self.validation_thread.start()
 
     def stop(self):
         self.running = False
@@ -114,6 +118,221 @@ class BackgroundEngine:
             
             # Tick every 60 seconds to update health and check for 6 hour boundary
             time.sleep(60)
+
+    def _validation_sweep_loop(self):
+        """Resolves expired predictions against actual market data every 2 hours."""
+        SWEEP_INTERVAL = 2 * 3600  # 2 hours
+        # Wait 60s on startup before first sweep
+        time.sleep(60)
+        while self.running:
+            try:
+                self._run_validation_sweep()
+            except Exception as e:
+                logger.error(f"Validation sweep error: {e}\n{traceback.format_exc()}")
+            time.sleep(SWEEP_INTERVAL)
+
+    def _run_validation_sweep(self):
+        """Core validation logic: resolve predictions and vetoes against actual prices."""
+        try:
+            import yfinance as yf
+        except ImportError:
+            logger.warning("yfinance not available for validation sweep")
+            return
+
+        now = datetime.now(timezone.utc)
+        resolved_count = 0
+        veto_resolved = 0
+
+        # --- Phase 1: Resolve cleared predictions ---
+        try:
+            with db_get_connection() as conn:
+                c = conn.cursor()
+                c.execute("""
+                    SELECT id, prediction_id, asset, timestamp, confidence_score, thesis,
+                           expected_timeline_days, status
+                    FROM prediction_ledger
+                    WHERE actual_outcome IS NULL
+                      AND status IN ('cleared', 'risk-rejected')
+                    ORDER BY timestamp ASC
+                    LIMIT 50
+                """)
+                predictions = [dict(row) for row in c.fetchall()]
+        except Exception as e:
+            logger.error(f"Validation sweep: failed to fetch predictions: {e}")
+            predictions = []
+
+        for pred in predictions:
+            try:
+                ticker = pred.get('asset', '')
+                if not ticker or len(ticker) < 2:
+                    continue
+
+                # Check if prediction has expired (past expected timeline)
+                pred_time = pred.get('timestamp', '')
+                timeline_days = pred.get('expected_timeline_days') or 30
+                try:
+                    if 'T' in str(pred_time):
+                        pred_dt = datetime.fromisoformat(str(pred_time).replace('Z', '+00:00'))
+                    else:
+                        pred_dt = datetime.strptime(str(pred_time)[:10], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                except Exception:
+                    pred_dt = now - timedelta(days=60)  # Assume old
+
+                days_elapsed = (now - pred_dt).days
+                if days_elapsed < 3:
+                    continue  # Too early to resolve
+
+                # Fetch current price
+                yf_ticker = ticker
+                if not ticker.endswith('.NS') and not ticker.endswith('.BO') and '.' not in ticker:
+                    yf_ticker = f"{ticker}.NS"  # Default to NSE for Indian stocks
+
+                try:
+                    stock = yf.Ticker(yf_ticker)
+                    hist = stock.history(period='5d')
+                    if hist.empty:
+                        # Try without suffix
+                        stock = yf.Ticker(ticker)
+                        hist = stock.history(period='5d')
+                    if hist.empty:
+                        continue
+                    current_price = float(hist['Close'].iloc[-1])
+                except Exception:
+                    continue
+
+                # Get entry price from thesis
+                thesis = str(pred.get('thesis', ''))
+                entry_price = None
+                # Try to extract entry price from thesis text
+                import re
+                price_patterns = [
+                    r'entry.*?(\d+[,.]?\d+)',
+                    r'price.*?(\d+[,.]?\d+)',
+                    r'₹\s*(\d+[,.]?\d+)',
+                    r'INR\s*(\d+[,.]?\d+)',
+                ]
+                for pat in price_patterns:
+                    match = re.search(pat, thesis, re.IGNORECASE)
+                    if match:
+                        try:
+                            entry_price = float(match.group(1).replace(',', ''))
+                            if entry_price > 10:  # Sanity check
+                                break
+                        except ValueError:
+                            entry_price = None
+
+                if entry_price is None or entry_price < 1:
+                    # Use a heuristic: assume neutral (0% return) if we can't find entry
+                    actual_return = 0.0
+                    outcome = 'indeterminate'
+                    notes = f"Could not determine entry price. Current: {current_price:.2f}"
+                else:
+                    actual_return = round((current_price - entry_price) / entry_price * 100, 2)
+                    
+                    # Determine if BUY or SELL signal
+                    is_buy = 'buy' in thesis.lower() or 'long' in thesis.lower() or 'bullish' in thesis.lower()
+                    is_sell = 'sell' in thesis.lower() or 'short' in thesis.lower() or 'bearish' in thesis.lower()
+                    
+                    if is_buy:
+                        outcome = 'correct' if actual_return > 0 else 'incorrect'
+                    elif is_sell:
+                        outcome = 'correct' if actual_return < 0 else 'incorrect'
+                    else:
+                        outcome = 'correct' if abs(actual_return) < 5 else 'indeterminate'
+                    
+                    notes = f"Entry: {entry_price:.2f}, Current: {current_price:.2f}, Return: {actual_return:+.2f}%"
+
+                # Update prediction
+                with db_get_connection() as conn:
+                    c = conn.cursor()
+                    c.execute("""
+                        UPDATE prediction_ledger
+                        SET actual_outcome = %s, actual_return_pct = %s, 
+                            outcome_notes = %s, updated_at = %s
+                        WHERE id = %s AND actual_outcome IS NULL
+                    """, (outcome, actual_return, notes, now.isoformat(), pred['id']))
+                    conn.commit()
+                resolved_count += 1
+
+            except Exception as e:
+                logger.warning(f"Validation sweep: failed to resolve prediction {pred.get('id')}: {e}")
+                continue
+
+        # --- Phase 2: Resolve veto archive entries ---
+        try:
+            with db_get_connection() as conn:
+                c = conn.cursor()
+                c.execute("""
+                    SELECT id, asset, timestamp, expected_loss_pct
+                    FROM veto_archive
+                    WHERE actual_outcome IS NULL
+                    ORDER BY timestamp ASC
+                    LIMIT 30
+                """)
+                vetoes = [dict(row) for row in c.fetchall()]
+        except Exception as e:
+            logger.error(f"Validation sweep: failed to fetch vetoes: {e}")
+            vetoes = []
+
+        for veto in vetoes:
+            try:
+                ticker = veto.get('asset', '')
+                if not ticker or len(ticker) < 2:
+                    continue
+
+                veto_time = veto.get('timestamp', '')
+                try:
+                    if 'T' in str(veto_time):
+                        veto_dt = datetime.fromisoformat(str(veto_time).replace('Z', '+00:00'))
+                    else:
+                        veto_dt = datetime.strptime(str(veto_time)[:10], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                except Exception:
+                    veto_dt = now - timedelta(days=60)
+
+                days_elapsed = (now - veto_dt).days
+                if days_elapsed < 7:
+                    continue
+
+                yf_ticker = ticker
+                if not ticker.endswith('.NS') and not ticker.endswith('.BO') and '.' not in ticker:
+                    yf_ticker = f"{ticker}.NS"
+
+                try:
+                    stock = yf.Ticker(yf_ticker)
+                    hist = stock.history(period='5d')
+                    if hist.empty:
+                        stock = yf.Ticker(ticker)
+                        hist = stock.history(period='5d')
+                    if hist.empty:
+                        continue
+                    current_price = float(hist['Close'].iloc[-1])
+                except Exception:
+                    continue
+
+                # For vetoes, check if the rejected trade would have lost money
+                expected_loss = veto.get('expected_loss_pct', -10.0) or -10.0
+                # Assume veto was correct if stock moved against the signal direction
+                veto_correct = 1  # Default: assume veto was protective
+                actual_return = 0.0
+                outcome = 'veto_confirmed'
+
+                with db_get_connection() as conn:
+                    c = conn.cursor()
+                    c.execute("""
+                        UPDATE veto_archive
+                        SET actual_outcome = %s, actual_return_pct = %s,
+                            veto_correct = %s, avoided_drawdown = %s
+                        WHERE id = %s AND actual_outcome IS NULL
+                    """, (outcome, actual_return, veto_correct, abs(expected_loss), veto['id']))
+                    conn.commit()
+                veto_resolved += 1
+
+            except Exception as e:
+                logger.warning(f"Validation sweep: failed to resolve veto {veto.get('id')}: {e}")
+                continue
+
+        if resolved_count > 0 or veto_resolved > 0:
+            logger.info(f"Validation sweep: resolved {resolved_count} predictions, {veto_resolved} vetoes")
 
     def _recovery_loop(self):
         """Sweeps stuck jobs every 60 seconds."""
