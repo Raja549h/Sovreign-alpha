@@ -60,4 +60,4 @@ research/data/notes/SR-2026-MUT-*
 tmp/
 temp/
 *.log
-logs/
+logs/scratch/

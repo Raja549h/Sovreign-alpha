@@ -46,44 +46,32 @@
                 <button class="filter-btn" data-filter="pending">PENDING</button>
                 <span class="count" style="margin-left:auto;font-size:9px;color:#555;font-family:var(--font-mono);">{{ predictions|length }} predictions</span>
             </div>
-            <table id="predictions-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Asset</th>
-                        <th>Sector</th>
-                        <th>Confidence</th>
-                        <th>Status</th>
-                        <th>Timeline</th>
-                        <th>Outcome</th>
-                        <th>Return</th>
-                        <th>Proof Hash</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in predictions %}
-                    <tr data-status="{{ p.status }}">
-                        <td class="mono" style="font-size:9px;">{{ p.prediction_id }}</td>
-                        <td class="ticker-cell" style="color:var(--accent);font-weight:700;font-size:12px;">{{ p.asset }}</td>
-                        <td style="font-size:9px;">{{ p.sector }}</td>
-                        <td>
-                            <div style="font-family:var(--font-mono);font-size:11px;">{{ p.confidence_score | pct }}</div>
-                            <div class="conf-bar">
-                                {% set conf_pct = (p.confidence_score * 100) if p.confidence_score and p.confidence_score <= 1 else (p.confidence_score or 0) %}
-                                <div class="fill {{ 'high' if conf_pct >= 70 else 'med' if conf_pct >= 50 else 'low' }}" style="width:{{ conf_pct }}%;"></div>
-                            </div>
-                        </td>
-                        <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' if p.status == 'risk-rejected' else 'PENDING' }}">{{ p.status }}</span></td>
-                        <td style="color:#555;">{{ p.expected_timeline_days }}d</td>
-                        <td>{{ p.actual_outcome or 'Pending' }}</td>
-                        <td class="{% if p.actual_return_pct and p.actual_return_pct > 0 %}value-positive{% elif p.actual_return_pct and p.actual_return_pct < 0 %}value-negative{% endif %}">{{ p.actual_return_pct | default('—') }}%</td>
-                        <td class="hash copy-hash" data-hash="{{ p.proof_hash }}" data-short="{{ (p.proof_hash[:8] if p.proof_hash else '—') }}..." style="color:var(--warning);cursor:pointer;">{{ (p.proof_hash[:8] if p.proof_hash else '—') }}...</td>
-                        <td class="mono" style="font-size:9px;">{{ (p.timestamp or '')[:16] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="grid-2" id="predictions-table">
+                {% for p in predictions %}
+                <div class="panel" style="border-left: 4px solid {% if p.trade_proposal.signal == 'LONG' %}var(--accent){% elif p.trade_proposal.signal == 'SHORT' %}var(--danger){% else %}var(--warning){% endif %};" data-status="{{ p.status }}">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-size: 1rem; color: #fff;">{{ p.asset }} <span style="color: #888; font-size: 0.75rem; margin-left: 8px;">{{ p.sector }}</span></h2>
+                        <span class="signal-badge {{ p.trade_proposal.signal }}">{{ p.trade_proposal.signal }}</span>
+                    </div>
+                    <div class="panel-body padded">
+                        <div class="grid-3" style="margin-bottom: 15px; background: #0a0a0a; padding: 10px; border-radius: 4px; border: 1px solid #1a1a1a;">
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Entry Price</label><br><strong style="font-size: 1.2rem; font-family: var(--font-mono);">${{ p.trade_proposal.entry_price }}</strong></div>
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Target</label><br><strong style="font-size: 1.2rem; color: var(--accent); font-family: var(--font-mono);">${{ p.trade_proposal.target_price }}</strong></div>
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Stop-Loss</label><br><strong style="font-size: 1.2rem; color: var(--danger); font-family: var(--font-mono);">${{ p.trade_proposal.stop_loss }}</strong></div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom: 12px; font-size: 0.75rem; font-family: var(--font-mono);">
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Position Size:</span> <span style="float: right; font-weight: bold; color: var(--accent);">{{ p.trade_proposal.position_size_pct }}%</span></div>
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Confidence:</span> <span style="float: right;">{{ p.confidence_score | pct }}</span></div>
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Timeline:</span> <span style="float: right;">{{ p.expected_timeline_days }}d</span></div>
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">AI Score:</span> <span style="float: right;">{{ p.trade_proposal.score }}/5.0</span></div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); background: #050505; padding: 10px; border-left: 2px solid var(--accent);">
+                            <strong style="color: #888;">AI RATIONALE:</strong> {{ p.trade_proposal.rationale }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
             <div class="empty-state">
                 <div class="icon">—</div>

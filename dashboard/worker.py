@@ -5,6 +5,9 @@ import threading
 import traceback
 from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
 
 from config import logger
 from dashboard.gateway import get_connection as db_get_connection
@@ -33,10 +36,28 @@ class BackgroundEngine:
         self.scheduler_thread.start()
         self.validation_thread = threading.Thread(target=self._validation_sweep_loop, daemon=True)
         self.validation_thread.start()
+        
+        # Alternative Data Scheduler
+        self.alt_data_scheduler = BackgroundScheduler(timezone=pytz.timezone('Asia/Kolkata'))
+        self.alt_data_scheduler.add_job(self._run_alt_data_monitors, CronTrigger(hour=9, minute=0))
+        self.alt_data_scheduler.start()
+
+    def _run_alt_data_monitors(self):
+        try:
+            from scripts.alternative_data.podcast_monitor import monitor as podcast_mon
+            from scripts.alternative_data.twitter_monitor import monitor as twitter_mon
+            from scripts.alternative_data.news_monitor import monitor as news_mon
+            podcast_mon()
+            twitter_mon()
+            news_mon()
+        except Exception as e:
+            logger.error(f"Alternative Data monitors failed: {e}")
 
     def stop(self):
         self.running = False
         self.executor.shutdown(wait=False)
+        if hasattr(self, 'alt_data_scheduler') and self.alt_data_scheduler:
+            self.alt_data_scheduler.shutdown(wait=False)
 
     def _log_event(self, run_id, event_type, message):
         try:

@@ -1,15 +1,12 @@
-import config
-from dashboard.gateway import get_connection
-conn = get_connection()
-if conn:
+from dotenv import load_dotenv; load_dotenv()
+from dashboard.gateway import get_connection as db_get_connection
+import traceback
+
+try:
+    conn = db_get_connection()
     c = conn.cursor()
-    sql = """
-        SELECT * FROM evidence_timeline 
-        WHERE event_type NOT ILIKE ANY(ARRAY['%%test%%', '%%simulated%%', '%%stress%%', '%%verification%%', '%%e2e%%'])
-        LIMIT %s
-    """
-    try:
-        c.execute(sql, [2])
-        print('SUCCESS:', len(c.fetchall()))
-    except Exception as e:
-        print('ERROR:', e)
+    c.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'veto_archive' AND column_name = 'veto_correct'")
+    row = c.fetchone()
+    print("Type:", row)
+except Exception as e:
+    traceback.print_exc()

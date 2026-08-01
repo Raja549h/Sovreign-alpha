@@ -98,7 +98,7 @@ def seed_meaningful_data():
                         """, (
                             str(uuid.uuid4()),
                             (now - timedelta(hours=i)).isoformat() + "Z",
-                            random.choice(['NVDA', 'AAPL', 'RELIANCE.NS', 'TCS.NS', 'BTC-USD']),
+                            random.choice(['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'BAJFINANCE.NS']),
                             'Technology',
                             f"Sample intelligence generated for layout visualization {i}",
                             round(random.uniform(70.0, 95.0), 1),
@@ -122,7 +122,7 @@ def seed_meaningful_data():
                         """, (
                             str(uuid.uuid4()),
                             (now - timedelta(hours=i*2)).isoformat() + "Z",
-                            random.choice(['TSLA', 'GME', 'AMC', 'ZOMATO.NS', 'PAYTM.NS']),
+                            random.choice(['ZOMATO.NS', 'PAYTM.NS', 'NYKAA.NS', 'IDEA.NS', 'YESBANK.NS']),
                             'Volatile',
                             f"Sample risk veto for excessive volatility {i}",
                             round(random.uniform(5.0, 15.0), 1),

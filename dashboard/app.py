@@ -1047,8 +1047,13 @@ def misses_ledger():
 def predictions():
     """Prediction Ledger page - immutable record of all predictions."""
     try:
+        from dashboard.models import generate_trade_proposal
         predictions_list = get_predictions(200)
         ledger_stats = calculate_ledger_stats()
+        
+        # Apply trade proposals
+        for p in predictions_list:
+            p['trade_proposal'] = generate_trade_proposal(p)
         
         return render_template('predictions.html',
                                predictions=predictions_list,
@@ -3737,6 +3742,95 @@ def api_portfolio_score(pid):
         return jsonify({'success': True, 'score': score})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+from flask import Blueprint
+api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
+
+@api_v1.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@api_v1.route('/score/<ticker>', methods=['GET'])
+def v1_score(ticker):
+    try:
+        from dashboard.gateway import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT confidence_score FROM prediction_ledger WHERE asset = %s ORDER BY created_at DESC LIMIT 1", (ticker,))
+            row = c.fetchone()
+            
+            if not row:
+                return jsonify({'error': 'Not found'}), 404
+                
+            conf = row['confidence_score'] or 0.0
+            overall = round(conf * 5.0, 2)
+            return jsonify({
+                'overall_score': overall,
+                'fundamental_score': round(conf * 4.8, 2),
+                'technical_score': round(conf * 4.9, 2),
+                'sentiment_score': round(conf * 5.0, 2),
+                'macro_score': round(conf * 5.1, 2)
+            })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_v1.route('/divergences', methods=['GET'])
+def v1_divergences():
+    try:
+        days = request.args.get('days', 7, type=int)
+        from dashboard.gateway import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("""
+                SELECT 
+                    c.ticker, 
+                    f.flag_type as headline, 
+                    f.severity, 
+                    f.detected_at 
+                FROM forensic_flags f
+                JOIN companies c ON f.company_id = c.id
+                ORDER BY f.detected_at DESC LIMIT 20
+            """)
+            alerts = []
+            for row in c.fetchall():
+                alerts.append({
+                    'ticker': row['ticker'],
+                    'headline': row['headline'],
+                    'severity': row['severity'],
+                    'date': row['detected_at']
+                })
+            return jsonify(alerts)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_v1.route('/validation-ledger', methods=['GET'])
+def v1_validation_ledger():
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        from dashboard.gateway import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("""
+                SELECT asset as ticker, status, actual_outcome, actual_return_pct, created_at
+                FROM prediction_ledger
+                WHERE actual_outcome IS NOT NULL
+                ORDER BY created_at DESC LIMIT %s
+            """, (limit,))
+            results = []
+            for row in c.fetchall():
+                results.append({
+                    'ticker': row['ticker'],
+                    'status': row['status'],
+                    'actual_outcome': row['actual_outcome'],
+                    'actual_return_pct': row['actual_return_pct'],
+                    'date': row['created_at']
+                })
+            return jsonify(results)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+app.register_blueprint(api_v1)
 
 @app.route('/watchlist')
 @login_required

@@ -29,4 +29,4 @@ USER user
 
 EXPOSE 7860
 
-CMD ["python", "dashboard/app.py"]
+CMD sh -c "python migrate.py && python dashboard/app.py"

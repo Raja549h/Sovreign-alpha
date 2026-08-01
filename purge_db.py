@@ -1,27 +1,28 @@
-import sys
 import os
-sys.path.insert(0, '.')
-from dotenv import load_dotenv
-load_dotenv()
-from dashboard.gateway import get_connection
+from dashboard.gateway import get_db_connection
 
-approved_tickers = ('RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS','SBIN.NS','BHARTIARTL.NS','ITC.NS','KOTAKBANK.NS','HCLTECH.NS','BAJFINANCE.NS','TRENT.NS','SUNPHARMA.NS')
-approved_assets = tuple([t.replace('.NS', '') for t in approved_tickers])
+def purge_us_tickers():
+    try:
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM prediction_ledger WHERE asset IN ('AVGO', 'UNH', 'LLY', 'AAPL', 'AMZN', 'META', 'MSFT', 'GOOGL', 'GS', 'JPM', 'BTC-USD', 'TSLA', 'GME', 'AMC', 'MS', 'AMD', 'TSM', 'CVX', 'XOM', 'NVDA');")
+            pred_count = c.rowcount
+            
+            c.execute("DELETE FROM observations WHERE ticker IN ('AVGO', 'UNH', 'LLY', 'AAPL', 'AMZN', 'META', 'MSFT', 'GOOGL', 'GS', 'JPM', 'BTC-USD', 'TSLA', 'GME', 'AMC', 'MS', 'AMD', 'TSM', 'CVX', 'XOM', 'NVDA');")
+            obs_count = c.rowcount
+            
+            c.execute("DELETE FROM veto_archive WHERE asset IN ('AVGO', 'UNH', 'LLY', 'AAPL', 'AMZN', 'META', 'MSFT', 'GOOGL', 'GS', 'JPM', 'BTC-USD', 'TSLA', 'GME', 'AMC', 'MS', 'AMD', 'TSM', 'CVX', 'XOM', 'NVDA');")
+            veto_count = c.rowcount
+            
+            conn.commit()
+            print(f"Purged {pred_count} from prediction_ledger")
+            print(f"Purged {obs_count} from observations")
+            print(f"Purged {veto_count} from veto_archive")
+            
+    except Exception as e:
+        print(f"Error purging: {e}")
 
-queries = [
-    f"DELETE FROM prediction_ledger WHERE asset NOT IN {approved_assets};",
-    f"DELETE FROM observations WHERE company NOT IN {approved_assets};",
-    f"DELETE FROM veto_archive WHERE asset NOT IN {approved_assets};",
-    "DELETE FROM evidence_timeline WHERE event_type ILIKE ANY(ARRAY['%test%', '%simulated%', '%stress%', '%verification%', '%e2e%']);"
-]
-
-try:
-    with get_connection() as conn:
-        c = conn.cursor()
-        for q in queries:
-            print(f'Executing: {q}')
-            c.execute(q)
-        conn.commit()
-        print('Sweep complete.')
-except Exception as e:
-    print('Failed:', e)
+if __name__ == '__main__':
+    from dotenv import load_dotenv
+    load_dotenv()
+    purge_us_tickers()
