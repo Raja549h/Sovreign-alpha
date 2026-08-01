@@ -197,8 +197,8 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
-@app.route('/api/debug/db')
-def debug_db():
+@app.route('/debug-env')
+def debug_env():
     db_url = os.environ.get("DATABASE_URL", "").strip()
     if not db_url:
         return {"error": "DATABASE_URL missing"}
