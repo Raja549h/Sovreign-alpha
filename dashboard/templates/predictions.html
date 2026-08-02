@@ -55,15 +55,17 @@
                     </div>
                     <div class="panel-body padded">
                         <div class="grid-3" style="margin-bottom: 15px; background: #0a0a0a; padding: 10px; border-radius: 4px; border: 1px solid #1a1a1a;">
-                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Entry Price</label><br><strong style="font-size: 1.2rem; font-family: var(--font-mono);">${{ p.trade_proposal.entry_price }}</strong></div>
-                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Target</label><br><strong style="font-size: 1.2rem; color: var(--accent); font-family: var(--font-mono);">${{ p.trade_proposal.target_price }}</strong></div>
-                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Stop-Loss</label><br><strong style="font-size: 1.2rem; color: var(--danger); font-family: var(--font-mono);">${{ p.trade_proposal.stop_loss }}</strong></div>
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Entry Price</label><br><strong style="font-size: 1.2rem; font-family: var(--font-mono);">₹{{ p.trade_proposal.entry_price }}</strong></div>
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Target</label><br><strong style="font-size: 1.2rem; color: var(--accent); font-family: var(--font-mono);">₹{{ p.trade_proposal.target_price }}</strong></div>
+                            <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Stop-Loss</label><br><strong style="font-size: 1.2rem; color: var(--danger); font-family: var(--font-mono);">₹{{ p.trade_proposal.stop_loss }}</strong></div>
                         </div>
                         <div class="grid-2" style="margin-bottom: 12px; font-size: 0.75rem; font-family: var(--font-mono);">
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Position Size:</span> <span style="float: right; font-weight: bold; color: var(--accent);">{{ p.trade_proposal.position_size_pct }}%</span></div>
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Confidence:</span> <span style="float: right;">{{ p.confidence_score | pct }}</span></div>
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Timeline:</span> <span style="float: right;">{{ p.expected_timeline_days }}d</span></div>
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">AI Score:</span> <span style="float: right;">{{ p.trade_proposal.score }}/5.0</span></div>
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Outcome:</span> <span style="float: right; font-weight: bold; {% if p.actual_outcome in ['HIT', 'correct'] %}color: var(--accent);{% elif p.actual_outcome in ['MISS', 'incorrect'] %}color: var(--danger);{% else %}color: var(--warning);{% endif %}">{{ p.actual_outcome or 'Pending' }}</span></div>
+                            <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Actual Return:</span> <span style="float: right; font-weight: bold; {% if p.actual_return_pct and p.actual_return_pct > 0 %}color: var(--accent);{% elif p.actual_return_pct and p.actual_return_pct < 0 %}color: var(--danger);{% else %}color: var(--text-dim);{% endif %}">{{ p.actual_return_pct|default('0.0') }}%</span></div>
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-dim); background: #050505; padding: 10px; border-left: 2px solid var(--accent);">
                             <strong style="color: #888;">AI RATIONALE:</strong> {{ p.trade_proposal.rationale }}

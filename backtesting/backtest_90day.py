@@ -52,12 +52,9 @@ CHECKPOINT_INTERVAL = 10  # days
 
 # Tickers from sample_positions.csv plus SPY
 TICKERS = [
-    "AAPL", "MSFT", "NVDA", "AMD", "GOOGL", "META", "AVGO", "ORCL", "NET", "CRM",
-    "JPM", "BAC", "GS", "MS", "BRK-B", "V", "MA",
-    "JNJ", "UNH", "LLY", "PFE", "MRK", "NVO",
-    "XOM", "CVX", "COP",
-    "AMZN", "NFLX", "COST", "TGT",
-    "SPY"  # Benchmark
+    'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
+    'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
+    'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
 ]
 
 # Sector mapping

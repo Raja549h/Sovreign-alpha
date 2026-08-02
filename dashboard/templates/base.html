@@ -583,7 +583,7 @@
                         if (key && s[key] !== undefined) {
                             var val = s[key];
                             if (key.indexOf('drawdown') > -1 || key.indexOf('alpha') > -1 || key.indexOf('fee') > -1) {
-                                el.textContent = '$' + Math.round(val);
+                                el.textContent = '₹' + Math.round(val);
                             } else if (key.indexOf('rate') > -1 || key.indexOf('efficiency') > -1) {
                                 el.textContent = Number(val).toFixed(1) + '%';
                             } else { el.textContent = val; }

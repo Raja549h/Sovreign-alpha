@@ -11,18 +11,17 @@ def generate_trade_proposal(prediction_data):
     conf = prediction_data.get('confidence_score') or prediction_data.get('confidence') or 0.0
     score = prediction_data.get('overall_score', conf * 5)
     
-    current_price = 100.0 # Default fallback
+    current_price = 0.0 # No longer defaulting to 100
     try:
-        # Avoid hanging on yfinance call if ticker is invalid
         if ticker and ticker != 'UNKNOWN':
-            # Most Indian stocks need .NS suffix for yfinance
             suffix_ticker = ticker + ".NS" if not ticker.endswith(".NS") and not ticker.endswith(".BO") else ticker
             stock = yf.Ticker(suffix_ticker)
-            hist = stock.history(period='5d')
-            if not hist.empty:
-                current_price = hist['Close'].iloc[-1]
+            current_price = stock.info.get('currentPrice', stock.info.get('regularMarketPrice', None))
+            if current_price is None:
+                current_price = stock.info.get('previousClose', 0.0)
     except Exception as e:
-        logger.warning(f"Failed to fetch price for {ticker}: {e}")
+        logger.error(f"Failed to fetch price for {ticker}: {e}")
+        current_price = 0.0
 
     if score < 3.0:
         signal = "SHORT"

@@ -58,11 +58,9 @@ class AnalystAgent:
     """
 
     INSTITUTIONAL_TICKERS = [
-        'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
-        'JPM', 'GS', 'MS',
-        'LLY', 'UNH',
-        'XOM', 'CVX',
-        'AMD', 'AVGO', 'TSM'
+        'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
+        'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
+        'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
     ]
 
     def __init__(self):
@@ -469,7 +467,7 @@ if __name__ == "__main__":
     print("ANALYST AGENT — Institutional Market Intelligence")
     print("=" * 60)
 
-    predictions = agent.run_full_analysis(['NVDA', 'JPM', 'XOM'])
+    predictions = agent.run_full_analysis(['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS'])
 
     print("\n" + "=" * 60)
     print("PREDICTIONS")

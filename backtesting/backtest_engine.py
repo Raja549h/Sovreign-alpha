@@ -27,7 +27,9 @@ except ImportError:
 class HistoricalDataLoader:
     """Load and process 2024 tech stock volatility data."""
     
-    TICKERS = ['NVDA', 'AMD', 'MSFT', 'AAPL', 'GOOGL', 'META', 'AVGO', 'TSM']
+    TICKERS = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
+               'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
+               'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS']
     
     def __init__(self, data_dir: str = "backtesting/historical_data"):
         self.data_dir = Path(data_dir)

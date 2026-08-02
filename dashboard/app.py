@@ -496,13 +496,13 @@ def calculate_ledger_stats() -> dict:
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
             with_outcome = c.fetchone()[0] or 0
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome = 'correct'")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('correct', 'HIT')")
             correct = c.fetchone()[0] or 0
             
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' AND actual_outcome IS NOT NULL AND actual_outcome != ''")
             cleared_with_outcome = c.fetchone()[0] or 0
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' AND actual_outcome = 'correct'")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' AND actual_outcome IN ('correct', 'HIT')")
             cleared_correct = c.fetchone()[0] or 0
             
             c.execute("SELECT AVG(confidence_score) FROM prediction_ledger WHERE status = 'cleared'")
@@ -2609,42 +2609,23 @@ def api_evidence_timeline():
             c = conn.cursor()
             # Primary: evidence_timeline table
             try:
-                c.execute("""SELECT created_at as timestamp, event_label, event_type, 
-                             event_detail, source 
-                             FROM evidence_timeline 
-                             ORDER BY created_at DESC LIMIT 100""")
+                c.execute("""SELECT timestamp, ticker, type, headline 
+                             FROM observations 
+                             ORDER BY timestamp DESC LIMIT 100""")
                 for row in c.fetchall():
+                    ts = row['timestamp'] if 'timestamp' in row else row[0]
+                    tk = row['ticker'] if 'ticker' in row else row[1]
+                    et = row['type'] if 'type' in row else row[2]
+                    hd = row['headline'] if 'headline' in row else row[3]
+                    
                     timeline.append({
-                        'timestamp': row['created_at'] if isinstance(row, dict) else row[0],
-                        'event_label': row['event_label'] if isinstance(row, dict) else row[1],
-                        'event_type': row['event_type'] if isinstance(row, dict) else row[2],
-                        'event_detail': row['event_detail'] if isinstance(row, dict) else row[3],
-                        'source': row['source'] if isinstance(row, dict) else row[4],
+                        'created_at': str(ts)[:16] if ts else 'Unknown',
+                        'ticker': str(tk) if tk else 'Unknown',
+                        'event_type': str(et) if et else 'Unknown',
+                        'event_label': str(hd) if hd else 'Unknown'
                     })
-            except Exception:
+            except Exception as e:
                 pass
-            
-            # Fallback: observation_memory for recent observations
-            if len(timeline) < 5:
-                try:
-                    c.execute("""SELECT om.created_at as timestamp, 
-                                 om.category as event_label,
-                                 'observation' as event_type,
-                                 om.observation_text as event_detail,
-                                 COALESCE(c.ticker, 'Unknown') as source
-                                 FROM observation_memory om
-                                 LEFT JOIN companies c ON c.id = om.company_id
-                                 ORDER BY om.created_at DESC LIMIT 100""")
-                    for row in c.fetchall():
-                        timeline.append({
-                            'timestamp': row['created_at'] if isinstance(row, dict) else row[0],
-                            'event_label': row['event_label'] if isinstance(row, dict) else row[1],
-                            'event_type': row['event_type'] if isinstance(row, dict) else row[2],
-                            'event_detail': (row['event_detail'] if isinstance(row, dict) else row[3] or '')[:200],
-                            'source': row['source'] if isinstance(row, dict) else row[4],
-                        })
-                except Exception:
-                    pass
         
         forbidden_strings = ["STRESS_TEST", "SIMULATED", "TEST_EVENT", "E2E TEST"]
         filtered_timeline = []
@@ -4208,22 +4189,22 @@ def seed_database_on_startup():
         if c.fetchone()[0] == 0:
             now = datetime.utcnow()
             samples = [
-                ("pred-001", (now - timedelta(days=5)).isoformat() + 'Z', "RELIANCE", "Energy", "Strong momentum in refining margins", 0.82, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "correct", 8.5),
-                ("pred-002", (now - timedelta(days=3)).isoformat() + 'Z', "TCS", "IT", "Weak guidance on IT spending outlook", 0.45, "risk-rejected", 14, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), None, None),
-                ("pred-003", (now - timedelta(days=2)).isoformat() + 'Z', "INFY", "IT", "Deal wins in AI/ML segment driving growth", 0.71, "cleared", 45, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "incorrect", -3.2),
-                ("pred-004", (now - timedelta(days=1)).isoformat() + 'Z', "HDFCBANK", "Banking", "Stable NIM, awaiting credit growth pickup", 0.60, "cleared", 60, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "correct", 4.1),
-                ("pred-005", now.isoformat() + 'Z', "BAJFINANCE", "NBFC", "AUM growth accelerating, ROE stabilizing", 0.78, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), None, None),
+                ("pred-001", (now - timedelta(days=5)).isoformat() + 'Z', "RELIANCE.NS", "Energy", "Strong momentum in refining margins", 0.82, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "HIT", 8.5, 2850.0, 3192.0, 2707.5, 5.0),
+                ("pred-002", (now - timedelta(days=3)).isoformat() + 'Z', "TCS.NS", "IT", "Weak guidance on IT spending outlook", 0.45, "risk-rejected", 14, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), None, None, 3800.0, 3344.0, 3990.0, 1.0),
+                ("pred-003", (now - timedelta(days=2)).isoformat() + 'Z', "INFY.NS", "IT", "Deal wins in AI/ML segment driving growth", 0.71, "cleared", 45, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "MISS", -3.2, 1450.0, 1624.0, 1377.5, 5.0),
+                ("pred-004", (now - timedelta(days=1)).isoformat() + 'Z', "HDFCBANK.NS", "Banking", "Stable NIM, awaiting credit growth pickup", 0.60, "cleared", 60, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), "HIT", 4.1, 1680.0, 1881.6, 1596.0, 3.0),
+                ("pred-005", now.isoformat() + 'Z', "BAJFINANCE.NS", "NBFC", "AUM growth accelerating, ROE stabilizing", 0.78, "cleared", 30, "0x" + uuid.uuid4().hex[:40], now.isoformat(), now.isoformat(), None, None, 6800.0, 7616.0, 6460.0, 5.0),
             ]
-            for pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret in samples:
+            for pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret, ep, tp, sl, ps in samples:
                 c.execute("""
                     INSERT INTO prediction_ledger
-                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, status, expected_timeline_days, proof_hash, created_at, updated_at, actual_outcome, actual_return_pct)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret))
+                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, status, expected_timeline_days, proof_hash, created_at, updated_at, actual_outcome, actual_return_pct, entry_price, target_price, stop_loss, position_size_pct)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (pid, ts, asset, sector, thesis, conf, status, days, phash, created, updated, outcome, ret, ep, tp, sl, ps))
             print(f"[seed] Inserted {len(samples)} sample predictions")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', status = 'HIT', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'incorrect', status = 'MISS', actual_return_pct = -3.2 WHERE prediction_id = 'pred-003' AND (actual_outcome IS NULL OR actual_outcome = '')")
-        c.execute("UPDATE prediction_ledger SET actual_outcome = 'correct', status = 'HIT', actual_return_pct = 4.1 WHERE prediction_id = 'pred-004' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'HIT', status = 'cleared', actual_return_pct = 8.5 WHERE prediction_id = 'pred-001' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'MISS', status = 'cleared', actual_return_pct = -3.2 WHERE prediction_id = 'pred-003' AND (actual_outcome IS NULL OR actual_outcome = '')")
+        c.execute("UPDATE prediction_ledger SET actual_outcome = 'HIT', status = 'cleared', actual_return_pct = 4.1 WHERE prediction_id = 'pred-004' AND (actual_outcome IS NULL OR actual_outcome = '')")
 
         c.execute("SELECT COUNT(*) FROM veto_archive")
         if c.fetchone()[0] == 0:

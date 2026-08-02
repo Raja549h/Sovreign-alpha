@@ -51,9 +51,9 @@
                         <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">Min Confidence (%)</label>
                         <input type="number" name="min_confidence" value="{{ (params.min_confidence_score | float * 100) | round(0) if params.min_confidence_score else '65' }}" step="1" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
-                    <div style="margin-bottom:0.45rem;">
-                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">AUM ($)</label>
-                        <input type="number" name="aum" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
+                    <div class="form-group">
+                        <label style="font-size:9px;color:#555;text-transform:uppercase;font-family:var(--font-mono);">AUM (₹)</label>
+                        <input type="number" id="aum" name="aum" class="form-control" value="{{ params.aum or '59000000' }}" step="1000000" style="width:100%;padding:6px;background:#0a0a0a;border:1px solid #2a2a2a;color:var(--text-primary);font-size:11px;font-family:var(--font-mono);outline:none;">
                     </div>
                     <button type="submit" class="btn" style="margin-top:0.45rem;">Save Parameters</button>
                     <div id="params-status" style="margin-top:0.45rem;font-size:0.65rem;color:var(--text-dim);"></div>

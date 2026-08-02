@@ -46,6 +46,10 @@ def main():
                 conn.rollback()
                 print(f"Skipping alter statement, column might already exist: {e.pgerror}")
 
+        # Clear US tickers from prediction_ledger
+        cursor.execute("DELETE FROM prediction_ledger WHERE asset NOT LIKE '%.NS'")
+        print("Cleared US tickers from prediction_ledger.")
+
         # Create alternative_mentions table
         create_stmt = """
         CREATE TABLE IF NOT EXISTS alternative_mentions (

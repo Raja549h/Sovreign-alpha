@@ -63,6 +63,10 @@ async function loadCalibration() {
         const r = await fetch('/api/evidence/calibration-dashboard');
         const d = await r.json();
         if (d.success && d.summary) {
+            if (!d.summary.total_calibrated || d.summary.total_calibrated < 10) {
+                document.getElementById('calibration-summary').innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">Calibration requires at least 10 resolved predictions.</div>';
+                return;
+            }
             document.getElementById('calibration-summary').innerHTML =
                 `MAE: ${d.summary.mean_absolute_error}<br>Calibrated: ${d.summary.total_calibrated}<br>Buckets: ${d.summary.by_bucket ? d.summary.by_bucket.length : 0}`;
         }

@@ -270,7 +270,7 @@ class DataLayer:
     def fetch_watchlist(self, tickers: Optional[List[str]] = None) -> List[AssetProfile]:
         """Fetch technicals for entire watchlist."""
         if tickers is None:
-            tickers = self.WATCHLIST_US
+            tickers = self.WATCHLIST_INDIA
 
         profiles = []
         for ticker in tickers:

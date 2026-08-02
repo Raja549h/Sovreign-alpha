@@ -255,11 +255,11 @@ class BackgroundEngine:
                     is_sell = 'sell' in thesis.lower() or 'short' in thesis.lower() or 'bearish' in thesis.lower()
                     
                     if is_buy:
-                        outcome = 'correct' if actual_return > 0 else 'incorrect'
+                        outcome = 'HIT' if actual_return > 0 else 'MISS'
                     elif is_sell:
-                        outcome = 'correct' if actual_return < 0 else 'incorrect'
+                        outcome = 'HIT' if actual_return < 0 else 'MISS'
                     else:
-                        outcome = 'correct' if abs(actual_return) < 5 else 'indeterminate'
+                        outcome = 'HIT' if abs(actual_return) < 5 else 'indeterminate'
                     
                     notes = f"Entry: {entry_price:.2f}, Current: {current_price:.2f}, Return: {actual_return:+.2f}%"
 
@@ -268,7 +268,7 @@ class BackgroundEngine:
                     c = conn.cursor()
                     c.execute("""
                         UPDATE prediction_ledger
-                        SET actual_outcome = %s, actual_return_pct = %s, 
+                        SET status = 'cleared', actual_outcome = %s, actual_return_pct = %s, 
                             outcome_notes = %s, updated_at = %s
                         WHERE id = %s AND actual_outcome IS NULL
                     """, (outcome, actual_return, notes, now.isoformat(), pred['id']))

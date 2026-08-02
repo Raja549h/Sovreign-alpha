@@ -20,12 +20,12 @@
             <div class="value danger">{{ stats.vetoed | default(0) }}</div>
         </div>
         <div class="stat-box info">
-            <label>Total Alpha</label>
-            <div class="value info">${{ (stats.total_alpha | default(0)) | round(0) | int }}</div>
+            <label>Total Alpha (Unrealized)</label>
+            <div class="value info">₹{{ (stats.total_alpha | default(0)) | round(0) | int }}</div>
         </div>
         <div class="stat-box warning">
-            <label>Performance Fees</label>
-            <div class="value warning">${{ (stats.total_fees | default(0)) | round(0) | int }}</div>
+            <label>Accrued Platform Fees</label>
+            <div class="value warning">₹{{ (stats.total_fees | default(0)) | round(0) | int }}</div>
         </div>
     </div>
 
@@ -68,8 +68,8 @@
                             {% endif %}
                         </td>
                         <td>{{ d.confidence | pct }}</td>
-                        <td>${{ ((d.potential_return or d.alpha_generated or 0)) | round(0) | int }}</td>
-                        <td>${{ ((d.fee or d.fee_calculated or 0)) | round(0) | int }}</td>
+                        <td>₹{{ ((d.potential_return or d.alpha_generated or 0)) | round(0) | int }}</td>
+                        <td>₹{{ ((d.fee or d.fee_calculated or 0)) | round(0) | int }}</td>
                         <td class="hash" data-full="{{ d.zk_proof_hash }}">{{ (d.zk_proof_hash[:20] if d.zk_proof_hash else '—') }}...</td>
                         <td class="mono" style="font-size:0.65rem;">{{ (d.timestamp or '')[:16] }}</td>
                     </tr>
