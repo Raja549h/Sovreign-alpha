@@ -372,7 +372,7 @@ def get_predictions(limit: int = 100) -> list:
             c = conn.cursor()
             c.execute("""
                 SELECT * FROM prediction_ledger 
-                ORDER BY timestamp DESC 
+                ORDER BY created_at DESC 
                 LIMIT %s
             """, (limit,))
             rows = c.fetchall()
@@ -493,7 +493,7 @@ def calculate_ledger_stats() -> dict:
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'risk-rejected'")
             rejected = c.fetchone()[0] or 0
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL AND actual_outcome != ''")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' OR actual_outcome IS NOT NULL")
             with_outcome = c.fetchone()[0] or 0
             
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('correct', 'HIT')")
@@ -1057,7 +1057,6 @@ def predictions():
         return render_template('predictions.html',
                                predictions=predictions_list,
                                ledger_stats=ledger_stats,
-                               decisions=decisions,
                                is_demo=is_demo_mode())
     except Exception:
         return render_template('predictions.html',
@@ -1119,7 +1118,6 @@ def veto_archive():
         return render_template('veto_archive.html',
                                vetoes=veto_list,
                                ledger_stats=ledger_stats,
-                               decisions=decisions,
                                is_demo=is_demo_mode())
     except Exception:
         return render_template('veto_archive.html',
@@ -1361,7 +1359,6 @@ def performance():
                              stats=stats,
                              ledger_stats=ledger_stats,
                              maturity_stats=maturity_stats,
-                             decisions=decisions,
                              hit_count=hit_count,
                              miss_count=miss_count,
                              resolved_outcomes=resolved_outcomes,
