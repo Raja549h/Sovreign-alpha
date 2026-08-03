@@ -127,7 +127,7 @@
                         {% for p in predictions[:8] %}
                         <tr>
                             <td class="ticker-cell">{{ p.asset or p.ticker }}</td>
-                            <td><span class="signal-badge {{ 'BUY' if p.status == 'cleared' else 'SELL' }}">{{ p.status }}</span></td>
+                            <td><span class="signal-badge {{ 'BUY' if (p.trade_signal == 'LONG' or p.trade_signal == 'BUY') else 'SELL' }}">{{ p.trade_signal if p.trade_signal else p.status }}</span></td>
                             <td>{{ (p.confidence_score or p.confidence or 0) | pct }}</td>
                             <td>
                                 {% if not p.actual_outcome %}
