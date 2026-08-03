@@ -37,6 +37,7 @@ def main():
             "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS position_size_pct DECIMAL(5,2);",
             "ALTER TABLE evidence_timeline ADD COLUMN IF NOT EXISTS company_id INTEGER;",
             "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS position_id VARCHAR(50);",
+            "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS ticker TEXT;",
             "ALTER TABLE failure_analysis ADD COLUMN IF NOT EXISTS failure_category TEXT;"
         ]
 
