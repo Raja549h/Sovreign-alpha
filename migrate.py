@@ -28,13 +28,16 @@ def main():
 
         print("Executing migrations...")
 
-        # Alter prediction_ledger to add columns
+        # Alter tables to add missing columns
         alter_statements = [
             "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS trade_signal VARCHAR(10);",
             "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS entry_price DECIMAL(10,2);",
             "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS target_price DECIMAL(10,2);",
             "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS stop_loss DECIMAL(10,2);",
-            "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS position_size_pct DECIMAL(5,2);"
+            "ALTER TABLE prediction_ledger ADD COLUMN IF NOT EXISTS position_size_pct DECIMAL(5,2);",
+            "ALTER TABLE evidence_timeline ADD COLUMN IF NOT EXISTS company_id INTEGER;",
+            "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS position_id VARCHAR(50);",
+            "ALTER TABLE failure_analysis ADD COLUMN IF NOT EXISTS failure_category TEXT;"
         ]
 
         for stmt in alter_statements:
@@ -45,6 +48,23 @@ def main():
                 # If column already exists (in older Postgres without IF NOT EXISTS)
                 conn.rollback()
                 print(f"Skipping alter statement, column might already exist: {e.pgerror}")
+
+        # Ensure confidence_calibration is correctly set up
+        cursor.execute("DROP TABLE IF EXISTS confidence_calibration CASCADE;")
+        cursor.execute("""
+        CREATE TABLE confidence_calibration (
+            id SERIAL PRIMARY KEY,
+            observation_id INTEGER,
+            company_id INTEGER,
+            predicted_confidence REAL,
+            actual_outcome REAL,
+            confidence_error REAL,
+            calibration_bucket TEXT,
+            adjusted_confidence REAL,
+            calibration_date TEXT
+        );
+        """)
+        print("Executed CREATE TABLE for confidence_calibration.")
 
         # Clear US tickers from prediction_ledger
         cursor.execute("DELETE FROM prediction_ledger WHERE asset NOT LIKE '%.NS'")
@@ -64,6 +84,23 @@ def main():
         """
         cursor.execute(create_stmt)
         print("Executed CREATE TABLE for alternative_mentions.")
+
+        # Create shadow_trades table
+        create_shadow_trades_stmt = """
+        CREATE TABLE IF NOT EXISTS shadow_trades (
+            id SERIAL PRIMARY KEY,
+            portfolio_id INTEGER,
+            trade_date TEXT NOT NULL,
+            trade_type TEXT CHECK(trade_type IN ('BUY','SELL')),
+            ticker TEXT NOT NULL,
+            price REAL,
+            quantity INTEGER,
+            reason TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        cursor.execute(create_shadow_trades_stmt)
+        print("Executed CREATE TABLE for shadow_trades.")
 
         conn.commit()
         print("Migrations completed successfully.")

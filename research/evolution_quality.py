@@ -862,7 +862,11 @@ class WeeklyICReport:
                                 COUNT(*) as total_calibrated
                          FROM confidence_calibration""")
             cal = dict(c.fetchone())
-            cal['overconfidence_rate'] = round(cal.get('overconfident', 0) / cal.get('total_calibrated', 1), 4)
+            over = cal.get('overconfident')
+            if over is None: over = 0
+            tot = cal.get('total_calibrated')
+            if not tot: tot = 1
+            cal['overconfidence_rate'] = round(over / tot, 4)
             report['sections']['calibration'] = cal
             try:
                 from research.observation_registry import ObservationRegistry

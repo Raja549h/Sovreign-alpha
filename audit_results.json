@@ -1,0 +1,651 @@
+{
+  "timestamp": "2026-08-03T13:09:15.946076",
+  "passed": 74,
+  "warnings": 33,
+  "failed": 0,
+  "total": 107,
+  "results": [
+    {
+      "category": "DB",
+      "name": "Pool initialized",
+      "status": "PASS",
+      "detail": "maxconn=20"
+    },
+    {
+      "category": "DB",
+      "name": "get_connection()",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "TABLE",
+      "name": "prediction_ledger",
+      "status": "PASS",
+      "detail": "24 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "veto_archive",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "decisions",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "performance_log",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "inference_log",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "monthly_summary",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "companies",
+      "status": "PASS",
+      "detail": "5 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "filings",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "financial_series",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "forensic_flags",
+      "status": "PASS",
+      "detail": "3 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "research_notes",
+      "status": "PASS",
+      "detail": "170 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "institutional_scores",
+      "status": "PASS",
+      "detail": "946 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "nsdl_fpi_flows",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "fii_flows",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "fii_flow_snapshots",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "edge_scorecard",
+      "status": "PASS",
+      "detail": "1 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "watchlist",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "observation_memory",
+      "status": "PASS",
+      "detail": "946 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "observation_validations",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "evidence_timeline",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "multi_source_evidence",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "framework_performance",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "reproducibility_log",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "observation_autopsy",
+      "status": "PASS",
+      "detail": "170 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "reasoning_audit",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "failure_analysis",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "calibration_history",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "edge_discovery_framework",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "shadow_portfolio",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "credibility_evidence",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "research_quality_metrics",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "confidence_calibration",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "portfolios",
+      "status": "PASS",
+      "detail": "3 rows"
+    },
+    {
+      "category": "TABLE",
+      "name": "portfolio_positions",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "portfolio_scores",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "portfolio_stress_results",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "theses",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "thesis_checks",
+      "status": "WARN",
+      "detail": "0 rows (empty)"
+    },
+    {
+      "category": "TABLE",
+      "name": "observations",
+      "status": "PASS",
+      "detail": "6 rows"
+    },
+    {
+      "category": "IMPORT",
+      "name": "config",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "dashboard.app",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "engine.data_layer",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "engine.regime",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "agents.analyst",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "agents.risk_manager",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "agents.auditor",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "data.market_feed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "data.market_signals",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "research.evolution_quality",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "research.observation_registry",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "research.auto_review_engine",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "research.fii_intelligence",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "research.storage.research_db",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "automation.master_daily",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "automation.email_digest",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "IMPORT",
+      "name": "dashboard.security",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "RESEARCH",
+      "name": "EvidenceTimeline.get_timeline()",
+      "status": "PASS",
+      "detail": "0 events"
+    },
+    {
+      "category": "RESEARCH",
+      "name": "ConfidenceCalibrator.get_summary()",
+      "status": "PASS",
+      "detail": "MAE=0"
+    },
+    {
+      "category": "RESEARCH",
+      "name": "WeeklyICReport.generate_report()",
+      "status": "PASS",
+      "detail": "sections=8"
+    },
+    {
+      "category": "REGISTRY",
+      "name": "get_registry()",
+      "status": "PASS",
+      "detail": "5 records"
+    },
+    {
+      "category": "REGISTRY",
+      "name": "calculate_edge_score()",
+      "status": "PASS",
+      "detail": "score={'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0, 'avg_confidence': 0.8, 'has_validated_data': False, 'total': 946, 'confirmed': 0, 'partially_confirmed': 0, 'invalidated': 0, 'active': 946, 'monitoring': 0, 'best_categories': ['organic_analysis'], 'worst_categories': ['organic_analysis']}"
+    },
+    {
+      "category": "FII",
+      "name": "get_flow_summary()",
+      "status": "PASS",
+      "detail": "trend=MIXED"
+    },
+    {
+      "category": "PAGE",
+      "name": "/login",
+      "status": "PASS",
+      "detail": "200 (49200 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/",
+      "status": "PASS",
+      "detail": "200 (49200 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/evidence",
+      "status": "PASS",
+      "detail": "200 (38413 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/research",
+      "status": "PASS",
+      "detail": "200 (45609 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/watchlist",
+      "status": "PASS",
+      "detail": "200 (37315 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/macro",
+      "status": "PASS",
+      "detail": "200 (37312 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/portfolio",
+      "status": "PASS",
+      "detail": "200 (36287 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/edge-discovery",
+      "status": "PASS",
+      "detail": "200 (32547 bytes)"
+    },
+    {
+      "category": "PAGE",
+      "name": "/calibration",
+      "status": "PASS",
+      "detail": "200 (31218 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/evidence/timeline",
+      "status": "PASS",
+      "detail": "200 JSON (892 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/evidence/calibration-dashboard",
+      "status": "PASS",
+      "detail": "200 JSON (102 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/evidence/institutional-credibility",
+      "status": "PASS",
+      "detail": "200 JSON (893 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/evidence/anti-vanity",
+      "status": "PASS",
+      "detail": "200 JSON (324 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/evidence/weekly-ic-report",
+      "status": "PASS",
+      "detail": "200 JSON (657 bytes)"
+    },
+    {
+      "category": "API",
+      "name": "/api/shadow-portfolio",
+      "status": "PASS",
+      "detail": "200 JSON (27 bytes)"
+    },
+    {
+      "category": "TIMELINE",
+      "name": "no filters (limit=5)",
+      "status": "PASS",
+      "detail": "0 events"
+    },
+    {
+      "category": "TIMELINE",
+      "name": "company_id=1",
+      "status": "PASS",
+      "detail": "0 events"
+    },
+    {
+      "category": "TIMELINE",
+      "name": "event_type=PIPELINE",
+      "status": "PASS",
+      "detail": "0 events"
+    },
+    {
+      "category": "TIMELINE",
+      "name": "JSON serializable",
+      "status": "PASS",
+      "detail": "2 chars"
+    },
+    {
+      "category": "POOL",
+      "name": "opened 6 concurrent conns",
+      "status": "WARN",
+      "detail": "6/15"
+    },
+    {
+      "category": "POOL",
+      "name": "all connections returned",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "evidence.html",
+      "status": "PASS",
+      "detail": "8132 bytes"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "dashboard.html",
+      "status": "WARN",
+      "detail": "file not found"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "login.html",
+      "status": "PASS",
+      "detail": "3115 bytes"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "macro_health.html",
+      "status": "PASS",
+      "detail": "6903 bytes"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "watchlist.html",
+      "status": "PASS",
+      "detail": "18015 bytes"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "error.html",
+      "status": "PASS",
+      "detail": "2369 bytes"
+    },
+    {
+      "category": "TEMPLATE",
+      "name": "unavailable.html",
+      "status": "PASS",
+      "detail": "1971 bytes"
+    },
+    {
+      "category": "ENV",
+      "name": "DATABASE_URL",
+      "status": "PASS",
+      "detail": "set (122 chars)"
+    },
+    {
+      "category": "ENV",
+      "name": "JWT_SECRET",
+      "status": "PASS",
+      "detail": "set (42 chars)"
+    },
+    {
+      "category": "ENV",
+      "name": "CEREBRAS_API_KEY",
+      "status": "PASS",
+      "detail": "set (52 chars)"
+    },
+    {
+      "category": "ENV",
+      "name": "OPENAI_API_KEY",
+      "status": "WARN",
+      "detail": "not set"
+    },
+    {
+      "category": "ENV",
+      "name": "FRED_API_KEY",
+      "status": "WARN",
+      "detail": "not set"
+    },
+    {
+      "category": "WORKFLOW",
+      "name": "daily-pipeline.yml exists",
+      "status": "PASS",
+      "detail": "4167 bytes"
+    },
+    {
+      "category": "WORKFLOW",
+      "name": "DATABASE_URL secret referenced",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "WORKFLOW",
+      "name": "dependencies install step",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "WORKFLOW",
+      "name": "timeout configured",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "REQS",
+      "name": "requirements-pipeline.txt",
+      "status": "PASS",
+      "detail": "19 packages"
+    },
+    {
+      "category": "REQS",
+      "name": "psycopg2 listed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "REQS",
+      "name": "flask listed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "REQS",
+      "name": "pandas listed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "REQS",
+      "name": "requests listed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "REQS",
+      "name": "openai listed",
+      "status": "PASS",
+      "detail": ""
+    }
+  ]
+}

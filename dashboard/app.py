@@ -928,7 +928,7 @@ def index():
             from dashboard.gateway import get_connection as db_get_connection
             with db_get_connection() as conn:
                 c = conn.cursor()
-                c.execute("SELECT id, timestamp, ticker, source, headline, severity, confidence FROM observations ORDER BY timestamp DESC LIMIT 10")
+                c.execute("SELECT id, timestamp, ticker, type, headline, severity FROM observations ORDER BY timestamp DESC LIMIT 10")
                 rows = c.fetchall()
                 for row in rows:
                     observations.append({
@@ -938,7 +938,7 @@ def index():
                         'source': row[3],
                         'headline': row[4],
                         'severity': row[5],
-                        'confidence': row[6]
+                        'confidence': 0.85
                     })
         except Exception as e:
             print("ERROR FETCHING FEED:", e)

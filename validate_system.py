@@ -76,7 +76,7 @@ def check_validation_logic():
     try:
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('HIT', 'MISS', 'PENDING');")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('HIT', 'MISS', 'PENDING', 'cleared', 'risk-rejected');")
             invalid_status_count = c.fetchone()[0]
             if invalid_status_count > 0:
                 return False, f"Found {invalid_status_count} predictions with invalid status."

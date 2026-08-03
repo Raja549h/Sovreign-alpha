@@ -1,0 +1,26 @@
+============================================================
+SOVEREIGN ALPHA ΓÇö FULL SYSTEM VALIDATION REPORT
+============================================================
+Generated: 2026-08-03T12:48:39
+
+Database Sanity: PASS
+
+Fake Data: PASS
+
+Validation Logic: Found 24 predictions with invalid status.
+
+Evidence Timeline: PASS
+
+Config & API: PASS
+
+UI Routes (Content & Tickers):
+/: FAIL (Request error: HTTPSConnectionPool(host='svrn)
+/evidence: Ticker check skipped (design decision). No forbidden strings..
+/predictions: FAIL (Request error: HTTPSConnectionPool(host='svrn)
+/performance: FAIL (Request error: HTTPSConnectionPool(host='svrn)
+/research: FAIL (Request error: HTTPSConnectionPool(host='svrn)
+/macro-health: FAIL (Request error: HTTPSConnectionPool(host='svrn)
+
+============================================================
+FINAL VERDICT: CRITICAL FAILURES DETECTED (FAIL)
+============================================================
