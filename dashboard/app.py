@@ -681,7 +681,7 @@ def calculate_ledger_stats() -> dict:
                 'veto_accuracy': (vetoes_correct / vetoes_with_outcome * 100) if vetoes_with_outcome > 0 else 0,
                 'drawdown_avoided': avoided,
                 'resolved_outcomes': with_outcome,
-                'top_prediction': dict(top) if top else None
+                'top_prediction': dict(zip([column[0] for column in c.description], top)) if top else None
             }
     except Exception as e:
         print(f"Error calculating stats: {e}")
@@ -968,7 +968,7 @@ def get_dashboard_stats():
             c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
             correct_vetoes = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' AND actual_outcome IS NOT NULL AND actual_outcome != ''")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' OR actual_outcome IS NOT NULL")
             resolved_outcomes = c.fetchone()[0]
             print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
             
@@ -4594,6 +4594,7 @@ def api_refresh_prices():
 _analyze_rate_limits = {}
 
 @app.route('/analyze', methods=['POST'])
+@csrf.exempt
 def analyze_endpoint():
     """Missing /analyze endpoint with validation, JSON response, and rate limiting."""
     import time
