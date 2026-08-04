@@ -210,7 +210,9 @@ logger.info("=== STARTUP COMPLETE ===")
 import psycopg2
 def check_db_connection():
     try:
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        db_url = os.environ.get('DATABASE_URL', '')
+        if db_url: db_url = db_url.strip()
+        conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
         logger.info("DATABASE CONNECTION: SUCCESS")
@@ -2176,22 +2178,6 @@ def run_analysis_page():
                        progress=progress,
                        is_demo=False,
                        session_user=session_user)
-
-
-@app.route('/health')
-def health():
-    """Health check endpoint."""
-    checks = {
-        'database': DB_PATH.exists(),
-        'results_dir': RESULTS_DIR.exists(),
-        'proofs_dir': PROOFS_DIR.exists()
-    }
-
-    return jsonify({
-        'status': 'healthy' if all(checks.values()) else 'degraded',
-        'is_cloud': IS_CLOUD,
-        'checks': checks
-    })
 
 
 @app.route('/debug/db')
