@@ -253,7 +253,7 @@ class FailureAnalysis:
                          ORDER BY cnt DESC""")
             categories = {r['failure_category']: r['cnt'] for r in c.fetchall()}
             c.execute("""SELECT COUNT(*) as total FROM failure_analysis""")
-            total = c.fetchone()['total']
+            total = c.fetchone()[0]
             return {
                 'total_failures': total,
                 'by_category': categories,
@@ -314,7 +314,7 @@ class EdgeDiscovery:
 
             c.execute("""SELECT COUNT(*) as total FROM edge_discovery_framework
                          WHERE total_observations >= %s""", (min_observations,))
-            total_frameworks = c.fetchone()['total']
+            total_frameworks = c.fetchone()[0]
 
             c.execute("""SELECT category, COUNT(*) as cnt, AVG(accuracy_rate) as avg_acc
                          FROM edge_discovery_framework
@@ -467,7 +467,7 @@ class ChallengeEngine:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("""SELECT COUNT(*) as total FROM challenge_records""")
-            total = c.fetchone()['total']
+            total = c.fetchone()[0]
             c.execute("""SELECT COUNT(*) as passed FROM challenge_records WHERE passed_challenge = 1""")
             passed = c.fetchone()['passed']
             c.execute("""SELECT COUNT(*) as survived FROM challenge_records WHERE observation_survived = 1""")
@@ -773,9 +773,9 @@ class AntiVanityFilter:
             c = conn.cursor()
             results = {}
             c.execute("SELECT COUNT(*) as total FROM observation_memory")
-            total_obs = c.fetchone()['total']
+            total_obs = c.fetchone()[0]
             c.execute("SELECT COUNT(*) as cnt FROM observation_validations")
-            total_validations = c.fetchone()['cnt']
+            total_validations = c.fetchone()[0]
             has_sufficient_validations = total_validations >= min_validations
             results['total_observations'] = total_obs
             results['total_validations'] = total_validations
@@ -792,7 +792,7 @@ class AntiVanityFilter:
                     'status': 'SUFFICIENT' if m['cnt'] >= 3 else 'INSUFFICIENT_DATA',
                 })
             c.execute("SELECT COUNT(*) as cnt FROM observation_memory WHERE confidence > 0.8")
-            high_conf = c.fetchone()['cnt']
+            high_conf = c.fetchone()[0]
             if not has_sufficient_validations and total_obs > 0:
                 results['verdict'] = 'INSUFFICIENT_DATA: Less than {} validated observations. All accuracy/edge metrics are unsubstantiated.'.format(min_validations)
                 results['high_confidence_count'] = high_conf
@@ -809,7 +809,7 @@ class AntiVanityFilter:
             c = conn.cursor()
             c.execute("SELECT COUNT(*) as cnt FROM financial_series WHERE metric_name = %s",
                       (metric_name,))
-            cnt = c.fetchone()['cnt']
+            cnt = c.fetchone()[0]
             return {
                 'metric': metric_name,
                 'data_points': cnt,
@@ -829,6 +829,27 @@ class WeeklyICReport:
             'period': 'Weekly IC Report',
             'sections': {},
         }
+        
+        with _get_db() as conn:
+            c = conn.cursor()
+            
+            # Fallback check for insufficient data
+            try:
+                c.execute("""
+                    SELECT COUNT(DISTINCT DATE_TRUNC('week', resolved_at)) as weeks 
+                    FROM prediction_ledger 
+                    WHERE status = 'cleared' AND resolved_at IS NOT NULL
+                """)
+                weeks_row = c.fetchone()
+                # Handle both tuple and dict-like cursors
+                weeks_data = weeks_row[0] if isinstance(weeks_row, tuple) else weeks_row.get('weeks', 0)
+                if weeks_data is None: weeks_data = 0
+            except Exception:
+                weeks_data = 0
+                
+            if weeks_data < 4:
+                raise ValueError(f"Weekly IC requires 4 weeks of validated data. Currently have: {weeks_data} weeks")
+
         companies = get_all_companies()
         report['sections']['coverage'] = {
             'companies_tracked': len(companies),
@@ -837,18 +858,19 @@ class WeeklyICReport:
         with _get_db() as conn:
             c = conn.cursor()
             c.execute("SELECT COUNT(*) as cnt FROM failure_analysis")
-            report['sections']['failures'] = {'total_failures': c.fetchone()['cnt']}
+            report['sections']['failures'] = {'total_failures': c.fetchone()[0]}
             c.execute("SELECT COUNT(*) as cnt FROM observation_memory")
-            report['sections']['observations'] = {'total_observations': c.fetchone()['cnt']}
+            report['sections']['observations'] = {'total_observations': c.fetchone()[0]}
             c.execute("""SELECT failure_category, COUNT(*) as cnt
                          FROM failure_analysis GROUP BY failure_category ORDER BY cnt DESC""")
-            report['sections']['failure_patterns'] = [dict(r) for r in c.fetchall()]
+            fp_cols = [col[0] for col in c.description]
+            report['sections']['failure_patterns'] = [dict(zip(fp_cols, r)) for r in c.fetchall()]
             c.execute("""SELECT COUNT(*) as cnt FROM observation_validations
                          WHERE CAST(validation_date AS DATE) >= CURRENT_DATE - INTERVAL '7 days'""")
-            report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()['cnt']}
+            report['sections']['weekly_validations'] = {'last_7_days': c.fetchone()[0]}
             c.execute("""SELECT COUNT(*) as cnt FROM shadow_trades
                          WHERE CAST(trade_date AS DATE) >= CURRENT_DATE - INTERVAL '7 days'""")
-            report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()['cnt']}
+            report['sections']['weekly_trades'] = {'closed_last_7d': c.fetchone()[0]}
             reg = ObservationRegistry()
             score = reg.calculate_edge_score()
             report['sections']['edge_scorecard'] = {
@@ -861,7 +883,9 @@ class WeeklyICReport:
             c.execute("""SELECT SUM(CASE WHEN actual_outcome > predicted_confidence THEN 1 ELSE 0 END) as overconfident,
                                 COUNT(*) as total_calibrated
                          FROM confidence_calibration""")
-            cal = dict(c.fetchone())
+            cal_cols = [col[0] for col in c.description]
+            cal_row = c.fetchone()
+            cal = dict(zip(cal_cols, cal_row)) if cal_row else {}
             over = cal.get('overconfident')
             if over is None: over = 0
             tot = cal.get('total_calibrated')

@@ -170,7 +170,8 @@ class BackgroundEngine:
                 c = conn.cursor()
                 c.execute("""
                     SELECT id, prediction_id, asset, timestamp, confidence_score, thesis,
-                           expected_timeline_days, status
+                           expected_timeline_days, status, trade_signal, entry_price, 
+                           target_price, stop_loss
                     FROM prediction_ledger
                     WHERE actual_outcome IS NULL
                       AND status IN ('cleared', 'risk-rejected')
@@ -221,57 +222,87 @@ class BackgroundEngine:
                 except Exception:
                     continue
 
-                # Get entry price from thesis
+                # Get entry price from database columns
+                entry_price = pred.get('entry_price')
+                target_price = pred.get('target_price')
+                stop_loss = pred.get('stop_loss')
+                signal = pred.get('trade_signal')
                 thesis = str(pred.get('thesis', ''))
-                entry_price = None
-                # Try to extract entry price from thesis text
-                import re
-                price_patterns = [
-                    r'entry.*?(\d+[,.]?\d+)',
-                    r'price.*?(\d+[,.]?\d+)',
-                    r'₹\s*(\d+[,.]?\d+)',
-                    r'INR\s*(\d+[,.]?\d+)',
-                ]
-                for pat in price_patterns:
-                    match = re.search(pat, thesis, re.IGNORECASE)
-                    if match:
-                        try:
-                            entry_price = float(match.group(1).replace(',', ''))
-                            if entry_price > 10:  # Sanity check
-                                break
-                        except ValueError:
-                            entry_price = None
 
-                if entry_price is None or entry_price < 1:
-                    # Use a heuristic: assume neutral (0% return) if we can't find entry
+                # Fallback to thesis regex if columns are missing
+                if entry_price is None or entry_price <= 0:
+                    import re
+                    price_patterns = [
+                        r'entry.*?(\d+[,.]?\d+)',
+                        r'price.*?(\d+[,.]?\d+)',
+                        r'₹\s*(\d+[,.]?\d+)',
+                        r'INR\s*(\d+[,.]?\d+)',
+                    ]
+                    for pat in price_patterns:
+                        match = re.search(pat, thesis, re.IGNORECASE)
+                        if match:
+                            try:
+                                entry_price = float(match.group(1).replace(',', ''))
+                                if entry_price > 10:  # Sanity check
+                                    break
+                            except ValueError:
+                                entry_price = None
+
+                if entry_price is None or entry_price <= 0:
                     actual_return = 0.0
                     outcome = 'indeterminate'
                     notes = f"Could not determine entry price. Current: {current_price:.2f}"
                 else:
-                    actual_return = round((current_price - entry_price) / entry_price * 100, 2)
-                    
-                    # Determine if BUY or SELL signal
-                    is_buy = 'buy' in thesis.lower() or 'long' in thesis.lower() or 'bullish' in thesis.lower()
-                    is_sell = 'sell' in thesis.lower() or 'short' in thesis.lower() or 'bearish' in thesis.lower()
-                    
-                    if is_buy:
-                        outcome = 'HIT' if actual_return > 0 else 'MISS'
-                    elif is_sell:
-                        outcome = 'HIT' if actual_return < 0 else 'MISS'
+                    # Calculate actual return percentage
+                    if signal == 'SHORT' or 'sell' in thesis.lower() or 'short' in thesis.lower():
+                        is_short = True
+                        actual_return = round((entry_price - current_price) / entry_price * 100, 2)
                     else:
-                        outcome = 'HIT' if abs(actual_return) < 5 else 'indeterminate'
+                        is_short = False
+                        actual_return = round((current_price - entry_price) / entry_price * 100, 2)
                     
-                    notes = f"Entry: {entry_price:.2f}, Current: {current_price:.2f}, Return: {actual_return:+.2f}%"
+                    outcome = None
+                    
+                    # Logic: use explicit targets and stop losses if available
+                    if target_price and stop_loss:
+                        if is_short:
+                            if current_price <= target_price:
+                                outcome = 'HIT'
+                            elif current_price >= stop_loss:
+                                outcome = 'MISS'
+                        else: # LONG
+                            if current_price >= target_price:
+                                outcome = 'HIT'
+                            elif current_price <= stop_loss:
+                                outcome = 'MISS'
+                    
+                    # If target/stop-loss missing, or price is still within range, mark PENDING or use fallback
+                    if outcome is None:
+                        if days_elapsed >= timeline_days:
+                            # Expired, force resolve based on return
+                            outcome = 'HIT' if actual_return > 0 else 'MISS'
+                        else:
+                            # Still within range and timeline
+                            outcome = 'PENDING'
+                            
+                    notes = f"Entry: {entry_price:.2f}, Target: {target_price}, Stop: {stop_loss}, Current: {current_price:.2f}, Return: {actual_return:+.2f}%"
 
                 # Update prediction
                 with db_get_connection() as conn:
                     c = conn.cursor()
-                    c.execute("""
-                        UPDATE prediction_ledger
-                        SET status = 'cleared', actual_outcome = %s, actual_return_pct = %s, 
-                            outcome_notes = %s, updated_at = %s
-                        WHERE id = %s AND actual_outcome IS NULL
-                    """, (outcome, actual_return, notes, now.isoformat(), pred['id']))
+                    if outcome == 'PENDING':
+                        c.execute("""
+                            UPDATE prediction_ledger
+                            SET actual_return_pct = %s, outcome_notes = %s, updated_at = %s
+                            WHERE id = %s
+                        """, (actual_return, notes, now.isoformat(), pred['id']))
+                    else:
+                        c.execute("""
+                            UPDATE prediction_ledger
+                            SET actual_outcome = %s, actual_return_pct = %s, 
+                                outcome_notes = %s, resolved_at = %s, updated_at = %s
+                            WHERE id = %s AND actual_outcome IS NULL
+                        """, (outcome, actual_return, notes, now.isoformat(), now.isoformat(), pred['id']))
                     conn.commit()
                 resolved_count += 1
 
