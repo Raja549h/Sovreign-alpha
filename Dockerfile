@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+LABEL version="2.0.1"
+LABEL build_date="2026-08-04"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libcairo2-dev \

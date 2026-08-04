@@ -1,11 +1,9 @@
 ---
 title: Sovereign Alpha
-emoji: 🏛️
-colorFrom: indigo
-colorTo: purple
+emoji: 📊
+colorFrom: blue
+colorTo: green
 sdk: docker
-python_version: "3.11"
-app_file: dashboard/app.py
 pinned: false
 ---
 

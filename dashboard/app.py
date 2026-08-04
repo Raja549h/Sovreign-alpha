@@ -197,6 +197,39 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("=== SOVEREIGN ALPHA STARTUP ===")
+logger.info(f"Environment: {os.environ.get('FLASK_ENV', 'production')}")
+logger.info(f"Database URL: {'SET' if os.environ.get('DATABASE_URL') else 'NOT SET'}")
+logger.info(f"Cerebras API Key: {'SET' if os.environ.get('CEREBRAS_API_KEY') else 'NOT SET'}")
+logger.info("=== STARTUP COMPLETE ===")
+
+import psycopg2
+def check_db_connection():
+    try:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        logger.info("DATABASE CONNECTION: SUCCESS")
+        return True
+    except Exception as e:
+        logger.error(f"DATABASE CONNECTION: FAILED - {e}")
+        return False
+
+db_connection_ok = check_db_connection()
+
+@app.route('/health')
+def health():
+    return {
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'version': '2.0.1',
+        'database': 'connected' if db_connection_ok else 'disconnected'
+    }
+
 @app.after_request
 def add_cache_busting_headers(response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0"
