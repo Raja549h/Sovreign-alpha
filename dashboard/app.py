@@ -1217,9 +1217,9 @@ def prediction_detail(prediction_id):
     """Audit-record style page for a single prediction."""
     try:
         with get_db_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
-        row = c.fetchone()
+            c = conn.cursor()
+            c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
+            row = c.fetchone()
         if not row:
             return render_template('prediction_detail.html',
                                    prediction={'id': prediction_id, 'status': 'NOT_FOUND', 'timestamp': '', 'error': 'Prediction not found in ledger'})
@@ -1669,15 +1669,15 @@ def api_track_record():
     """API endpoint for track record summary."""
     try:
         with get_db_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = \'COMPLETED\'")
-        total_sessions = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM prediction_ledger")
-        total_decisions = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN (\'vetoed\',\'risk-rejected\',\'VETOED\',\'RISK_REJECTED\')")
-        total_approved = c.fetchone()[0]
-        c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN (\'vetoed\',\'risk-rejected\',\'VETOED\',\'RISK_REJECTED\')")
-        total_alpha = c.fetchone()[0] or 0.0
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'COMPLETED'")
+            total_sessions = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM prediction_ledger")
+            total_decisions = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+            total_approved = c.fetchone()[0]
+            c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+            total_alpha = c.fetchone()[0] or 0.0
     except Exception:
         total_sessions = 0
         total_decisions = 0
