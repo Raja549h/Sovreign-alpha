@@ -40,6 +40,7 @@ def main():
             "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS ticker TEXT;",
             "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS company_name TEXT;",
             "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS sector TEXT;",
+            "ALTER TABLE shadow_portfolio ADD COLUMN IF NOT EXISTS position_size REAL;",
             "ALTER TABLE failure_analysis ADD COLUMN IF NOT EXISTS failure_category TEXT;"
         ]
 

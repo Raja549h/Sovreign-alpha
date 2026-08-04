@@ -177,7 +177,7 @@ class BackgroundEngine:
                     ORDER BY timestamp ASC
                     LIMIT 50
                 """)
-                predictions = [dict(row) for row in c.fetchall()]
+                predictions = [dict(zip([column[0] for column in c.description], row)) for row in c.fetchall()]
         except Exception as e:
             logger.error(f"Validation sweep: failed to fetch predictions: {e}")
             predictions = []
@@ -290,7 +290,7 @@ class BackgroundEngine:
                     ORDER BY timestamp ASC
                     LIMIT 30
                 """)
-                vetoes = [dict(row) for row in c.fetchall()]
+                vetoes = [dict(zip([column[0] for column in c.description], row)) for row in c.fetchall()]
         except Exception as e:
             logger.error(f"Validation sweep: failed to fetch vetoes: {e}")
             vetoes = []

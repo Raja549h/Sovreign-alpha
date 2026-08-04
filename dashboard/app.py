@@ -515,7 +515,7 @@ def get_predictions(limit: int = 100) -> list:
             rows = c.fetchall()
             import logging
             logging.info(f"[/predictions] Fetched {len(rows)} predictions (filtered for Indian equities).")
-            return [dict(row) for row in rows]
+            return [dict(zip([column[0] for column in c.description], row)) for row in rows]
     except Exception as e:
         import logging
         logging.error(f"Error fetching predictions: {e}")
@@ -584,7 +584,7 @@ def get_veto_archive(limit: int = 100) -> list:
                 LIMIT %s
             """, (limit,))
             rows = c.fetchall()
-            return [dict(row) for row in rows]
+            return [dict(zip([column[0] for column in c.description], row)) for row in rows]
     except Exception:
         return []
 
@@ -784,7 +784,7 @@ def get_db_data(query, params=None):
             cursor.execute(query)
         
         rows = cursor.fetchall()
-        return [dict(row) for row in rows]
+        return [dict(zip([column[0] for column in cursor.description], row)) for row in rows]
     except Exception as e:
         print(f"DB Error: {e}")
         return []
@@ -1177,7 +1177,7 @@ def misses_ledger():
             WHERE status IN ('MISS', 'miss') OR actual_outcome IN ('MISS', 'miss')
             ORDER BY timestamp DESC
         """)
-        misses = [dict(row) for row in c.fetchall()]
+        misses = [dict(zip([column[0] for column in c.description], row)) for row in c.fetchall()]
         c.close()
         pass
         pass # conn.close()
@@ -1223,7 +1223,7 @@ def prediction_detail(prediction_id):
         if not row:
             return render_template('prediction_detail.html',
                                    prediction={'id': prediction_id, 'status': 'NOT_FOUND', 'timestamp': '', 'error': 'Prediction not found in ledger'})
-        p = dict(row)
+        p = dict(zip([column[0] for column in c.description], row))
         import hashlib
         raw = f"{p.get('id', prediction_id)}|{p.get('timestamp', '')}|{p.get('asset', '')}"
         sim_hash = hashlib.sha256(raw.encode()).hexdigest()
