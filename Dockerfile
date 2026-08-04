@@ -32,4 +32,4 @@ USER user
 
 EXPOSE 7860
 
-CMD sh -c "python migrate.py && python dashboard/app.py"
+CMD sh -c "python migrate.py && python test_database.py && python dashboard/app.py"

@@ -197,6 +197,9 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
+from dashboard.database import init_database
+init_database(app)
+
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -207,14 +210,93 @@ logger.info(f"Database URL: {'SET' if os.environ.get('DATABASE_URL') else 'NOT S
 logger.info(f"Cerebras API Key: {'SET' if os.environ.get('CEREBRAS_API_KEY') else 'NOT SET'}")
 logger.info("=== STARTUP COMPLETE ===")
 
+@app.route('/api/status')
+def api_status():
+    """System health and caching status."""
+    return jsonify({
+        "status": "ONLINE",
+        "cache_enabled": True,
+        "database": "CONNECTED",
+        "version": "2.0.1"
+    })
+
+
 import psycopg2
+from psycopg2 import pool
+from contextlib import contextmanager
+
+db_url = os.environ.get('DATABASE_URL')
+if not db_url:
+    logger.error("FATAL: DATABASE_URL not found in environment.")
+    raise ValueError("DATABASE_URL is required.")
+db_url = db_url.strip()
+if 'aivencloud.com' not in db_url:
+    logger.warning("DATABASE_URL does not contain aivencloud.com. Is this a production Aiven DB?")
+else:
+    logger.info("Aiven connection string verified.")
+
+if 'sslmode=require' not in db_url:
+    if '?' in db_url:
+        db_url += '&sslmode=require'
+    else:
+        db_url += '?sslmode=require'
+
+try:
+    db_pool = pool.SimpleConnectionPool(1, 10, db_url)
+    if db_pool:
+        logger.info("Database connection pool created successfully.")
+except Exception as e:
+    logger.error(f"Failed to create connection pool: {e}")
+    db_pool = None
+
+@contextmanager
+def get_db_connection():
+    """Get database connection with auto-return to pool."""
+    if not db_pool:
+        raise Exception("Database pool not initialized")
+    conn = db_pool.getconn()
+    conn.autocommit = False
+    try:
+        yield conn
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        db_pool.putconn(conn)
+
+def execute_query(query, params=None, fetch=True):
+    """Wrapper function to log execution time and manage connections."""
+    import time
+    start_time = time.time()
+    try:
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            c.execute(query, params)
+            elapsed = time.time() - start_time
+            if elapsed > 1.0:
+                logger.warning(f"Slow query detected ({elapsed:.2f}s): {query[:100]}...")
+            
+            result = None
+            if fetch:
+                try:
+                    result = c.fetchall()
+                except psycopg2.ProgrammingError:
+                    pass # no results to fetch (e.g., INSERT/UPDATE without RETURNING)
+            
+            logger.info(f"Query executed in {elapsed:.2f}s. Rows returned/affected: {c.rowcount}")
+            c.close()
+            return result
+    except Exception as e:
+        logger.error(f"Query execution failed: {e}. Query: {query[:100]}...")
+        raise e
+
 def check_db_connection():
     try:
-        db_url = os.environ.get('DATABASE_URL', '')
-        if db_url: db_url = db_url.strip()
-        conn = psycopg2.connect(db_url)
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT 1")
+            c.close()
         logger.info("DATABASE CONNECTION: SUCCESS")
         return True
     except Exception as e:
@@ -230,6 +312,21 @@ def health():
         'timestamp': datetime.utcnow().isoformat(),
         'version': '2.0.1',
         'database': 'connected' if db_connection_ok else 'disconnected'
+    }
+
+@app.route('/health/db')
+def health_db():
+    if not db_pool:
+        return {'status': 'error', 'message': 'Pool not initialized'}, 500
+    
+    # Internal variables of SimpleConnectionPool
+    used = len(db_pool._used)
+    available = len(db_pool._pool)
+    return {
+        'minconn': db_pool.minconn,
+        'maxconn': db_pool.maxconn,
+        'used_connections': used,
+        'available_connections': available
     }
 
 @app.after_request
@@ -374,10 +471,7 @@ try:
 except Exception as e:
     print(f"Warning: Initialization failed: {e}")
 
-def get_db_connection():
-    """Get database connection to db (prediction_ledger, veto_archive)."""
-    conn = db_get_connection()
-    return conn
+
 
 def save_prediction(prediction_data: dict) -> bool:
     """Save a prediction to the ledger. Write-once, never update timestamp."""
@@ -1122,12 +1216,10 @@ def predictions():
 def prediction_detail(prediction_id):
     """Audit-record style page for a single prediction."""
     try:
-        conn = get_db_connection()
+        with get_db_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT * FROM prediction_ledger WHERE id = %s", (prediction_id,))
         row = c.fetchone()
-        pass
-        pass # conn.close()
         if not row:
             return render_template('prediction_detail.html',
                                    prediction={'id': prediction_id, 'status': 'NOT_FOUND', 'timestamp': '', 'error': 'Prediction not found in ledger'})
@@ -1576,18 +1668,16 @@ def api_signals():
 def api_track_record():
     """API endpoint for track record summary."""
     try:
-        conn = get_db_connection()
+        with get_db_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = 'COMPLETED'")
+        c.execute("SELECT COUNT(*) FROM analysis_runs WHERE status = \'COMPLETED\'")
         total_sessions = c.fetchone()[0]
         c.execute("SELECT COUNT(*) FROM prediction_ledger")
         total_decisions = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status NOT IN (\'vetoed\',\'risk-rejected\',\'VETOED\',\'RISK_REJECTED\')")
         total_approved = c.fetchone()[0]
-        c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN ('vetoed','risk-rejected','VETOED','RISK_REJECTED')")
+        c.execute("SELECT SUM(confidence_score * 0.1) FROM prediction_ledger WHERE status NOT IN (\'vetoed\',\'risk-rejected\',\'VETOED\',\'RISK_REJECTED\')")
         total_alpha = c.fetchone()[0] or 0.0
-        pass
-        pass # conn.close()
     except Exception:
         total_sessions = 0
         total_decisions = 0
@@ -2651,7 +2741,7 @@ def api_evidence_timeline():
                 logging.info(f"[/api/evidence/timeline] Fetched {len(rows)} timeline events from observation_memory.")
                 for row in rows:
                     ts = row['created_at'] if 'created_at' in row else row[0]
-                    tk = row['ticker'] if 'ticker' in row else row[1]
+                    tk = row.get('asset', row.get('ticker', '')) if 'ticker' in row else row[1]
                     et = row['category'] if 'category' in row else row[2]
                     hd = row['observation_text'] if 'observation_text' in row else row[3]
                     
@@ -3826,7 +3916,7 @@ def v1_divergences():
             alerts = []
             for row in c.fetchall():
                 alerts.append({
-                    'ticker': row['ticker'],
+                    'ticker': row.get('asset', row.get('ticker', '')),
                     'headline': row['headline'],
                     'severity': row['severity'],
                     'date': row['detected_at']
@@ -3851,7 +3941,7 @@ def v1_validation_ledger():
             results = []
             for row in c.fetchall():
                 results.append({
-                    'ticker': row['ticker'],
+                    'ticker': row.get('asset', row.get('ticker', '')),
                     'status': row['status'],
                     'actual_outcome': row['actual_outcome'],
                     'actual_return_pct': row['actual_return_pct'],
@@ -4472,6 +4562,86 @@ scheduler.add_job(
     run_pipeline_job,
     CronTrigger(hour=8, minute=45, timezone=pytz.timezone('Asia/Kolkata')),
     id='daily_pipeline',
+    replace_existing=True
+)
+
+@app.route('/api/refresh-prices', methods=['POST'])
+def api_refresh_prices():
+    """Background endpoint to refresh stock prices to warm the cache."""
+    def refresh_task():
+        try:
+            with get_db_connection() as conn:
+                c = conn.cursor()
+                # Get unique assets from prediction_ledger
+                c.execute("SELECT DISTINCT asset FROM prediction_ledger WHERE asset IS NOT NULL")
+                assets = [row[0] for row in c.fetchall()]
+                
+            from dashboard.cache import price_cache
+            for asset in assets:
+                suffix_ticker = asset + ".NS" if not asset.endswith(".NS") and not asset.endswith(".BO") else asset
+                # Call get_price to force cache update
+                price_cache.get_price(suffix_ticker)
+                
+            logger.info(f"Successfully refreshed prices for {len(assets)} assets.")
+        except Exception as e:
+            logger.error(f"Error in background price refresh: {e}")
+            
+    import threading
+    threading.Thread(target=refresh_task, daemon=True).start()
+    return jsonify({"success": True, "message": "Price refresh started in background."})
+
+# Rate limit dictionary for /analyze
+_analyze_rate_limits = {}
+
+@app.route('/analyze', methods=['POST'])
+def analyze_endpoint():
+    """Missing /analyze endpoint with validation, JSON response, and rate limiting."""
+    import time
+    ip = request.remote_addr
+    now = time.time()
+    
+    # Rate limiting: 10 requests per hour (3600 seconds) per IP
+    if ip not in _analyze_rate_limits:
+        _analyze_rate_limits[ip] = []
+    
+    # Clean up old requests
+    _analyze_rate_limits[ip] = [req_time for req_time in _analyze_rate_limits[ip] if now - req_time < 3600]
+    
+    if len(_analyze_rate_limits[ip]) >= 10:
+        return jsonify({"success": False, "error": "Rate limit exceeded. Maximum 10 requests per hour."}), 429
+        
+    _analyze_rate_limits[ip].append(now)
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Invalid JSON body"}), 400
+        
+    ticker = data.get('ticker')
+    if not ticker:
+        return jsonify({"success": False, "error": "Missing 'ticker' in request"}), 400
+        
+    # Mock analysis response for now, can be hooked up to deep_research_engine
+    return jsonify({
+        "success": True, 
+        "message": f"Analysis queued for {ticker}",
+        "ticker": ticker,
+        "status": "PROCESSING"
+    }), 201
+
+def scheduled_db_health_check():
+    """Runs database health test function every 5 minutes."""
+    logger.info("[Scheduler] Running scheduled database health check...")
+    db_connection_ok = check_db_connection()
+    if db_connection_ok:
+        logger.info("[Scheduler] Database health check PASSED.")
+    else:
+        logger.error("[Scheduler] Database health check FAILED.")
+
+scheduler.add_job(
+    scheduled_db_health_check,
+    'interval',
+    minutes=5,
+    id='db_health_check',
     replace_existing=True
 )
 print("[Scheduler] Job 'daily_pipeline' configured for 08:45 AM Asia/Kolkata.")

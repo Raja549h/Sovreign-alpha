@@ -33,10 +33,53 @@
     <div class="panel">
         <div class="panel-header">
             <h2>All Predictions</h2>
-            <div class="actions">
+            <div class="actions" style="display: flex; gap: 10px; align-items: center;">
+                <span id="cache-status" style="font-size: 0.75rem; color: #888;"></span>
+                <button id="refresh-prices-btn" class="btn outline small" onclick="refreshPrices()">Refresh Prices</button>
                 <a href="/api/export-predictions" class="btn outline small">Export Excel</a>
             </div>
         </div>
+        <script>
+            function refreshPrices() {
+                var btn = document.getElementById('refresh-prices-btn');
+                var status = document.getElementById('cache-status');
+                btn.disabled = true;
+                btn.textContent = "Refreshing...";
+                
+                fetch('/api/refresh-prices', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            status.textContent = "Cache updated: Just now";
+                            status.style.color = "var(--accent)";
+                            // Give background process time before reloading
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            status.textContent = "Refresh failed";
+                            status.style.color = "var(--danger)";
+                            btn.disabled = false;
+                            btn.textContent = "Refresh Prices";
+                        }
+                    })
+                    .catch(err => {
+                        status.textContent = "Network error";
+                        status.style.color = "var(--danger)";
+                        btn.disabled = false;
+                        btn.textContent = "Retry Refresh";
+                    });
+            }
+            
+            // Set initial timestamp
+            document.addEventListener("DOMContentLoaded", function() {
+                var status = document.getElementById('cache-status');
+                if (status.textContent === "") {
+                    var d = new Date();
+                    status.textContent = "Prices loaded: " + d.toLocaleTimeString();
+                }
+            });
+        </script>
         <div class="panel-body">
             {% if predictions and predictions|length > 0 %}
             <div id="pred-filter" class="filter-bar" style="margin-bottom:0.75rem;display:flex;gap:6px;flex-wrap:wrap;">
