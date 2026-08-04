@@ -5,7 +5,7 @@ def generate_trade_proposal(prediction_data):
     """
     Generates a specific trade proposal from prediction data.
     """
-    ticker = prediction_data.get('asset') or prediction_data.get('ticker', 'UNKNOWN')
+    ticker = prediction_data.get('asset', 'UNKNOWN')
     
     # We derive a simulated 1-5 score from confidence if overall_score is missing
     conf = prediction_data.get('confidence_score') or prediction_data.get('confidence') or 0.0

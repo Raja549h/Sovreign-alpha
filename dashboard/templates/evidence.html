@@ -110,10 +110,12 @@ async function loadWeeklyReport() {
         if (d.success && d.report) {
             const s = d.report.sections;
             document.getElementById('weekly-report-summary').innerHTML =
-                `Failures: ${s.failures?.total_failures || 0}<br>Observations: ${s.observations?.total_observations || 0}<br>Edge: ${s.edge_scorecard?.edge_score || '—'}`;
+                `Failures: ${s.failures?.total_failures || 0}<br>Observations: ${s.observations?.total_observations || 0}<br>Edge: ${s.edge_scorecard?.edge_score || '-'}`;
+        } else {
+            document.getElementById('weekly-report-summary').textContent = d.message || d.error || 'Weekly IC requires 4 weeks of data';
         }
     } catch(e) {
-        document.getElementById('weekly-report-summary').textContent = 'Data Unavailable';
+        document.getElementById('weekly-report-summary').textContent = 'Weekly IC requires 4 weeks of data';
     }
 }
 async function loadTimeline() {

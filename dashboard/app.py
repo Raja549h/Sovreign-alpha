@@ -839,14 +839,14 @@ def get_dashboard_stats():
             c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
             correct_vetoes = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'MISS', 'hit', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' AND actual_outcome IS NOT NULL AND actual_outcome != ''")
             resolved_outcomes = c.fetchone()[0]
             print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'hit')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'hit', 'correct')")
             hits = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('MISS', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('MISS', 'miss', 'incorrect')")
             misses = c.fetchone()[0]
 
             approval_rate = round(approved / total * 100, 1) if total > 0 else 0
@@ -3262,6 +3262,7 @@ def research_home():
         from research.storage.research_db import get_all_companies, get_notes, get_flags_count, get_flags
         from research.thesis_tracker import get_watchlist_companies
         import logging
+        companies = get_all_companies() or []
         logging.info(f"[/research] Fetched {len(companies)} companies.")
         notes = get_notes()
         logging.info(f"[/research] Fetched {len(notes)} research notes. Latest note: {notes[0]['generated_at'] if notes else 'None'}")
