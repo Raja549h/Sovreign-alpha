@@ -34,7 +34,7 @@
                         <span style="font-size:1.1rem;font-weight:700;color:var(--warning); border-bottom: 1px dotted var(--warning);">{{ stats.misses }}</span>
                     </a>
                 </div>
-                <div><span style="color:#555;">Avg Research Quality</span><br><span style="font-size:1.1rem;font-weight:700;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score else '—' }}</span></div>
+                <div><span style="color:#555;">Avg Research Quality</span><br><span style="font-size:1.1rem;font-weight:700;">{{ "%.2f"|format(trust.avg_research_quality_score) if trust.avg_research_quality_score is not none else '—' }}</span></div>
             </div>
             
             {% if trust.total_validations < 10 %}
@@ -127,7 +127,7 @@
                         {% for p in predictions[:8] %}
                         <tr>
                             <td class="ticker-cell">{{ p.asset or p.ticker }}</td>
-                            <td><span class="signal-badge {{ 'BUY' if (p.trade_signal == 'LONG' or p.trade_signal == 'BUY') else 'SELL' }}">{{ p.trade_signal if p.trade_signal else p.status }}</span></td>
+                            <td><span class="signal-badge {{ 'BUY' if (p.trade_proposal and (p.trade_proposal.signal == 'LONG' or p.trade_proposal.signal == 'BUY')) else 'SELL' }}">{{ p.trade_proposal.signal if p.trade_proposal else p.status }}</span></td>
                             <td>{{ (p.confidence_score or p.confidence or 0) | pct }}</td>
                             <td>
                                 {% if not p.actual_outcome %}

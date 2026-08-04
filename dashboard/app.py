@@ -197,6 +197,13 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
+@app.after_request
+def add_cache_busting_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "-1"
+    return response
+
 @app.route('/debug-env')
 def debug_env():
     db_url = os.environ.get("DATABASE_URL", "").strip()
@@ -366,18 +373,23 @@ def save_prediction(prediction_data: dict) -> bool:
         return False
 
 def get_predictions(limit: int = 100) -> list:
-    """Get all predictions ordered by timestamp descending."""
+    """Get all predictions ordered by timestamp descending, filtering for Indian Equities (.NS)."""
     try:
         with get_db_connection() as conn:
             c = conn.cursor()
             c.execute("""
                 SELECT * FROM prediction_ledger 
+                WHERE asset LIKE '%%.NS' OR asset LIKE '%%.BO'
                 ORDER BY created_at DESC 
                 LIMIT %s
             """, (limit,))
             rows = c.fetchall()
+            import logging
+            logging.info(f"[/predictions] Fetched {len(rows)} predictions (filtered for Indian equities).")
             return [dict(row) for row in rows]
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.error(f"Error fetching predictions: {e}")
         return []
 
 def update_prediction_outcome(prediction_id: str, outcome_data: dict) -> bool:
@@ -827,14 +839,14 @@ def get_dashboard_stats():
             c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
             correct_vetoes = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'MISS', 'hit', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'MISS', 'hit', 'miss')")
             resolved_outcomes = c.fetchone()[0]
             print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('HIT', 'hit')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'hit')")
             hits = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('MISS', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('MISS', 'miss')")
             misses = c.fetchone()[0]
 
             approval_rate = round(approved / total * 100, 1) if total > 0 else 0
@@ -947,6 +959,11 @@ def index():
         stats = get_dashboard_stats()
         regime = get_regime_data()
         predictions_list = get_predictions(8)
+        
+        from dashboard.models import generate_trade_proposal
+        for p in predictions_list:
+            p['trade_proposal'] = generate_trade_proposal(p)
+            
         veto_list = get_veto_archive(6)
         progress = check_setup_progress()
 
@@ -2604,16 +2621,20 @@ def api_evidence_timeline():
         timeline = []
         with db_get_connection() as conn:
             c = conn.cursor()
-            # Primary: evidence_timeline table
+            # Primary: observation_memory table
             try:
-                c.execute("""SELECT timestamp, ticker, type, headline 
-                             FROM observations 
-                             ORDER BY timestamp DESC LIMIT 100""")
-                for row in c.fetchall():
-                    ts = row['timestamp'] if 'timestamp' in row else row[0]
+                c.execute("""SELECT o.created_at, c.ticker, o.category, o.observation_text 
+                             FROM observation_memory o
+                             LEFT JOIN companies c ON o.company_id = c.id
+                             ORDER BY o.created_at DESC LIMIT 100""")
+                rows = c.fetchall()
+                import logging
+                logging.info(f"[/api/evidence/timeline] Fetched {len(rows)} timeline events from observation_memory.")
+                for row in rows:
+                    ts = row['created_at'] if 'created_at' in row else row[0]
                     tk = row['ticker'] if 'ticker' in row else row[1]
-                    et = row['type'] if 'type' in row else row[2]
-                    hd = row['headline'] if 'headline' in row else row[3]
+                    et = row['category'] if 'category' in row else row[2]
+                    hd = row['observation_text'] if 'observation_text' in row else row[3]
                     
                     timeline.append({
                         'created_at': str(ts)[:16] if ts else 'Unknown',
@@ -2622,6 +2643,8 @@ def api_evidence_timeline():
                         'event_label': str(hd) if hd else 'Unknown'
                     })
             except Exception as e:
+                import logging
+                logging.error(f"Error fetching evidence timeline: {e}")
                 pass
         
         forbidden_strings = ["STRESS_TEST", "SIMULATED", "TEST_EVENT", "E2E TEST"]
@@ -3230,8 +3253,11 @@ def research_home():
     try:
         from research.storage.research_db import get_all_companies, get_notes, get_flags_count, get_flags
         from research.thesis_tracker import get_watchlist_companies
-        companies = get_all_companies()
+        import logging
+        logging.info(f"[/research] Fetched {len(companies)} companies.")
         notes = get_notes()
+        logging.info(f"[/research] Fetched {len(notes)} research notes. Latest note: {notes[0]['generated_at'] if notes else 'None'}")
+        
         watchlist = get_watchlist_companies()
         watchlist_dict = {w['ticker']: w['alert_threshold'] for w in watchlist} if watchlist else {}
         for c in companies:

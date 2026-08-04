@@ -439,14 +439,14 @@ def init_evolution_quality_tables():
         conn.cursor().execute(EVOLUTION_QUALITY_TABLES_SQL)
 
 
-def get_notes(company_id: int = None) -> List[Dict]:
+def get_notes(company_id: int = None, limit: int = 50) -> List[Dict]:
     """Get research notes, optionally filtered by company."""
     with get_connection() as conn:
         c = conn.cursor()
         if company_id:
-            c.execute("SELECT * FROM research_notes WHERE company_id = %s ORDER BY generated_at DESC", (company_id,))
+            c.execute("SELECT * FROM research_notes WHERE company_id = %s ORDER BY generated_at DESC LIMIT %s", (company_id, limit))
         else:
-            c.execute("SELECT * FROM research_notes ORDER BY generated_at DESC")
+            c.execute("SELECT * FROM research_notes ORDER BY generated_at DESC LIMIT %s", (limit,))
         return [dict(row) for row in c.fetchall()]
 
 

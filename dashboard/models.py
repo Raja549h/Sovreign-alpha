@@ -24,9 +24,19 @@ def generate_trade_proposal(prediction_data):
             if ticker and ticker != 'UNKNOWN':
                 suffix_ticker = ticker + ".NS" if not ticker.endswith(".NS") and not ticker.endswith(".BO") else ticker
                 stock = yf.Ticker(suffix_ticker)
-                current_price = stock.info.get('currentPrice', stock.info.get('regularMarketPrice', None))
+                # Try getting price from multiple possible fields
+                info = stock.info
+                current_price = info.get('currentPrice')
                 if current_price is None:
-                    current_price = stock.info.get('previousClose', 0.0)
+                    current_price = info.get('regularMarketPrice')
+                if current_price is None:
+                    current_price = info.get('previousClose', 0.0)
+                
+                # If all info fields fail, try history
+                if not current_price:
+                    hist = stock.history(period="1d")
+                    if not hist.empty:
+                        current_price = float(hist['Close'].iloc[-1])
         except Exception as e:
             logger.error(f"Failed to fetch price for {ticker}: {e}")
             current_price = 0.0
