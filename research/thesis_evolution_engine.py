@@ -272,17 +272,17 @@ class ThesisEvolutionEngine:
                 c.execute(
                     """SELECT * FROM observation_memory
                        WHERE company_id = %s AND category = %s
-                       ORDER BY observation_date DESC, id DESC LIMIT %s""",
+                       ORDER BY created_at DESC LIMIT %s""",
                     (company_id, category, limit)
                 )
             else:
                 c.execute(
                     """SELECT * FROM observation_memory
                        WHERE company_id = %s
-                       ORDER BY observation_date DESC, id DESC LIMIT %s""",
+                       ORDER BY created_at DESC LIMIT %s""",
                     (company_id, limit)
                 )
-            return [dict(r) for r in c.fetchall()]
+            return [dict(row) for row in c.fetchall()]
 
     def _get_latest_observation(self, company_id: int, category: str) -> Optional[Dict]:
         with _get_db() as conn:

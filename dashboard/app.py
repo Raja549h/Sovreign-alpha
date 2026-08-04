@@ -379,7 +379,7 @@ def get_predictions(limit: int = 100) -> list:
             c = conn.cursor()
             c.execute("""
                 SELECT * FROM prediction_ledger 
-                WHERE asset LIKE '%%.NS' OR asset LIKE '%%.BO'
+                WHERE asset LIKE '%%.NS' OR asset IN ('RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'SBIN', 'BHARTIARTL', 'ITC', 'KOTAKBANK', 'HCLTECH', 'BAJFINANCE', 'TRENT', 'SUNPHARMA')
                 ORDER BY created_at DESC 
                 LIMIT %s
             """, (limit,))
@@ -1306,9 +1306,9 @@ def performance():
                 else: maturity_stats['>60'] += 1
         
         # Calculate hits, misses, and vetoes dynamically
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'HIT'")
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome = 'HIT' OR actual_outcome = 'correct' OR status = 'HIT'")
         hit_count = c.fetchone()[0] or 0
-        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'MISS'")
+        c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome = 'MISS' OR actual_outcome = 'incorrect' OR status = 'MISS'")
         miss_count = c.fetchone()[0] or 0
         resolved_outcomes = hit_count + miss_count
 
@@ -2636,8 +2636,16 @@ def api_evidence_timeline():
                     et = row['category'] if 'category' in row else row[2]
                     hd = row['observation_text'] if 'observation_text' in row else row[3]
                     
+                    formatted_date = 'Unknown'
+                    if ts:
+                        try:
+                            # handle various formats, mostly we just need the first 10 chars for YYYY-MM-DD
+                            formatted_date = str(ts)[:10]
+                        except:
+                            formatted_date = 'Unknown'
+                    
                     timeline.append({
-                        'created_at': str(ts)[:16] if ts else 'Unknown',
+                        'created_at': formatted_date,
                         'ticker': str(tk) if tk else 'Unknown',
                         'event_type': str(et) if et else 'Unknown',
                         'event_label': str(hd) if hd else 'Unknown'

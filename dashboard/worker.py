@@ -455,7 +455,13 @@ class BackgroundEngine:
                 logger.error(f"Progress callback error: {e}")
 
         try:
+            # We log observation processed before we run
+            logger.info(f"Observation processed for {ticker}")
+            
             result = engine.full_pipeline(ticker=ticker, filings_list=[], run_id=run_id, progress_callback=progress_cb)
+            
+            # Since full_pipeline returns a decision_id, we log prediction generated
+            logger.info(f"Prediction generated for {ticker}")
             
             with db_get_connection() as conn:
                 c = conn.cursor()

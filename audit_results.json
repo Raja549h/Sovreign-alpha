@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-03T13:09:15.946076",
+  "timestamp": "2026-08-03T15:46:25.394853",
   "passed": 74,
   "warnings": 33,
   "failed": 0,
@@ -87,7 +87,7 @@
       "category": "TABLE",
       "name": "institutional_scores",
       "status": "PASS",
-      "detail": "946 rows"
+      "detail": "966 rows"
     },
     {
       "category": "TABLE",
@@ -123,7 +123,7 @@
       "category": "TABLE",
       "name": "observation_memory",
       "status": "PASS",
-      "detail": "946 rows"
+      "detail": "966 rows"
     },
     {
       "category": "TABLE",
@@ -381,7 +381,7 @@
       "category": "REGISTRY",
       "name": "calculate_edge_score()",
       "status": "PASS",
-      "detail": "score={'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0, 'avg_confidence': 0.8, 'has_validated_data': False, 'total': 946, 'confirmed': 0, 'partially_confirmed': 0, 'invalidated': 0, 'active': 946, 'monitoring': 0, 'best_categories': ['organic_analysis'], 'worst_categories': ['organic_analysis']}"
+      "detail": "score={'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0, 'avg_confidence': 0.8, 'has_validated_data': False, 'total': 966, 'confirmed': 0, 'partially_confirmed': 0, 'invalidated': 0, 'active': 966, 'monitoring': 0, 'best_categories': ['organic_analysis'], 'worst_categories': ['organic_analysis']}"
     },
     {
       "category": "FII",
@@ -405,7 +405,7 @@
       "category": "PAGE",
       "name": "/evidence",
       "status": "PASS",
-      "detail": "200 (38413 bytes)"
+      "detail": "200 (38792 bytes)"
     },
     {
       "category": "PAGE",
@@ -519,7 +519,7 @@
       "category": "TEMPLATE",
       "name": "evidence.html",
       "status": "PASS",
-      "detail": "8132 bytes"
+      "detail": "8515 bytes"
     },
     {
       "category": "TEMPLATE",

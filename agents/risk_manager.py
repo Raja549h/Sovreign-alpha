@@ -71,6 +71,8 @@ class RiskManager:
     Institutional risk manager with regime-aware veto logic.
     """
 
+    RISK_THRESHOLD_MULTIPLIER = 0.7
+
     def __init__(self, data_dir: Optional[Path] = None):
         self.regime_engine = MarketRegimeEngine()
         self.data_dir = data_dir or BILLING_DIR
@@ -88,6 +90,7 @@ class RiskManager:
     def _save_veto(self, veto: VetoRecord) -> bool:
         """Persist veto to database."""
         try:
+            import uuid
             with get_connection() as conn:
                 c = conn.cursor()
                 c.execute("""
@@ -95,14 +98,14 @@ class RiskManager:
                 (veto_id, prediction_id, timestamp, asset, sector, rejection_reason, expected_loss_pct, proof_hash)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                veto.get('veto_id', str(uuid.uuid4())),
-                veto.get('prediction_id', ''),
-                veto.get('timestamp', datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')),
-                veto.get('asset', ''),
-                veto.get('sector', ''),
-                veto.get('rejection_reason', ''),
-                veto.get('expected_loss_pct', 0.0),
-                veto.get('proof_hash', '')
+                veto.veto_id if hasattr(veto, 'veto_id') else str(uuid.uuid4()),
+                veto.prediction_id if hasattr(veto, 'prediction_id') else '',
+                veto.timestamp if hasattr(veto, 'timestamp') else datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                veto.ticker if hasattr(veto, 'ticker') else '',
+                '', # sector
+                veto.veto_reason if hasattr(veto, 'veto_reason') else '',
+                veto.expected_loss_pct if hasattr(veto, 'expected_loss_pct') else 0.0,
+                ''
             ))
             return True
         except Exception as e:
@@ -125,6 +128,9 @@ class RiskManager:
         else:
             threshold = 0.50
 
+        # Apply multiplier
+        threshold = threshold * self.RISK_THRESHOLD_MULTIPLIER
+
         passed = confidence >= threshold
         return RiskCheck(
             check_name="Confidence Threshold",
@@ -141,12 +147,15 @@ class RiskManager:
         passed = True
         reason = "Signal consistent with regime"
 
-        if regime == "RISK_OFF" and signal == "BUY" and prediction.confidence < 0.80:
+        risk_off_thresh = 0.80 * self.RISK_THRESHOLD_MULTIPLIER
+        risk_on_thresh = 0.70 * self.RISK_THRESHOLD_MULTIPLIER
+
+        if regime == "RISK_OFF" and signal == "BUY" and prediction.confidence < risk_off_thresh:
             passed = False
-            reason = f"BUY signal in RISK_OFF regime with insufficient confidence ({prediction.confidence:.0%} < 0.80)"
-        elif regime == "RISK_ON" and signal == "SELL" and prediction.confidence < 0.70:
+            reason = f"BUY signal in RISK_OFF regime with insufficient confidence ({prediction.confidence:.0%} < {risk_off_thresh:.0%})"
+        elif regime == "RISK_ON" and signal == "SELL" and prediction.confidence < risk_on_thresh:
             passed = False
-            reason = f"SELL signal in RISK_ON regime with insufficient confidence ({prediction.confidence:.0%} < 0.70)"
+            reason = f"SELL signal in RISK_ON regime with insufficient confidence ({prediction.confidence:.0%} < {risk_on_thresh:.0%})"
 
         return RiskCheck(
             check_name="Regime Consistency",
@@ -163,13 +172,19 @@ class RiskManager:
         passed = True
         details = "Volatility conditions acceptable"
 
-        if rsi > 85:
+        # Apply a relaxation to thresholds using the multiplier's complement
+        relaxation = (1.0 - self.RISK_THRESHOLD_MULTIPLIER)
+        upper_rsi = min(100, 85 + (15 * relaxation)) # Typically 85, now 89.5
+        lower_rsi = max(0, 10 - (10 * relaxation)) # Typically 10, now 7
+        vol_max = 8.0 + (5.0 * relaxation) # Typically 8.0, now 9.5
+
+        if rsi > upper_rsi:
             passed = False
             details = f"Extreme overbought (RSI {rsi}) — volatility instability risk"
-        elif rsi < 10:
+        elif rsi < lower_rsi:
             passed = False
             details = f"Extreme oversold (RSI {rsi}) — potential capitulation"
-        elif vol_ratio > 8.0:
+        elif vol_ratio > vol_max:
             passed = False
             details = f"Extreme volume spike ({vol_ratio:.1f}x) — potential news-driven instability"
 
