@@ -4613,7 +4613,7 @@ def analyze_endpoint():
         
     _analyze_rate_limits[ip].append(now)
     
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "Invalid JSON body"}), 400
         
