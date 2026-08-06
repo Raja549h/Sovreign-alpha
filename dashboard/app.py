@@ -197,6 +197,28 @@ def get_macro_tickers():
 
 app = Flask(__name__, template_folder='templates')
 
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    
+    api_rate = os.environ.get('API_RATE_LIMIT', '30 per minute')
+    page_rate = os.environ.get('PAGE_RATE_LIMIT', '60 per minute')
+    
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=[page_rate],
+        storage_uri="memory://"
+    )
+except ImportError:
+    class DummyLimiter:
+        def limit(self, *args, **kwargs):
+            def decorator(f):
+                return f
+            return decorator
+    limiter = DummyLimiter()
+    print("Flask-Limiter not installed, rate limiting disabled")
+
 from dashboard.database import init_database
 init_database(app)
 
@@ -348,6 +370,26 @@ def debug_env():
         user = creds.split(":")[0]
         masked = db_url.replace(creds, f"{user}:********")
     return {"DATABASE_URL_masked": masked[:40]}
+
+@app.errorhandler(404)
+def not_found_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': 'Endpoint not found'}), 404
+    return render_template('error.html', error_code="404", error_message="Page not found. The forensic trail goes cold here."), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Server Error: {error}", exc_info=True)
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': 'An internal server error occurred.'}), 500
+    return render_template('error.html', error_code="500", error_message="Internal Server Error. Our team has been notified."), 500
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    logger.warning(f"Rate limit exceeded for {request.remote_addr}: {e.description}")
+    if request.path.startswith('/api/'):
+        return jsonify({'success': False, 'error': f"Rate limit exceeded: {e.description}"}), 429
+    return render_template('error.html', error_code="429", error_message="Too many requests. Please slow down to protect our pipeline."), 429
 
 @app.before_request
 def check_db_availability():
@@ -3858,6 +3900,9 @@ def api_portfolio_score(pid):
 from flask import Blueprint
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 
+if limiter:
+    limiter.limit(api_rate)(api_v1)
+
 @api_v1.after_request
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -4594,29 +4639,11 @@ def api_refresh_prices():
     threading.Thread(target=refresh_task, daemon=True).start()
     return jsonify({"success": True, "message": "Price refresh started in background."})
 
-# Rate limit dictionary for /analyze
-_analyze_rate_limits = {}
-
 @app.route('/analyze', methods=['POST'])
 @csrf.exempt
+@limiter.limit('10 per hour')
 def analyze_endpoint():
     """Missing /analyze endpoint with validation, JSON response, and rate limiting."""
-    import time
-    ip = request.remote_addr
-    now = time.time()
-    
-    # Rate limiting: 10 requests per hour (3600 seconds) per IP
-    if ip not in _analyze_rate_limits:
-        _analyze_rate_limits[ip] = []
-    
-    # Clean up old requests
-    _analyze_rate_limits[ip] = [req_time for req_time in _analyze_rate_limits[ip] if now - req_time < 3600]
-    
-    if len(_analyze_rate_limits[ip]) >= 10:
-        return jsonify({"success": False, "error": "Rate limit exceeded. Maximum 10 requests per hour."}), 429
-        
-    _analyze_rate_limits[ip].append(now)
-    
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "Invalid JSON body"}), 400
@@ -4624,6 +4651,10 @@ def analyze_endpoint():
     ticker = data.get('ticker')
     if not ticker:
         return jsonify({"success": False, "error": "Missing 'ticker' in request"}), 400
+    if not isinstance(ticker, str):
+        return jsonify({"success": False, "error": "Ticker must be a string"}), 400
+    if len(ticker) > 20 or not ticker.replace('.', '').isalnum():
+        return jsonify({"success": False, "error": "Invalid ticker format"}), 400
         
     # Mock analysis response for now, can be hooked up to deep_research_engine
     return jsonify({
