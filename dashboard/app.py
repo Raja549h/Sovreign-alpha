@@ -205,7 +205,7 @@ try:
     page_rate = os.environ.get('PAGE_RATE_LIMIT', '60 per minute')
     
     limiter = Limiter(
-        get_remote_address,
+        key_func=get_remote_address,
         app=app,
         default_limits=[page_rate],
         storage_uri="memory://"
