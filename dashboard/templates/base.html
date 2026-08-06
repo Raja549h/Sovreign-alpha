@@ -485,8 +485,8 @@
             <a href="/predictions" class="{% if request.path == '/predictions' %}active{% endif %}">Predictions</a>
             <a href="/performance" class="{% if request.path == '/performance' %}active{% endif %}">Track Record</a>
             <a href="/research" class="{% if request.path == '/research' %}active{% endif %}">Research</a>
-            <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Macro Intel</a>
-            <a href="/methodology" class="{% if request.path == '/methodology' %}active{% endif %}">Methodology</a>
+            <a href="/macro-health" class="{% if request.path == '/macro-health' or request.path.startswith('/macro-health') %}active{% endif %}">Market Health</a>
+            <a href="/methodology" class="{% if request.path == '/methodology' %}active{% endif %}">How It Works</a>
         </div>
         <div class="nav-right">
             {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
@@ -635,10 +635,7 @@
 
     <div style="margin-top:2rem;padding:0.75rem 1rem;border-top:1px solid #1a1a1a;font-size:0.6rem;color:#555;font-family:var(--font-mono);text-align:center;line-height:1.6;">
         Your AI Forensic Research Teammate<br>
-        <strong>DISCLAIMER:</strong> This system is a research prototype. It is not SEBI-registered, does not constitute investment advice,
-        and does not guarantee any investment outcomes. Past performance (including backtest results) does not guarantee future returns.
-        All data is sourced from public APIs (Yahoo Finance, FRED) and may contain errors. No client funds are managed by this system.
-        No warranty is expressed or implied. Use at your own risk.
+        Data sourced from public market feeds, macro indicators, and public filings. Sovereign Alpha is designed for deep forensic research, due diligence, and long-term analysis. It is not a high-frequency trading terminal. All tools and plugins are provided completely free of charge.
     </div>
 </body>
 </html>

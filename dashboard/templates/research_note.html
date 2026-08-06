@@ -7,6 +7,7 @@
             <span class="timestamp">{{ note.title }}</span>
         </div>
         <div class="actions">
+            <button onclick="navigator.clipboard.writeText(document.querySelector('.panel-body.padded').innerText); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy to Clipboard', 2000);" class="btn outline small" style="cursor:pointer; background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 0.25rem 0.75rem; border-radius: 3px;">Copy to Clipboard</button>
             <a href="/research/export/{{ note.note_reference }}" class="btn outline small">Download PDF</a>
             <a href="/research" class="btn outline small">Back to Research</a>
         </div>
