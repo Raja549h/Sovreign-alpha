@@ -489,9 +489,8 @@
             <a href="/methodology" class="{% if request.path == '/methodology' %}active{% endif %}">How It Works</a>
         </div>
         <div class="nav-right">
-            {% if session_user %}<span class="user">{{ session_user }}</span>{% endif %}
+            <span style="font-weight:600;color:var(--text-primary);margin-right:1rem;">Sovereign Alpha v2.0</span>
             <span data-tip="Last full refresh" id="nav-updated" style="color:var(--text-dim);font-size:0.65rem;">{{ last_updated[:19] if last_updated else '' }}</span>
-            <a href="/logout">Logout</a>
         </div>
     </nav>
 

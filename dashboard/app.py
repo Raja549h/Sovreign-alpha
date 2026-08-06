@@ -695,16 +695,7 @@ def calculate_ledger_stats() -> dict:
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        session_token = request.cookies.get('session_token')
-        if not session_token:
-            return redirect(url_for('login_page'))
-        try:
-            from privacy import verify_session_token
-            fund_id = verify_session_token(session_token)
-            if not fund_id:
-                return redirect(url_for('login_page'))
-        except Exception:
-            return redirect(url_for('login_page'))
+        # Login requirement disabled for retail pivot
         return f(*args, **kwargs)
     return decorated_function
 
@@ -3878,13 +3869,26 @@ def v1_score(ticker):
         from dashboard.gateway import get_connection
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("SELECT confidence_score FROM prediction_ledger WHERE asset = %s ORDER BY created_at DESC LIMIT 1", (ticker,))
+            # Handle Ticker formatting
+            search_ticker = ticker.upper()
+            if not search_ticker.endswith('.NS'):
+                search_ticker += '.NS'
+                
+            c.execute("SELECT confidence_score FROM prediction_ledger WHERE asset = %s ORDER BY created_at DESC LIMIT 1", (search_ticker,))
             row = c.fetchone()
             
             if not row:
-                return jsonify({'error': 'Not found'}), 404
+                # Try original just in case
+                c.execute("SELECT confidence_score FROM prediction_ledger WHERE asset = %s ORDER BY created_at DESC LIMIT 1", (ticker,))
+                row = c.fetchone()
+                if not row:
+                    return jsonify({'error': 'Not found'}), 404
                 
-            conf = row['confidence_score'] or 0.0
+            # Handle tuple vs dict return
+            conf = row[0] if isinstance(row, tuple) else row.get('confidence_score', 0.0)
+            if conf is None:
+                conf = 0.0
+                
             overall = round(conf * 5.0, 2)
             return jsonify({
                 'overall_score': overall,
