@@ -852,7 +852,7 @@ def get_decisions():
             asset,
             'veto' AS action,
             'vetoed' AS status,
-            1.0 - risk_score AS confidence,
+            1.0 - (risk_score / 100.0) AS confidence,
             timestamp,
             NULL AS zk_proof_hash,
             NULL AS expected_timeline_days
