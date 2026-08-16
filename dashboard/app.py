@@ -721,8 +721,14 @@ def calculate_ledger_stats() -> dict:
                 'avg_confidence': avg_conf,
                 'total_vetoes': total_vetoes,
                 'veto_accuracy': (vetoes_correct / vetoes_with_outcome * 100) if vetoes_with_outcome > 0 else 0,
+                'veto_correct_count': vetoes_correct,
                 'drawdown_avoided': avoided,
                 'resolved_outcomes': with_outcome,
+                'hit_count': correct,
+                'miss_count': with_outcome - correct,
+                'pending_count': total - with_outcome,
+                'risk_rejected': rejected,
+                'outcome_fill_rate': (with_outcome / total * 100) if total > 0 else 0,
                 'top_prediction': dict(zip([column[0] for column in c.description], top)) if top else None
             }
     except Exception as e:

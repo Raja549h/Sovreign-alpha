@@ -57,6 +57,13 @@ def generate_trade_proposal(prediction_data):
         else:
             position_size = 1.0
         
+    # Detect fallback / invalid risk parameters
+    # If target == entry or stop == entry, the ATR-based values were not computed
+    needs_recompute = False
+    if current_price > 0:
+        if abs(target_price - current_price) < 0.01 or abs(stop_loss - current_price) < 0.01:
+            needs_recompute = True
+
     return {
         'signal': signal,
         'entry_price': round(current_price, 2) if current_price else 0.0,
@@ -64,5 +71,6 @@ def generate_trade_proposal(prediction_data):
         'stop_loss': round(stop_loss, 2) if stop_loss else 0.0,
         'position_size_pct': position_size,
         'score': round(score, 2),
-        'rationale': prediction_data.get('reasoning', f"Trade proposed based on AI overall score of {round(score, 2)}/5.0")
+        'rationale': prediction_data.get('reasoning', f"Trade proposed based on AI overall score of {round(score, 2)}/5.0"),
+        'needs_recompute': needs_recompute
     }

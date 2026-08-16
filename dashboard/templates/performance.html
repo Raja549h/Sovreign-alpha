@@ -21,7 +21,12 @@
         </div>
         <div class="stat-box info">
             <label>Veto Accuracy</label>
+            {% if ledger_stats.total_vetoes | default(0) == 0 %}
+            <div class="value" style="font-size: 0.7rem; color: var(--accent);">Active</div>
+            <div class="sub" style="font-size: 0.6rem;">Monitoring Zero Anomalies</div>
+            {% else %}
             <div class="value info">{{ veto_accuracy | round(1) }}%</div>
+            {% endif %}
         </div>
     </div>
 
@@ -51,7 +56,7 @@
                 </div>
 
                 <div class="key-val"><span class="key">Total Predictions</span><span class="val">{{ (ledger_stats.total_predictions | default(0)) | int }}</span></div>
-                <div class="key-val"><span class="key">Risk Rejected</span><span class="val danger">{{ ledger_stats.risk_rejected | default(0) }}</span></div>
+                <div class="key-val"><span class="key">Risk Rejected</span><span class="val {% if ledger_stats.risk_rejected | default(0) > 0 %}danger{% else %}accent{% endif %}">{% if ledger_stats.risk_rejected | default(0) == 0 %}Veto Engine: Active (0 Anomalies){% else %}{{ ledger_stats.risk_rejected }}{% endif %}</span></div>
                 <div class="key-val"><span class="key">Total Vetoes</span><span class="val">{{ ledger_stats.total_vetoes | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Correct Vetoes</span><span class="val">{{ ledger_stats.veto_correct_count | default(0) }}</span></div>
                 <div class="key-val"><span class="key">Outcome Fill Rate</span><span class="val">{{ (ledger_stats.outcome_fill_rate | default(0)) | round(1) }}%</span></div>

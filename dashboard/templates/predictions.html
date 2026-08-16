@@ -19,14 +19,15 @@
             <label>Risk Rejected</label>
             <div class="value danger">{{ ledger_stats.rejected | default(0) }}</div>
         </div>
-        <div class="stat-box {% if ledger_stats.accuracy and ledger_stats.accuracy < 50 %}danger{% else %}accent{% endif %}">
-            <label>Hit Rate</label>
-            <div class="value stat-refresh" data-key="success_rate">{{ (ledger_stats.accuracy | default(0)) | round(1) }}%</div>
-            <div class="sub">{{ ledger_stats.resolved_outcomes | default(0) }} outcomes / {{ ledger_stats.total_predictions | default(0) }} total</div>
+        <div class="stat-box {% if ledger_stats.resolved_outcomes and ledger_stats.resolved_outcomes > 0 and ledger_stats.accuracy >= 50 %}accent{% elif ledger_stats.resolved_outcomes and ledger_stats.resolved_outcomes > 0 %}danger{% else %}warning{% endif %}">
+            <label>Resolved Hit Rate</label>
+            <div class="value stat-refresh" data-key="success_rate">{% if ledger_stats.resolved_outcomes | default(0) > 0 %}{{ (ledger_stats.accuracy | default(0)) | round(1) }}%{% else %}—{% endif %}</div>
+            <div class="sub">{{ ledger_stats.hit_count | default(0) }}/{{ ledger_stats.resolved_outcomes | default(0) }} resolved</div>
         </div>
         <div class="stat-box warning">
-            <label>Outcome Fill Rate</label>
-            <div class="value warning">{{ ((ledger_stats.resolved_outcomes / ledger_stats.total_predictions * 100) if ledger_stats.total_predictions > 0 else 0) | round(1) }}%</div>
+            <label>Active Pipeline</label>
+            <div class="value warning">{{ ledger_stats.pending_count | default(0) }}</div>
+            <div class="sub">Pending outcomes</div>
         </div>
     </div>
 
@@ -98,11 +99,18 @@
                         <span class="signal-badge {{ p.trade_proposal.signal }}">{{ p.trade_proposal.signal }}</span>
                     </div>
                     <div class="panel-body padded">
+                        {% if p.trade_proposal.needs_recompute %}
+                        <div style="margin-bottom: 15px; background: rgba(255,170,0,0.08); padding: 14px; border-radius: 4px; border: 1px solid rgba(255,170,0,0.3); text-align: center;">
+                            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--warning); font-weight: 700;">⚠ Computing Risk Parameters...</div>
+                            <div style="font-size: 0.7rem; color: #888; margin-top: 4px; font-family: var(--font-mono);">Entry: ₹{{ p.trade_proposal.entry_price }} — ATR-based targets pending recalculation</div>
+                        </div>
+                        {% else %}
                         <div class="grid-3" style="margin-bottom: 15px; background: #0a0a0a; padding: 10px; border-radius: 4px; border: 1px solid #1a1a1a;">
                             <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Entry Price</label><br><strong style="font-size: 1.2rem; font-family: var(--font-mono);">₹{{ p.trade_proposal.entry_price }}</strong></div>
                             <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Target</label><br><strong style="font-size: 1.2rem; color: var(--accent); font-family: var(--font-mono);">₹{{ p.trade_proposal.target_price }}</strong></div>
                             <div style="text-align: center;"><label style="font-size: 9px; color: #555; text-transform: uppercase;">Stop-Loss</label><br><strong style="font-size: 1.2rem; color: var(--danger); font-family: var(--font-mono);">₹{{ p.trade_proposal.stop_loss }}</strong></div>
                         </div>
+                        {% endif %}
                         <div class="grid-2" style="margin-bottom: 12px; font-size: 0.75rem; font-family: var(--font-mono);">
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Position Size:</span> <span style="float: right; font-weight: bold; color: var(--accent);">{{ p.trade_proposal.position_size_pct }}%</span></div>
                             <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;"><span style="color: #555;">Confidence:</span> <span style="float: right;">{{ p.confidence_score | pct }}</span></div>

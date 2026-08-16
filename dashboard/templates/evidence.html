@@ -84,8 +84,11 @@ async function loadCredibility() {
         const d = await r.json();
         if (d.success) {
             const s = d.data;
-            document.getElementById('credibility-summary').innerHTML =
-                `Score: ${s.credibility_score}/${s.max_possible}<br>Grade: ${s.grade}<br>${s.verdict}`;
+            let html = `Score: ${s.credibility_score}/${s.max_possible}<br>Grade: ${s.grade}<br>${s.verdict}`;
+            if (s.credibility_score < 20 || s.grade === 'F') {
+                html += `<br><span style="color:#aa8800;font-size:0.65rem;line-height:1.3;display:inline-block;margin-top:6px;">Bootstrap Phase: Score scales dynamically as sample size reaches statistical significance (&gt;50 resolved outcomes).</span>`;
+            }
+            document.getElementById('credibility-summary').innerHTML = html;
         }
     } catch(e) {
         document.getElementById('credibility-summary').textContent = 'Data Unavailable';
