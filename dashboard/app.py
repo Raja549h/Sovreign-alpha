@@ -3060,7 +3060,7 @@ def api_evidence_institutional_credibility():
             timeline_events = safe_count("SELECT COUNT(*) as cnt FROM evidence_timeline")
             reproducible_obs = safe_count("SELECT COUNT(*) as cnt FROM reproducibility_log")
             total_failures = safe_count("SELECT COUNT(*) as cnt FROM failure_analysis")
-            frameworks_ranked = safe_count("SELECT COUNT(DISTINCT framework_name) as cnt FROM framework_performance WHERE observation_count >= 2")
+            frameworks_ranked = safe_count("SELECT COUNT(DISTINCT framework_name) as cnt FROM framework_performance WHERE total_predictions >= 2")
             total_challenges = safe_count("SELECT COUNT(*) as cnt FROM challenge_records")
             challenges_passed = safe_count("SELECT COUNT(*) as cnt FROM challenge_records WHERE passed_challenge = 1")
             total_trades = safe_count("SELECT COUNT(*) as cnt FROM shadow_trades")
