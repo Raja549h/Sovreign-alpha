@@ -44,8 +44,8 @@ def generate_trade_proposal(prediction_data):
             stop_loss = current_price * 0.95
         else:
             signal = "HOLD"
-            target_price = current_price
-            stop_loss = current_price
+            target_price = current_price * 1.10
+            stop_loss = current_price * 0.90
         
     if db_pos is not None:
         position_size = db_pos

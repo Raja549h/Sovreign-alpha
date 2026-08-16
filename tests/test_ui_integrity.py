@@ -96,8 +96,8 @@ class TestTickerCardValidation:
         assert 'needs_recompute' in result, \
             "generate_trade_proposal must return 'needs_recompute'"
 
-    def test_hold_signal_triggers_recompute_flag(self):
-        """When score is between 3-4 and no DB values exist, needs_recompute must be True."""
+    def test_hold_signal_computes_baseline_targets(self):
+        """When score is between 3-4 and no DB values exist, we compute baseline symmetrical targets."""
         from dashboard.models import generate_trade_proposal
 
         prediction = {
@@ -109,9 +109,11 @@ class TestTickerCardValidation:
         }
         result = generate_trade_proposal(prediction)
 
-        # With score 3.5, signal is HOLD, target = entry, stop = entry
-        assert result['needs_recompute'] is True, \
-            "HOLD signal with target == entry should flag needs_recompute"
+        # With score 3.5, signal is HOLD, target = entry * 1.10, stop = entry * 0.90
+        assert result['needs_recompute'] is False, \
+            "HOLD signal should now compute expected numbers, not trigger recompute flag"
+        assert result['target_price'] > result['entry_price'], "HOLD target should be > entry"
+        assert result['stop_loss'] < result['entry_price'], "HOLD stop should be < entry"
 
     def test_valid_trade_does_not_trigger_recompute(self):
         """When DB has proper target/stop/signal, needs_recompute should be False."""
