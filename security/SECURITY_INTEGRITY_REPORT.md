@@ -43,7 +43,7 @@
 
 ---
 
-## ZK Proof Chain
+## Signed Audit Trails Proof Chain
 
 | Metric | Value |
 |--------|-------|
@@ -81,7 +81,7 @@ Risk Manager and Auditor agents. No malicious payloads reached the
 decision pipeline.
 
 CRYPTOGRAPHIC INTEGRITY VERIFIED:
-- All ZK proofs confirmed via RSA-2048 verification
+- All Signed Audit Trails proofs confirmed via RSA-2048 verification
 - Merkle chain integrity maintained
 - Private key never exposed in any test scenario
 - Policy parameters never revealed in certificates

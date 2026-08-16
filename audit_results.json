@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-08-03T15:46:25.394853",
-  "passed": 74,
-  "warnings": 33,
-  "failed": 0,
+  "timestamp": "2026-08-16T19:41:31.240240",
+  "passed": 79,
+  "warnings": 27,
+  "failed": 1,
   "total": 107,
   "results": [
     {
@@ -21,13 +21,13 @@
       "category": "TABLE",
       "name": "prediction_ledger",
       "status": "PASS",
-      "detail": "24 rows"
+      "detail": "264 rows"
     },
     {
       "category": "TABLE",
       "name": "veto_archive",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "120 rows"
     },
     {
       "category": "TABLE",
@@ -81,13 +81,13 @@
       "category": "TABLE",
       "name": "research_notes",
       "status": "PASS",
-      "detail": "170 rows"
+      "detail": "180 rows"
     },
     {
       "category": "TABLE",
       "name": "institutional_scores",
       "status": "PASS",
-      "detail": "966 rows"
+      "detail": "1606 rows"
     },
     {
       "category": "TABLE",
@@ -123,19 +123,19 @@
       "category": "TABLE",
       "name": "observation_memory",
       "status": "PASS",
-      "detail": "966 rows"
+      "detail": "1606 rows"
     },
     {
       "category": "TABLE",
       "name": "observation_validations",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "500 rows"
     },
     {
       "category": "TABLE",
       "name": "evidence_timeline",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "30 rows"
     },
     {
       "category": "TABLE",
@@ -146,20 +146,20 @@
     {
       "category": "TABLE",
       "name": "framework_performance",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "6 rows"
     },
     {
       "category": "TABLE",
       "name": "reproducibility_log",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "500 rows"
     },
     {
       "category": "TABLE",
       "name": "observation_autopsy",
       "status": "PASS",
-      "detail": "170 rows"
+      "detail": "180 rows"
     },
     {
       "category": "TABLE",
@@ -170,8 +170,8 @@
     {
       "category": "TABLE",
       "name": "failure_analysis",
-      "status": "WARN",
-      "detail": "0 rows (empty)"
+      "status": "PASS",
+      "detail": "15 rows"
     },
     {
       "category": "TABLE",
@@ -357,7 +357,7 @@
       "category": "RESEARCH",
       "name": "EvidenceTimeline.get_timeline()",
       "status": "PASS",
-      "detail": "0 events"
+      "detail": "3 events"
     },
     {
       "category": "RESEARCH",
@@ -368,8 +368,8 @@
     {
       "category": "RESEARCH",
       "name": "WeeklyICReport.generate_report()",
-      "status": "PASS",
-      "detail": "sections=8"
+      "status": "FAIL",
+      "detail": "Weekly IC requires 4 weeks of validated data. Currently have: 0 weeks"
     },
     {
       "category": "REGISTRY",
@@ -381,7 +381,7 @@
       "category": "REGISTRY",
       "name": "calculate_edge_score()",
       "status": "PASS",
-      "detail": "score={'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0, 'avg_confidence': 0.8, 'has_validated_data': False, 'total': 966, 'confirmed': 0, 'partially_confirmed': 0, 'invalidated': 0, 'active': 966, 'monitoring': 0, 'best_categories': ['organic_analysis'], 'worst_categories': ['organic_analysis']}"
+      "detail": "score={'edge_score': None, 'accuracy_rate': 0.0, 'weighted_accuracy': 0.0, 'avg_confidence': 0.8, 'has_validated_data': False, 'total': 1606, 'confirmed': 0, 'partially_confirmed': 0, 'invalidated': 0, 'active': 1606, 'monitoring': 0, 'best_categories': ['organic_analysis'], 'worst_categories': ['organic_analysis']}"
     },
     {
       "category": "FII",
@@ -393,61 +393,61 @@
       "category": "PAGE",
       "name": "/login",
       "status": "PASS",
-      "detail": "200 (49200 bytes)"
+      "detail": "200 (52155 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/",
       "status": "PASS",
-      "detail": "200 (49200 bytes)"
+      "detail": "200 (52155 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/evidence",
       "status": "PASS",
-      "detail": "200 (38792 bytes)"
+      "detail": "200 (39143 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/research",
       "status": "PASS",
-      "detail": "200 (45609 bytes)"
+      "detail": "200 (46095 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/watchlist",
       "status": "PASS",
-      "detail": "200 (37315 bytes)"
+      "detail": "200 (37149 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/macro",
       "status": "PASS",
-      "detail": "200 (37312 bytes)"
+      "detail": "200 (37146 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/portfolio",
       "status": "PASS",
-      "detail": "200 (36287 bytes)"
+      "detail": "200 (36121 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/edge-discovery",
       "status": "PASS",
-      "detail": "200 (32547 bytes)"
+      "detail": "200 (32381 bytes)"
     },
     {
       "category": "PAGE",
       "name": "/calibration",
       "status": "PASS",
-      "detail": "200 (31218 bytes)"
+      "detail": "200 (31052 bytes)"
     },
     {
       "category": "API",
       "name": "/api/evidence/timeline",
       "status": "PASS",
-      "detail": "200 JSON (892 bytes)"
+      "detail": "200 JSON (13090 bytes)"
     },
     {
       "category": "API",
@@ -459,19 +459,19 @@
       "category": "API",
       "name": "/api/evidence/institutional-credibility",
       "status": "PASS",
-      "detail": "200 JSON (893 bytes)"
+      "detail": "200 JSON (935 bytes)"
     },
     {
       "category": "API",
       "name": "/api/evidence/anti-vanity",
       "status": "PASS",
-      "detail": "200 JSON (324 bytes)"
+      "detail": "200 JSON (281 bytes)"
     },
     {
       "category": "API",
       "name": "/api/evidence/weekly-ic-report",
-      "status": "PASS",
-      "detail": "200 JSON (657 bytes)"
+      "status": "WARN",
+      "detail": "200 JSON but success=false: Weekly IC requires 4 weeks of validated "
     },
     {
       "category": "API",
@@ -483,7 +483,7 @@
       "category": "TIMELINE",
       "name": "no filters (limit=5)",
       "status": "PASS",
-      "detail": "0 events"
+      "detail": "5 events"
     },
     {
       "category": "TIMELINE",
@@ -501,13 +501,13 @@
       "category": "TIMELINE",
       "name": "JSON serializable",
       "status": "PASS",
-      "detail": "2 chars"
+      "detail": "1525 chars"
     },
     {
       "category": "POOL",
-      "name": "opened 6 concurrent conns",
-      "status": "WARN",
-      "detail": "6/15"
+      "name": "opened 10 concurrent conns",
+      "status": "PASS",
+      "detail": "10/15"
     },
     {
       "category": "POOL",
@@ -519,7 +519,7 @@
       "category": "TEMPLATE",
       "name": "evidence.html",
       "status": "PASS",
-      "detail": "8515 bytes"
+      "detail": "9035 bytes"
     },
     {
       "category": "TEMPLATE",

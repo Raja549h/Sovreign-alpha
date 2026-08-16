@@ -77,7 +77,7 @@ The result is a system where *every recommendation is auditable, every decision 
 
 ### ⚖️ Autonomous Risk Management
 - Risk Manager Agent holds **absolute veto power** — no trade proceeds without approval
-- Automatic veto triggers: missing ZK proof, confidence < 65%, position size > 5%, sector breach
+- Automatic veto triggers: missing Signed Audit Trails proof, confidence < 65%, position size > 5%, sector breach
 - Multi-layer validation: position sizing → sector exposure → drawdown limits → AI risk assessment
 
 ### 📋 Immutable Audit Trail
@@ -117,7 +117,7 @@ The result is a system where *every recommendation is auditable, every decision 
 │                              │                                       │
 │                              ▼                                       │
 │   ┌──────────────────────────────────────────────────────────┐      │
-│   │              PHASE 2: ZK PROOF GENERATOR                  │      │
+│   │              PHASE 2: Signed Audit Trails PROOF GENERATOR                  │      │
 │   │   Creates cryptographic proof BEFORE Risk Manager review  │      │
 │   │   Output: ProofResult (hash, verification status)         │      │
 │   └──────────────────────────┬───────────────────────────────┘      │
@@ -125,7 +125,7 @@ The result is a system where *every recommendation is auditable, every decision 
 │                              ▼                                       │
 │   ┌──────────────────────────────────────────────────────────┐      │
 │   │              PHASE 3: RISK MANAGER AGENT                  │      │
-│   │   Verifies ZK proof → Checks limits → Approves or VETOES │      │
+│   │   Verifies Signed Audit Trails proof → Checks limits → Approves or VETOES │      │
 │   │   Output: RiskDecision (approved/vetoed + risk score)     │      │
 │   └──────────────────────────┬───────────────────────────────┘      │
 │                              │                                       │
@@ -148,7 +148,7 @@ The result is a system where *every recommendation is auditable, every decision 
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-> **Architecture Diagram Note:** A visual Mermaid/Excalidraw diagram is available in the `/documents` directory. The architecture follows a strict sequential pipeline where the ZK proof is generated *before* the Risk Manager sees the recommendation — this ordering is critical for compliance integrity.
+> **Architecture Diagram Note:** A visual Mermaid/Excalidraw diagram is available in the `/documents` directory. The architecture follows a strict sequential pipeline where the Signed Audit Trails proof is generated *before* the Risk Manager sees the recommendation — this ordering is critical for compliance integrity.
 
 ---
 
@@ -162,9 +162,9 @@ The following examples demonstrate how Sovereign Alpha processes variant percept
 |-----------|----------|
 | **Thesis** | Consensus views Bajaj Finance as an unassailable fintech-NBFC compounder. Sovereign Alpha's forensic engine surfaces variant perception. |
 | **What the Agent Finds** | Internal RAG retrieves proprietary channel checks revealing: (a) Unsecured personal loan disbursements growing 2.1x faster than secured book, shifting the risk profile; (b) Early-stage delinquency (DPD 30+) in digital loan channels running 180bps above legacy channels — not visible in headline GNPA; (c) Customer acquisition cost per digital borrower rising ₹340 QoQ while ticket sizes shrink. |
-| **ZK Proof** | Generates SHA-256 proof that the SELL recommendation followed policy: confidence 0.71, recommended weight 1.8% (within 5% cap), drawdown risk scored at 0.62. |
+| **Signed Audit Trails Proof** | Generates SHA-256 proof that the SELL recommendation followed policy: confidence 0.71, recommended weight 1.8% (within 5% cap), drawdown risk scored at 0.62. |
 | **Risk Manager** | Approves the weight reduction. Flags correlation risk — Bajaj Finance moves with NIFTY Financial Services index, and fund already holds HDFC Bank and Kotak. |
-| **Auditor** | Decision logged to Base Sepolia with compliance summary: *"Position reduction approved. ZK proof verified. Decision consistent with fund's maximum sector exposure and drawdown limits."* |
+| **Auditor** | Decision logged to Base Sepolia with compliance summary: *"Position reduction approved. Signed Audit Trails proof verified. Decision consistent with fund's maximum sector exposure and drawdown limits."* |
 | **Edge** | Public analysts focus on headline AUM growth (26% YoY). Sovereign Alpha surfaces the *composition* risk that consensus misses. |
 
 ---
@@ -175,7 +175,7 @@ The following examples demonstrate how Sovereign Alpha processes variant percept
 |-----------|----------|
 | **Thesis** | Gold loan NBFCs are mispriced during FII outflow cycles. Sovereign Alpha's macro regime engine identifies the opportunity. |
 | **What the Agent Finds** | (a) FII net selling in Indian equities crossed ₹18,000 Cr in the trailing 30 days — historically, gold prices rally 8-12% in the subsequent quarter; (b) Muthoot's gold AUM per branch at ₹67 Cr is at a 3-year trough — a contrarian entry signal; (c) INR/USD weakening past 83.5 — currency sensitivity mapping shows Muthoot's earnings are positively correlated to gold's INR price (gold rises when INR weakens). |
-| **ZK Proof** | Proof generated for BUY recommendation: confidence 0.78, target weight 3.2%, potential return +18.4% over 90 days. |
+| **Signed Audit Trails Proof** | Proof generated for BUY recommendation: confidence 0.78, target weight 3.2%, potential return +18.4% over 90 days. |
 | **Risk Manager** | Approves with condition: *"Set trailing stop-loss at -8% given gold price volatility."* Financials sector exposure post-trade: 14.2% (within 20% limit). |
 | **Auditor** | Full audit trail created. Billing meter records: if +18.4% return materializes on a 3.2% weight in a ₹59M AUM fund, alpha contribution = 0.59%, performance fee = ₹4,17,600 (12% of excess). |
 | **Edge** | The opportunity exists because FII flow data is public but the *second-order effect* on gold NBFCs requires connecting macro regime → currency sensitivity → company-specific AUM quality — a chain of reasoning most single-layer AI tools cannot perform. |
@@ -188,7 +188,7 @@ The following examples demonstrate how Sovereign Alpha processes variant percept
 |-----------|----------|
 | **Thesis** | Page Industries (Jockey India licensee) trades at 55x PE. The market assumes pricing power is infinite. Sovereign Alpha tracks the counter-thesis. |
 | **What the Agent Finds** | (a) Proprietary retail channel checks from 6 cities show Jockey's average selling price (ASP) growth decelerating from 9.2% to 3.1% YoY — D-Mart and Flipkart are forcing discounted SKUs; (b) Cotton prices (MCX) have risen 22% in 6 months but Page's last quarter showed only 40bps of gross margin expansion — suggesting pricing power is exhausted; (c) Management guided for "mid-teen" volume growth but internal distributor feedback suggests Q2 volumes flat to negative due to channel destocking. |
-| **ZK Proof** | SELL recommendation proof: confidence 0.74, current weight 2.1%, recommended weight 0.5%, potential return -14.2% over 120 days. |
+| **Signed Audit Trails Proof** | SELL recommendation proof: confidence 0.74, current weight 2.1%, recommended weight 0.5%, potential return -14.2% over 120 days. |
 | **Risk Manager** | Approves weight reduction. Notes: *"Consumer discretionary sector exposure drops to 3.8% post-trade. Thesis is contrarian to consensus — monitor for thesis invalidation if Q2 results show ASP recovery."* |
 | **Auditor** | Decision hash logged immutably. If the thesis plays out, the *avoided loss* on a 1.6% weight reduction ≈ ₹1.34 Cr in a ₹59M fund. This is tracked in the billing meter as negative-alpha avoidance. |
 | **Edge** | Sovereign Alpha's thesis tracking maintains the contrarian view across multiple data updates. Unlike human analysts who suffer from anchoring bias on premium brands, the system re-evaluates from first principles each cycle. |
@@ -204,7 +204,7 @@ The following examples demonstrate how Sovereign Alpha processes variant percept
 | **RAG / Vector Store** | ChromaDB + LlamaIndex + HuggingFace Embeddings | Semantic search over proprietary research notes |
 | **Embeddings** | Sentence-Transformers (all-MiniLM-L6-v2) | Local embedding generation — data never leaves the machine |
 | **Data Validation** | Pydantic v2 | Structured output schemas for every agent response |
-| **ZK Proofs** | SHA-256 (stub) → EZKL (production) | Cryptographic compliance verification |
+| **Signed Audit Trails Proofs** | SHA-256 (stub) → EZKL (production) | Cryptographic compliance verification |
 | **Blockchain** | Base Sepolia Testnet (Web3.py) | Immutable on-chain audit trail |
 | **Database** | PostgreSQL (production) + SQLite (billing) | Persistent data layer and inference tracking |
 | **Dashboard** | FastAPI + Jinja2 Templates | Real-time portfolio monitoring and research display |
@@ -273,7 +273,7 @@ Output: Deterministic SHA-256 hash of the serialized decision data.
 The Risk Manager receives the recommendation AND the proof.
 It performs multi-layer validation:
 
-  Layer 1: ZK proof verification (automatic veto if missing)
+  Layer 1: Signed Audit Trails proof verification (automatic veto if missing)
   Layer 2: Confidence threshold check
   Layer 3: Position size limit check
   Layer 4: Sector exposure calculation
@@ -287,7 +287,7 @@ The Risk Manager's veto power is absolute and non-overridable.
 ```
 Whether approved or vetoed, the full decision is logged:
 
-  → ZK proof hash logged to Base Sepolia testnet
+  → Signed Audit Trails proof hash logged to Base Sepolia testnet
   → Local JSONL ledger updated (fallback when no wallet configured)
   → Billing meter entry created in SQLite
   → Compliance summary generated in plain English for regulators
@@ -306,7 +306,7 @@ The billing meter calculates:
 
 ---
 
-## 🔐 Validation Ledger & ZK Proofs
+## 🔐 Validation Ledger & Signed Audit Trails Proofs
 
 The **Validation Ledger** is the cryptographic backbone of Sovereign Alpha. It answers a question that matters deeply to regulated institutions:
 
@@ -377,7 +377,7 @@ The **Validation Ledger** is the cryptographic backbone of Sovereign Alpha. It a
 | **Pipeline Console** | Real-time output showing all 5 phases executing sequentially |
 | **Research Dashboard** | Forensic equity research with thesis tracking and risk flags |
 | **Portfolio Monitor** | Live position weights, sector exposure, and drawdown alerts |
-| **Audit Trail** | Chronological ledger of all decisions with ZK proof status |
+| **Audit Trail** | Chronological ledger of all decisions with Signed Audit Trails proof status |
 | **Billing Report** | Performance attribution with alpha calculation and fee summary |
 
 ```
@@ -391,7 +391,7 @@ The **Validation Ledger** is the cryptographic backbone of Sovereign Alpha. It a
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| **v1.0** | Multi-agent pipeline with ZK proof stub | ✅ Complete |
+| **v1.0** | Multi-agent pipeline with Signed Audit Trails proof stub | ✅ Complete |
 | **v1.1** | Base Sepolia blockchain logging | ✅ Complete |
 | **v1.2** | RAG-powered knowledge base (ChromaDB) | ✅ Complete |
 | **v1.3** | Autonomous risk management with veto power | ✅ Complete |
@@ -487,7 +487,7 @@ sovereign-alpha/
 ├── rag/
 │   └── knowledge_base.py       # ChromaDB RAG engine (private data)
 ├── zkml/
-│   └── proof_generator.py      # ZK proof generation (stub → EZKL)
+│   └── proof_generator.py      # Signed Audit Trails proof generation (stub → EZKL)
 ├── blockchain/
 │   └── ledger.py               # Base testnet immutable logging
 ├── billing/

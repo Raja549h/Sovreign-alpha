@@ -28,7 +28,7 @@ Use these exact words during each 20-second segment.
 
 ---
 
-## [00:40 - 01:00] ZK PROOF GENERATION
+## [00:40 - 01:00] Signed Audit Trails PROOF GENERATION
 
 > "Now the critical part - we generate a ZERO-KNOWLEDGE proof. Notice what doesn't leave this system: the actual position size, the policy limits, the research."
 
@@ -44,7 +44,7 @@ Use these exact words during each 20-second segment.
 
 > "The Risk Manager reviews every trade - it has absolute veto authority. No trade happens without passing 5 risk checks."
 
-> "Position size, sector exposure, confidence threshold, drawdown limits, ZK proof verification. All passed."
+> "Position size, sector exposure, confidence threshold, drawdown limits, Signed Audit Trails proof verification. All passed."
 
 > "This is the security model - the AI can't override its own guards."
 
@@ -82,7 +82,7 @@ Use these exact words during each 20-second segment.
 |---------|-------------|
 | Intro | Live system, real prices |
 | Analyst | AI reasons, finds alpha |
-| ZK Proof | Privacy guaranteed |
+| Signed Audit Trails Proof | Privacy guaranteed |
 | Risk Manager | Veto authority |
 | Attack | 100% blocked |
 | Blockchain | Compliance ready |
@@ -98,7 +98,7 @@ Use these exact words during each 20-second segment.
 ## COMMON QUESTIONS - READY ANSWERS
 
 **"What's your moat?"**
-> "The multi-agent architecture with ZK proofs. You can't just layer this on top of ChatGPT - it's a fundamental system design that requires the Analyst/Risk Manager/Auditor separation."
+> "The multi-agent architecture with Signed Audit Trails proofs. You can't just layer this on top of ChatGPT - it's a fundamental system design that requires the Analyst/Risk Manager/Auditor separation."
 
 **"Who pays for this?"**
 > "Zero cost unless it beats benchmark. 12% performance fee on alpha above 8%. We're aligned with the fund's success."
@@ -107,4 +107,4 @@ Use these exact words during each 20-second segment.
 > "The Risk Manager vetoes bad trades - in backtesting, it caught 41% of losing trades that a single LLM would have approved. That's the edge."
 
 **"Is this for real?"**
-> "Every claim is verifiable. Run the demo yourself, check the proofs, review the security report. We have 28 ZK proofs on record."
+> "Every claim is verifiable. Run the demo yourself, check the proofs, review the security report. We have 28 Signed Audit Trails proofs on record."

@@ -25,7 +25,7 @@ Before starting the demo, ensure:
 - Portfolio overview with AUM ($10.4M)
 - Approval rate (49%)
 - Alpha generated ($913K)
-- ZK proofs count (28)
+- Signed Audit Trails proofs count (28)
 
 **Say**: *"This is our command center. You can see portfolio metrics, approval rates, and performance in real-time. The key differentiator here is every decision is cryptographically verified with zero-knowledge proofs - giving you institutional-grade auditability."*
 
@@ -67,7 +67,7 @@ Before starting the demo, ensure:
 - Console output showing:
   1. Analyst agent processing
   2. Risk Manager evaluating
-  3. Auditor generating ZK proof
+  3. Auditor generating Signed Audit Trails proof
 
 **Say**: *"First, the Analyst evaluates opportunities. Then Risk Manager checks every position against our risk parameters - position size, sector limits, confidence thresholds. Finally, the Auditor generates cryptographic proof."*
 
@@ -88,11 +88,11 @@ Before starting the demo, ensure:
 - New decision with status "approved"
 - Ticker, confidence score, position value
 
-**Say**: *"Here's a concrete example - this position was approved because it passed all risk checks AND generated a valid ZK proof."*
+**Say**: *"Here's a concrete example - this position was approved because it passed all risk checks AND generated a valid Signed Audit Trails proof."*
 
 ---
 
-## Step 5: ZK Proof Certificate (~30 seconds)
+## Step 5: Signed Audit Trails Proof Certificate (~30 seconds)
 
 **Say**: *"This is the key differentiator. Every decision generates a cryptographically verifiable certificate."*
 
@@ -172,7 +172,7 @@ Before starting the demo, ensure:
 | Agents | CrewAI |
 | RAG | ChromaDB |
 | Market Data | yfinance |
-| ZK Proofs | RSA-2048 |
+| Signed Audit Trails Proofs | RSA-2048 |
 | Blockchain | Base testnet (stub) |
 | Dashboard | Flask |
 | Billing | SQLite |
