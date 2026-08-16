@@ -1007,7 +1007,7 @@ def get_dashboard_stats():
             c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
             correct_vetoes = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' OR actual_outcome IN ('correct', 'incorrect', 'HIT', 'MISS', 'hit', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('correct', 'incorrect', 'HIT', 'MISS', 'hit', 'miss')")
             resolved_outcomes = c.fetchone()[0]
             print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
             
@@ -1463,7 +1463,7 @@ def performance():
         
         # Calculate Prediction Maturity Breakdown
         maturity_stats = {'<30': 0, '30-60': 0, '>60': 0}
-        c.execute("SELECT expected_timeline_days FROM prediction_ledger WHERE status NOT IN ('HIT', 'MISS', 'hit', 'miss', 'resolved')")
+        c.execute("SELECT expected_timeline_days FROM prediction_ledger WHERE status NOT IN ('HIT', 'MISS', 'hit', 'miss', 'resolved') AND (actual_outcome IS NULL OR actual_outcome NOT IN ('HIT', 'MISS', 'hit', 'miss', 'correct', 'incorrect'))")
         for row in c.fetchall():
             days = row[0]
             if days is not None:
