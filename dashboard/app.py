@@ -676,13 +676,13 @@ def calculate_ledger_stats() -> dict:
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'risk-rejected'")
             rejected = c.fetchone()[0] or 0
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IS NOT NULL OR status IN ('HIT', 'MISS', 'hit', 'miss')")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('correct', 'incorrect', 'HIT', 'MISS', 'hit', 'miss') OR status IN ('HIT', 'MISS', 'hit', 'miss')")
             with_outcome = c.fetchone()[0] or 0
             
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE actual_outcome IN ('correct', 'HIT') OR status IN ('HIT', 'hit')")
             correct = c.fetchone()[0] or 0
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('cleared', 'HIT', 'MISS', 'hit', 'miss') AND (actual_outcome IS NOT NULL AND actual_outcome != '' OR status IN ('HIT', 'MISS', 'hit', 'miss'))")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('cleared', 'HIT', 'MISS', 'hit', 'miss') AND (actual_outcome IN ('correct', 'incorrect', 'HIT', 'MISS', 'hit', 'miss') OR status IN ('HIT', 'MISS', 'hit', 'miss'))")
             cleared_with_outcome = c.fetchone()[0] or 0
             
             c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status IN ('cleared', 'HIT', 'MISS', 'hit', 'miss') AND (actual_outcome IN ('correct', 'HIT') OR status IN ('HIT', 'hit'))")
@@ -1007,7 +1007,7 @@ def get_dashboard_stats():
             c.execute("SELECT COUNT(*) FROM veto_archive WHERE veto_correct = 1")
             correct_vetoes = c.fetchone()[0]
             
-            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' OR actual_outcome IS NOT NULL")
+            c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE status = 'cleared' OR actual_outcome IN ('correct', 'incorrect', 'HIT', 'MISS', 'hit', 'miss')")
             resolved_outcomes = c.fetchone()[0]
             print(f"DEBUG: SELECT COUNT(*) FROM prediction_ledger WHERE resolved IS TRUE -> {resolved_outcomes}")
             
