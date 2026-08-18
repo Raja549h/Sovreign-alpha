@@ -22,6 +22,8 @@ from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, logger
 from engine.regime import MarketRegimeEngine
 from engine.data_layer import DataLayer
 
+MIN_CONVICTION_SCORE = 3.5  # Represents 70% confidence threshold (3.5 / 5.0)
+
 try:
     from openai import OpenAI
     OPENAI_AVAILABLE = True
@@ -357,8 +359,8 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
             logger.info(f"Analyst: analyzing {ticker}")
 
             profile = self.data_layer.fetch_technicals(ticker)
-            if profile is None:
-                logger.warning(f"No technical data for {ticker}")
+            if profile is None or profile.sma_50 == 0.0 or profile.beta == 0.0:
+                logger.warning(f"No valid technical data for {ticker} (possible API timeout/empty array). Skipping to avoid 2.5 fallback.")
                 return None
 
             regime = self.regime_engine.classify()
@@ -405,6 +407,11 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
                 stop_loss=stop,
                 risk_reward_ratio=risk_reward
             )
+
+            final_4d_score = confidence * 5.0
+            if final_4d_score < MIN_CONVICTION_SCORE:
+                logger.warning(f"  {ticker}: Discarded (Conviction {final_4d_score:.2f} < {MIN_CONVICTION_SCORE})")
+                return None
 
             logger.info(f"  {ticker}: {signal} (confidence: {confidence:.0%}) | Regime: {regime.regime}")
             return prediction

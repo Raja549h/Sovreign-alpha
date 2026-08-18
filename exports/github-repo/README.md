@@ -7,6 +7,10 @@ Sovereign Alpha is an institutional intelligence operating system that helps pro
 
 Check out the live platform here: [Sovereign Alpha Platform](https://huggingface.co/spaces/Raja549h/Sovereign-Alpha)
 
+## Google Sheets Plugin
+You can also plug our 4D Forensic Scoring directly into your Google Sheets. No signup required. Just type `=SOVEREIGN_SCORE('TICKER')`.
+[Get the Sovereign Alpha Google Sheets Plugin](https://docs.google.com/spreadsheets/d/1YIC5tfLC7PUDXGyVkVvdaOEEkDJFXpdDejLoJH6shsY/edit?gid=0#gid=0)
+
 ## Installation
 
 1. Clone this repository.
