@@ -14,6 +14,17 @@ app.add_middleware(
 
 RAW_DATA_URL = "https://raw.githubusercontent.com/Raja549h/Sovreign-alpha/main/data/daily_alpha.json"
 
+@app.get("/")
+def read_root():
+    return {
+        "message": "Welcome to the Sovereign Alpha DaaS API",
+        "status": "Online",
+        "endpoints": {
+            "divergence": "/api/v1/divergence",
+            "health": "/health"
+        }
+    }
+
 @app.get("/api/v1/divergence")
 def get_divergence_data():
     try:
