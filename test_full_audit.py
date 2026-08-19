@@ -360,7 +360,7 @@ for tmpl in TEMPLATES_TO_CHECK:
 # 12. CONFIG & ENVIRONMENT
 # ============================================================
 print("\n── CONFIG & ENVIRONMENT ──")
-env_vars = ["DATABASE_URL", "JWT_SECRET", "CEREBRAS_API_KEY", "OPENAI_API_KEY", "FRED_API_KEY"]
+env_vars = ["DATABASE_URL", "JWT_SECRET", "MISTRAL_API_KEY", "OPENAI_API_KEY", "FRED_API_KEY"]
 for var in env_vars:
     val = os.environ.get(var, "")
     if val and len(val) > 5:

@@ -170,7 +170,7 @@ class BacktestEngine:
         }
     
     def run_single_llm_analysis(self, market_data: Dict, ticker: str, day: Dict) -> Dict:
-        """Approach A: Send raw market data to Cerebras directly."""
+        """Approach A: Send raw market data to Mistral directly."""
         prompt = f"""Given today's market data for {ticker}:
 - Close: ${day['close']:.2f}
 - RSI: {day['rsi']:.1f}
@@ -371,7 +371,7 @@ Should we buy, sell or hold {ticker} today%s Answer with just BUY, SELL, or HOLD
 
 This report compares two investment approaches over 50+ historical trading days:
 
-- **Approach A (Single LLM):** Raw market data sent directly to Cerebras
+- **Approach A (Single LLM):** Raw market data sent directly to Mistral
 - **Approach B (Council):** Full Analyst -> Risk Manager -> Auditor pipeline
 
 ---
@@ -401,7 +401,7 @@ This represents a **{council['veto_effectiveness']:.1f}%** effectiveness rate in
 ## Detailed Comparison
 
 ### Single LLM (Baseline)
-- Sends raw market data directly to Cerebras
+- Sends raw market data directly to Mistral
 - No risk checks or verification
 - Decision based purely on LLM interpretation
 - Win Rate: **{single['win_rate']:.1f}%**

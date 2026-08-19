@@ -205,7 +205,7 @@ LINE 5:                 LEFT JOIN companies
 ΓöÇΓöÇ CONFIG & ENVIRONMENT ΓöÇΓöÇ
   [Γ£ô] ENV........................... DATABASE_URL................................. PASS set (122 chars)
   [Γ£ô] ENV........................... JWT_SECRET................................... PASS set (42 chars)
-  [Γ£ô] ENV........................... CEREBRAS_API_KEY............................. PASS set (52 chars)
+  [Γ£ô] ENV........................... MISTRAL_API_KEY............................. PASS set (52 chars)
   [ΓÜá] ENV........................... OPENAI_API_KEY............................... WARN not set
   [ΓÜá] ENV........................... FRED_API_KEY................................. WARN not set
 

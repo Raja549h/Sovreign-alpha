@@ -147,7 +147,7 @@ Replace retail-grade dashboards and generic AI wrappers with a calm, expensive, 
 
 - **Hosting:** Hugging Face Spaces (Docker, always-on)
 - **Database:** SQLite (single-file, no external DB service)
-- **LLM:** Cerebras API (gpt-oss-120b), requires API key
+- **LLM:** Mistral API (mistral-large-latest), requires API key
 - **Market Data:** yfinance (free, no API key)
 - **Storage:** Local filesystem (~100MB for proofs + research)
 - **Cache:** In-memory TTL 300s (lost on restart)

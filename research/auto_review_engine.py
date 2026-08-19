@@ -13,7 +13,7 @@ from typing import Dict, List
 
 BASE_DIR = Path(__file__).parent.parent
 
-CEREBRAS_VALIDATION_PROMPT = """You are an institutional analyst validating a prior research observation.
+MISTRAL_VALIDATION_PROMPT = """You are an institutional analyst validating a prior research observation.
 
 Original observation (made {date}):
 {observation_text}
@@ -90,7 +90,7 @@ class AutoReviewEngine:
         current_metrics = self._fetch_current_metrics(ticker, company_id)
         recent_news = self._fetch_recent_news(ticker)
 
-        classification = self._classify_via_cerebras(
+        classification = self._classify_via_mistral(
             obs_date, obs_text, expected,
             current_metrics, recent_news
         )
@@ -98,7 +98,7 @@ class AutoReviewEngine:
         new_status = classification.get('status', 'MONITORING')
         evidence = classification.get('evidence', '')
         reasoning = classification.get('reasoning', '')
-        cerebras_confidence = classification.get('confidence', 0.5)
+        mistral_confidence = classification.get('confidence', 0.5)
 
         review_type = self._determine_review_type(observation)
 
@@ -148,7 +148,7 @@ class AutoReviewEngine:
             'new_status': new_status,
             'evidence': evidence,
             'reasoning': reasoning,
-            'confidence': cerebras_confidence,
+            'confidence': mistral_confidence,
         }
 
     def trigger_review(self, company_id: int, trigger: str) -> List[Dict]:
@@ -205,7 +205,7 @@ class AutoReviewEngine:
             pass
         return news
 
-    def _classify_via_cerebras(self, date: str, text: str, expected: str,
+    def _classify_via_mistral(self, date: str, text: str, expected: str,
                            metrics: Dict, news: List) -> Dict:
         from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
         if not LLM_API_KEY:
@@ -213,7 +213,7 @@ class AutoReviewEngine:
                     'reasoning': 'LLM API key unavailable for classification.',
                     'confidence': 0.5}
 
-        prompt = CEREBRAS_VALIDATION_PROMPT.format(
+        prompt = MISTRAL_VALIDATION_PROMPT.format(
             date=date or 'unknown date',
             observation_text=text or 'No observation text',
             expected_implication=expected or 'Not specified',

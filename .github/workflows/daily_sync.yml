@@ -1,0 +1,37 @@
+name: Daily Data Sync
+
+on:
+  schedule:
+    - cron: '30 16 * * *' # 10:00 PM IST is 16:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas psycopg2-binary
+
+      - name: Export Data
+        env:
+          AIVEN_DATABASE_URL: ${{ secrets.AIVEN_DATABASE_URL }}
+        run: python export_data.py
+
+      - name: Commit and Push Data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/daily_alpha.json data/daily_alpha.csv
+          git commit -m "Auto-update daily alpha data" || echo "No changes to commit"
+          git push

@@ -5,13 +5,13 @@ import re
 base = 'C:/Users/lokes/Downloads/project/sovereign-alpha/'
 files = glob.glob(base + '**/*.*', recursive=True)
 
-# Define replacements (no word boundaries so it replaces cerebras_key, etc.)
+# Define replacements (no word boundaries so it replaces mistral_key, etc.)
 replacements = [
-    (r'cerebras', 'cerebras'),
-    (r'Cerebras', 'Cerebras'),
-    (r'CEREBRAS', 'CEREBRAS'),
-    (r'gpt-oss-120b-?3\.?[0-9]?-[0-9]+[bc]?-?[a-z]*', 'gpt-oss-120b'),
-    (r'\bllama\b', 'gpt-oss-120b')
+    (r'mistral', 'mistral'),
+    (r'Mistral', 'Mistral'),
+    (r'MISTRAL', 'MISTRAL'),
+    (r'mistral-large-latest-?3\.?[0-9]?-[0-9]+[bc]?-?[a-z]*', 'mistral-large-latest'),
+    (r'\bllama\b', 'mistral-large-latest')
 ]
 
 for filepath in files:
@@ -24,7 +24,7 @@ for filepath in files:
             
         new_content = content
         
-        # Don't replace 'gpt-oss-120b' if it's 'llama-index'
+        # Don't replace 'mistral-large-latest' if it's 'llama-index'
         new_content = re.sub(r'llama-index', 'llama-index', new_content)
         
         for old, new in replacements:

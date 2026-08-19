@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Sovereign Alpha NLP Divergence",
+    "description": "Daily predictive NLP signals for Indian Equities.",
+    "category": "Alternative Data",
+    "endpoint": "https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence",
+    "type": "table"
+  }
+]

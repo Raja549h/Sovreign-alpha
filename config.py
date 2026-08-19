@@ -27,20 +27,20 @@ ZKML_DIR = BASE_DIR / "zkml"
 BLOCKCHAIN_DIR = BASE_DIR / "blockchain"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 
-LLM_PROVIDER = "cerebras"
-LLM_API_KEY = os.environ.get("CEREBRAS_API_KEY", "")
-LLM_BASE_URL = "https://api.cerebras.ai/v1"
+LLM_PROVIDER = "mistral"
+LLM_API_KEY = os.environ.get("MISTRAL_API_KEY", "")
+LLM_BASE_URL = "https://api.mistral.ai/v1"
 
 if not LLM_API_KEY:
-    print("WARNING: CEREBRAS_API_KEY not found. Copy .env.example to .env and add your key.")
+    print("WARNING: MISTRAL_API_KEY not found. Copy .env.example to .env and add your key.")
 
 WEB3_RPC_URL = os.getenv("WEB3_RPC_URL", "https://sepolia.base.org")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY", "")
 COINBASE_AGENT_KIT_TOKEN = os.getenv("COINBASE_AGENT_KIT_TOKEN", "")
 WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "")
 
-LLM_MODEL = os.environ.get("CEREBRAS_MODEL", "gpt-oss-120b")
-LLM_MODEL_FAST = os.environ.get("CEREBRAS_MODEL_FAST", "gpt-oss-120b")
+LLM_MODEL = os.environ.get("MISTRAL_MODEL", "mistral-large-latest")
+LLM_MODEL_FAST = os.environ.get("MISTRAL_MODEL_FAST", "mistral-large-latest")
 
 llm_config = {
     "model": LLM_MODEL,

@@ -571,7 +571,7 @@
     },
     {
       "category": "ENV",
-      "name": "CEREBRAS_API_KEY",
+      "name": "MISTRAL_API_KEY",
       "status": "PASS",
       "detail": "set (52 chars)"
     },

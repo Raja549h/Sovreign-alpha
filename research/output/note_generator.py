@@ -1,7 +1,7 @@
 """
 Note Generator — Institutional research note composer
 =====================================================
-Generates forensic research notes using Cerebras API.
+Generates forensic research notes using Mistral API.
 Produces HTML-formatted notes with cryptographic signing.
 """
 
@@ -26,9 +26,9 @@ NOTES_DIR = BASE_DIR / "research" / "data" / "notes"
 
 # Load environment at module level so dotenv works
 load_dotenv(BASE_DIR / ".env")
-LLM_API_KEY = os.environ.get('CEREBRAS_API_KEY') or os.environ.get('LLM_API_KEY', '')
-LLM_BASE_URL = "https://api.cerebras.ai/v1"
-LLM_MODEL = "gpt-oss-120b"
+LLM_API_KEY = os.environ.get('MISTRAL_API_KEY') or os.environ.get('LLM_API_KEY', '')
+LLM_BASE_URL = "https://api.mistral.ai/v1"
+LLM_MODEL = "mistral-large-latest"
 
 NOTE_COUNTER_FILE = BASE_DIR / "research" / "data" / ".note_counter"
 
@@ -121,7 +121,7 @@ def _sign_content(content: str) -> str:
 
 def generate_research_note(company_id: int, analyst_context: str = '', run_id: str = None) -> Dict:
     """
-    Generate institutional research note using Cerebras.
+    Generate institutional research note using Mistral.
     
     Args:
         company_id: Company ID
@@ -255,7 +255,7 @@ Generate a forensic institutional research note."""
 
 def _generate_fallback_note(company_name: str, ticker: str, sector: str,
                             metrics: Dict, flags: List, scores: Dict, regime: Dict) -> str:
-    """Generate a basic note when Cerebras is unavailable."""
+    """Generate a basic note when Mistral is unavailable."""
     lines = [
         f"# FORENSIC RESEARCH NOTE — {company_name} ({ticker})",
         f"Sector: {sector}",
