@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
-LABEL version="2.0.1"
-LABEL build_date="2026-08-04"
+LABEL version="3.0.0"
+LABEL build_date="2026-08-19"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -18,13 +18,12 @@ ENV HOME=/home/user \
 
 WORKDIR $HOME/app
 
-COPY --chown=user requirements-docker.txt .
+# We are using the main requirements.txt which is now streamlined for DaaS
+COPY --chown=user requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements-docker.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=user . .
-
-RUN mkdir -p billing research/data/filings research/data/transcripts research/data/notes logs
 
 RUN chown -R user:user /home/user
 
@@ -32,4 +31,5 @@ USER user
 
 EXPOSE 7860
 
-CMD sh -c "python migrate.py && python test_database.py && python dashboard/app.py"
+# DaaS Serverless Architecture
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
