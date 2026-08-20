@@ -1,30 +1,702 @@
 [
     {
-        "ticker": "RELIANCE.NS",
-        "signal": "BUY",
-        "confidence": 0.92,
-        "thesis": "Strong quarterly earnings growth and telecom expansion.",
-        "timestamp": "2026-08-19T10:00:00Z"
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 SUNPHARMA.NS showing mixed signals, technical structure neutral (RSI 20.0, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:26.286687Z"
     },
     {
-        "ticker": "TCS.NS",
-        "signal": "BUY",
-        "confidence": 0.85,
-        "thesis": "Solid margin improvement despite macro headwinds.",
-        "timestamp": "2026-08-19T10:00:00Z"
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 TRENT.NS showing mixed signals, technical structure neutral (RSI 50.8, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:25.869152Z"
     },
     {
-        "ticker": "HDFCBANK.NS",
-        "signal": "BUY",
-        "confidence": 0.88,
-        "thesis": "Credit growth remains robust.",
-        "timestamp": "2026-08-19T10:00:00Z"
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 BAJFINANCE.NS showing mixed signals, technical structure neutral (RSI 57.6, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:25.444007Z"
     },
     {
-        "ticker": "INFY.NS",
-        "signal": "SELL",
-        "confidence": 0.45,
-        "thesis": "Weak guidance for the upcoming quarter.",
-        "timestamp": "2026-08-19T10:00:00Z"
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 HCLTECH.NS showing mixed signals, technical structure neutral (RSI 48.0, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:24.986761Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 KOTAKBANK.NS showing mixed signals, technical structure neutral (RSI 57.1, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:24.579507Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.45,
+        "thesis":"HOLD \u2014 ITC.NS showing mixed signals, technical structure neutral (RSI 30.6, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:23.878832Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 BHARTIARTL.NS showing mixed signals, technical structure neutral (RSI 47.8, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:23.355086Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 SBIN.NS showing mixed signals, technical structure neutral (RSI 65.1, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:22.934271Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 INFY.NS showing mixed signals, technical structure neutral (RSI 41.1, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:22.583432Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 HDFCBANK.NS showing mixed signals, technical structure neutral (RSI 28.7, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:22.220291Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 TCS.NS showing mixed signals, technical structure neutral (RSI 37.7, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:21.870928Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 RELIANCE.NS showing mixed signals, technical structure neutral (RSI 62.6, neutral trend), macro regime (NEUTRAL) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T04:00:21.497792Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.7,
+        "thesis":"BUY signal supported by, consolidating price action near equilibrium levels, risk-on macro regime (VIX 15.19, 10Y 4.724%) providing favorable backdrop.",
+        "timestamp":"2026-08-18T03:15:16.161527Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 TRENT.NS showing mixed signals, technical structure neutral (RSI 51.7, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:15.550331Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 BAJFINANCE.NS showing mixed signals, technical structure neutral (RSI 58.4, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:15.081241Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 HCLTECH.NS showing mixed signals, technical structure neutral (RSI 63.2, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:14.654640Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 KOTAKBANK.NS showing mixed signals, technical structure neutral (RSI 60.3, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:14.169388Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"HOLD \u2014 ITC.NS showing mixed signals, technical structure neutral (RSI 33.8, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:13.646164Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 BHARTIARTL.NS showing mixed signals, technical structure neutral (RSI 62.1, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:13.174335Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 SBIN.NS showing mixed signals, technical structure neutral (RSI 65.1, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:12.700378Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 INFY.NS showing mixed signals, technical structure neutral (RSI 57.4, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:12.142902Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 HDFCBANK.NS showing mixed signals, technical structure neutral (RSI 44.8, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:11.533406Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 TCS.NS showing mixed signals, technical structure neutral (RSI 43.5, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:10.951890Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HOLD \u2014 RELIANCE.NS showing mixed signals, technical structure neutral (RSI 63.0, neutral trend), macro regime (RISK_ON) does not provide clear directional bias.",
+        "timestamp":"2026-08-18T03:15:10.502215Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.7,
+        "thesis":"SUNPHARMA.NS is trading marginally above its 50\u2011day SMA (1917.5\u202fvs\u202f1904.2) with an RSI of 28.1 indicating oversold conditions and a positive MACD (+4.35) that points to emerging bullish momentum despite light volume. The prevailing risk\u2011on environment\u2014characterized by a low VIX (14.25), stable credit conditions and ample liquidity\u2014has historically benefitted defensive sectors such as healthcare, and recent 13F filings show renewed institutional allocation to the space. Accordingly, we initiate a BUY on SUNPHARMA.NS, targeting a move toward the upper bound of its 52\u2011week range.",
+        "timestamp":"2026-08-17T04:07:20.708414Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally beneath its 50\u2011day SMA (\u2248\u202f2976 vs\u202f3016) with a neutral trend, mid\u2011range RSI (55.4) and a modestly positive MACD (3.85) on light volume, suggesting limited near\u2011term directional impetus. In a risk\u2011on backdrop\u2014characterized by a low VIX (14.3), stable credit spreads, and a 10\u2011year Treasury yield near 4.7%\u2014the broader consumer\u2011cyclical sector remains vulnerable to inflation\u2011linked cost pressures, while the modest institutional interest reflected in three recent 13F filings signals no fresh accumulation. Consequently, the balance of technical, macro and positioning factors supports a HOLD rating on TRENT.NS.",
+        "timestamp":"2026-08-17T04:07:19.601716Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"BAJFINANCE trades marginally above its 50\u2011day SMA (1083.3 vs 1025.3) with a neutral price trend, RSI at 57.1 and a modestly positive MACD of 19.66, while volume remains light (\u22480.05\u00d7 average), suggesting limited near\u2011term conviction. The prevailing risk\u2011on environment\u2014low VIX (14.25), 10\u2011year Treasury yields near 4.7% and stable credit conditions\u2014provides sector\u2011wide support for financial services, yet recent 13F filings show only modest institutional accumulation, indicating continued caution. Accordingly, we maintain a HOLD rating, reflecting a balanced view between technical resilience and the absence of decisive macro\u2011driven catalysts.",
+        "timestamp":"2026-08-17T04:06:23.706489Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HCL Technologies (HCLTECH.NS) trades modestly above its 50\u2011day SMA (1343.3 vs 1208.6) with a neutral trend, RSI at 57.1 and a positive MACD (+44.0), suggesting limited upside momentum amid light trading volume (\u22480.03\u00d7 average). The stock benefits from the prevailing risk\u2011on backdrop\u2014low VIX (14.3), stable credit spreads (10\u2011yr Treasury 4.70%) and ample liquidity\u2014yet the broader technology sector has seen modest institutional accumulation, reflected in three recent 13F filings, which supports a neutral stance rather than a directional call. Consequently, we maintain a HOLD rating, acknowledging the stock\u2019s near\u2011term price stability while awaiting clearer catalysts.",
+        "timestamp":"2026-08-17T04:06:22.894696Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA at 392.75, with a neutral price trend, RSI\u202f60.3 and a modestly positive MACD (1.42), indicating limited upside momentum amid thin liquidity (\u22480.03\u202f\u00d7\u202faverage volume). In the prevailing risk\u2011on environment\u2014low VIX (14.25), stable credit conditions, and ample liquidity\u2014financial services remain broadly supported, yet only three recent 13F filings signal modest institutional accumulation, offering no decisive conviction. Consequently, we maintain a HOLD rating pending clearer directional catalysts.",
+        "timestamp":"2026-08-17T04:06:22.277398Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"The stock is trading in a neutral trend, with price at \u20b9276.15 below the 50\u2011day SMA (\u20b9284.68), an RSI of 37 and a MACD of \u20131.85 indicating modest oversold pressure but no clear directional bias, while thin trading (\u22480.07\u00d7 average) suggests limited short\u2011term catalyst. In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), a 10\u2011year Treasury yield near 4.7% and stable commodity prices\u2014equity markets are broadly supported, yet consumer\u2011defensive names such as ITC often underperform relative to growth\u2011oriented peers. Recent 13F filings show only modest reallocation within the sector, reinforcing a view that institutional demand is muted; consequently, the balance of technical weakness and neutral macro drivers supports a HOLD positioning.",
+        "timestamp":"2026-08-17T04:06:21.385106Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (\u20b91,987.2 vs \u20b91,891.7) with a neutral trend, an RSI of 66.4 and a modestly positive MACD (+21.1), suggesting limited upside momentum amid light volume (\u22480.2\u00d7 average) and a price positioned near the upper end of its 52\u2011week range (\u20b91,718.9\u20112,031.0). In the prevailing risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit spreads (10\u2011year Treasury at 4.70%) and ample liquidity\u2014the communication services sector remains broadly supported, yet recent 13F filings show only modest reallocation to the space, implying that institutional demand is not accelerating. Consequently, the balance of technical modesty, macro risk\u2011on conditions, and muted institutional inflows justifies a HOLD stance on BHARTIARTL.NS.",
+        "timestamp":"2026-08-17T04:06:20.268771Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1057\u202fvs\u202f1037.5) with a neutral trend, a 63.5\u202fRSI and a positive MACD (+12.2), but the light 0.04\u00d7 average volume indicates limited conviction in the near term. In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.3), stable credit conditions and a 10\u2011year Treasury yield near 4.7%\u2014financials benefit from ample liquidity, yet elevated rates constrain net interest margins, tempering upside. Recent 13F filings show modest positioning by institutional investors in the financial services sector without a decisive shift, supporting a HOLD stance pending clearer directional catalysts.",
+        "timestamp":"2026-08-17T04:05:22.412057Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1152.5 vs 1103.8) with a neutral trend, an RSI of 65 and a positive MACD (+23.6), yet the light 0.03\u00d7 average volume limits the reliability of the bullish signals. In the current risk\u2011on backdrop\u2014characterized by a low VIX (14.3), stable 10\u2011year Treasury yields (4.70%), and supportive liquidity\u2014the broader technology sector remains attractive, but Infosys shows no fresh institutional accumulation, as evidenced by only three recent 13F filings. Consequently, the balance of technical momentum, macro conditions, and unchanged institutional positioning justifies a HOLD stance.",
+        "timestamp":"2026-08-17T04:05:21.726026Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HDFCBANK.NS trades in a neutral technical context, with price (\u20b9725.85) comfortably below the 50\u2011day SMA (\u20b9769.86), a sub\u201150 RSI (42.1) and a bearish MACD divergence (\u201114.64) that together suggest limited upside momentum and modest downside risk, especially given the light 0.04\u00d7 average volume. The broader risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit conditions, and ample liquidity\u2014mitigates systemic concerns for Indian banks, but the stock\u2019s proximity to the lower end of its 52\u2011week range (\u20b9714.83\u2011\u20b9914.08) tempers the case for a near\u2011term rally. Recent 13F filings indicate continued institutional exposure within the financial services sector, reinforcing a balanced stance; consequently, we maintain a HOLD rating pending clearer directional catalysts.",
+        "timestamp":"2026-08-17T04:05:21.016237Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"With price modestly above the 50\u2011day SMA (2327.4\u202fvs\u202f2218.3) while RSI sits at 44.4 and MACD remains positive, the chart reflects a neutral bias and limited upside momentum, further dampened by light volume (\u22480.08\u00d7 average). The prevailing risk\u2011on environment\u2014VIX near 14, 10\u2011year Treasury yields under 5% and stable credit conditions\u2014supports the broader technology sector, yet recent 13F filings reveal only modest institutional accumulation. Accordingly, we maintain a HOLD on TCS.NS, balancing technical modesty, supportive macro fundamentals, and muted institutional demand.",
+        "timestamp":"2026-08-17T04:05:20.421710Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1306.5 vs 1302.8) with a neutral price trend, a modestly elevated RSI (60.6) and a positive MACD (+4.28), while volume remains thin (\u2248\u202f0.09\u00d7 average), suggesting limited near\u2011term directional bias. In the prevailing risk\u2011on backdrop\u2014characterized by a low VIX (14.25), a 10\u2011year Treasury yield near 4.7% and stable commodity prices (oil at $82.4, gold at $4,380)\u2014the broader market environment supports equity participation but does not materially alter the stock\u2019s intrinsic valuation. Recent 13F filings indicate modest institutional exposure within the energy sector, reinforcing a view that the current price level reflects a fair valuation, warranting a HOLD stance.",
+        "timestamp":"2026-08-17T04:05:19.769727Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.7,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (\u20b91,930 vs \u20b91,898) with a neutral trend, a low RSI of 32.6 and a positive MACD (+8.08), suggesting oversold momentum and a near\u2011term upside bias despite light volume. This technical backdrop aligns with a risk\u2011on macro regime\u2014characterized by a subdued VIX (14.25), stable credit spreads and ample liquidity\u2014that is supportive of cyclical and growth\u2011oriented equities, including healthcare. Moreover, three recent 13F filings have added to Sun Pharma\u2019s exposure, reflecting institutional confidence in the sector\u2019s defensive profile and positioning the stock for a near\u2011term price appreciation.",
+        "timestamp":"2026-08-17T03:17:12.081980Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally below its 50\u2011day SMA (2978 vs 3011) with a neutral trend, an RSI of 54.6 and a modestly positive MACD (+6.66), suggesting limited upside momentum and a balanced risk\u2011reward profile. In the current risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit spreads, and ample liquidity\u2014the broader consumer\u2011cyclical sector has attracted modest institutional interest, as reflected by three recent 13F filings, supporting a neutral stance. Consequently, we maintain a HOLD rating on TRENT.NS, given the lack of decisive technical catalysts and the supportive yet non\u2011driving macro backdrop.",
+        "timestamp":"2026-08-17T03:17:11.097923Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1087 vs 1020.9) with a neutral trend, RSI at 58 and a modest MACD reading of 22.3, while volume remains subdued at 0.43\u00d7 average, suggesting limited near\u2011term price pressure; in a risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit conditions and ample liquidity\u2014the broader financial services sector has attracted modest institutional interest, as evidenced by three recent 13F filings, supporting a neutral stance. Consequently, we maintain a HOLD rating on BAJFINANCE.NS, reflecting a balanced risk\u2011reward profile given the current technical and macro fundamentals.",
+        "timestamp":"2026-08-17T03:16:13.387552Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1360 vs 1204.5) with a neutral trend, an RSI of 67.8 and a positive MACD (+47.8), suggesting modest upward momentum but limited upside given light volume (0.37\u00d7 average) and a 52\u2011week high still 100\u202fpts away. This technical backdrop aligns with the broader risk\u2011on regime\u2014low VIX (14.25), stable credit spreads and ample liquidity\u2014yet the absence of significant institutional accumulation (only three recent 13F filings in the technology sector) implies that demand is not accelerating. Consequently, the balance of price action, macro conditions, and muted institutional positioning supports a HOLD stance on HCLTECH.NS.",
+        "timestamp":"2026-08-17T03:16:12.783933Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades essentially flat, with price marginally above the 50\u2011day SMA (391.15 vs 391.01), a neutral MACD (+1.45) and RSI at 59.3, indicating no near\u2011term directional bias and modest momentum; volume remains below average (0.79\u00d7), limiting upside catalysts. In the prevailing risk\u2011on backdrop\u2014characterized by low VIX (14.25), a stable credit environment and ample liquidity\u2014the broader financial services sector has attracted modest institutional interest, as reflected by three recent 13F filings, but the lack of a decisive technical breakout suggests that the current valuation (mid\u2011range of the 52\u2011week band) warrants a HOLD stance pending clearer price impetus.",
+        "timestamp":"2026-08-17T03:16:12.182756Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"The neutral price trend, with ITC.NS trading at \u20b9278.2\u202f\u2014\u202fapproximately 2.3% below the 50\u2011day SMA (\u20b9284.8) and an RSI of 38 coupled with a bearish MACD divergence (\u20111.48) and subdued volume (\u22480.5\u00d7 average), signals limited near\u2011term upside despite the broader risk\u2011on backdrop (VIX\u202f14.3, 10\u2011yr Treasury\u202f4.70%). In a risk\u2011on environment that favours consumer\u2011defensive exposure, recent 13F filings show modest institutional interest but do not indicate a decisive shift in positioning. Consequently, the balance of technical weakness and stable macro fundamentals supports a HOLD recommendation for ITC.NS.",
+        "timestamp":"2026-08-17T03:16:11.388955Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1992.1 vs 1887.8) with a neutral trend, a relatively elevated RSI at 66.8 and a modestly positive MACD (19.47), suggesting limited upside momentum amid normal\u2011to\u2011slightly elevated volume (\u22481.8\u00d7 average). In the current risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit conditions and ample liquidity\u2014the broader Communication Services sector has seen modest institutional interest, with only three recent 13F filings and no discernible accumulation pressure. Given the constrained technical upside, a broadly supportive macro backdrop but limited institutional conviction, we maintain a HOLD stance on BHARTIARTL.NS.",
+        "timestamp":"2026-08-17T03:16:10.584111Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"SBIN.NS is marginally above its 50\u2011day SMA (1067.7 vs 1035.9) with an RSI of 64.8 and a positive MACD of 13.7, indicating limited upside momentum within a neutral price trend. The prevailing risk\u2011on environment\u2014low VIX (14.3), stable credit conditions and ample liquidity\u2014favours financials, yet recent 13F filings show only modest accumulation in the sector, supporting a HOLD recommendation.",
+        "timestamp":"2026-08-17T03:15:13.765974Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral technical pattern with an elevated RSI (71.7) that signals overbought conditions, a still\u2011positive MACD (26.19) but muted participation (volume at 0.43\u202f\u00d7 average), suggesting limited near\u2011term upside despite the broader risk\u2011on backdrop (VIX\u202f14.3, 10\u2011year Treasury\u202f4.70%). In a risk\u2011on environment that typically benefits technology exposure, the modest institutional interest\u2014reflected in only three recent 13F filings\u2014does not indicate a strong conviction shift, reinforcing a neutral stance. Consequently, we maintain a HOLD rating on INFY.NS.",
+        "timestamp":"2026-08-17T03:15:12.922259Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral technical regime, with price well below the 50\u2011day SMA (727 vs 770), an RSI of 40.1 and a bearish MACD divergence (\u201114.46), indicating limited near\u2011term upside despite normal volume. In a risk\u2011on macro backdrop\u2014characterized by low VIX (14.25), stable credit conditions and ample liquidity\u2014the broader financial\u2011services sector has seen modest institutional accumulation (three recent 13F filings), reinforcing a neutral stance and justifying a HOLD recommendation.",
+        "timestamp":"2026-08-17T03:15:12.207944Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"Technicals show TCS trading modestly above its 50\u2011day SMA (2361\u202fvs\u202f2214) with a neutral trend, an RSI of 54.7 and a modest MACD reading of 52.73, while volume remains below average, indicating limited upside momentum. In the current risk\u2011on environment\u2014low VIX (14.3), 10\u2011year Treasury yields near 4.7% and stable commodity prices\u2014the technology sector has attracted modest institutional interest (three recent 13F filings), but the absence of a decisive directional bias justifies a HOLD position pending clearer catalysts.",
+        "timestamp":"2026-08-17T03:15:11.523662Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"Reliance trades marginally above its 50\u2011day SMA at 1310, with a neutral trend, RSI\u202f57.8 and a modestly positive MACD (+5.17), indicating limited upside momentum and no clear near\u2011term directional bias. The prevailing risk\u2011on environment\u2014VIX\u202f\u2248\u202f14, 10\u2011year Treasury yields near 4.7% and stable commodity prices\u2014underpins the broader energy sector but does not materially shift Reliance\u2019s valuation within its 52\u2011week range of 1,249.8\u20111,466.6. Recent 13F filings show modest accumulation by large\u2011cap funds, supporting a balanced stance; consequently, we maintain a HOLD recommendation.",
+        "timestamp":"2026-08-17T03:15:10.726640Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.7,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1930 vs 1901.5) with a neutral trend, a modestly bullish MACD (+7.15) and an RSI of 32.6 that suggests limited downside risk despite light volume (0.37\u00d7 average). In the current risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit spreads (10\u2011year Treasury at 4.70%) and ample liquidity\u2014health\u2011care equities have attracted incremental institutional interest, as evidenced by three recent 13F filings increasing exposure to the sector. Together, the technical resilience, favorable macro backdrop, and growing institutional positioning support a BUY stance on SUNPHARMA.NS.",
+        "timestamp":"2026-08-16T04:04:07.397864Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"TRENT.NS is marginally below its 50\u2011day SMA (2,978 vs. 3,006) with RSI at 59.1 and a positive MACD (+6.43), indicating a neutral trend and limited upside potential. The prevailing risk\u2011on environment\u2014VIX 14.3, 10\u2011year Treasury at 4.7%, stable DXY and commodity prices\u2014supports consumer\u2011cyclical demand but does not materially shift the stock\u2019s near\u2011term bias. Recent 13F filings show modest, steady accumulation by a few institutional investors, reinforcing a HOLD stance until clearer directional catalysts emerge.",
+        "timestamp":"2026-08-16T04:04:06.541272Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading neutral to the upside, with price at \u20b91,087 marginally above the 50\u2011day SMA (\u20b91,020.9) and a modestly positive MACD (+22.3) while RSI remains in the mid\u201150s (58), suggesting limited momentum and a lack of decisive directional bias; light volume (\u22480.43\u00d7 average) further underscores the subdued participation. In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit spreads, and ample liquidity\u2014the financial services sector continues to benefit from favorable funding conditions, yet the absence of strong institutional inflows (only three recent 13F filings) tempers the upside case. Consequently, we maintain a HOLD stance, reflecting a balanced view of modest technical support against a supportive macro environment but insufficient conviction from institutional positioning to warrant a bullish call.",
+        "timestamp":"2026-08-16T04:03:10.713915Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral technical regime, with price ~13% above the 50\u2011day SMA (1360\u202fvs\u202f1204.5) and a modestly elevated RSI (67.8) that suggests limited upside momentum; the MACD remains positive (47.8) but the light 0.37\u00d7 average volume underscores a lack of fresh conviction. In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable 10\u2011year Treasury yields (4.70%), a near\u2011neutral DXY (99.7) and modest commodity prices\u2014macro fundamentals are supportive but not a catalyst for sector\u2011specific outperformance. Recent 13F filings show only modest reallocation into the technology sector, indicating that institutional demand for HCLTech is neither expanding nor contracting, justifying a HOLD stance.",
+        "timestamp":"2026-08-16T04:03:10.026423Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"KOTAKBANK.NS is trading marginally above its 50\u2011day SMA (391.15\u202fvs\u202f390.74) with a neutral trend, RSI at 59.1 and a modestly positive MACD (+1.45), indicating limited upside momentum and no clear directional bias. The broader risk\u2011on environment\u2014low VIX (14.25), stable credit conditions and ample liquidity\u2014underpins financials, yet the stock remains near the lower\u2011mid of its 52\u2011week range (344.9\u2011431.7) on sub\u2011average volume, suggesting muted demand. Recent 13F filings show modest institutional accumulation within the sector, supporting a neutral positioning; consequently, we maintain a HOLD rating.",
+        "timestamp":"2026-08-16T04:03:09.238826Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"ITC trades on a neutral technical backdrop, with the price at\u202f\u20b9278.2\u2014approximately 2.3\u202f% below the 50\u2011day SMA\u2014while RSI sits at 38 and MACD remains negative (\u20111.48), reflecting modest downside momentum and light volume (\u22480.47\u00d7 average). The broader risk\u2011on environment\u2014low VIX (14.3), 10\u2011year Treasury yields near 4.7\u202f% and stable commodity prices\u2014provides a supportive backdrop for consumer\u2011defensive names but does not generate a clear catalyst for ITC. Recent 13F filings indicate continued, albeit modest, positioning by defensive funds, reinforcing a HOLD stance pending clearer directional impetus.",
+        "timestamp":"2026-08-16T04:03:08.447029Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1992.1 vs 1887.8) in a neutral trend, with RSI at 66.8 and a positive MACD (+19.5) that suggest modest momentum but no clear breakout, while volume remains only 1.8\u00d7 average, indicating limited new buying pressure. In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit spreads, and ample liquidity\u2014the broader Communication Services sector has attracted modest institutional interest, as evidenced by three recent 13F filings, yet BHARTIARTL.NS remains near the upper end of its 52\u2011week range (\u22482031) and lacks a decisive catalyst. Consequently, the balance of technical and macro fundamentals supports a HOLD stance, with upside constrained by resistance and downside buffered by sector\u2011wide risk\u2011on support.",
+        "timestamp":"2026-08-16T04:03:07.480083Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"SBIN.NS is trading modestly above its 50\u2011day SMA (1067.7 vs 1035.98) with an RSI of 64.8 and a positive MACD (+13.74), reflecting limited upside momentum within a neutral trend framework. The prevailing risk\u2011on environment\u2014low VIX (14.25), 10\u2011year Treasury yields near 4.7% and stable credit conditions\u2014generally favours financials, but recent 13F filings reveal only marginal net accumulation, indicating institutional investors are maintaining a cautious stance. Accordingly, we assign a HOLD rating.",
+        "timestamp":"2026-08-16T04:02:10.119368Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1169.2 vs 1101.8) with a neutral trend and a high\u2011normal RSI of 69.8, while the MACD remains positive (25.3) but volume is subdued at 0.44\u00d7 average, indicating limited near\u2011term momentum despite modest short\u2011term strength. In the current risk\u2011on regime\u2014characterized by a low VIX (14.3), a 10\u2011year Treasury yield near 4.7% and stable credit conditions\u2014the broader technology sector benefits from ample liquidity, yet there is no macro\u2011driven catalyst specific to Infosys. Institutional interest is modest, with only three recent 13F filings, suggesting that the market\u2019s positioning is neither aggressively bullish nor bearish; consequently, the balance of technical, macro and positioning factors supports a HOLD stance.",
+        "timestamp":"2026-08-16T04:02:09.330273Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading below its 50\u2011day SMA (727\u202fvs\u202f770) with a neutral trend, an RSI of 40.1 and a bearish MACD divergence (\u201114.46), suggesting limited upside momentum while still retaining modest downside cushion; volume remains at 0.66\u00d7 average, indicating muted trader participation. In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit conditions, and ample liquidity\u2014the financial services sector has attracted modest institutional interest, as evidenced by three recent 13F filings, supporting a neutral stance. Consequently, we maintain a HOLD rating, reflecting a balance of technical weakness and macro\u2011driven support without a clear catalyst for directional movement.",
+        "timestamp":"2026-08-16T04:02:08.629730Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"TCS.NS trades marginally above its 50\u2011day SMA (2361\u202fvs\u202f2214) with a neutral trend, RSI at 54.7 and a modestly positive MACD (51.97), indicating limited upside momentum and no imminent directional bias. The broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit spreads and ample liquidity\u2014supports the technology sector, yet the absence of significant 13F inflows (only three recent filings) suggests institutional investors remain cautious, reinforcing a HOLD stance.",
+        "timestamp":"2026-08-16T04:02:08.016540Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1310\u202fvs\u202f1301.98) with a neutral trend, RSI at 57.8 and a modestly positive MACD (+5.17), suggesting limited upside momentum and a balanced risk\u2011reward profile. In the current risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit spreads, and supportive liquidity\u2014energy equities benefit from moderate oil prices (WTI $82.4) but face headwinds from a strong dollar (DXY\u202f\u2248\u202f99.7) and elevated gold levels, which can dampen demand. Institutional interest remains steady, with three recent 13F filings indicating continued exposure without fresh accumulation, reinforcing a HOLD stance pending clearer directional catalysts.",
+        "timestamp":"2026-08-16T04:02:07.278440Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.7,
+        "thesis":"SUNPHARMA.NS trades marginally above its 50\u2011day SMA (1930\u202fvs\u202f1901) with a neutral trend, an RSI of 32.6 indicating oversold conditions, and a positive MACD (+7.15) that together suggest modest upside momentum despite light volume. The broader risk\u2011on environment\u2014low VIX (14.3), stable credit conditions, and ample liquidity\u2014has been supportive of Indian healthcare equities, and recent 13F filings reveal renewed institutional allocation to the sector, providing a compelling basis for a BUY stance.",
+        "timestamp":"2026-08-15T03:58:28.683022Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally below its 50\u2011day SMA (2,978 vs 3,011) with a neutral trend, RSI at 54.6 and a modestly positive MACD (+6.66), suggesting limited upside momentum while volume remains at 1.46\u00d7 average. In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.25), a stable 10\u2011year Treasury yield (4.70%), and supportive liquidity\u2014the consumer\u2011cyclical sector benefits from improved sentiment, yet recent 13F filings show only modest accumulation, indicating that institutional demand is not yet decisive. Consequently, the balance of technical and macro fundamentals supports a HOLD stance on TRENT.NS.",
+        "timestamp":"2026-08-15T03:58:27.732485Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral trend with price modestly above the 50\u2011day SMA (\u20b91,087 vs \u20b91,021) and an RSI of 58, while a positive MACD (+22.3) suggests limited upward momentum amid light volume (0.43\u00d7 average). This technical backdrop aligns with a broader risk\u2011on macro regime\u2014characterized by a low VIX (14.25), stable credit conditions, and ample liquidity\u2014as reflected in a 4.7% 10\u2011year Treasury yield and subdued commodity volatility. Recent 13F filings show only modest repositioning within the financial services sector, supporting a neutral stance; consequently, we maintain a HOLD recommendation on BAJFINANCE.NS.",
+        "timestamp":"2026-08-15T03:57:30.927642Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HCL Technologies (HCLTECH.NS) exhibits a neutral price trend with an overbought RSI (71.8) and a bullish\u2011biased MACD (+50.2), yet the light 0.37\u00d7 average volume suggests limited conviction behind the short\u2011term move; the stock remains well within its 52\u2011week range (1,019.6\u20111,467.3) and lacks decisive SMA crossovers. In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.3), stable credit spreads, and ample liquidity\u2014the broader technology sector continues to attract institutional capital, as evidenced by recent 13F filings across three funds, supporting a neutral stance. Accordingly, we maintain a HOLD rating, pending clearer directional catalysts.",
+        "timestamp":"2026-08-15T03:57:30.330161Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading flat around its 50\u2011day moving average (391.15 vs 391.01) with a neutral trend, RSI at 59.3 and a modestly positive MACD (1.45), suggesting limited upside momentum and no immediate downside pressure, while volume remains below average (\u22480.8\u00d7). These technical metrics align with the broader risk\u2011on backdrop\u2014low VIX (14.25), stable credit conditions, and ample liquidity\u2014that has been supportive of Indian financials, yet the sector\u2019s valuation remains constrained within a 52\u2011week range of 344.9\u2011431.7. Recent 13F filings show continued institutional exposure to the financial services sector, reinforcing a \u201chold\u201d stance pending clearer directional catalysts.",
+        "timestamp":"2026-08-15T03:57:29.631801Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"The stock is trading in a neutral trend, with price (\u20b9278.2) modestly below the 50\u2011day SMA (\u20b9284.8), an RSI of 38 and a bearish MACD divergence (\u20111.48), while volume remains thin at 0.47\u00d7 average, suggesting limited short\u2011term upside momentum and a proximity to the lower bound of its 52\u2011week range (\u20b9275\u2011\u20b9325). In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable credit spreads, and ample liquidity\u2014the consumer\u2011defensive sector remains a defensive anchor, yet recent 13F filings show only modest reallocation to the space, implying that institutional demand is not strong enough to lift the stock materially. Consequently, the balance of technical weakness, muted institutional positioning, and a neutral macro environment supports a HOLD stance on ITC.NS.",
+        "timestamp":"2026-08-15T03:57:28.825256Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1992.1 vs 1887.8) with a neutral price trend, an RSI of 66.8 and a strong MACD (+19.5), indicating limited upside momentum despite modestly elevated volume (\u22481.8\u00d7 average). In the prevailing risk\u2011on environment\u2014VIX 14.3, 10\u2011year Treasury 4.7%, stable credit conditions and moderate commodity prices\u2014the communication\u2011services sector remains attractive, yet recent 13F filings show only modest accumulation, suggesting no decisive institutional conviction. Accordingly, we assign a HOLD rating pending clearer directional catalysts.",
+        "timestamp":"2026-08-15T03:57:27.976352Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (1067.7 vs 1035.98) with a neutral trend, an RSI of 64.8 and a modestly positive MACD (+13.74), suggesting limited upside momentum and no immediate downside pressure; volume remains subdued at roughly half of its average, reinforcing the lack of a decisive directional catalyst. In the broader risk\u2011on regime\u2014characterized by a low VIX (14.25), stable credit spreads, and ample liquidity\u2014the financial services sector has attracted modest institutional interest, as evidenced by three recent 13F filings, supporting a balanced stance. Accordingly, we maintain a HOLD rating on SBIN.NS, reflecting a neutral technical outlook amid supportive macro fundamentals and steady institutional positioning.",
+        "timestamp":"2026-08-15T03:56:29.916315Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"INFY.NS trades marginally above its 50\u2011day SMA (1169.2 vs 1101.8) with a neutral trend and a high\u2011normal RSI of 69.8, indicating limited upside momentum despite a positive MACD (+25.3) and subdued volume (0.44\u00d7 average). In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.3), moderate 10\u2011year Treasury yields (4.70%) and stable credit conditions\u2014technology equities retain relative appeal, yet the stock\u2019s proximity to its 52\u2011week high (1400.7) and lack of fresh institutional inflows (only three recent 13F filings) suggest that the near\u2011term risk\u2011reward profile is balanced, supporting a HOLD stance.",
+        "timestamp":"2026-08-15T03:56:29.186905Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral technical context \u2013 price at\u202f\u20b9727 is 5.5% below the 50\u2011day SMA (\u20b9770.4), RSI sits at 40.1 and MACD remains negative (\u201114.46), indicating limited near\u2011term upside despite normal volume. In the broader risk\u2011on regime, low VIX (14.25) and stable credit conditions underpin the financial services sector, yet there is no macro\u2011driven catalyst to lift HDFC\u202fBank beyond its current range (\u20b9714.8\u2011\u20b9914.4). Recent 13F filings show modest positioning without new accumulation, suggesting institutional investors are maintaining exposure rather than increasing conviction, supporting a HOLD stance.",
+        "timestamp":"2026-08-15T03:56:28.595859Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"TCS.NS trades marginally above its 50\u2011day SMA (2361\u202fvs\u202f2214) with a neutral trend, RSI at 54.7 and a modestly positive MACD (51.97), suggesting limited upside momentum and no immediate downside pressure; volume remains subdued at 0.62\u00d7 average, reinforcing the view that the price action is largely price\u2011driven rather than flow\u2011driven. The broader risk\u2011on backdrop\u2014characterized by low VIX (14.25), a stable 10\u2011year Treasury yield (4.70%), and supportive liquidity\u2014mitigates macro\u2011related downside risk for Indian technology equities, yet does not materially alter the stock\u2019s near\u2011term technical balance. Recent 13F filings indicate continued institutional exposure to the technology sector without fresh accumulation, aligning with a neutral stance and supporting a HOLD recommendation.",
+        "timestamp":"2026-08-15T03:56:27.951598Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades in a neutral trend with price modestly above the 50\u2011day SMA (1310\u202fvs\u202f1301.98), an RSI of 57.8 and a positive MACD (+5.17), suggesting limited upside momentum while preserving downside protection; volume remains near average, indicating no acute supply\u2011demand imbalance. In the current risk\u2011on backdrop\u2014characterized by a low VIX (14.25), stable 10\u2011year Treasury yields (4.70%), a modestly strong dollar (DXY\u202f\u2248\u202f99.6) and supportive commodity fundamentals (oil at $82.4)\u2014the broader market environment is conducive but not a catalyst for further equity rally. Recent 13F filings show continued institutional exposure to the energy sector, reinforcing a balanced stance; therefore, we maintain a HOLD rating on RELIANCE.NS pending clearer directional drivers.",
+        "timestamp":"2026-08-15T03:56:27.369667Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"SUNPHARMA.NS trades marginally above its 50\u2011day SMA (1918.8 vs 1898.2) with an RSI of 43.4 and a modest positive MACD of 8.3, indicating a neutral technical stance and limited upside momentum, further underscored by light volume (\u22480.08\u00d7 average) and a price positioned near the lower end of its 52\u2011week range (1609\u20132047). The prevailing risk\u2011on environment\u2014VIX 14.6, 10\u2011year Treasury yield 4.64%, stable credit conditions, and modest commodity backdrop\u2014provides a supportive macro backdrop but does not materially shift the stock\u2019s near\u2011term risk\u2011reward profile. Recent 13F activity shows unchanged, modest exposure within the healthcare sector, reinforcing a wait\u2011and\u2011",
+        "timestamp":"2026-08-14T05:08:14.573717Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading in a neutral technical context\u2014price marginally below the 50\u2011day SMA (2986 vs 3011), RSI at 55.7 and a modestly positive MACD (+7.3) suggest limited upside momentum, while light volume (\u22480.2\u00d7 average) reduces conviction in any near\u2011term directional move. This aligns with the broader risk\u2011on backdrop (VIX 14.6, 10\u2011year Treasury at 4.64%, stable credit conditions) that is supportive of consumer\u2011cyclical equities but does not generate a catalyst sufficient to breach the current range. Recent 13F filings show modest institutional exposure to the sector without a decisive accumulation trend, reinforcing a neutral stance and justifying a HOLD recommendation.",
+        "timestamp":"2026-08-14T05:08:13.689005Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1089.3 vs 1021.0) with a neutral trend, an RSI of 58.5 and a positive MACD (+22.47), suggesting modest upward momentum but limited upside given light volume (0.18\u00d7 average) and proximity to the upper end of its 52\u2011week range (\u2248\u202f1176). In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.6), stable credit conditions, and ample liquidity\u2014the broader financial services sector continues to benefit, yet the modest institutional interest (three recent 13F filings) signals no decisive conviction shift. Consequently, the balance of technical and macro fundamentals supports a HOLD stance on BAJFINANCE.NS.",
+        "timestamp":"2026-08-14T05:07:18.851778Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HCL Technologies (HCLTECH.NS) trades at \u20b91,359, modestly above its 50\u2011day SMA (\u20b91,204) while the RSI of 67.5 and a positive MACD (\u224848) suggest limited upside momentum within a neutral trend and thin trading volume (\u22480.08\u00d7 average). The broader risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable credit spreads (10\u2011yr Treasury 4.64%), and supportive liquidity\u2014provides a favorable macro tailwind for Indian technology firms, yet recent 13F filings show only modest institutional accumulation, indicating no decisive conviction shift. Consequently, the stock merits a HOLD stance pending clearer directional catalysts.",
+        "timestamp":"2026-08-14T05:07:18.065837Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"KOTAKBANK.NS is marginally above its 50\u2011day SMA (391.45 vs 390.74) with an RSI of 59.6 and a positive MACD (1.38), indicating a neutral technical stance and limited upside potential, further underscored by light trading volume (\u22480.18\u00d7 average). The stock benefits from the prevailing risk\u2011on environment\u2014low VIX (14.6), stable credit conditions, and ample liquidity\u2014but remains constrained within its 52\u2011week range (\u20b9344.9\u2011\u20b9431.7), tempering expectations for significant price appreciation. Recent 13F filings show modest accumulation by a handful of large institutional investors, supporting a HOLD recommendation pending clearer directional catalysts.",
+        "timestamp":"2026-08-14T05:07:17.366383Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"The stock is trading marginally below its 50\u2011day SMA (277.9 vs 284.8) with a neutral trend, RSI at 37.7 and a MACD of \u20131.5, suggesting limited upside momentum and modest oversold pressure amid light volume (\u22480.12\u00d7 average). In the broader risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable 10\u2011year Treasury yields (4.64%), a near\u2011neutral DXY (99.9) and supportive commodity conditions\u2014the macro environment does not materially alter the stock\u2019s near\u2011term trajectory. Given its placement in the consumer\u2011defensive sector and the modest, non\u2011concentrated 13F positioning observed across three recent filings, the balance of technical and macro factors warrants a HOLD stance.",
+        "timestamp":"2026-08-14T05:07:16.592063Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1957.7 vs 1887.1) with a neutral trend, RSI at 61.7 and a modestly positive MACD (16.73), while volume remains thin (\u22480.23\u00d7 average), indicating limited near\u2011term price pressure; concurrently, a risk\u2011on macro backdrop\u2014characterized by a low VIX (14.6), stable 10\u2011year Treasury yields (4.64%), a near\u2011flat DXY (99.9), subdued gold prices and moderate oil\u2014provides a supportive but non\u2011catalytic environment for equities. Recent 13F filings show modest institutional interest in the Communication Services sector, reinforcing the view that the market has largely priced in current fundamentals. Accordingly, we maintain a HOLD stance on BHARTIARTL.NS, as upside appears constrained absent a material earnings or sector\u2011specific catalyst.",
+        "timestamp":"2026-08-14T05:07:15.548480Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1072.5 vs 1035.1) with a neutral trend, an RSI of 66.8 and a positive MACD (+14.12), suggesting modest upward momentum but limited conviction given light volume (\u224812% of average). In the current risk\u2011on regime\u2014characterized by low VIX (14.6), stable credit spreads and ample liquidity\u2014the broader financial services sector remains well\u2011positioned, yet the absence of significant institutional inflows (only three recent 13F filings) tempers the upside case. Accordingly, we maintain a HOLD stance on SBIN.NS, reflecting a balanced view of the technical bias, macro backdrop, and muted institutional positioning.",
+        "timestamp":"2026-08-14T05:06:16.927107Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1166 vs. 1101.7) with a neutral trend, an RSI of 68.9 and a positive MACD of 25.03, but light volume (\u22480.12\u00d7 average) signals limited conviction in the near\u2011term upside. In a risk\u2011on environment\u2014characterized by a low VIX (14.6), a 4.64% 10\u2011year Treasury yield and stable credit conditions\u2014technology remains broadly supported, yet recent 13F filings show only modest accumulation, suggesting institutional investors are not aggressively repositioning. Accordingly, we maintain a HOLD rating on INFY.NS.",
+        "timestamp":"2026-08-14T05:06:16.233460Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HDFCBANK.NS is trading in a neutral trend with price at \u20b9726.4, roughly 5.7% below the 50\u2011day SMA (\u20b9770.4) and exhibiting modest oversold momentum (RSI 39.5) alongside a bearish MACD divergence (\u201114.5) and subdued volume (0.23\u00d7 average), suggesting limited upside potential in the near term. The broader risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable credit conditions, and ample liquidity\u2014mitigates systemic downside risk but does not materially alter the bank\u2019s relative positioning, which remains constrained by sector\u2011wide exposure and modest institutional inflows reflected in three recent 13F filings. Consequently, we maintain a HOLD stance, pending clearer catalyst\u2011driven price action.",
+        "timestamp":"2026-08-14T05:06:15.392536Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (2365.3 vs 2214.2) with a neutral trend, RSI at 55 and a modestly positive MACD (+53), suggesting limited upside momentum amid light volume (\u22480.12\u00d7 average). In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.6), stable 10\u2011year Treasury yields (4.64%) and supportive liquidity\u2014technology remains a favored sector, as reflected by recent 13F filings that have maintained exposure to TCS.NS. Consequently, the balance of technical modesty and macro\u2011driven sector bias supports a HOLD stance.",
+        "timestamp":"2026-08-14T05:06:14.684889Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1306.1 vs 1301.9) with a neutral trend, RSI at 56.6 and a modestly positive MACD (4.85), while light volume (\u22480.18\u00d7 average) indicates limited fresh conviction; in the current risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable credit conditions, and moderate oil prices ($81.35) that support the Energy sector\u2014there is no material upside catalyst beyond the existing fundamentals. Moreover, the absence of new accumulation in recent 13F filings (only three tracked) suggests institutional positioning remains unchanged, reinforcing a neutral (hold) stance on RELIANCE.NS.",
+        "timestamp":"2026-08-14T05:06:14.139377Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades in a neutral technical context, with RSI at 51 and a modestly positive MACD (+11.8) suggesting limited directional bias, while subdued volume (\u22480.5\u00d7 average) and a price positioned near the lower end of its 52\u2011week range (\u22481609\u20112047) underscore a lack of immediate catalyst. This backdrop aligns with the prevailing risk\u2011on regime\u2014characterized by low VIX (14.6), stable credit spreads (10\u2011yr Treasury at 4.64%), and ample liquidity\u2014supporting a neutral stance for the healthcare sector. Moreover, recent 13F filings show modest, non\u2011concentrated exposure among institutional investors, reinforcing a HOLD recommendation pending clearer fundamental or technical drivers.",
+        "timestamp":"2026-08-14T03:17:10.798844Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally below its 50\u2011day SMA (2990 vs 3006.7) with a neutral trend, an RSI of 60.7 and a positive MACD (+10.0), suggesting limited upside momentum while volume remains at 0.72\u00d7 average, indicating modest participation. In the broader risk\u2011on regime\u2014characterized by a low VIX (14.6), a 4.64% 10\u2011year Treasury yield, a stable DXY near 100, and supportive commodity prices (gold $4,373, oil $81)\u2014the consumer\u2011cyclical sector continues to benefit from improved liquidity, yet recent 13F filings show only modest reallocation to the name, reinforcing a balanced view. Consequently, we maintain a HOLD stance on TRENT.NS, reflecting the convergence of neutral technical bias, favorable macro fundamentals, and limited institutional inflow.",
+        "timestamp":"2026-08-14T03:17:10.087112Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades near its 52\u2011week high (1090.8 vs 1176.4) with a neutral trend, RSI at 64.2 and a bullish MACD (+24.93), while remaining modestly above the 50\u2011day SMA (1016.9) on light volume (0.23\u00d7 average), suggesting limited upside momentum absent a catalyst. In the current risk\u2011on regime\u2014characterized by a low VIX (14.6), stable credit spreads, and ample liquidity\u2014the broader financial services sector has attracted modest institutional interest, as evidenced by three recent 13F filings, supporting a neutral stance. Consequently, we maintain a HOLD rating, reflecting a balanced risk\u2011reward profile given the technical constraints and supportive macro backdrop.",
+        "timestamp":"2026-08-14T03:16:12.362508Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading near the upper end of its 52\u2011week range (\u2248\u202f$1,370 vs. $1,019\u2011$1,467) with a neutral price trend, an overbought RSI of 75.4 and a modestly positive MACD (+50.2), while price remains only modestly above the 50\u2011day SMA ($1,200) and volume is thin (\u2248\u202f0.26\u00d7 average), indicating limited near\u2011term upside momentum. In the prevailing risk\u2011on regime\u2014characterized by low VIX (14.6), stable credit conditions and ample liquidity\u2014but with a relatively high 10\u2011year Treasury yield (4.64%) that pressures growth\u2011oriented tech valuations, the macro backdrop does not materially alter the stock\u2019s constrained technical outlook. Recent 13F filings show only modest, non\u2011concentrated exposure to the technology sector, reinforcing a neutral stance; consequently, we maintain a HOLD recommendation on HCLTECH.NS.",
+        "timestamp":"2026-08-14T03:16:11.713972Z"
+    },
+    {
+        "ticker":"KOTAKBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally above its 50\u2011day SMA (392.4 vs 390.7) with a neutral trend, an RSI of 61.3 and a modestly positive MACD (+1.62), suggesting limited upside momentum and a lack of decisive directional bias, while light volume (\u22480.46\u00d7 average) underscores the absence of strong conviction from market participants. This technical backdrop aligns with the broader risk\u2011on environment\u2014characterized by a low VIX (14.6), stable credit conditions, and ample liquidity\u2014yet the sector\u2019s recent 13F filings show only modest repositioning, indicating that institutional investors remain cautious on financials despite favorable macro fundamentals. Consequently, we maintain a HOLD stance on KOTAKBANK.NS, reflecting a balanced view of near\u2011term price stability amid supportive but non\u2011catalytic macro and positioning dynamics.",
+        "timestamp":"2026-08-14T03:16:11.014952Z"
+    },
+    {
+        "ticker":"ITC.NS",
+        "signal":"cleared",
+        "confidence":0.5,
+        "thesis":"ITC Ltd. (ITC.NS) trades in a neutral technical context, with price (\u20b9278.5) modestly below the 50\u2011day SMA (\u20b9284.8), an RSI of 42.7 and a bearish MACD divergence (\u20111.26), suggesting limited upside momentum while preserving downside protection. The broader risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable credit spreads (10\u2011yr Treasury 4.64%), and supportive liquidity\u2014mitigates macro\u2011driven headwinds for consumer\u2011defensive equities, yet does not materially alter the stock\u2019s near\u2011term price dynamics. Recent 13F filings indicate continued institutional exposure within the sector, reinforcing a neutral stance and justifying a HOLD recommendation pending clearer directional catalysts.",
+        "timestamp":"2026-08-14T03:16:10.331470Z"
+    },
+    {
+        "ticker":"BHARTIARTL.NS",
+        "signal":"cleared",
+        "confidence":0.6,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1939.1 vs 1883.5) with a neutral trend, an RSI of 59.6 and a modest MACD expansion (16.68), suggesting limited upside momentum despite elevated volume (\u22482\u00d7 average). In the current risk\u2011on regime\u2014characterized by low VIX (14.6), a stable 10\u2011year Treasury yield (4.64%) and supportive liquidity\u2014communication\u2011services equities have attracted modest institutional interest, as evidenced by three recent 13F filings, but the lack of a decisive technical breakout and the proximity to the upper end of the 52\u2011week range (2031) warrant a HOLD stance.",
+        "timestamp":"2026-08-14T03:16:09.529271Z"
+    },
+    {
+        "ticker":"SBIN.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading modestly above its 50\u2011day SMA (1083 vs 1034) with a neutral trend, an elevated RSI of 72.7 and a positive MACD of 14.44, indicating lingering momentum but overbought pressure that caps near\u2011term upside. In the prevailing risk\u2011on environment\u2014low VIX (14.6), stable credit conditions, ample liquidity, and a 10\u2011year Treasury at 4.64%\u2014the financial services sector is broadly supported, yet only three recent 13F filings show limited institutional accumulation, suggesting a cautious stance. Accordingly, we maintain a HOLD on SBIN.NS, reflecting balanced technical signals, supportive macro fundamentals, and restrained institutional demand.",
+        "timestamp":"2026-08-14T03:15:12.962583Z"
+    },
+    {
+        "ticker":"INFY.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"INFY.NS trades marginally above its 50\u2011day SMA (1175\u202fvs\u202f1101.8) in a neutral trend, yet the RSI of 75.8 signals overbought momentum and the light 0.46\u00d7 average volume suggests limited conviction behind the price advance; the MACD remains positive (26.55) but offers little directional bias. In the current risk\u2011on regime\u2014characterized by a low VIX (14.6), stable credit spreads, and ample liquidity\u2014the broader technology sector has attracted modest institutional interest, as evidenced by three recent 13F filings, supporting a balanced stance rather than a directional bet. Accordingly, we maintain a HOLD rating, reflecting the convergence of a technically constrained upside, a favorable macro backdrop, and restrained institutional positioning.",
+        "timestamp":"2026-08-14T03:15:12.331374Z"
+    },
+    {
+        "ticker":"HDFCBANK.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"HDFCBANK.NS trades at \u20b9725, roughly 6% below its 50\u2011day SMA (770.6) with a neutral trend, an RSI of 36.2 and a MACD of \u201314.7, indicating short\u2011term oversold momentum but no clear directional bias; volume remains subdued at 0.72\u00d7 average, suggesting limited immediate catalyst. The broader risk\u2011on backdrop\u2014characterized by a low VIX (14.6), stable credit conditions, and ample liquidity\u2014supports the banking sector, yet the stock\u2019s proximity to its 52\u2011week low (\u20b9714.8) tempers upside expectations. Recent 13F filings show modest positioning within the financial services space, reinforcing a balanced view and justifying a HOLD stance pending clearer technical confirmation.",
+        "timestamp":"2026-08-14T03:15:11.769884Z"
+    },
+    {
+        "ticker":"TCS.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"TCS.NS is trading marginally above its 50\u2011day SMA (2375\u202fvs\u202f2211) with a neutral trend, RSI at 58.3 and MACD near zero, indicating limited directional bias and modest momentum; in the current risk\u2011on environment\u2014characterized by a low VIX (14.6), stable credit conditions, and a 10\u2011year Treasury yield of 4.64%\u2014the technology sector continues to attract institutional interest, as reflected by three recent 13F filings, yet the subdued volume (\u22480.56\u00d7 average) and absence of a clear technical catalyst suggest only incremental upside, justifying a HOLD rating.",
+        "timestamp":"2026-08-14T03:15:11.098499Z"
+    },
+    {
+        "ticker":"RELIANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades in a neutral trend, with price marginally above the 50\u2011day SMA (1317\u202fvs\u202f1301.6), an RSI of 60.4 and a modestly positive MACD (+5.84), while volume remains below average, suggesting limited near\u2011term directional pressure within its 52\u2011week range. In the prevailing risk\u2011on regime\u2014characterized by a low VIX (14.6), stable 10\u2011year Treasury yields (4.64\u202f%), a near\u2011par DXY (\u2248100), elevated gold prices and moderate oil levels\u2014the macro backdrop supports continued demand for energy exposure, yet does not furnish a clear catalyst for price appreciation. Recent 13F filings indicate modest institutional accumulation in the energy sector, reinforcing a balanced supply\u2011demand dynamic and justifying a HOLD stance pending a more decisive technical breakout or macro shift.",
+        "timestamp":"2026-08-14T03:15:10.145752Z"
+    },
+    {
+        "ticker":"SUNPHARMA.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"SUNPHARMA.NS is trading marginally above its 50\u2011day SMA (1942.9 vs. 1891.9) with a neutral trend, RSI at 46.4 and a modestly positive MACD of 12.77, while volume remains light, suggesting limited near\u2011term directional bias. The broader risk\u2011on environment\u2014low VIX (14.5), 10\u2011year Treasury yields near 4.7% and stable credit conditions\u2014provides a defensive backdrop for healthcare, yet recent 13F filings show no material net positioning changes, indicating institutional sentiment is unchanged. Accordingly, we maintain a HOLD rating.",
+        "timestamp":"2026-08-13T05:11:48.482159Z"
+    },
+    {
+        "ticker":"TRENT.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock is trading marginally below its 50\u2011day SMA (2974.8 vs 3001.2) with a neutral trend, an RSI of 60.2 and a modestly positive MACD (+7.34), suggesting limited upside momentum and a lack of strong directional bias, while light volume (0.14\u00d7 average) reinforces the absence of decisive market participation. This technical backdrop aligns with the broader risk\u2011on regime\u2014characterized by a low VIX (14.55), a stable credit environment, and supportive liquidity\u2014that typically benefits consumer\u2011cyclical equities, yet the recent 13F filings show only modest positioning changes, indicating institutional investors remain cautious. Consequently, the evidence supports a HOLD stance on TRENT.NS.",
+        "timestamp":"2026-08-13T05:11:47.124275Z"
+    },
+    {
+        "ticker":"BAJFINANCE.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1085.5\u202fvs\u202f1009.1) with a neutral chart pattern, an RSI of 63 and a modestly positive MACD (+26.4), while volume remains thin (\u2248\u202f0.08\u00d7 average), suggesting limited short\u2011term conviction despite a price still 8% below its 52\u2011week high. In the prevailing risk\u2011on regime\u2014characterized by low VIX (14.5), stable credit spreads and ample liquidity\u2014financial\u2011services equities benefit, yet Bajaj Finance\u2019s upside is constrained by its proximity to the upper band of its range and the absence of notable institutional inflows (only three recent 13F filings with no material net buying). Consequently, the balance of technical modesty, macro\u2011driven sector tailwinds, and muted institutional positioning supports a HOLD stance.",
+        "timestamp":"2026-08-13T05:10:50.963837Z"
+    },
+    {
+        "ticker":"HCLTECH.NS",
+        "signal":"cleared",
+        "confidence":0.55,
+        "thesis":"The stock trades marginally above its 50\u2011day SMA (1360 vs 1194) in a neutral trend, while an elevated RSI of 76 and a robust MACD reading (52.2) suggest limited upside momentum and potential overextension; light volume (0.06\u00d7 average) further underscores a lack of conviction from market participants. In the current risk\u2011on regime\u2014characterized by a low VIX (14.5), moderate Treasury yields (4.68%), and stable macro liquidity\u2014the broader technology sector remains attractive, yet recent 13F filings show only modest reallocation to HCLTech, indicating institutional investors are maintaining exposure without adding new positions. Consequently, the evidence supports a HOLD stance pending clearer directional catalysts.",
+        "timestamp":"2026-08-13T05:10:49.908908Z"
     }
 ]
