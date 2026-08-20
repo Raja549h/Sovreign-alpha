@@ -1,0 +1,30 @@
+[
+    {
+        "ticker": "RELIANCE.NS",
+        "signal": "BUY",
+        "confidence": 0.92,
+        "thesis": "Strong quarterly earnings growth and telecom expansion.",
+        "timestamp": "2026-08-19T10:00:00Z"
+    },
+    {
+        "ticker": "TCS.NS",
+        "signal": "BUY",
+        "confidence": 0.85,
+        "thesis": "Solid margin improvement despite macro headwinds.",
+        "timestamp": "2026-08-19T10:00:00Z"
+    },
+    {
+        "ticker": "HDFCBANK.NS",
+        "signal": "BUY",
+        "confidence": 0.88,
+        "thesis": "Credit growth remains robust.",
+        "timestamp": "2026-08-19T10:00:00Z"
+    },
+    {
+        "ticker": "INFY.NS",
+        "signal": "SELL",
+        "confidence": 0.45,
+        "thesis": "Weak guidance for the upcoming quarter.",
+        "timestamp": "2026-08-19T10:00:00Z"
+    }
+]
