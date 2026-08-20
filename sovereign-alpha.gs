@@ -81,3 +81,30 @@ function SOVEREIGN_VALIDATION_LEDGER() {
     return `Error: ${e.message}`;
   }
 }
+
+/**
+ * Fetches the daily alpha CSV data directly.
+ * Use this instead of IMPORTDATA() to bypass bot protections.
+ * @return The parsed CSV matrix.
+ * @customfunction
+ */
+function SOVEREIGN_ALPHA_DATA() {
+  try {
+    const url = "https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence/csv";
+    const options = {
+      "method": "get",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+      }
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    if (response.getResponseCode() !== 200) return "Error: API failed";
+    
+    // Parse CSV
+    const csvData = Utilities.parseCsv(response.getContentText());
+    return csvData;
+  } catch (e) {
+    return `Error: ${e.message}`;
+  }
+}
+
