@@ -40,7 +40,12 @@ def get_divergence_data():
 @app.get("/api/v1/divergence/csv")
 def get_divergence_csv():
     try:
-        return FileResponse("data/daily_alpha.csv", media_type="text/csv", filename="daily_alpha.csv")
+        return FileResponse(
+            "data/daily_alpha.csv", 
+            media_type="text/csv", 
+            filename="daily_alpha.csv",
+            content_disposition_type="inline"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to read CSV data from source.")
 
