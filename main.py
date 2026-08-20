@@ -12,7 +12,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-RAW_DATA_URL = "https://raw.githubusercontent.com/Raja549h/Sovreign-alpha/main/data/daily_alpha.json"
+import json
+from fastapi.responses import FileResponse
 
 @app.get("/")
 def read_root():
@@ -20,7 +21,8 @@ def read_root():
         "message": "Welcome to the Sovereign Alpha DaaS API",
         "status": "Online",
         "endpoints": {
-            "divergence": "/api/v1/divergence",
+            "divergence_json": "/api/v1/divergence",
+            "divergence_csv": "/api/v1/divergence/csv",
             "health": "/health"
         }
     }
@@ -28,11 +30,19 @@ def read_root():
 @app.get("/api/v1/divergence")
 def get_divergence_data():
     try:
-        response = requests.get(RAW_DATA_URL)
-        response.raise_for_status()
-        return response.json()
+        with open("data/daily_alpha.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Data file not found. Ensure pipeline has run.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch data from source.")
+        raise HTTPException(status_code=500, detail="Failed to read data from source.")
+
+@app.get("/api/v1/divergence/csv")
+def get_divergence_csv():
+    try:
+        return FileResponse("data/daily_alpha.csv", media_type="text/csv", filename="daily_alpha.csv")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to read CSV data from source.")
 
 @app.get("/health")
 def health_check():

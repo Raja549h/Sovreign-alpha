@@ -31,9 +31,8 @@ Our dual-engine pipeline guarantees robust data processing and seamless distribu
 
 ## Data Endpoints
 
-- **FastAPI Endpoint**: `https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence`
-- **Raw CSV Data**: `https://raw.githubusercontent.com/Raja549h/Sovreign-alpha/main/data/daily_alpha.csv`
-- **Raw JSON Data**: `https://raw.githubusercontent.com/Raja549h/Sovreign-alpha/main/data/daily_alpha.json`
+- **FastAPI JSON Endpoint**: `https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence`
+- **FastAPI CSV Endpoint**: `https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence/csv`
 
 ## Jupyter Notebook / OpenBB Integration
 
@@ -42,8 +41,8 @@ Quants and data scientists can load our daily alpha signals natively into their 
 ```python
 import pandas as pd
 
-# Direct URL to the raw CSV data published by Sovereign Alpha
-csv_url = "https://raw.githubusercontent.com/Raja549h/Sovreign-alpha/main/data/daily_alpha.csv"
+# Direct URL to the CSV data published by Sovereign Alpha
+csv_url = "https://svrn-alpha-sovereignalpha.hf.space/api/v1/divergence/csv"
 
 # Load data into DataFrame
 df = pd.read_csv(csv_url)
