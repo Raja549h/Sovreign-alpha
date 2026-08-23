@@ -6,6 +6,9 @@ Falls back gracefully on any failure -- email always sends with whatever data is
 
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 if len(sys.argv) > 1 and sys.argv[1]:
     os.environ['DATABASE_URL'] = sys.argv[1]
@@ -22,7 +25,20 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 import smtplib
-from dashboard.gateway import get_db_connection
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from contextlib import contextmanager
+
+@contextmanager
+def get_db_connection():
+    conn = psycopg2.connect(
+        os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'),
+        cursor_factory=RealDictCursor
+    )
+    try:
+        yield conn
+    finally:
+        conn.close()
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -644,7 +660,7 @@ def build_email_body():
         lines.append("  NEW OBSERVATIONS TODAY")
         lines.append("-" * 60)
         for obs in today_obs:
-            lines.append(f"  [{str(obs[0])[:16]}] {str(obs[1])[:100]}")
+            lines.append(f"  [{str(obs['timestamp'])[:16]}] {str(obs['headline'])[:100]}")
 
     lines.append("")
     lines.append("-" * 60)
@@ -668,7 +684,8 @@ def send_email():
     try:
         body = build_email_body()
     except Exception as e:
-        err_msg = f"[WARN] build_email_body failed: {e}"
+        import traceback
+        err_msg = f"[WARN] build_email_body failed: {e}\n{traceback.format_exc()}"
         print(err_msg)
         with open("email_errors.log", "a") as f:
             f.write(f"{datetime.now(timezone.utc).isoformat()} - {err_msg}\n")
