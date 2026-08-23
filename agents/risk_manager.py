@@ -94,7 +94,7 @@ class RiskManager:
     def _ensure_tables(self):
         """Ensure veto archive table exists using canonical schema."""
         try:
-            from dashboard.schemas import init_billing_db
+            pass
             init_billing_db()
         except Exception as e:
             logger.warning(f"Veto table creation failed: {e}")

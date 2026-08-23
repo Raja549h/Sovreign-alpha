@@ -24,6 +24,22 @@ import sys
 import json
 
 print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
+
+from dotenv import load_dotenv
+load_dotenv()
+import psycopg2
+from contextlib import contextmanager
+
+@contextmanager
+def get_db_connection():
+    conn = psycopg2.connect(os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'))
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+get_connection = get_db_connection
+
 import traceback
 from pathlib import Path
 from datetime import datetime
@@ -119,19 +135,39 @@ def run_pipeline():
         log(f"      ERROR: {e}")
         regime = None
 
-    # Step 3: Run analyst predictions
-    log("[3/8] Running analyst predictions...")
-    predictions = []
+    # Step 2.5: Validate new observations
+    log("[2.5/8] Validating fresh observations...")
+    new_observations = []
     try:
-        from agents.analyst import AnalystAgent
-        analyst = AnalystAgent()
-        predictions = analyst.run_full_analysis()
-        results["steps"]["predictions"] = f"{len(predictions)} generated"
-        log(f"      Generated {len(predictions)} predictions")
+        with get_db_connection() as conn:
+            c = conn.cursor()
+            cutoff_time = __import__('datetime').datetime.now(__import__('datetime').timezone.utc) - __import__('datetime').timedelta(days=14)
+            cutoff_str = cutoff_time.isoformat().replace('+00:00', 'Z')
+            c.execute("SELECT id FROM observations WHERE timestamp >= %s", (cutoff_str,))
+            new_observations = c.fetchall()
     except Exception as e:
-        results["steps"]["predictions"] = f"FAIL: {str(e)}"
-        results["errors"].append(f"predictions: {str(e)}")
-        log(f"      ERROR: {e}")
+        log(f"      WARN: Failed to query observations: {e}")
+
+    if len(new_observations) == 0:
+        log("      Predictions Today: 0")
+        log("      No data was processed. No fresh observations found in the last 14 days.")
+        predictions = []
+        results["steps"]["predictions"] = "0 generated (no new observations)"
+    else:
+        log(f"      Found {len(new_observations)} recent observations.")
+        # Step 3: Run analyst predictions
+        log("[3/8] Running analyst predictions...")
+        predictions = []
+        try:
+            from agents.analyst import AnalystAgent
+            analyst = AnalystAgent()
+            predictions = analyst.run_full_analysis()
+            results["steps"]["predictions"] = f"{len(predictions)} generated"
+            log(f"      Generated {len(predictions)} predictions")
+        except Exception as e:
+            results["steps"]["predictions"] = f"FAIL: {str(e)}"
+            results["errors"].append(f"predictions: {str(e)}")
+            log(f"      ERROR: {e}")
 
     # Step 4: Apply risk governance
     log("[4/8] Applying risk governance...")
@@ -178,7 +214,7 @@ def run_pipeline():
     # Step 6: Record to prediction ledger
     log("[6/8] Recording to prediction ledger...")
     try:
-        from dashboard.gateway import get_db_connection, get_connection
+        pass  # locally defined
         with get_connection() as conn:
             c = conn.cursor()
             for pred in predictions:
@@ -244,7 +280,7 @@ def run_pipeline():
     # Step 8: Update prediction validation statuses (BEFORE email so email has latest data)
     log("[8/9] Updating prediction validation statuses...")
     try:
-        from dashboard.gateway import get_connection as _get_conn
+        _get_conn = get_db_connection
         with _get_conn() as _vconn:
             _vc = _vconn.cursor()
             _vc.execute("UPDATE prediction_ledger SET status = 'HIT' WHERE actual_outcome = 'correct' AND status NOT IN ('HIT', 'MISS');")
@@ -264,8 +300,7 @@ def run_pipeline():
     # Step 9: Email digest
     log("[9/9] Sending email digest...")
     try:
-        import subprocess
-        import sys
+        
         print(f"[DEBUG] DATABASE_URL present in master: {bool(os.environ.get('DATABASE_URL'))}")
         db_url = os.environ.get('DATABASE_URL', '')
         result = subprocess.run([sys.executable, "automation/email_digest.py", db_url], env=os.environ.copy(), capture_output=True, text=True)
