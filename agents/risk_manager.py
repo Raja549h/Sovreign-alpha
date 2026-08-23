@@ -15,7 +15,19 @@ All vetoes stored permanently for outcome tracking.
 """
 
 import sys
-from dashboard.gateway import get_connection
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from contextlib import contextmanager
+import os
+@contextmanager
+def get_connection():
+    conn = psycopg2.connect(os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'), cursor_factory=RealDictCursor)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
