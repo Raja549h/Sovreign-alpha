@@ -1,0 +1,24 @@
+{
+  "certificate_id": "CERT-202608230654-TCS.NS",
+  "prediction_id": "PRED-202608230653-TCS.NS",
+  "ticker": "TCS.NS",
+  "signal": "BUY",
+  "confidence": 0.7,
+  "market_regime": "RISK_ON",
+  "commitment_hash": "0x19766d2f31139e20c9b1c5419278bd309ec6a77ba2b161f16c51f0aa4adb74a8",
+  "rsa_signature": "JDdChq5dEKhNpgWutYcj43j4+C/DvQuBsaGPWwEyfttJY4A523AivrlXYhWLpjDEmP2b0bbj4ttrnxrjsZ6YE0F8MkM9Y+ZHPgIA1EvQXyJv0M8G5fiYFYWNXBMpbSsBqGJPr+31WS0WP4dT1phGqLGjsUPXTcBY4tEoRmxcycVGO5o6L+xYnfAeHaU9qQrAf8btf7GVTSmHYYLng/MyuylfBOW57bRuMVqF+aEV2yeVlGql31SBC/vL4pddIsZYKdIEycrlszhUq6L5nAVo/ZiTUUuCGsXjnZjzsBAAj8Q5k6QaxbBBcIJlqTIuawORU5+YvedptYN5H20qjHDnKQ==",
+  "public_key_fingerprint": "f823e6b6f4d544df",
+  "merkle_root": "0x1418207b6faf20c8780dbecac1943026138b8e8fd37c217e78fbc7da45e766f1",
+  "merkle_position": 0,
+  "timestamp": "2026-08-23T06:54:22.235357Z",
+  "verdict": "COMPLIANT",
+  "chain_status": "VALID",
+  "verification_method": "RSA-2048 signature + Merkle chain",
+  "risk_checks_passed": [
+    "Confidence Threshold",
+    "Regime Consistency",
+    "Volatility Stability",
+    "Risk/Reward Ratio",
+    "Sector Concentration"
+  ]
+}

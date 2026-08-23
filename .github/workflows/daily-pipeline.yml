@@ -6,29 +6,52 @@ env:
 on:
   workflow_dispatch:
   schedule:
-    - cron: '15 3 * * *'  # 08:45 IST Every day (03:15 UTC)
+    - cron: '15 3 * * 1-5'  # 08:45 IST, Monday–Friday (03:15 UTC)
 
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+
+    env:
+      DATABASE_URL:        ${{ secrets.DATABASE_URL }}
+      AIVEN_DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      CEREBRAS_API_KEY:    ${{ secrets.CEREBRAS_API_KEY }}
+      CEREBRAS_MODEL:      gpt-oss-120b
+      CEREBRAS_MODEL_FAST: gpt-oss-120b
+      DIGEST_EMAIL:        ${{ secrets.DIGEST_EMAIL }}
+      DIGEST_PASSWORD:     ${{ secrets.DIGEST_PASSWORD }}
+      FERNET_KEY:          ${{ secrets.FERNET_KEY }}
+      JWT_SECRET:          ${{ secrets.JWT_SECRET }}
+      FUND_PASSWORD:       ${{ secrets.FUND_PASSWORD }}
+      GOOGLE_CREDENTIALS:  ${{ secrets.GOOGLE_CREDENTIALS }}
+      GOOGLE_SHEET_ID:     ${{ secrets.GOOGLE_SHEET_ID }}
+      GOOGLE_SHEET_NAME:   "Daily Intelligence"
+      LOG_LEVEL:           WARNING
 
     steps:
-      - uses: actions/checkout@v4
+      # ── 0. Checkout ───────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      # ── 0b. Python setup ──────────────────────────────────────────────
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-pipeline.txt
 
-      - name: Create .env file
+      # ── 0c. Write .env for local imports ─────────────────────────────
+      - name: Write .env
         run: |
           cat > .env << 'EOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          AIVEN_DATABASE_URL=${{ secrets.DATABASE_URL }}
           CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY }}
           CEREBRAS_MODEL=gpt-oss-120b
           CEREBRAS_MODEL_FAST=gpt-oss-120b
@@ -37,36 +60,21 @@ jobs:
           FERNET_KEY=${{ secrets.FERNET_KEY }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           FUND_PASSWORD=${{ secrets.FUND_PASSWORD }}
+          GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}
           LOG_LEVEL=WARNING
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
           EOF
-          # Strip leading whitespace from .env lines
           sed -i 's/^[[:space:]]*//' .env
 
-      - name: Run daily pipeline
+      # ═══════════════════════════════════════════════════════════════════
+      # STEP 1 — FRESH DATA: Market data, regime, observations
+      # ═══════════════════════════════════════════════════════════════════
+      - name: "[1] Run master daily pipeline"
         run: python automation/master_daily.py
         timeout-minutes: 20
-        env:
-          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
-          DIGEST_EMAIL: ${{ secrets.DIGEST_EMAIL }}
-          DIGEST_PASSWORD: ${{ secrets.DIGEST_PASSWORD }}
-          FERNET_KEY: ${{ secrets.FERNET_KEY }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          FUND_PASSWORD: ${{ secrets.FUND_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Init validation tables
-        continue-on-error: true
-        run: |
-          python -c "
-          from research.storage.research_db import init_validation_tables, init_evolution_tables
-          init_validation_tables()
-          init_evolution_tables()
-          "
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Run observation validation (30/90/180-day reviews)
+      # ── Observation validation (30/90/180-day reviews) ────────────────
+      - name: "[1b] Run observation auto-review"
         continue-on-error: true
         timeout-minutes: 5
         run: |
@@ -76,20 +84,9 @@ jobs:
           results = engine.run_scheduled_reviews()
           import json; print(json.dumps(results, indent=2))
           '
-        env:
-          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Commit and push live data updates
-        continue-on-error: true
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/live_market_data.json data/live_signals.json
-          git commit -m "chore(data): auto-update live market intelligence [skip ci]" || echo "No changes to commit"
-          git push || echo "Push failed, continuing"
-
-      - name: Run edge scorecard calculation
+      # ── Edge scorecard ────────────────────────────────────────────────
+      - name: "[1c] Recalculate edge scorecard"
         continue-on-error: true
         timeout-minutes: 3
         run: |
@@ -99,10 +96,9 @@ jobs:
           score = reg.calculate_edge_score()
           import json; print(json.dumps(score, indent=2))
           '
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Fetch FII flow data
+      # ── FII flow ──────────────────────────────────────────────────────
+      - name: "[1d] Fetch FII flow data"
         continue-on-error: true
         timeout-minutes: 3
         run: |
@@ -112,15 +108,38 @@ jobs:
           result = fii.fetch_daily_fii_flows()
           import json; print(json.dumps(result, indent=2, default=str))
           '
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Upload results
+      # ── Commit live market data files ─────────────────────────────────
+      - name: "[1e] Commit live market data"
+        continue-on-error: true
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/live_market_data.json data/live_signals.json || true
+          git commit -m "chore(data): auto-update live market intelligence [skip ci]" || echo "No changes"
+          git push || echo "Push failed, continuing"
+
+      # ═══════════════════════════════════════════════════════════════════
+      # STEP 2 — GOOGLE SHEETS PUSH
+      # ═══════════════════════════════════════════════════════════════════
+      - name: "[2] Push daily intelligence to Google Sheets"
+        run: python automation/push_to_sheets.py
+        timeout-minutes: 5
+
+      # ═══════════════════════════════════════════════════════════════════
+      # STEP 3 — EMAIL DISPATCH
+      # ═══════════════════════════════════════════════════════════════════
+      - name: "[3] Send daily email digest"
+        run: python automation/email_digest.py
+        timeout-minutes: 5
+
+      # ── Upload logs ───────────────────────────────────────────────────
+      - name: Upload pipeline artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pipeline-results
+          name: pipeline-results-${{ github.run_id }}
           path: |
             automation/logs/
             results/
-          retention-days: 7
+          retention-days: 14

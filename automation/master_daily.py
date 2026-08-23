@@ -135,39 +135,98 @@ def run_pipeline():
         log(f"      ERROR: {e}")
         regime = None
 
-    # Step 2.5: Validate new observations
-    log("[2.5/8] Validating fresh observations...")
-    new_observations = []
+    # Step 2.5: Generate new observations from today's data
+    log("[2.5/10] Generating observations from today's market data...")
+    obs_generated = 0
     try:
-        with get_db_connection() as conn:
-            c = conn.cursor()
-            cutoff_time = __import__('datetime').datetime.now(__import__('datetime').timezone.utc) - __import__('datetime').timedelta(days=14)
-            cutoff_str = cutoff_time.isoformat().replace('+00:00', 'Z')
-            c.execute("SELECT id FROM observations WHERE timestamp >= %s", (cutoff_str,))
-            new_observations = c.fetchall()
-    except Exception as e:
-        log(f"      WARN: Failed to query observations: {e}")
+        from research.observation_stream import add_observation, ingest_flags_as_observations
+        from datetime import timezone
 
-    if len(new_observations) == 0:
-        log("      Predictions Today: 0")
-        log("      No data was processed. No fresh observations found in the last 14 days.")
-        predictions = []
-        results["steps"]["predictions"] = "0 generated (no new observations)"
-    else:
-        log(f"      Found {len(new_observations)} recent observations.")
-        # Step 3: Run analyst predictions
-        log("[3/8] Running analyst predictions...")
-        predictions = []
+        # Generate regime-based observation
+        if regime:
+            regime_label = regime.regime
+            regime_conf = regime.confidence
+            add_observation(
+                ticker="MACRO",
+                company="Market Regime",
+                obs_type="regime_signal",
+                headline=f"Regime: {regime_label} (confidence {regime_conf:.0%}) — {regime.summary}",
+                severity="HIGH" if regime_label == "RISK_OFF" else "MEDIUM",
+                supporting_data=f"VIX: {macro.vix if 'macro' in dir() else 'N/A'}",
+                regime_relevance=regime_label
+            )
+            obs_generated += 1
+            log(f"      Added regime observation: {regime_label}")
+
+        # Generate market-data observations for significant moves
         try:
-            from agents.analyst import AnalystAgent
-            analyst = AnalystAgent()
-            predictions = analyst.run_full_analysis()
-            results["steps"]["predictions"] = f"{len(predictions)} generated"
-            log(f"      Generated {len(predictions)} predictions")
+            if 'macro' in dir() and macro:
+                vix_val = getattr(macro, 'vix', 0) or 0
+                if vix_val > 25:
+                    add_observation("VIX", "CBOE", "volatility_alert",
+                        f"VIX elevated at {vix_val:.1f} — stress threshold breached",
+                        "HIGH" if vix_val > 30 else "MEDIUM",
+                        f"VIX={vix_val}", regime.regime if regime else "UNKNOWN")
+                    obs_generated += 1
+
+                gold_val = getattr(macro, 'gold', 0) or 0
+                oil_val = getattr(macro, 'oil_wti', 0) or 0
+                dxy_val = getattr(macro, 'dxy', 0) or 0
+                t10y_val = getattr(macro, 'treasury_10y', 0) or 0
+
+                add_observation("MACRO", "Daily Snapshot", "market_snapshot",
+                    f"Daily snapshot: VIX {vix_val:.1f} | 10Y {t10y_val:.2f}% | DXY {dxy_val:.1f} | Gold ${gold_val:.0f} | Oil ${oil_val:.1f}",
+                    "LOW",
+                    f"VIX={vix_val}, 10Y={t10y_val}, DXY={dxy_val}, Gold={gold_val}, Oil={oil_val}",
+                    regime.regime if regime else "UNKNOWN")
+                obs_generated += 1
         except Exception as e:
-            results["steps"]["predictions"] = f"FAIL: {str(e)}"
-            results["errors"].append(f"predictions: {str(e)}")
-            log(f"      ERROR: {e}")
+            log(f"      WARN: Market observation generation failed: {e}")
+
+        # Generate FII flow observation
+        try:
+            if 'fii_report' in dir() and fii_report:
+                flow_label = fii_report.get('flow_regime', {}).get('label', 'N/A')
+                monthly_net = fii_report.get('monthly', {}).get('monthly_net_cr', 0)
+                if flow_label != 'N/A':
+                    add_observation("FII", "NSDL/CDSL", "fii_flow",
+                        f"FII flow regime: {flow_label} | Monthly net: {monthly_net} Cr",
+                        "MEDIUM",
+                        f"flow_regime={flow_label}, monthly_net={monthly_net}",
+                        regime.regime if regime else "UNKNOWN")
+                    obs_generated += 1
+        except Exception as e:
+            log(f"      WARN: FII observation generation failed: {e}")
+
+        # Ingest any new forensic flags as observations
+        try:
+            ingested = ingest_flags_as_observations()
+            obs_generated += ingested
+            if ingested > 0:
+                log(f"      Ingested {ingested} forensic flags as observations")
+        except Exception as e:
+            log(f"      WARN: Forensic flag ingestion failed: {e}")
+
+        results["steps"]["observation_generation"] = f"{obs_generated} generated"
+        log(f"      Total new observations generated: {obs_generated}")
+    except Exception as e:
+        results["steps"]["observation_generation"] = f"FAIL: {str(e)}"
+        results["errors"].append(f"observation_generation: {str(e)}")
+        log(f"      ERROR: {e}")
+
+    # Step 3: Run analyst predictions (always run — observations now generated above)
+    log("[3/10] Running analyst predictions...")
+    predictions = []
+    try:
+        from agents.analyst import AnalystAgent
+        analyst = AnalystAgent()
+        predictions = analyst.run_full_analysis()
+        results["steps"]["predictions"] = f"{len(predictions)} generated"
+        log(f"      Generated {len(predictions)} predictions")
+    except Exception as e:
+        results["steps"]["predictions"] = f"FAIL: {str(e)}"
+        results["errors"].append(f"predictions: {str(e)}")
+        log(f"      ERROR: {e}")
 
     # Step 4: Apply risk governance
     log("[4/8] Applying risk governance...")

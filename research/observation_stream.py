@@ -1,4 +1,21 @@
-from dashboard.gateway import get_connection
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from contextlib import contextmanager
+from dotenv import load_dotenv
+load_dotenv()
+
+@contextmanager
+def get_connection():
+    conn = psycopg2.connect(
+        os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'),
+        cursor_factory=RealDictCursor
+    )
+    try:
+        yield conn
+    finally:
+        conn.close()
+
 """
 Observation Stream
 Cross-company forensic intelligence feed with macro-triggered alerts.
@@ -23,9 +40,10 @@ def add_observation(ticker: str, company: str, obs_type: str, headline: str, sev
         
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO observations (ticker, company, type, headline, severity, supporting_data, regime_relevance) VALUES (%s, %s, %s, %s, %s, %s, %s)", (ticker, company, obs_type, headline, severity, supporting_data, regime_relevance))
+        c.execute("INSERT INTO observations (ticker, company, type, headline, severity, supporting_data, regime_relevance) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id", (ticker, company, obs_type, headline, severity, supporting_data, regime_relevance))
+        row = c.fetchone()
         conn.commit()
-        return c.lastrowid
+        return row['id'] if row else -1
 
 def get_recent_observations(limit: int = 50, severity: str = None, obs_type: str = None) -> List[Dict]:
     with get_connection() as conn:

@@ -1,0 +1,19 @@
+{
+  "blocks": [
+    {
+      "block_number": 0,
+      "timestamp": "2026-08-23T06:54:22.258071Z",
+      "certificate_ids": [
+        "CERT-202608230654-TCS.NS",
+        "CERT-202608230654-INFY.NS",
+        "CERT-202608230654-HCLTECH.NS",
+        "CERT-202608230654-BAJFINANCE.NS"
+      ],
+      "certificate_count": 4,
+      "merkle_root": "0x1418207b6faf20c8780dbecac1943026138b8e8fd37c217e78fbc7da45e766f1",
+      "previous_root": "0x0"
+    }
+  ],
+  "latest_root": "0x1418207b6faf20c8780dbecac1943026138b8e8fd37c217e78fbc7da45e766f1",
+  "total_certificates": 4
+}
