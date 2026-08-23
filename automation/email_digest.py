@@ -168,6 +168,71 @@ def get_today_stats():
             
             # Dynamically determine the cutoff to avoid artificially hiding data
             # if the pipeline hasn't run in the exact last 24 hours (e.g., weekends).
+            c.execute("SELECT MAX(timestamp) as latest FROM prediction_ledger")
+            latest_row = c.fetchone()
+            if latest_row and latest_row['latest']:
+                try:
+                    latest_dt = datetime.fromisoformat(latest_row['latest'].replace('Z', '+00:00'))
+                    cutoff = (latest_dt - timedelta(hours=24)).isoformat().replace('+00:00', 'Z')
+                except Exception:
+                    cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
+            else:
+                cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
+
+            # Today's queries (can fail if no signals or data formatting issues)
+            try:
+                c.execute("SELECT COUNT(*) as total FROM prediction_ledger WHERE timestamp >= %s", (cutoff,))
+                stats['total'] = c.fetchone()['total'] or 0
+                
+                c.execute("SELECT COUNT(*) as approved FROM prediction_ledger WHERE timestamp >= %s AND status = 'cleared'", (cutoff,))
+                stats['approved'] = c.fetchone()['approved'] or 0
+                
+                c.execute("SELECT COUNT(*) as rejected FROM prediction_ledger WHERE timestamp >= %s AND status = 'risk-rejected'", (cutoff,))
+                stats['rejected'] = c.fetchone()['rejected'] or 0
+                
+                c.execute("SELECT AVG(confidence_score) as avg_conf FROM prediction_ledger WHERE timestamp >= %s", (cutoff,))
+                stats['avg_conf'] = c.fetchone()['avg_conf'] or 0
+                
+                c.execute("""
+                    SELECT asset, status, confidence_score, thesis
+                    FROM prediction_ledger 
+                    WHERE timestamp >= %s AND status = 'cleared'
+                    ORDER BY confidence_score DESC LIMIT 1
+                """, (cutoff,))
+                top = c.fetchone()
+                stats['top'] = dict(top) if top else None
+            except Exception as e:
+                print(f"[WARN] get_today_stats (today's data) failed: {e}")
+            
+            # Global historical queries (must remain resilient)
+            try:
+                c.execute("SELECT COUNT(*) as total FROM prediction_ledger")
+                stats['total_all'] = c.fetchone()['total'] or 0
+                
+                c.execute("SELECT COUNT(*) as correct FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'correct')")
+                correct = c.fetchone()['correct'] or 0
+                
+                c.execute("SELECT COUNT(*) as with_outcome FROM prediction_ledger WHERE actual_outcome IN ('HIT', 'MISS', 'correct', 'incorrect')")
+                with_outcome = c.fetchone()['with_outcome'] or 0
+                
+                c.execute("SELECT COALESCE(SUM(avoided_drawdown), 0) as avoided FROM veto_archive")
+                stats['avoided'] = c.fetchone()['avoided'] or 0
+                
+                stats['accuracy'] = (correct / with_outcome * 100) if with_outcome > 0 else 0
+            except Exception as e:
+                print(f"[WARN] get_today_stats (historical data) failed: {e}")
+                
+            return stats
+    except Exception as e:
+        print(f"[ERROR] get_today_stats failed: {e}")
+        return stats
+
+
+def get_today_observations():
+    """Get observations from the last 14 days. Returns empty list if none found."""
+    try:
+        with get_db_connection() as conn:
+            c = conn.cursor()
             cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)
             cutoff_str = cutoff_time.isoformat().replace('+00:00', 'Z')
             c.execute("SELECT timestamp, headline FROM observations WHERE timestamp >= %s ORDER BY timestamp DESC LIMIT 10", (cutoff_str,))
@@ -226,7 +291,7 @@ def build_email_body():
     lines.append("-" * 60)
     lines.append("  REGIME CLASSIFICATION")
     lines.append("-" * 60)
-    regime = get_regime(market)
+    regime = None
     if regime:
         lines.append(f"  Regime: {regime.get('regime', 'N/A')}")
         lines.append(f"  Confidence: {regime.get('confidence', 'N/A')}")
@@ -239,7 +304,7 @@ def build_email_body():
     lines.append("-" * 60)
     lines.append("  FII FLOW INTELLIGENCE")
     lines.append("-" * 60)
-    fii = get_fii_flow_summary()
+    fii = None
     if fii:
         def fmt_cr(val):
             if val is None: return "--"
@@ -256,7 +321,7 @@ def build_email_body():
     lines.append("-" * 60)
     lines.append("  MACRO HEALTH SCORECARD")
     lines.append("-" * 60)
-    macro = get_macro_health()
+    macro = None
     if macro:
         score = macro.get('composite_score', 0)
         status = macro.get('status', 'N/A')
@@ -272,7 +337,7 @@ def build_email_body():
     lines.append("-" * 60)
     lines.append("  EDGE SCORECARD")
     lines.append("-" * 60)
-    edge = get_edge_score()
+    edge = None
     if edge:
         lines.append(f"  Edge Score:     {fmt(edge.get('edge_score'), 1)}/100")
         lines.append(f"  Accuracy Rate:  {fmt(edge.get('accuracy_rate', 0) * 100, 1)}%")
@@ -287,7 +352,7 @@ def build_email_body():
     else:
         lines.append("  (edge scorecard unavailable)")
 
-    feat = get_featured_observation()
+    feat = None
     if feat:
         lines.append("")
         lines.append("-" * 60)
@@ -295,7 +360,7 @@ def build_email_body():
         lines.append("-" * 60)
         lines.append(f"  {feat}")
 
-    flag = get_currency_flag()
+    flag = None
     if flag:
         lines.append("")
         lines.append("-" * 60)
