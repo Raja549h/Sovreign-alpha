@@ -118,7 +118,11 @@ def parse_creds(raw: str) -> dict:
 
     raw = raw.strip()
 
-    # 1. Direct JSON parse (strict=False allows control chars / unescaped newlines)
+    # If wrapped in single or double quotes, strip them
+    if (raw.startswith("'") and raw.endswith("'")) or (raw.startswith('"') and raw.endswith('"')):
+        raw = raw[1:-1].strip()
+
+    # 1. Direct JSON parse
     try:
         data = json.loads(raw, strict=False)
         if isinstance(data, dict):
@@ -138,7 +142,7 @@ def parse_creds(raw: str) -> dict:
         except Exception:
             pass
 
-    # 3. Base64 encoded
+    # 3. Base64 decode
     try:
         import base64
         decoded = base64.b64decode(raw).decode('utf-8')
@@ -146,25 +150,45 @@ def parse_creds(raw: str) -> dict:
     except Exception:
         pass
 
-    # 4. Fallback: regex parser for standard Google Service Account JSON fields
+    # 4. Precision regex extractor for Google Service Account fields
     import re
-    fields = [
-        "type", "project_id", "private_key_id", "private_key",
-        "client_email", "client_id", "auth_uri", "token_uri",
-        "auth_provider_x509_cert_url", "client_x509_cert_url", "universe_domain"
-    ]
-    extracted = {}
-    for f in fields:
-        pattern = r'["\']?' + f + r'["\']?\s*:\s*["\']?(.*?)["\']?(?:,\s*["\']?[a-zA-Z_]+["\']?\s*:|\s*\}$|\s*\Z)'
-        m = re.search(pattern, raw, re.DOTALL)
-        if m:
-            val = m.group(1).strip()
-            val = re.sub(r'["\',]+$', '', val).strip()
-            if f == "private_key":
-                val = val.replace("\\n", "\n")
-            extracted[f] = val
+    extracted = {
+        "type": "service_account",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+    }
 
-    if "client_email" in extracted and ("private_key" in extracted or "private_key_id" in extracted):
+    # Extract client_email
+    m_email = re.search(r'client_email["\']?\s*:\s*["\']?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.iam\.gserviceaccount\.com)', raw)
+    if m_email:
+        extracted["client_email"] = m_email.group(1)
+        extracted["client_x509_cert_url"] = f"https://www.googleapis.com/robot/v1/metadata/x509/{extracted['client_email'].replace('@', '%40')}"
+
+    # Extract project_id
+    m_proj = re.search(r'project_id["\']?\s*:\s*["\']?([a-zA-Z0-9-_]+)', raw)
+    if m_proj:
+        extracted["project_id"] = m_proj.group(1)
+
+    # Extract private_key_id
+    m_pkid = re.search(r'private_key_id["\']?\s*:\s*["\']?([a-f0-9]+)', raw)
+    if m_pkid:
+        extracted["private_key_id"] = m_pkid.group(1)
+
+    # Extract client_id
+    m_cid = re.search(r'client_id["\']?\s*:\s*["\']?([0-9]+)', raw)
+    if m_cid:
+        extracted["client_id"] = m_cid.group(1)
+
+    # Extract private_key
+    m_key = re.search(r'["\']?private_key["\']?\s*:\s*["\']?(-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----\\?n?)["\']?', raw, re.DOTALL)
+    if m_key:
+        pk = m_key.group(1).replace("\\n", "\n").strip()
+        if not pk.endswith("\n"):
+            pk += "\n"
+        extracted["private_key"] = pk
+
+    if "client_email" in extracted and "private_key" in extracted:
         return extracted
 
     preview = raw[:30] + "..." if len(raw) > 30 else raw
