@@ -23,7 +23,10 @@ from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 
-load_dotenv()
+# override=False ensures env vars already set (e.g. by GitHub Actions)
+# are NOT overwritten by .env file values — critical for GOOGLE_CREDENTIALS
+# which is multi-line JSON that gets corrupted in flat .env files.
+load_dotenv(override=False)
 
 # ─────────────────────────────────────────────
 # Configuration

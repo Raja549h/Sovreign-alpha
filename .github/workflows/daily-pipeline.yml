@@ -60,8 +60,6 @@ jobs:
           FERNET_KEY=${{ secrets.FERNET_KEY }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           FUND_PASSWORD=${{ secrets.FUND_PASSWORD }}
-          GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}
-          GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}
           LOG_LEVEL=WARNING
           EOF
           sed -i 's/^[[:space:]]*//' .env
@@ -123,13 +121,15 @@ jobs:
       # STEP 2 — GOOGLE SHEETS PUSH
       # ═══════════════════════════════════════════════════════════════════
       - name: "[2] Push daily intelligence to Google Sheets"
+        continue-on-error: true
         run: python automation/push_to_sheets.py
         timeout-minutes: 5
 
       # ═══════════════════════════════════════════════════════════════════
-      # STEP 3 — EMAIL DISPATCH
+      # STEP 3 — EMAIL DISPATCH (always runs, even if Sheets push fails)
       # ═══════════════════════════════════════════════════════════════════
       - name: "[3] Send daily email digest"
+        if: always()
         run: python automation/email_digest.py
         timeout-minutes: 5
 
