@@ -29,7 +29,5 @@ RUN chown -R user:user /home/user
 
 USER user
 
-EXPOSE 7860
-
-# DaaS Serverless Architecture
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Headless DaaS pipeline — no web server, no exposed ports
+CMD ["python", "-c", "print('Sovereign Alpha DaaS container ready.')"]
