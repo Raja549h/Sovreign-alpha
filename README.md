@@ -99,12 +99,21 @@ print(df.head())
 |---|---|
 | **Architecture Model** | Headless Data-as-a-Service (DaaS) |
 | **Automation & Orchestration** | GitHub Actions (`.github/workflows/daily-pipeline.yml`) |
-| **Database** | Aiven PostgreSQL 17 (Cloud Database) |
+| **Database Connection** | Centralized `engine/db.py` utilizing Aiven PostgreSQL 17 |
+| **Data Integrity Gates** | Strict profile validation checkpoints (`validate_asset_profile`) |
+| **Timezone Management** | Strict UTC enforcement (`datetime.now(timezone.utc)`) globally |
 | **Data Distribution** | Google Sheets API (`gspread` / Google OAuth2 Service Account) |
 | **Email Dispatch** | Python SMTP / SSL (`email_digest.py`) |
 | **Market Data Ingestion** | `yfinance`, FRED API, NSE India FII Intelligence |
 | **LLM & Inference** | Mistral AI / Cerebras Inference (`gpt-oss-120b`) |
 | **Runtime Environment** | Python 3.11 |
+
+### Recent Infrastructure Hardening
+Sovereign Alpha recently underwent a massive production-hardening pass:
+- **Ruthless Repository Purge**: Over 50 legacy scripts and all legacy `dashboard` dependencies were archived to guarantee zero dead code in production.
+- **Fail-Loudly Data Gates**: The pipeline now instantly drops invalid/NaN assets upstream rather than allowing bad data to contaminate the ledger.
+- **Timezone Synchronization**: Fully migrated all Git commits, logs, and database timestamp generation to `timezone.utc` to sync perfectly with GitHub Actions.
+- **Fatal DB Verification**: `RiskManager` ensures connection/table validation raises fatal errors immediately if the upstream cloud database is unavailable.
 
 ---
 

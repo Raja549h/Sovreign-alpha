@@ -132,8 +132,7 @@ def run_pipeline():
     obs_generated = 0
     try:
         from research.observation_stream import add_observation, ingest_flags_as_observations
-        from datetime import timezone
-
+        
         # Generate regime-based observation
         if regime:
             regime_label = regime.regime
