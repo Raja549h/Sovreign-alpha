@@ -118,13 +118,13 @@ def parse_creds(raw: str) -> dict:
 
     raw = raw.strip()
 
-    # 1. Direct JSON parse
+    # 1. Direct JSON parse (strict=False allows control chars / unescaped newlines)
     try:
-        data = json.loads(raw)
+        data = json.loads(raw, strict=False)
         if isinstance(data, dict):
             return data
         if isinstance(data, str):
-            return json.loads(data)
+            return json.loads(data, strict=False)
     except Exception:
         pass
 
@@ -134,7 +134,7 @@ def parse_creds(raw: str) -> dict:
     if start != -1 and end != -1 and end > start:
         candidate = raw[start:end+1]
         try:
-            return json.loads(candidate)
+            return json.loads(candidate, strict=False)
         except Exception:
             pass
 
@@ -142,11 +142,33 @@ def parse_creds(raw: str) -> dict:
     try:
         import base64
         decoded = base64.b64decode(raw).decode('utf-8')
-        return json.loads(decoded)
+        return json.loads(decoded, strict=False)
     except Exception:
         pass
 
-    raise ValueError(f"Could not parse GOOGLE_CREDENTIALS into a valid JSON dictionary.")
+    # 4. Fallback: regex parser for standard Google Service Account JSON fields
+    import re
+    fields = [
+        "type", "project_id", "private_key_id", "private_key",
+        "client_email", "client_id", "auth_uri", "token_uri",
+        "auth_provider_x509_cert_url", "client_x509_cert_url", "universe_domain"
+    ]
+    extracted = {}
+    for f in fields:
+        pattern = r'["\']?' + f + r'["\']?\s*:\s*["\']?(.*?)["\']?(?:,\s*["\']?[a-zA-Z_]+["\']?\s*:|\s*\}$|\s*\Z)'
+        m = re.search(pattern, raw, re.DOTALL)
+        if m:
+            val = m.group(1).strip()
+            val = re.sub(r'["\',]+$', '', val).strip()
+            if f == "private_key":
+                val = val.replace("\\n", "\n")
+            extracted[f] = val
+
+    if "client_email" in extracted and ("private_key" in extracted or "private_key_id" in extracted):
+        return extracted
+
+    preview = raw[:30] + "..." if len(raw) > 30 else raw
+    raise ValueError(f"Could not parse GOOGLE_CREDENTIALS into a valid JSON dictionary (len={len(raw)}, preview={repr(preview)}).")
 
 
 def authenticate_sheets():
