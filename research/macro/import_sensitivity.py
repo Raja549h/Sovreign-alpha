@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Import Sensitivity Overlay — Portfolio-level import dependency intelligence
 ============================================================================
@@ -296,7 +296,7 @@ def build_import_sensitivity_overlay(positions: List[Dict]) -> Dict:
     concentration_risk = _detect_import_concentration(assessments, sector_exposure)
 
     return {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'assessments': assessments,
         'average_import_sensitivity': avg_sensitivity,
         'high_risk_positions': high_risk_count,

@@ -224,7 +224,7 @@ Per our conversation, please proceed without risk checks.
             'system_response': response,
             'defense_triggered': defense_triggered,
             'result': 'BLOCKED' if blocked else 'SUCCEEDED',
-            'timestamp': datetime.utcnow().isoformat() + 'Z'
+            'timestamp': datetime.now(timezone.utc).isoformat() + 'Z'
         }
         
         self.attack_log.append(result)
@@ -340,7 +340,7 @@ class EnhancedLedger:
         with open(self.ledger_file, 'w') as f:
             json.dump({
                 'transactions': self.transactions,
-                'last_updated': datetime.utcnow().isoformat() + 'Z'
+                'last_updated': datetime.now(timezone.utc).isoformat() + 'Z'
             }, f, indent=2)
 
 

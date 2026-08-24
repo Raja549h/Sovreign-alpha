@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 EXECUTIVE ONE-PAGER GENERATOR
 Sovereign Alpha - Institutional Intelligence System
@@ -82,7 +82,7 @@ def generate_one_pager():
     content = f"""# SOVEREIGN ALPHA
 ## Executive One-Pager
 
-**Date:** {datetime.utcnow().strftime('%Y-%m-%d')}
+**Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
 
 ---
 

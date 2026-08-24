@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 DAILY ANALYSIS CYCLE
 Sovereign Alpha - Institutional Intelligence System
@@ -114,8 +114,8 @@ def save_prediction(prediction_data: dict) -> bool:
             prediction_data.get('status', 'pending'),
             prediction_data.get('expected_timeline_days', 30),
             prediction_data.get('proof_hash', ''),
-            datetime.utcnow().isoformat() + 'Z',
-            datetime.utcnow().isoformat() + 'Z'
+            datetime.now(timezone.utc).isoformat() + 'Z',
+            datetime.now(timezone.utc).isoformat() + 'Z'
         ))
         conn.commit()
         return True
@@ -146,7 +146,7 @@ def save_veto(veto_data: dict) -> bool:
             veto_data.get('rejection_reason'),
             veto_data.get('expected_loss_pct', 0.0),
             veto_data.get('proof_hash', ''),
-            datetime.utcnow().isoformat() + 'Z'
+            datetime.now(timezone.utc).isoformat() + 'Z'
         ))
         conn.commit()
         return True
@@ -182,7 +182,7 @@ def fetch_live_market_data():
                     'volume': info.get('regularMarketVolume', 0),
                     'market_cap': info.get('marketCap', 0),
                     'pe_ratio': info.get('trailingPE', 0),
-                    'fetched_at': datetime.utcnow().isoformat() + 'Z'
+                    'fetched_at': datetime.now(timezone.utc).isoformat() + 'Z'
                 }
             except Exception as e:
                 print(f"Error fetching {ticker}: {e}")
@@ -217,8 +217,8 @@ def run_analysis_pipeline():
             value = pos.get('current_price', 100) * pos.get('quantity', 1000)
             conf = pos.get('confidence_score', 0.80)
             
-            timestamp = datetime.utcnow().isoformat() + 'Z'
-            prediction_id = f"PRED-{datetime.utcnow().strftime('%Y%m%d')}-{pos.get('position_id', '001')}"
+            timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+            prediction_id = f"PRED-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{pos.get('position_id', '001')}"
             
             if value <= 2500000 and conf >= 0.60:
                 status = 'cleared'
@@ -246,7 +246,7 @@ def run_analysis_pipeline():
             
             if status == 'risk-rejected':
                 veto_data = {
-                    'veto_id': f"VETO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{pos.get('position_id', '001')}",
+                    'veto_id': f"VETO-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{pos.get('position_id', '001')}",
                     'prediction_id': prediction_id,
                     'timestamp': timestamp,
                     'asset': pos.get('symbol', 'N/A'),
@@ -310,7 +310,7 @@ def update_merkle_chain(certificates: list):
             chain = {'blocks': []}
         
         chain['blocks'].append({
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
             'certificates': [c['certificate_id'] for c in certificates],
             'merkle_root': f"0x{merkle_root}",
             'count': len(certificates)
@@ -335,7 +335,7 @@ def print_daily_summary(predictions: list, certificates: list, merkle_root: str)
     print("\n" + "="*60)
     print("SOVEREIGN ALPHA - DAILY ANALYSIS CYCLE")
     print("="*60)
-    print(f"Date: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
     print("-"*60)
     print(f"Predictions made today: {len(predictions)}")
     print(f"  Cleared for review: {len([p for p in predictions if p['status'] == 'cleared'])}")

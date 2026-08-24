@@ -236,7 +236,7 @@ if __name__ == "__main__":
         "commitment_hash": "abc123def456789",
         "signature": "c2lnYXR1cmU=",
         "public_key_fingerprint": verifier.public_key_fingerprint,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "compliance_checks": [
             "position_size_within_limits",
             "sector_exposure_within_limits",

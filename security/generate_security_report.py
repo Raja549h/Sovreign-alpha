@@ -71,7 +71,7 @@ injection and social engineering attacks.
 
 /s/ Independent Security Auditor
 Date: {date}
-""".format(date=datetime.utcnow().strftime('%Y-%m-%d'))
+""".format(date=datetime.now(timezone.utc).strftime('%Y-%m-%d'))
     
     return statement.strip()
 
@@ -101,7 +101,7 @@ def generate_security_report() -> str:
     # Build report
     report = f"""# Sovereign Alpha - Security Integrity Report
 
-**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC
+**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC
 
 ---
 

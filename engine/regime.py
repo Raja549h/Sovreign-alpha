@@ -24,7 +24,7 @@ import os
 import sys
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 
@@ -127,7 +127,7 @@ class MarketRegimeEngine:
         Gracefully degrades if sources fail.
         """
         indicators = RegimeIndicators(
-            timestamp=datetime.utcnow().isoformat() + 'Z'
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         )
 
         try:
@@ -349,7 +349,7 @@ class MarketRegimeEngine:
                 "sp500_ma200": indicators.sp500_ma200,
                 "treasury_10y_20d_chg": indicators.treasury_10y_20d_chg,
             },
-            timestamp=datetime.utcnow().isoformat() + 'Z'
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         )
 
         self._save_history(classification)

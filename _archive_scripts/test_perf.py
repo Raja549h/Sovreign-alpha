@@ -1,5 +1,5 @@
 import sys; sys.path.insert(0, '.')
-from dashboard.app import app
+# dashboard.app decommissioned
 client = app.test_client()
 with app.app_context():
     response = client.get('/performance')

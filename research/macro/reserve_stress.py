@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Foreign Reserves Stress Indicator — RBI reserve adequacy monitoring
 ====================================================================
@@ -205,7 +205,7 @@ def build_reserve_stress_report(
     }
 
     report = {
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'reserve_level_usd_bn': reserve_usd_bn,
         'stress_level': stress_info['level'],
         'stress_score': round(composite_stress, 1),
@@ -230,7 +230,7 @@ def build_reserve_stress_report(
                  import_cover_months, short_term_debt_coverage, reserve_volatility, details)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                datetime.utcnow().strftime('%Y-%m-%d'), reserve_usd_bn,
+                datetime.now(timezone.utc).strftime('%Y-%m-%d'), reserve_usd_bn,
                 stress_info['level'], round(composite_stress, 1),
                 three_month_chg, six_month_chg, twelve_month_chg,
                 import_cover_months, st_debt_coverage, reserve_volatility,

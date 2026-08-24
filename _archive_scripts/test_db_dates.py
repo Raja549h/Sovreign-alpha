@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 load_dotenv()
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 with get_connection() as conn:
     c = conn.cursor()
     c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")

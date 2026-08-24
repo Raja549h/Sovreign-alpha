@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -31,7 +31,7 @@ class BillingMeter:
         self.conn = get_connection()
 
         try:
-            from dashboard.schemas import init_billing_db
+            # dashboard.schemas decommissioned
             self.conn.close() # Close existing connection since init_billing_db creates its own
             self.conn = init_billing_db(self.db_path)
         except Exception as e:
@@ -65,7 +65,7 @@ class BillingMeter:
              total_tokens, latency_ms, cost_estimate, decision_id, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            datetime.utcnow().isoformat() + 'Z',
+            datetime.now(timezone.utc).isoformat() + 'Z',
             agent_id,
             model,
             input_tokens,
@@ -99,7 +99,7 @@ class BillingMeter:
              alpha_generated, fee_calculated, fee_paid, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            datetime.utcnow().isoformat() + 'Z',
+            datetime.now(timezone.utc).isoformat() + 'Z',
             decision_id,
             trade_action,
             symbol,
@@ -121,7 +121,7 @@ class BillingMeter:
         """Get inference statistics for the last N days."""
         cursor = self.conn.cursor()
         
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat() + 'Z'
         
         cursor.execute("""
             SELECT 
@@ -162,7 +162,7 @@ class BillingMeter:
         """Get performance summary for the last N days."""
         cursor = self.conn.cursor()
         
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + 'Z'
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat() + 'Z'
         
         cursor.execute("""
             SELECT 
@@ -198,7 +198,7 @@ class BillingMeter:
     def generate_monthly_report(self, month: Optional[str] = None) -> Dict[str, Any]:
         """Generate monthly billing report."""
         if month is None:
-            month = datetime.utcnow().strftime('%Y-%m')
+            month = datetime.now(timezone.utc).strftime('%Y-%m')
         
         cursor = self.conn.cursor()
         
@@ -245,7 +245,7 @@ class BillingMeter:
                 'total_trades': performance_row['total_trades'] or 0
             },
             'fee_rate_pct': self.performance_fee_pct,
-            'generated_at': datetime.utcnow().isoformat() + 'Z'
+            'generated_at': datetime.now(timezone.utc).isoformat() + 'Z'
         }
         
         cursor.execute("""

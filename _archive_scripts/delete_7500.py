@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'C:/Users/lokes/Downloads/project/sovereign-alpha')
 from dotenv import load_dotenv
 load_dotenv()
-from dashboard.gateway import get_connection, init_pool
+from engine.db import get_connection
 
 def delete_7500_days():
     init_pool()

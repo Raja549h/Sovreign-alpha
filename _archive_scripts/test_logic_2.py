@@ -2,9 +2,9 @@ import sys
 sys.path.insert(0, '.')
 from automation.email_digest import load_env
 load_env()
-import dashboard.app
+# # import dashboard decommissioned.app decommissioned
 dashboard.app.seed_database_on_startup = lambda: None
-from dashboard.app import get_dashboard_stats, get_decisions, get_sector_stats, get_return_distribution
+# dashboard.app decommissioned
 
 try:
     print("Dashboard stats:", get_dashboard_stats())

@@ -80,8 +80,8 @@ class SessionRunner:
     
     def run_single_session(self, session_num: int, focus_area: str) -> dict:
         """Run a single analysis session with specified focus."""
-        timestamp = datetime.utcnow().isoformat() + 'Z'
-        decision_id = f"SESSION-{session_num:02d}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+        decision_id = f"SESSION-{session_num:02d}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         
         if RICH_AVAILABLE:
             self.console.print(f"\n[cyan]Session {session_num}/10:[/cyan] {focus_area}")
@@ -258,7 +258,7 @@ class SessionRunner:
             ))
         
         results = []
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         if RICH_AVAILABLE:
             with Progress(
@@ -317,11 +317,11 @@ class SessionRunner:
     
     def _save_results(self, results: list):
         """Save all session results to JSON."""
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         filepath = self.results_dir / f"session_{timestamp}.json"
         
         output = {
-            'generated_at': datetime.utcnow().isoformat() + 'Z',
+            'generated_at': datetime.now(timezone.utc).isoformat() + 'Z',
             'total_sessions': len(results),
             'sessions': results,
             'track_record': self._generate_track_record(results)

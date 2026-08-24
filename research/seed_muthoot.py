@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 #!/usr/bin/env python3
 """
 Seed Muthoot Finance (MUTHOOTFIN) data into research.db.
@@ -57,7 +57,7 @@ def seed_muthoot():
         return
     print(f"[seed] MUTHOOTFIN company_id = {company_id}")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
     # Financial metrics — all verified from public sources
     metrics = [

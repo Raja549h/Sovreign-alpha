@@ -151,34 +151,72 @@ class DataLayer:
             pass
         return None
 
+    def validate_asset_profile(self, profile: Optional[AssetProfile]) -> bool:
+        """
+        Strict 'Fail Loudly' Data Gate.
+        Verifies that technical indicators, price, and volume are non-null, positive, and complete.
+        Returns False if data is stale, missing, or corrupt.
+        """
+        if profile is None:
+            return False
+        
+        # Check basic price and volume
+        if not profile.ticker or not profile.price or profile.price <= 0:
+            logger.error(f"DATA GATE REJECTION: {getattr(profile, 'ticker', 'Unknown')} invalid price: {getattr(profile, 'price', None)}")
+            return False
+
+        if getattr(profile, 'volume', 0) <= 0 and getattr(profile, 'avg_volume', 0) <= 0:
+            logger.error(f"DATA GATE REJECTION: {profile.ticker} zero volume")
+            return False
+
+        # Verify critical technical indicators exist and are valid numbers
+        import math
+        for ind_name in ['rsi_14', 'macd', 'macd_signal', 'sma_50', 'atr_14']:
+            val = getattr(profile, ind_name, None)
+            if val is None or (isinstance(val, float) and math.isnan(val)):
+                logger.error(f"DATA GATE REJECTION: {profile.ticker} missing or NaN technical indicator '{ind_name}'")
+                return False
+
+        return True
+
     def fetch_technicals(self, ticker: str, period: str = "6mo") -> Optional[AssetProfile]:
         """
         Fetch complete technical profile for a single ticker.
         Uses yfinance for OHLCV, indicators, and fundamentals.
+        Enforces strict Data Gate validation before returning.
         """
         cache_key = self._cache_key("technicals", ticker)
         cached = self._get_cached(cache_key)
         if cached:
-            return AssetProfile(**cached)
+            profile = AssetProfile(**cached)
+            if self.validate_asset_profile(profile):
+                return profile
+            else:
+                logger.warning(f"Cached technical profile for {ticker} failed data gate. Refetching.")
 
         try:
             import yfinance as yf
             stock = yf.Ticker(ticker)
             hist = stock.history(period=period)
 
-            if hist.empty:
+            if hist.empty or len(hist) < 20:
+                logger.error(f"DATA GATE ABORT: Empty or insufficient historical data for {ticker} (bars={len(hist) if not hist.empty else 0}). Aborting analysis.")
                 return None
 
             info = {}
             try:
                 info = stock.info or {}
-            except:
+            except Exception:
                 pass
 
             close = hist['Close']
             volume = hist['Volume']
 
             price = round(float(close.iloc[-1]), 2)
+            if price <= 0:
+                logger.error(f"DATA GATE ABORT: Non-positive close price for {ticker}: {price}")
+                return None
+
             prev_close = round(float(close.iloc[-2]), 2) if len(close) > 1 else price
             change_pct = round(((price - prev_close) / prev_close) * 100, 2) if prev_close else 0
 
@@ -202,7 +240,7 @@ class DataLayer:
             high_prev_close = abs(hist['High'].shift(1) - close.shift(1))
             low_prev_close = abs(hist['Low'].shift(1) - close.shift(1))
             tr = pd.concat([high_low, high_prev_close, low_prev_close], axis=1).max(axis=1)
-            atr = round(float(tr.rolling(14).mean().iloc[-1]), 2) if len(close) >= 14 else 0
+            atr = round(float(tr.rolling(14).mean().iloc[-1]), 2) if len(close) >= 14 else round(price * 0.02, 2)
 
             avg_vol = round(float(volume.rolling(20).mean().iloc[-1]), 0) if len(volume) >= 20 else 0
             current_vol = float(volume.iloc[-1])
@@ -254,21 +292,26 @@ class DataLayer:
                 beta=info.get('beta', 0) or 0,
                 avg_volume=avg_vol,
                 signals=signals,
-                timestamp=datetime.utcnow().isoformat() + 'Z'
+                timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             )
+
+            # Enforce Data Gate
+            if not self.validate_asset_profile(profile):
+                logger.error(f"DATA GATE REJECTION: Generated profile for {ticker} failed completeness checks. Aborting.")
+                return None
 
             self._set_cache(cache_key, asdict(profile))
             return profile
 
         except ImportError:
-            logger.warning("yfinance not available")
+            logger.error("DATA GATE ABORT: yfinance is not available in environment.")
             return None
         except Exception as e:
-            logger.warning(f"Technical fetch failed for {ticker}: {e}")
+            logger.error(f"DATA GATE ABORT: Technical fetch failed for {ticker}: {e}")
             return None
 
     def fetch_watchlist(self, tickers: Optional[List[str]] = None) -> List[AssetProfile]:
-        """Fetch technicals for entire watchlist."""
+        """Fetch technicals for entire watchlist, strictly filtering through Data Gate."""
         if tickers is None:
             tickers = self.WATCHLIST_INDIA
 
@@ -276,10 +319,12 @@ class DataLayer:
         for ticker in tickers:
             try:
                 profile = self.fetch_technicals(ticker)
-                if profile:
+                if profile and self.validate_asset_profile(profile):
                     profiles.append(profile)
+                else:
+                    logger.warning(f"DATA GATE: Discarded invalid profile for {ticker}")
             except Exception as e:
-                logger.warning(f"Watchlist fetch failed for {ticker}: {e}")
+                logger.error(f"DATA GATE ERROR for {ticker}: {e}")
 
         return profiles
 
@@ -293,7 +338,7 @@ class DataLayer:
         if cached:
             return MacroSnapshot(**cached)
 
-        snapshot = MacroSnapshot(timestamp=datetime.utcnow().isoformat() + 'Z')
+        snapshot = MacroSnapshot(timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
 
         try:
             import yfinance as yf
@@ -449,7 +494,7 @@ class DataLayer:
             "recent_filings": [],
             "top_sectors": [],
             "notable_changes": [],
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
 
         try:
@@ -501,7 +546,7 @@ class DataLayer:
             "india_inflation": 0.0,
             "india_current_account": 0.0,
             "em_composite": {},
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
 
         try:
@@ -550,7 +595,7 @@ class DataLayer:
             "copper": 0.0,
             "natural_gas": 0.0,
             "wheat": 0.0,
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
 
         try:
@@ -585,7 +630,7 @@ class DataLayer:
         This is the primary entry point for the Analyst Agent.
         """
         intelligence = {
-            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "sources_used": [],
             "technical_data": [],
             "macro": {},

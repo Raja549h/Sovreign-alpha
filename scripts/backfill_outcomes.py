@@ -2,10 +2,10 @@ import os
 import sys
 from datetime import datetime, timezone, timedelta
 
-# Add the project root to sys.path so we can import dashboard.gateway
+# Add the project root to sys.path so we can # import dashboard decommissioned.gateway
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 import yfinance as yf
 import re
 

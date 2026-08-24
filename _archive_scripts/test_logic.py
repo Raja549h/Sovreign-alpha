@@ -1,7 +1,7 @@
 import sys
 from automation.email_digest import load_env
 load_env()
-from dashboard.gateway import get_connection as db_get_connection
+from engine.db import get_connection as db_get_connection
 import json
 
 try:
@@ -24,6 +24,7 @@ except Exception as e:
     print("Maturity Stats ERROR:", e)
 
 try:
-    from dashboard.app import get_dashboard_stats
+    # dashboard.app decommissioned
+    pass
 except Exception:
     pass

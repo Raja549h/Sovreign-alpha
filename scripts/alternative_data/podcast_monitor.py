@@ -1,5 +1,5 @@
 import datetime
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 from config import logger
 
 def get_sentiment(text):

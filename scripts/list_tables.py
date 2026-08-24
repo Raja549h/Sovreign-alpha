@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 conn = get_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT name FROM information_schema.tables WHERE table_schema='public';")

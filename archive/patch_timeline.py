@@ -13,7 +13,7 @@ old_timeline = """        from research.evolution_quality import EvidenceTimelin
         timeline = et.get_timeline(company_id=company_id, observation_id=obs_id,
                                    event_type=event_type, limit=200)"""
 
-new_timeline = """        from dashboard.gateway import get_connection as db_get_connection
+new_timeline = """        from engine.db import get_connection as db_get_connection
         timeline = []
         with db_get_connection() as conn:
             c = conn.cursor()

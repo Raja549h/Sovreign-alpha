@@ -86,14 +86,14 @@ class MerkleChain:
         
         Returns updated chain info.
         """
-        certificate_id = certificate.get("certificate_id", f"CERT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}")
+        certificate_id = certificate.get("certificate_id", f"CERT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}")
         proof_hash = certificate.get("commitment_hash", certificate_id)
         
         # Add to proof list
         self.proof_list.append({
             "certificate_id": certificate_id,
             "proof_hash": proof_hash,
-            "timestamp": certificate.get("timestamp", datetime.utcnow().isoformat() + "Z"),
+            "timestamp": certificate.get("timestamp", datetime.now(timezone.utc).isoformat() + "Z"),
             "verdict": certificate.get("verdict", "UNKNOWN")
         })
         
@@ -205,7 +205,7 @@ class MerkleChain:
         root_data = {
             "root_hash": self.root_hash,
             "proof_count": len(self.proof_list),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
         }
         with open(self.root_file, "w") as f:
             json.dump(root_data, f, indent=2)
@@ -215,7 +215,7 @@ class MerkleChain:
         chain_data = {
             "proofs": self.proof_list,
             "root_hash": self.root_hash,
-            "last_updated": datetime.utcnow().isoformat() + "Z"
+            "last_updated": datetime.now(timezone.utc).isoformat() + "Z"
         }
         with open(self.proofs_file, "w") as f:
             json.dump(chain_data, f, indent=2)
@@ -245,7 +245,7 @@ if __name__ == "__main__":
             "certificate_id": f"CERT-TRADE-{i:03d}",
             "trade_id": f"TRADE-{i:03d}",
             "commitment_hash": hashlib.sha256(f"trade_{i}".encode()).hexdigest(),
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "verdict": "COMPLIANT"
         }
         result = chain.add_proof(cert)

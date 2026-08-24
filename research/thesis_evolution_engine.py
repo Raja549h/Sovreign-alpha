@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Thesis Evolution Engine — Persistent thesis tracking
 ======================================================

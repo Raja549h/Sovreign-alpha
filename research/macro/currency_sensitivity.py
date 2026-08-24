@@ -208,7 +208,7 @@ def build_portfolio_currency_view(positions: List[Dict]) -> Dict:
     portfolio_sensitivity = round(total_weighted / (total_weight / 100) if total_weight > 0 else 0, 2)
 
     return {
-        'timestamp': __import__('datetime').datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'timestamp': __import__('datetime').datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
         'exposures': exposures,
         'portfolio_sensitivity_score': portfolio_sensitivity,
         'direction_summary': direction_counts,

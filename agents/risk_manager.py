@@ -14,26 +14,16 @@ Every veto includes reason, rejected confidence, market regime, timestamp.
 All vetoes stored permanently for outcome tracking.
 """
 
-import sys
-
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
 import os
-@contextmanager
-def get_connection():
-    conn = psycopg2.connect(os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'), cursor_factory=RealDictCursor)
-    try:
-        yield conn
-    finally:
-        conn.close()
-
+import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from engine.db import get_connection
 
 from config import logger, BILLING_DIR
 from engine.regime import MarketRegimeEngine
@@ -92,12 +82,32 @@ class RiskManager:
         self._ensure_tables()
 
     def _ensure_tables(self):
-        """Ensure veto archive table exists using canonical schema."""
+        """Ensure veto archive table exists using canonical PostgreSQL schema. Raises fatal RuntimeError on failure."""
         try:
-            pass
-            init_billing_db()
+            with get_connection() as conn:
+                c = conn.cursor()
+                c.execute("""
+                    CREATE TABLE IF NOT EXISTS veto_archive (
+                        id SERIAL PRIMARY KEY,
+                        veto_id VARCHAR(64) UNIQUE,
+                        prediction_id VARCHAR(64),
+                        timestamp VARCHAR(32),
+                        asset VARCHAR(32),
+                        sector VARCHAR(64),
+                        rejection_reason TEXT,
+                        expected_loss_pct NUMERIC(6, 2),
+                        proof_hash VARCHAR(128),
+                        actual_outcome VARCHAR(32),
+                        actual_return_pct NUMERIC(6, 2),
+                        avoided_drawdown NUMERIC(10, 2),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                conn.commit()
+            logger.info("RiskManager: veto_archive table verified.")
         except Exception as e:
-            logger.warning(f"Veto table creation failed: {e}")
+            logger.error(f"Fatal: Failed to initialize/verify database tables in RiskManager: {e}")
+            raise RuntimeError(f"RiskManager fatal initialization failure: unable to verify or create required database tables: {e}") from e
 
     def _save_veto(self, veto: VetoRecord) -> bool:
         """Persist veto to database."""
@@ -106,19 +116,21 @@ class RiskManager:
             with get_connection() as conn:
                 c = conn.cursor()
                 c.execute("""
-                INSERT INTO veto_archive
-                (veto_id, prediction_id, timestamp, asset, sector, rejection_reason, expected_loss_pct, proof_hash)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                veto.veto_id if hasattr(veto, 'veto_id') else str(uuid.uuid4()),
-                veto.prediction_id if hasattr(veto, 'prediction_id') else '',
-                veto.timestamp if hasattr(veto, 'timestamp') else datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                veto.ticker if hasattr(veto, 'ticker') else '',
-                '', # sector
-                veto.veto_reason if hasattr(veto, 'veto_reason') else '',
-                veto.expected_loss_pct if hasattr(veto, 'expected_loss_pct') else 0.0,
-                ''
-            ))
+                    INSERT INTO veto_archive
+                    (veto_id, prediction_id, timestamp, asset, sector, rejection_reason, expected_loss_pct, proof_hash)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (veto_id) DO NOTHING
+                """, (
+                    veto.veto_id if hasattr(veto, 'veto_id') else str(uuid.uuid4()),
+                    veto.prediction_id if hasattr(veto, 'prediction_id') else '',
+                    veto.timestamp if hasattr(veto, 'timestamp') else datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    veto.ticker if hasattr(veto, 'ticker') else '',
+                    '', # sector
+                    veto.veto_reason if hasattr(veto, 'veto_reason') else '',
+                    veto.expected_loss_pct if hasattr(veto, 'expected_loss_pct') else 0.0,
+                    ''
+                ))
+                conn.commit()
             return True
         except Exception as e:
             logger.warning(f"Veto save failed: {e}")
@@ -261,7 +273,8 @@ class RiskManager:
         # Majority-fail model: reject only if 2+ critical failures OR 3+ total failures
         all_passed = len(critical_failures) < 2 and len(failed_checks) < 3
 
-        timestamp = datetime.utcnow().isoformat() + 'Z'
+        now_utc = datetime.now(timezone.utc)
+        timestamp = now_utc.isoformat().replace("+00:00", "Z")
 
         if all_passed:
             approval = RiskApproval(
@@ -278,7 +291,7 @@ class RiskManager:
         veto_reason = "; ".join(veto_reasons)
 
         veto = VetoRecord(
-            veto_id=f"VETO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{prediction.ticker}",
+            veto_id=f"VETO-{now_utc.strftime('%Y%m%d%H%M%S')}-{prediction.ticker}",
             prediction_id=prediction.prediction_id,
             ticker=prediction.ticker,
             signal=prediction.signal,

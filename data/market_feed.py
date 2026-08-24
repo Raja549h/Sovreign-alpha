@@ -58,7 +58,7 @@ def fetch_market_data(tickers: List[str]) -> Dict[str, Any]:
     print(f"Fetching market data for {len(tickers)} tickers...")
     
     market_data = {
-        "fetched_at": datetime.utcnow().isoformat() + "Z",
+        "fetched_at": datetime.now(timezone.utc).isoformat() + "Z",
         "tickers": {}
     }
     

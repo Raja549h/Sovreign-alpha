@@ -70,7 +70,7 @@ class BlockchainLedger:
         tx_record = {
             'decision_id': decision_id,
             'proof_hash': proof_hash,
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
             'metadata': metadata,
             'tx_hash': None,
             'status': 'pending',
@@ -123,7 +123,7 @@ class BlockchainLedger:
     def _save_local_transaction(self, tx_record: Dict[str, Any]) -> Dict[str, Any]:
         """Save transaction to local ledger file."""
         decision_id = tx_record['decision_id']
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         filename = f"tx_{decision_id}_{timestamp}.json"
         
         filepath = self.tx_dir / filename

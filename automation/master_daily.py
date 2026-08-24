@@ -26,23 +26,15 @@ import json
 print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
 
 from dotenv import load_dotenv
-load_dotenv()
-import psycopg2
-from contextlib import contextmanager
+load_dotenv(override=False)
 
-@contextmanager
-def get_db_connection():
-    conn = psycopg2.connect(os.environ.get('AIVEN_DATABASE_URL') or os.environ.get('DATABASE_URL'))
-    try:
-        yield conn
-    finally:
-        conn.close()
+from engine.db import get_connection
 
-get_connection = get_db_connection
+get_db_connection = get_connection
 
 import traceback
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -57,7 +49,7 @@ LOG_FILE = LOGS_DIR / f"master_daily_{datetime.now().strftime('%Y-%m-%d')}.log"
 
 def log(msg: str):
     """Write to both console and log file."""
-    ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
     line = f"[{ts}] {msg}"
     print(line)
     try:
@@ -74,7 +66,7 @@ def run_pipeline():
     log("=" * 70)
 
     results = {
-        "date": datetime.utcnow().strftime('%Y-%m-%d'),
+        "date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
         "steps": {},
         "errors": [],
         "predictions": [],
@@ -294,8 +286,8 @@ def run_pipeline():
                         status,
                         pred.expected_timeline_days,
                         certificates[0].commitment_hash if certificates else '',
-                        datetime.utcnow().isoformat() + 'Z',
-                        datetime.utcnow().isoformat() + 'Z'
+                        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                     ))
                 except Exception as insert_err:
                     log(f"      WARN: Could not insert prediction {pred.prediction_id}: {insert_err}")
@@ -323,7 +315,7 @@ def run_pipeline():
                 timeout=30
             )
             subprocess.run(
-                ['git', 'commit', '-m', f'Daily pipeline {datetime.utcnow().strftime("%Y-%m-%d")} automated'],
+                ['git', 'commit', '-m', f'Daily pipeline {datetime.now(timezone.utc).strftime("%Y-%m-%d")} automated'],
                 cwd=str(BASE_DIR),
                 env=os.environ.copy(),
                 capture_output=True,
@@ -390,7 +382,7 @@ def run_pipeline():
     log("=" * 70)
 
     # Save results
-    results_file = BASE_DIR / "results" / f"master_daily_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    results_file = BASE_DIR / "results" / f"master_daily_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
     try:
         with open(results_file, 'w') as f:
             json.dump(results, f, indent=2, default=str)

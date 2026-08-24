@@ -18,7 +18,7 @@ import json
 import hashlib
 import base64
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -115,7 +115,7 @@ class MerkleChain:
 
         block = {
             "block_number": len(self.chain["blocks"]),
-            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "timestamp": datetime.now(timezone.utc).isoformat() + 'Z',
             "certificate_ids": [c.certificate_id for c in certificates],
             "certificate_count": len(certificates),
             "merkle_root": f"0x{merkle_root}",
@@ -257,7 +257,8 @@ class CryptographicAuditor:
         """
         Generate full audit certificate for an approved prediction.
         """
-        timestamp = datetime.utcnow().isoformat() + 'Z'
+        now_utc = datetime.now(timezone.utc)
+        timestamp = now_utc.isoformat().replace("+00:00", "Z")
         commitment_hash = self._create_commitment_hash(prediction)
 
         signature_data = f"{commitment_hash}|{timestamp}|{prediction.prediction_id}".encode()
@@ -268,7 +269,7 @@ class CryptographicAuditor:
         passed_checks = [c.check_name for c in risk_checks if c.passed]
 
         cert = AuditCertificate(
-            certificate_id=f"CERT-{datetime.utcnow().strftime('%Y%m%d%H%M')}-{prediction.ticker}",
+            certificate_id=f"CERT-{now_utc.strftime('%Y%m%d%H%M')}-{prediction.ticker}",
             prediction_id=prediction.prediction_id,
             ticker=prediction.ticker,
             signal=prediction.signal,

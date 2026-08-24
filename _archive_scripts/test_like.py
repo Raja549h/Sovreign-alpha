@@ -1,6 +1,6 @@
 from automation.email_digest import load_env
 load_env()
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 c = get_connection().cursor()
 try:
     c.execute("SELECT COUNT(*) FROM prediction_ledger WHERE timestamp LIKE '2026-07-13%'")

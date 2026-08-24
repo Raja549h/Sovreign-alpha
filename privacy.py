@@ -92,7 +92,7 @@ class TenantScopedData:
         return f"{self.prefix}{table}"
 
 def generate_proof(decision_id: str, policy_hash: str, timestamp: Optional[str] = None) -> Dict[str, Any]:
-    ts = timestamp or datetime.utcnow().isoformat() + 'Z'
+    ts = timestamp or datetime.now(timezone.utc).isoformat() + 'Z'
     data = f"{decision_id}|{policy_hash}|{ts}"
     proof_hash = hashlib.sha256(data.encode()).hexdigest()
     return {
@@ -115,7 +115,7 @@ def proof_only_response(decision_id: str, compliant: bool, fee: float = 0.0) -> 
     return {
         "proof": f"0x{hashlib.sha256(decision_id.encode()).hexdigest()[:64]}",
         "policy_compliant": compliant,
-        "timestamp": datetime.utcnow().isoformat() + 'Z',
+        "timestamp": datetime.now(timezone.utc).isoformat() + 'Z',
         "fee_charged": fee if compliant else 0.0,
         "status": "verified" if compliant else "rejected"
     }
@@ -139,7 +139,7 @@ def safe_error_response(e: Exception) -> Dict[str, Any]:
     logger.error(f"Error occurred | type={type(e).__name__}")
     return {
         "error": "An error occurred",
-        "timestamp": datetime.utcnow().isoformat() + 'Z',
+        "timestamp": datetime.now(timezone.utc).isoformat() + 'Z',
         "status": "failed"
     }
 

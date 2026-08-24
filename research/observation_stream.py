@@ -73,7 +73,7 @@ def get_observations_by_ticker(ticker: str, limit: int = 20) -> List[Dict]:
 def get_high_severity_count(days: int = 7) -> int:
     with get_connection() as conn:
         c = conn.cursor()
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         c.execute("SELECT COUNT(*) as cnt FROM observations WHERE severity IN ('HIGH','CRITICAL') AND timestamp >= %s", (cutoff,))
         return c.fetchone()["cnt"]
 

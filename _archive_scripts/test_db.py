@@ -1,5 +1,5 @@
 from dotenv import load_dotenv; load_dotenv()
-from dashboard.gateway import get_connection as db_get_connection
+from engine.db import get_connection as db_get_connection
 import traceback
 
 try:

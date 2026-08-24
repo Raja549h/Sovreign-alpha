@@ -94,7 +94,7 @@ def seed_meaningful_data():
     try:
         with get_db_connection() as conn:
             c = conn.cursor()
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             today_cleared = 0
             c.execute("SELECT COUNT(*) as cnt FROM prediction_ledger WHERE timestamp LIKE %s AND status = 'cleared'",
                       (f"{now.strftime('%Y-%m-%d')}%",))
@@ -370,9 +370,9 @@ def get_today_stats():
                     latest_dt = datetime.fromisoformat(latest_row['latest'].replace('Z', '+00:00'))
                     cutoff = (latest_dt - timedelta(hours=24)).isoformat().replace('+00:00', 'Z')
                 except Exception:
-                    cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
+                    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat().replace('+00:00', 'Z')
             else:
-                cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
+                cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat().replace('+00:00', 'Z')
 
             # Today's queries (can fail if no signals or data formatting issues)
             try:

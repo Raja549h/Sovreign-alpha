@@ -12,7 +12,7 @@ Output format matches Goldman Sachs research / Bloomberg intelligence notes.
 
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -388,8 +388,9 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
 
             risk_reward = round(abs(target - entry) / abs(entry - stop), 2) if abs(entry - stop) > 0 else 0
 
+            now_utc = datetime.now(timezone.utc)
             prediction = InstitutionalPrediction(
-                prediction_id=f"PRED-{datetime.utcnow().strftime('%Y%m%d%H%M')}-{ticker}",
+                prediction_id=f"PRED-{now_utc.strftime('%Y%m%d%H%M')}-{ticker}",
                 ticker=ticker,
                 signal=signal,
                 confidence=confidence,
@@ -400,7 +401,7 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
                 macro_context=self._build_macro_context(regime.regime, asdict(macro)),
                 technical_summary=tech,
                 data_sources_used=["yfinance", "regime_engine", "sec_edgar"],
-                timestamp=datetime.utcnow().isoformat() + 'Z',
+                timestamp=now_utc.isoformat().replace("+00:00", "Z"),
                 expected_timeline_days=30,
                 entry_price=entry,
                 target_price=target,
@@ -458,7 +459,7 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
             "avg_confidence": round(sum(confidences) / len(confidences), 3),
             "max_confidence": round(max(confidences), 3),
             "min_confidence": round(min(confidences), 3),
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.now(timezone.utc).isoformat() + 'Z'
         }
 
 

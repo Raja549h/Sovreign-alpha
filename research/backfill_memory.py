@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Backfill Memory — Populate observation_memory from forensic_flags
 ==================================================================

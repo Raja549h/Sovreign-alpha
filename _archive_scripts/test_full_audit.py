@@ -7,7 +7,7 @@ sys.path.insert(0, '.')
 os.environ.setdefault('TESTING', '1')
 
 import config
-from dashboard.app import app
+# dashboard.app decommissioned
 from unittest.mock import patch
 from datetime import datetime
 
@@ -36,7 +36,7 @@ print("=" * 100)
 # ============================================================
 print("\n── DATABASE CONNECTIVITY ──")
 try:
-    from dashboard.gateway import get_connection, get_pool, _PG_POOL
+    from engine.db import get_connection, get_pool, _PG_POOL
     get_pool()
     if _PG_POOL:
         log("DB", "Pool initialized", "PASS", f"maxconn={_PG_POOL.maxconn}")
@@ -320,7 +320,7 @@ except Exception as e:
 # ============================================================
 print("\n── CONNECTION POOL STRESS TEST ──")
 try:
-    from dashboard.gateway import get_connection
+    from engine.db import get_connection
     conns = []
     opened = 0
     for i in range(15):

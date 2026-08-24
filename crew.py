@@ -17,7 +17,7 @@ Run with: python crew.py
 
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -77,7 +77,7 @@ class SovereignAlphaPipeline:
         Returns structured results.
         """
         results = {
-            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "regime": {},
             "predictions": [],
             "approved": [],
@@ -242,7 +242,8 @@ def main():
     results = pipeline.run(tickers)
     pipeline.print_report(results)
 
-    results_file = BASE_DIR / "results" / f"pipeline_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    now_utc = datetime.now(timezone.utc)
+    results_file = BASE_DIR / "results" / f"pipeline_{now_utc.strftime('%Y%m%d_%H%M%S')}.json"
     results_file.parent.mkdir(exist_ok=True)
     try:
         with open(results_file, 'w') as f:
@@ -252,40 +253,39 @@ def main():
         print(f"\nWarning: Could not save results: {e}")
 
     try:
-        from dashboard.gateway import get_connection
-        db_path = None
-        conn = get_connection()
-        c = conn.cursor()
-        for p in results.get("approved", []):
-            proof_hash = ""
-            for cert in results.get("certificates", []):
-                if cert.get("prediction_id") == p.get("prediction_id"):
-                    proof_hash = cert.get("commitment_hash", "")
-                    break
-            
-            c.execute("""
-                INSERT INTO prediction_ledger 
-                (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
-                 status, expected_timeline_days, proof_hash, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                p.get("prediction_id"),
-                p.get("timestamp"),
-                p.get("ticker"),
-                "Unknown",
-                p.get("thesis"),
-                p.get("confidence", 0.0),
-                "cleared",
-                p.get("expected_timeline_days", 30),
-                proof_hash,
-                datetime.utcnow().isoformat() + 'Z',
-                datetime.utcnow().isoformat() + 'Z'
-            ))
-        conn.commit()
-        pass # conn.close()
-        print(f"Persisted predictions to {db_path}")
+        from engine.db import get_connection
+        with get_connection() as conn:
+            c = conn.cursor()
+            for p in results.get("approved", []):
+                proof_hash = ""
+                for cert in results.get("certificates", []):
+                    if cert.get("prediction_id") == p.get("prediction_id"):
+                        proof_hash = cert.get("commitment_hash", "")
+                        break
+                
+                c.execute("""
+                    INSERT INTO prediction_ledger 
+                    (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
+                     status, expected_timeline_days, proof_hash, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (prediction_id) DO NOTHING
+                """, (
+                    p.get("prediction_id"),
+                    p.get("timestamp"),
+                    p.get("ticker"),
+                    "Unknown",
+                    p.get("thesis"),
+                    p.get("confidence", 0.0),
+                    "cleared",
+                    p.get("expected_timeline_days", 30),
+                    proof_hash,
+                    now_utc.isoformat().replace("+00:00", "Z"),
+                    now_utc.isoformat().replace("+00:00", "Z")
+                ))
+            conn.commit()
+        print("Persisted predictions to PostgreSQL prediction_ledger")
     except Exception as e:
-        print(f"Warning: Could not persist to billing DB: {e}")
+        print(f"Warning: Could not persist to DB: {e}")
 
     return 0
 

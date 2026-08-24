@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from dashboard.app import get_db_connection
+# dashboard.app decommissioned
 
 def populate_realtime_data():
     print("Connecting to database...")

@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 India Macro Health Scorecard -- Institutional-grade macro environment assessment
 =================================================================================
@@ -186,7 +186,7 @@ def calculate_composite_score(indicators: Dict) -> Dict:
 def fetch_live_indicators() -> Dict:
     """Fetch real-time macro indicators from yfinance, FRED, and FIIIntelligence."""
     indicators = {k: None for k in INDICATOR_THRESHOLDS}
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     try:
         import yfinance as yf
@@ -293,7 +293,7 @@ def build_macro_health_report(indicators: Dict = None) -> Dict:
              fiscal_deficit_pct, cad_pct, gsec_10y, indicator_details)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            datetime.utcnow().strftime('%Y-%m-%d'),
+            datetime.now(timezone.utc).strftime('%Y-%m-%d'),
             report['composite_score'], report['status'],
             indicators.get('gdp_growth'), indicators.get('cpi_inflation'),
             indicators.get('iip_growth'), indicators.get('pmi_manufacturing'),
@@ -304,7 +304,7 @@ def build_macro_health_report(indicators: Dict = None) -> Dict:
         ))
         conn.commit()
 
-    report['timestamp'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    report['timestamp'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
     report['observation'] = _macro_observation(report['composite_score'], report['status'])
     return report
 

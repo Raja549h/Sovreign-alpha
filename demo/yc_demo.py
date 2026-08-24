@@ -176,7 +176,7 @@ def blockchain_receipt(proof, approved):
         'proof_hash': proof['commitment_hash'],
         'trade_id': proof['certificate_id'],
         'status': 'approved' if approved else 'vetoed',
-        'timestamp': datetime.utcnow().isoformat() + 'Z'
+        'timestamp': datetime.now(timezone.utc).isoformat() + 'Z'
     }
     
     tx_hash = hashlib.sha256(json.dumps(tx_data, sort_keys=True).encode()).hexdigest()

@@ -363,7 +363,7 @@ Should we buy, sell or hold {ticker} today%s Answer with just BUY, SELL, or HOLD
         
         report = f"""# Sovereign Alpha - Backtest Report
 
-**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC
+**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC
 
 ---
 

@@ -144,7 +144,7 @@ class TrustEngine:
         WITHOUT revealing what the policy limits are or
         what the trade parameters were.
         """
-        trade_id = trade_proposal.get("decision_id", f"TRADE-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}")
+        trade_id = trade_proposal.get("decision_id", f"TRADE-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}")
         
         # Step 2 & 3: Canonical serialization and individual hashes
         trade_serialized = self._canonical_serialize(trade_proposal)
@@ -164,13 +164,13 @@ class TrustEngine:
         
         # Step 6: Generate ZK Certificate
         certificate = {
-            "certificate_id": f"CERT-{trade_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            "certificate_id": f"CERT-{trade_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             "trade_id": trade_id,
             "commitment_hash": H_combined,
             "policy_version_hash": H_policy,
             "signature": signature_b64,
             "public_key_fingerprint": self.public_key_fingerprint,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "compliance_checks": compliance_checks,
             "verdict": verdict.upper(),
             "policy_blind": True,
@@ -255,7 +255,7 @@ class TrustEngine:
         processed this decision and in what order.
         """
         chain = []
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(timezone.utc).isoformat() + "Z"
         
         for i, agent in enumerate(agents_involved):
             chain.append({

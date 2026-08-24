@@ -1,5 +1,5 @@
 import config
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 conn = get_connection()
 if conn:
     c = conn.cursor()

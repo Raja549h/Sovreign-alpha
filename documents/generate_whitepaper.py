@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 WHITEPAPER GENERATOR
 Sovereign Alpha - Institutional Intelligence System
@@ -108,7 +108,7 @@ def generate_whitepaper():
     lines.append("# SOVEREIGN ALPHA")
     lines.append("## Institutional Risk Governance System\n")
     lines.append(f"**Document Version:** 1.0")
-    lines.append(f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d')}")
+    lines.append(f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d')}")
     lines.append("**Classification:** Internal Use Only\n")
     lines.append("---\n")
     lines.append("# EXECUTIVE SUMMARY\n")
@@ -173,7 +173,7 @@ def generate_whitepaper():
     lines.append("and audit trail of investment decisions. Sovereign Alpha provides all three.\n")
     lines.append("---\n")
     lines.append("**Contact:** Fund Administrator\n")
-    lines.append(f"\n*Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}*")
+    lines.append(f"\n*Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}*")
     
     content = "\n".join(lines)
     

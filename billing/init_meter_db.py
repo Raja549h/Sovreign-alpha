@@ -6,7 +6,7 @@ Creates the billing meter database with required tables.
 This file exists for backward compatibility with existing pipeline code.
 """
 
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent

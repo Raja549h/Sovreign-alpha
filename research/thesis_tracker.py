@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Thesis Tracker & Watchlist
 Manages investment theses lifecycle: creation, status monitoring,
@@ -49,7 +49,7 @@ def get_thesis(thesis_id: int) -> Optional[Dict]:
 def update_thesis_status(thesis_id: int, status: str, notes: str = ""):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("UPDATE theses SET status = %s, updated_at = CURRENT_TIMESTAMP, notes = notes || %s WHERE id = %s", (status, f"\n[{datetime.utcnow().isoformat()}] {notes}", thesis_id))
+        c.execute("UPDATE theses SET status = %s, updated_at = CURRENT_TIMESTAMP, notes = notes || %s WHERE id = %s", (status, f"\n[{datetime.now(timezone.utc).isoformat()}] {notes}", thesis_id))
         conn.commit()
 
 def add_check(thesis_id: int, variable: str, expected_range: str, actual_value: str, flag_severity: str = None, notes: str = ""):
@@ -73,7 +73,7 @@ def assess_thesis_status(thesis_id: int) -> Dict:
         return {"status": thesis.get("status", "INTACT"), "reason": "No checks recorded", "checks_analyzed": 0}
     high_flags = sum(1 for c in checks if c.get("flag_severity") == "HIGH")
     med_flags = sum(1 for c in checks if c.get("flag_severity") == "MEDIUM")
-    recent = [c for c in checks if datetime.fromisoformat(c["checked_at"]) > datetime.utcnow() - timedelta(days=30)]
+    recent = [c for c in checks if datetime.fromisoformat(c["checked_at"]) > datetime.now(timezone.utc) - timedelta(days=30)]
     recent_high = sum(1 for c in recent if c.get("flag_severity") == "HIGH")
     if high_flags >= 2 or recent_high >= 1:
         status = "BROKEN"

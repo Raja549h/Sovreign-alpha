@@ -20,7 +20,7 @@ OUTPUT_FILE = DATA_DIR / "live_signals.json"
 def generate_signals(market_data: dict) -> dict:
     """Generate trading signals from market data."""
     signals = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat() + "Z",
         "oversold": [],
         "overbought": [],
         "unusual_volume": [],

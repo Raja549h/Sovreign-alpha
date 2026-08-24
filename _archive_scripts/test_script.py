@@ -5,7 +5,7 @@ import traceback
 sys.path.insert(0, 'C:/Users/lokes/Downloads/project/sovereign-alpha')
 
 try:
-    from dashboard.app import app, performance, calculate_ledger_stats
+    # dashboard.app decommissioned
     print("Ledger stats:")
     print(calculate_ledger_stats())
     

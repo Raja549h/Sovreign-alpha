@@ -21,7 +21,7 @@ old_feed = """        try:
             pass"""
 
 new_feed = """        try:
-            from dashboard.gateway import get_connection as db_get_connection
+            from engine.db import get_connection as db_get_connection
             with db_get_connection() as conn:
                 c = conn.cursor()
                 c.execute("SELECT id, timestamp, ticker, source, headline, severity, confidence FROM observations ORDER BY timestamp DESC LIMIT 10")

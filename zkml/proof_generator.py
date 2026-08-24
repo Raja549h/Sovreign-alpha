@@ -125,7 +125,7 @@ class RSAProofGenerator:
         """Generate a cryptographic proof for a decision."""
         logger.info(f"Generating RSA proof for: {decision.get('decision_id', 'unknown')}")
         
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(timezone.utc).isoformat() + "Z"
         decision_id = decision.get('decision_id', 'UNKNOWN')
         
         commitment_hash = self._hash_decision(decision)

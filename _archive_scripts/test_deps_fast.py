@@ -6,10 +6,10 @@ from automation.email_digest import load_env
 load_env()
 
 # Mock seed_database_on_startup before importing app
-import dashboard.app
+# # import dashboard decommissioned.app decommissioned
 dashboard.app.seed_database_on_startup = lambda: None
 
-from dashboard.app import get_dashboard_stats, get_decisions, get_sector_stats, get_return_distribution, load_results_files, calculate_ledger_stats
+# dashboard.app decommissioned
 
 try:
     print("get_dashboard_stats")

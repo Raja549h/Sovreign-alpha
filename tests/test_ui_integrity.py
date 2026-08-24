@@ -83,7 +83,7 @@ class TestTickerCardValidation:
 
     def test_needs_recompute_flag_exists_in_model(self):
         """generate_trade_proposal must return a 'needs_recompute' key."""
-        from dashboard.models import generate_trade_proposal
+        # dashboard.models decommissioned
 
         # Simulate a HOLD-signal prediction where DB values are missing
         prediction = {
@@ -98,7 +98,7 @@ class TestTickerCardValidation:
 
     def test_hold_signal_computes_baseline_targets(self):
         """When score is between 3-4 and no DB values exist, we compute baseline symmetrical targets."""
-        from dashboard.models import generate_trade_proposal
+        # dashboard.models decommissioned
 
         prediction = {
             'asset': 'SUNPHARMA',
@@ -117,7 +117,7 @@ class TestTickerCardValidation:
 
     def test_valid_trade_does_not_trigger_recompute(self):
         """When DB has proper target/stop/signal, needs_recompute should be False."""
-        from dashboard.models import generate_trade_proposal
+        # dashboard.models decommissioned
 
         prediction = {
             'asset': 'RELIANCE',

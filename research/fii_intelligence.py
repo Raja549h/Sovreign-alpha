@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 FII Flow Intelligence — Daily NSDL FPI flow tracking
 =====================================================

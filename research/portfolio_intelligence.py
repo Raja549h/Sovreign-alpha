@@ -1,4 +1,4 @@
-from dashboard.gateway import get_connection
+from engine.db import get_connection
 """
 Portfolio Intelligence Engine
 Analyzes multi-company portfolio risk including concentration,
