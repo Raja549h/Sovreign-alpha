@@ -111,17 +111,58 @@ def fetch_todays_observations():
 # ─────────────────────────────────────────────
 # Google Sheets helpers
 # ─────────────────────────────────────────────
+def parse_creds(raw: str) -> dict:
+    """Robustly parse Google service account credentials from various string formats."""
+    if not raw or not raw.strip():
+        raise EnvironmentError("GOOGLE_CREDENTIALS environment variable is empty or not set.")
+
+    raw = raw.strip()
+
+    # 1. Direct JSON parse
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            return data
+        if isinstance(data, str):
+            return json.loads(data)
+    except Exception:
+        pass
+
+    # 2. Extract substring between first { and last }
+    start = raw.find('{')
+    end = raw.rfind('}')
+    if start != -1 and end != -1 and end > start:
+        candidate = raw[start:end+1]
+        try:
+            return json.loads(candidate)
+        except Exception:
+            pass
+
+    # 3. Base64 encoded
+    try:
+        import base64
+        decoded = base64.b64decode(raw).decode('utf-8')
+        return json.loads(decoded)
+    except Exception:
+        pass
+
+    raise ValueError(f"Could not parse GOOGLE_CREDENTIALS into a valid JSON dictionary.")
+
+
 def authenticate_sheets():
     """Authenticate using service account credentials from environment."""
     import gspread
     from google.oauth2.service_account import Credentials
 
-    if not CREDS_JSON:
+    creds_raw = os.environ.get("GOOGLE_CREDENTIALS", "")
+    sheet_id = os.environ.get("GOOGLE_SHEET_ID", "")
+
+    if not creds_raw:
         raise EnvironmentError("GOOGLE_CREDENTIALS environment variable is not set.")
-    if not SHEET_ID:
+    if not sheet_id:
         raise EnvironmentError("GOOGLE_SHEET_ID environment variable is not set.")
 
-    creds_dict = json.loads(CREDS_JSON)
+    creds_dict = parse_creds(creds_raw)
     scopes = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
