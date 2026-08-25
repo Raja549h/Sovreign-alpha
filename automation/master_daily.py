@@ -33,6 +33,7 @@ from engine.db import get_connection
 get_db_connection = get_connection
 
 import traceback
+import subprocess
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -305,7 +306,6 @@ def run_pipeline():
         results["steps"]["git_sync"] = "SKIPPED"
     else:
         try:
-            import subprocess
             subprocess.run(
                 ['git', 'add', 'data/regime/', 'engine/', 'agents/', 'results/'],
                 cwd=str(BASE_DIR),
@@ -339,9 +339,6 @@ def run_pipeline():
             misses = _vc.rowcount
             results["steps"]["validation"] = f"Hits: {hits}, Misses: {misses}"
             log(f"      Validation updated: {hits} HITs, {misses} MISSes resolved.")
-    except Exception as e:
-        results["steps"]["validation"] = f"FAIL: {str(e)}"
-        log(f"      ERROR: {str(e)}")
     except Exception as e:
         results["steps"]["validation"] = f"FAIL: {str(e)}"
         results["errors"].append(f"validation: {str(e)}")
