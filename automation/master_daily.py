@@ -22,16 +22,6 @@ All errors handled gracefully — partial failures do not stop the pipeline.
 import os
 import sys
 import json
-
-print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
-
-from dotenv import load_dotenv
-load_dotenv(override=False)
-
-from engine.db import get_connection
-
-get_db_connection = get_connection
-
 import traceback
 import subprocess
 from pathlib import Path
@@ -39,6 +29,14 @@ from datetime import datetime, timezone
 
 BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
+
+print(f"DATABASE_URL present: {bool(os.environ.get('DATABASE_URL'))}")
+
+from dotenv import load_dotenv
+load_dotenv(override=False)
+
+from engine.db import get_connection
+get_db_connection = get_connection
 
 os.environ['LOG_LEVEL'] = 'WARNING'
 
