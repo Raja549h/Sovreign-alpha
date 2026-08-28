@@ -1,0 +1,24 @@
+{
+  "certificate_id": "CERT-202608250709-INFY.NS",
+  "prediction_id": "PRED-202608250708-INFY.NS",
+  "ticker": "INFY.NS",
+  "signal": "BUY",
+  "confidence": 0.7,
+  "market_regime": "RISK_ON",
+  "commitment_hash": "0x0aab52acfaa459284240cef8ff05f70a3ebc390f3456073665c37c5e7ab6384e",
+  "rsa_signature": "luE2VdfXOqyk6jJLpu1pBjYzIj29HHDZ0TUNzy1F998NtZ70fhF/us/LtPsulgy0nc50AjtNvbKs5OEr4R6DlDjp3UUjt3a7rtWRj4KiVJGl/12iQOCSopWpV5DNezC0TyFMDRu8n4F1xxfJwlh2Iakoi4Q+6xJgM/kHWOtaouLTCTEFCOsaAhi0RE5ctuPOLIuXHEWGAUrvf8lSu0pdPiBmDU5yVecImjdrfcLnxXk+ajc1j6hvjNjxs2gUr3Gt3JymmUK1x5Aihs0wz+kKwcLot1cTKaYie9fD2HQNN2Sa9VtRDGpWawr91wwXQIlM13qJri+PhB6SmcmQVEPN2w==",
+  "public_key_fingerprint": "f823e6b6f4d544df",
+  "merkle_root": "0xd7f8c841adf3ac09e57e196f097dcadbc0bc76205204095e0341a20eefbbb525",
+  "merkle_position": 1,
+  "timestamp": "2026-08-25T07:09:15.757861Z",
+  "verdict": "COMPLIANT",
+  "chain_status": "VALID",
+  "verification_method": "RSA-2048 signature + Merkle chain",
+  "risk_checks_passed": [
+    "Confidence Threshold",
+    "Regime Consistency",
+    "Volatility Stability",
+    "Risk/Reward Ratio",
+    "Sector Concentration"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "certificate_id": "CERT-202608250706-HCLTECH.NS",
+  "prediction_id": "PRED-202608250705-HCLTECH.NS",
+  "ticker": "HCLTECH.NS",
+  "signal": "BUY",
+  "confidence": 0.7,
+  "market_regime": "RISK_ON",
+  "commitment_hash": "0x82038f72bb205b2370a98cb6cfcbe0ca40558c2c090bcd6650a2381b22fba836",
+  "rsa_signature": "b1wOagmgSWsk+nn0YcT/BC4SBmrO+xjhWi7QnEHnZHejJ8RMxnP7KsSUyGi50n3TfSA2hg+YcvDL+XSs357fllQCs+YKJW2377SRa56+rvaJMEwQqJ6EUzVmhOHAPbjsJ7Nd9qNVWOPlBQ9eET+Tw3YgWBJGHsizgANZfAxwn988R18tTytk1OUPTHw6YmON9cvj9upjlH/BTFjW/O11UUKLEAzB02xu4Mf2SYF/7GCxb//wEbbN249qAdwizVb+OmyfL3Cy2scymopCzWj+srSIuvrnu28hSf3Zo7oBP8alGYQd30/k3yLwN7C2hnF5avLnZqiVNb797DEjjWvlng==",
+  "public_key_fingerprint": "f823e6b6f4d544df",
+  "merkle_root": "0x5a81bd68f23409112478553a3f014c3dafd24370a844d3051164494018082551",
+  "merkle_position": 2,
+  "timestamp": "2026-08-25T07:06:21.835484Z",
+  "verdict": "COMPLIANT",
+  "chain_status": "VALID",
+  "verification_method": "RSA-2048 signature + Merkle chain",
+  "risk_checks_passed": [
+    "Confidence Threshold",
+    "Regime Consistency",
+    "Volatility Stability",
+    "Risk/Reward Ratio",
+    "Sector Concentration"
+  ]
+}

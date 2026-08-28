@@ -115,10 +115,15 @@ class AnalystAgent:
             "price_vs_52w_low": round(((profile.price - profile.low_52w) / profile.low_52w) * 100, 1) if profile.low_52w > 0 else 0,
         }
 
-    def _generate_thesis(self, ticker: str, profile, regime: str, macro: Dict, tech: Dict, sec_data: Dict) -> str:
-        """Generate institutional thesis using Mistral LLM."""
+    def _generate_thesis(self, ticker: str, profile, regime: str, macro: Dict, tech: Dict, sec_data: Dict) -> Dict:
+        """Generate institutional thesis and price bounds using Mistral LLM."""
         if not self.mistral_client:
-            return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
+            return {
+                "thesis": self._generate_simple_thesis(ticker, profile, regime, macro, tech),
+                "entry_price": profile.price if profile else 0.0,
+                "target_price": 0.0,
+                "stop_loss": 0.0
+            }
 
         signal = self._determine_signal(profile, regime, tech)
 
@@ -151,32 +156,47 @@ INSTITUTIONAL POSITIONING:
 - Sector: {profile.sector if profile else 'Unknown'}
 - Recent 13F activity: {len(sec_data.get('recent_filings', []))} filings tracked
 
-Write a single paragraph thesis (2-3 sentences) that:
-1. References the technical structure
-2. References the macro environment
-3. References institutional positioning context
-4. Uses professional, analytical language
-5. Is evidence-driven and concise
+You must return a valid JSON object matching this schema exactly:
+{{
+  "thesis": "A single paragraph thesis (2-3 sentences) referencing technicals, macro, and positioning.",
+  "entry_price": float (the exact current market price to enter, typically {profile.price if profile else 0.0}),
+  "target_price": float (the calculated target price based on signal),
+  "stop_loss": float (the calculated stop loss based on signal)
+}}
 
 Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs research note."""
 
         try:
+            import json
+            from pydantic import BaseModel
+            
+            class LLMPredictionOutput(BaseModel):
+                thesis: str
+                entry_price: float
+                target_price: float
+                stop_loss: float
+
             response = self.mistral_client.chat.completions.create(
                 model=LLM_MODEL,
                 messages=[
-                    {"role": "system", "content": "You are a senior institutional analyst. Write concise, evidence-driven market analysis in the style of Goldman Sachs research notes. No hype, no emoji, no retail language."},
+                    {"role": "system", "content": "You are a senior institutional analyst. You output strict JSON."},
                     {"role": "user", "content": prompt}
                 ],
+                response_format={"type": "json_object"},
                 temperature=0.3,
                 max_tokens=500
             )
-            thesis = response.choices[0].message.content
-            if thesis:
-                return thesis.strip()
-            return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
+            content = response.choices[0].message.content
+            parsed = LLMPredictionOutput.model_validate_json(content)
+            return parsed.model_dump()
         except Exception as e:
             logger.warning(f"LLM thesis generation failed: {e}")
-            return self._generate_simple_thesis(ticker, profile, regime, macro, tech)
+            return {
+                "thesis": self._generate_simple_thesis(ticker, profile, regime, macro, tech),
+                "entry_price": profile.price if profile else 0.0,
+                "target_price": 0.0,
+                "stop_loss": 0.0
+            }
 
     def _generate_simple_thesis(self, ticker: str, profile, regime: str, macro: Dict, tech: Dict) -> str:
         """Generate thesis without LLM — rule-based institutional language."""
@@ -370,21 +390,30 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
             tech = self._build_technical_summary(profile)
             signal = self._determine_signal(profile, regime.regime, tech)
             confidence = self._calculate_confidence(profile, signal, regime.regime, tech)
-            thesis = self._generate_thesis(ticker, profile, regime.regime, asdict(macro), tech, sec_data)
+            
+            thesis_output = self._generate_thesis(ticker, profile, regime.regime, asdict(macro), tech, sec_data)
+            thesis = thesis_output.get("thesis", "")
             risks = self._identify_risk_factors(ticker, profile, regime.regime, tech, asdict(macro))
 
-            entry = profile.price
-            atr = profile.atr_14 if profile.atr_14 > 0 else entry * 0.03
-
-            if signal == "BUY":
-                target = round(entry * 1.08, 2)
-                stop = round(entry - atr * 2, 2)
-            elif signal == "SELL":
-                target = round(entry * 0.92, 2)
-                stop = round(entry + atr * 2, 2)
+            # Use LLM-generated bounds, fallback to hardcoded ATR logic if LLM failed to produce valid bounds
+            entry = float(thesis_output.get("entry_price") or profile.price)
+            llm_target = thesis_output.get("target_price")
+            llm_stop = thesis_output.get("stop_loss")
+            
+            if llm_target and llm_stop and llm_target > 0 and llm_stop > 0:
+                target = float(llm_target)
+                stop = float(llm_stop)
             else:
-                target = round(entry * 1.02, 2)
-                stop = round(entry * 0.98, 2)
+                atr = profile.atr_14 if profile.atr_14 > 0 else entry * 0.03
+                if signal == "BUY":
+                    target = round(entry * 1.08, 2)
+                    stop = round(entry - atr * 2, 2)
+                elif signal == "SELL":
+                    target = round(entry * 0.92, 2)
+                    stop = round(entry + atr * 2, 2)
+                else:
+                    target = round(entry * 1.02, 2)
+                    stop = round(entry * 0.98, 2)
 
             risk_reward = round(abs(target - entry) / abs(entry - stop), 2) if abs(entry - stop) > 0 else 0
 

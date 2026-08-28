@@ -272,8 +272,9 @@ def run_pipeline():
                     c.execute("""
                         INSERT INTO prediction_ledger 
                         (prediction_id, timestamp, asset, sector, thesis, confidence_score, 
-                         status, expected_timeline_days, proof_hash, created_at, updated_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         status, expected_timeline_days, proof_hash, created_at, updated_at,
+                         trade_signal, entry_price, target_price, stop_loss)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         pred.prediction_id,
                         pred.timestamp,
@@ -285,7 +286,11 @@ def run_pipeline():
                         pred.expected_timeline_days,
                         certificates[0].commitment_hash if certificates else '',
                         datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                        pred.signal,
+                        pred.entry_price,
+                        pred.target_price,
+                        pred.stop_loss
                     ))
                 except Exception as insert_err:
                     log(f"      WARN: Could not insert prediction {pred.prediction_id}: {insert_err}")

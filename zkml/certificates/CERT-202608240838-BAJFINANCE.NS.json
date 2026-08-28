@@ -1,0 +1,24 @@
+{
+  "certificate_id": "CERT-202608240838-BAJFINANCE.NS",
+  "prediction_id": "PRED-202608240838-BAJFINANCE.NS",
+  "ticker": "BAJFINANCE.NS",
+  "signal": "BUY",
+  "confidence": 0.7,
+  "market_regime": "RISK_ON",
+  "commitment_hash": "0x4a648a4cd2f02f71c1bb141951a0bcf6b3b503a9761b0b042a5e18e67fc0fa35",
+  "rsa_signature": "Fph66/air4B46+gkTokfR1lLDofGpSGZKLXxTbyqAtkBxs3c8NqogJhidp4lLloeurruSBOVL1wnAFn3MBoSveL04wZPT6UsP2CgOUFGtrbpSC2/GBUMlpB4QceupXmS8PCz/36tXph/TA3zv1G6w8FvHvaKG4VjMom1Q0UiO690MhMYga4Gerz/2rqp4Nb5JATJqh5d3XZibojsHgmXiuKmPyCRWJ+QlZjJZ7vEG/5osu6YVzcq6pcRaQw1xwh65s0HGIURPRZVmwOeqQHbH02FQpIJ9BbpqwnnmVoq3oooqGX1kJiZ9NaA+wMzzG4RmUaygEVe2COPjGNJz2Bk9w==",
+  "public_key_fingerprint": "f823e6b6f4d544df",
+  "merkle_root": "0x2ac4cc245ae152c2896002f2c0be9e3d62aa3026bf9f3abbcd78b84057baec02",
+  "merkle_position": 3,
+  "timestamp": "2026-08-24T08:38:33.924758Z",
+  "verdict": "COMPLIANT",
+  "chain_status": "VALID",
+  "verification_method": "RSA-2048 signature + Merkle chain",
+  "risk_checks_passed": [
+    "Confidence Threshold",
+    "Regime Consistency",
+    "Volatility Stability",
+    "Risk/Reward Ratio",
+    "Sector Concentration"
+  ]
+}
