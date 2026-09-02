@@ -210,7 +210,22 @@ def run_pipeline():
     try:
         from agents.analyst import AnalystAgent
         analyst = AnalystAgent()
-        predictions = analyst.run_full_analysis()
+        
+        # ACTIVE POSITION COOLDOWN
+        active_tickers = set()
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT DISTINCT asset FROM prediction_ledger WHERE status = 'active'")
+            active_tickers = {row[0] for row in cur.fetchall()}
+        
+        filtered_watchlist = []
+        for ticker in analyst.INSTITUTIONAL_TICKERS:
+            if ticker in active_tickers:
+                log(f"[SKIP] {ticker} already has an active trade in the ledger. Max 1 active position per asset.")
+            else:
+                filtered_watchlist.append(ticker)
+                
+        predictions = analyst.run_full_analysis(tickers=filtered_watchlist)
         results["steps"]["predictions"] = f"{len(predictions)} generated"
         log(f"      Generated {len(predictions)} predictions")
     except Exception as e:

@@ -59,11 +59,28 @@ class AnalystAgent:
     Generates predictions that read like Bloomberg intelligence notes.
     """
 
-    INSTITUTIONAL_TICKERS = [
-        'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
-        'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
-        'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
-    ]
+    import os
+    import pandas as pd
+    
+    # Load dynamically from bulk deals universe if available
+    _universe_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bulk_deal_universe.csv')
+    if os.path.exists(_universe_path):
+        try:
+            _df = pd.read_csv(_universe_path)
+            # Take top 100 to keep daily runtimes manageable while still covering small/mid caps
+            INSTITUTIONAL_TICKERS = [f"{t}.NS" for t in _df['ticker'].head(100).tolist()]
+        except Exception as e:
+            INSTITUTIONAL_TICKERS = [
+                'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
+                'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
+                'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
+            ]
+    else:
+        INSTITUTIONAL_TICKERS = [
+            'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'SBIN.NS', 
+            'BHARTIARTL.NS', 'ITC.NS', 'KOTAKBANK.NS', 'HCLTECH.NS', 
+            'BAJFINANCE.NS', 'TRENT.NS', 'SUNPHARMA.NS'
+        ]
 
     def __init__(self):
         self.data_layer = DataLayer()
@@ -160,8 +177,8 @@ You must return a valid JSON object matching this schema exactly:
 {{
   "thesis": "A single paragraph thesis (2-3 sentences) referencing technicals, macro, and positioning.",
   "entry_price": float (the exact current market price to enter, typically {profile.price if profile else 0.0}),
-  "target_price": float (the calculated target price based on signal),
-  "stop_loss": float (the calculated stop loss based on signal)
+  "target_price": float (the calculated target price based on signal, typically +/- 10% to 12% from entry),
+  "stop_loss": float (the calculated stop loss based on signal, typically +/- 5% to 6% from entry)
 }}
 
 Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs research note."""
@@ -395,25 +412,19 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
             thesis = thesis_output.get("thesis", "")
             risks = self._identify_risk_factors(ticker, profile, regime.regime, tech, asdict(macro))
 
-            # Use LLM-generated bounds, fallback to hardcoded ATR logic if LLM failed to produce valid bounds
+            # DOMAIN 2: DYNAMIC ATR BOUNDS
             entry = float(thesis_output.get("entry_price") or profile.price)
-            llm_target = thesis_output.get("target_price")
-            llm_stop = thesis_output.get("stop_loss")
+            atr = profile.atr_14 if profile.atr_14 > 0 else entry * 0.03
             
-            if llm_target and llm_stop and llm_target > 0 and llm_stop > 0:
-                target = float(llm_target)
-                stop = float(llm_stop)
+            if signal == "BUY":
+                target = round(entry + (3.0 * atr), 2)
+                stop = round(entry - (1.5 * atr), 2)
+            elif signal in ("SELL", "SHORT"):
+                target = round(entry - (3.0 * atr), 2)
+                stop = round(entry + (1.5 * atr), 2)
             else:
-                atr = profile.atr_14 if profile.atr_14 > 0 else entry * 0.03
-                if signal == "BUY":
-                    target = round(entry * 1.08, 2)
-                    stop = round(entry - atr * 2, 2)
-                elif signal == "SELL":
-                    target = round(entry * 0.92, 2)
-                    stop = round(entry + atr * 2, 2)
-                else:
-                    target = round(entry * 1.02, 2)
-                    stop = round(entry * 0.98, 2)
+                target = round(entry * 1.02, 2)
+                stop = round(entry * 0.98, 2)
 
             risk_reward = round(abs(target - entry) / abs(entry - stop), 2) if abs(entry - stop) > 0 else 0
 
@@ -459,9 +470,27 @@ Do NOT use retail trading language, emoji, or hype. Write like a Goldman Sachs r
             tickers = self.INSTITUTIONAL_TICKERS
 
         logger.info(f"Running full analysis: {len(tickers)} tickers")
+        
+        # ACTIVE COOLDOWN FILTER: Query DB for active trades
+        active_tickers = set()
+        try:
+            from engine.db import get_connection
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT DISTINCT asset FROM prediction_ledger WHERE status = 'active'")
+            active_tickers = {row[0] for row in cur.fetchall()}
+            conn.close()
+            logger.info(f"Active trades cooldown filter: Found {len(active_tickers)} tickers actively trading.")
+        except Exception as e:
+            logger.warning(f"Failed to fetch active trades for cooldown filter: {e}")
 
         predictions = []
         for ticker in tickers:
+            if ticker in active_tickers:
+                logger.info(f"[SKIP] {ticker} already has an active trade in the ledger.")
+                print(f"[SKIP] {ticker} already has an active trade in the ledger.")
+                continue
+                
             try:
                 pred = self.analyze(ticker)
                 if pred:

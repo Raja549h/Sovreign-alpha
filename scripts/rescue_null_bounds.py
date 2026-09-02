@@ -61,11 +61,11 @@ def rescue_null_bounds():
                     signal = 'BUY'
                     
                 if signal in ('SHORT', 'SELL'):
-                    target_price = round(entry_price * 0.91, 2)
-                    stop_loss = round(entry_price * 1.03, 2)
+                    target_price = round(entry_price * 0.88, 2)
+                    stop_loss = round(entry_price * 1.06, 2)
                 else:
-                    target_price = round(entry_price * 1.09, 2)
-                    stop_loss = round(entry_price * 0.97, 2)
+                    target_price = round(entry_price * 1.12, 2)
+                    stop_loss = round(entry_price * 0.94, 2)
                     
                 c.execute("""
                     UPDATE prediction_ledger

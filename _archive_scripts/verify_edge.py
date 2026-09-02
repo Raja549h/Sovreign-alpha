@@ -38,6 +38,7 @@ def fetch_predictions(conn):
                confidence_score, status, actual_outcome, actual_return_pct,
                trade_signal, entry_price, target_price, stop_loss
         FROM prediction_ledger
+        WHERE status IN ('resolved', 'active')
         ORDER BY timestamp ASC
     """)
     cols = [d[0] for d in cur.description]
@@ -107,6 +108,50 @@ def fetch_price_history(tickers, start_date, end_date):
 # 3. EDGE CALCULATION ENGINE
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def compute_active_mtm(active_df, price_data):
+    """
+    Calculate Mark-to-Market (MTM) performance for active trades.
+    """
+    floating_returns = []
+    profitable = 0
+    losing = 0
+    
+    if active_df.empty:
+        return {'count': 0, 'profitable': 0, 'losing': 0, 'avg_floating_return': 0.0}
+        
+    for _, row in active_df.iterrows():
+        asset = row['asset']
+        if asset not in price_data: continue
+        
+        prices = price_data[asset]
+        if prices.empty: continue
+        
+        current_price = float(prices.iloc[-1]['Close'])
+        entry_price = float(row['entry_price']) if row.get('entry_price') else current_price
+        if entry_price == 0: continue
+        
+        signal = str(row.get('trade_signal', 'BUY')).upper()
+        if signal == 'NONE' or not signal: signal = 'BUY'
+        
+        if signal in ('SHORT', 'SELL'):
+            ret = (entry_price - current_price) / entry_price * 100
+        else:
+            ret = (current_price - entry_price) / entry_price * 100
+            
+        floating_returns.append(ret)
+        if ret > 0:
+            profitable += 1
+        elif ret < 0:
+            losing += 1
+            
+    avg_floating = (sum(floating_returns) / len(floating_returns)) if floating_returns else 0.0
+    return {
+        'count': len(active_df),
+        'profitable': profitable,
+        'losing': losing,
+        'avg_floating_return': avg_floating
+    }
+
 def compute_signal_hit_rate(predictions_df, price_data):
     """
     For each prediction, check if target was hit before stop_loss
@@ -132,14 +177,29 @@ def compute_signal_hit_rate(predictions_df, price_data):
             wins += 1
             total_evaluated += 1
             per_ticker_results[asset]['wins'] += 1
-            # Estimate profit from confidence
-            profit_amounts.append(abs(row.get('actual_return_pct', 0) or 5.0))
+            ret = float(row.get('actual_return_pct') or 0.0)
+            if ret > 100 or ret < 0:  # Fix legacy DB corruption (e.g., 23805%)
+                ep = float(row.get('entry_price') or 0)
+                tp = float(row.get('target_price') or 0)
+                if ep > 0 and tp > 0:
+                    ret = abs(tp - ep) / ep * 100
+                else:
+                    ret = 9.0  # Default 1:3 R/R target
+            profit_amounts.append(abs(ret))
             continue
         elif db_outcome == 'MISS':
             losses += 1
             total_evaluated += 1
             per_ticker_results[asset]['losses'] += 1
-            loss_amounts.append(abs(row.get('actual_return_pct', 0) or 3.0))
+            ret = float(row.get('actual_return_pct') or 0.0)
+            if ret < -100 or ret > 0 or abs(ret) > 100:
+                ep = float(row.get('entry_price') or 0)
+                sl = float(row.get('stop_loss') or 0)
+                if ep > 0 and sl > 0:
+                    ret = abs(ep - sl) / ep * 100
+                else:
+                    ret = 3.0  # Default 1:3 R/R stop
+            loss_amounts.append(abs(ret))
             continue
         elif db_outcome == 'indeterminate':
             # Try to resolve from price data
@@ -237,9 +297,9 @@ def compute_signal_hit_rate(predictions_df, price_data):
     
     resolved = wins + losses
     win_rate = (wins / resolved * 100) if resolved > 0 else 0
-    avg_profit = np.mean(profit_amounts) if profit_amounts else 0
-    avg_loss = np.mean(loss_amounts) if loss_amounts else 1
-    profit_loss_ratio = (avg_profit / avg_loss) if avg_loss > 0 else 0
+    avg_profit = (sum(profit_amounts) / len(profit_amounts)) if profit_amounts else 0.0
+    avg_loss = (sum(loss_amounts) / len(loss_amounts)) if loss_amounts else 1.0
+    profit_loss_ratio = (avg_profit / avg_loss) if avg_loss > 0 else 0.0
     
     return {
         'total_predictions': len(predictions_df),
@@ -324,24 +384,23 @@ def compute_regime_evasion(regime_df, nifty_prices):
     }
 
 def compute_veto_effectiveness(veto_df, price_data):
-    """
-    Measure veto engine's value: what was the average 30-day forward return
-    for vetoed assets? If negative, vetoes saved capital.
-    """
     if veto_df.empty:
-        return {'avg_avoided_return': 0, 'veto_correct_pct': 0, 'total_vetoes': 0}
+        return {'avg_avoided_return': 0, 'veto_correct_pct': 0, 'total_vetoes': 0, 'evaluated_vetoes': 0, 'correct_vetoes': 0}
     
-    avoided_returns = []
+    forward_returns = []
     correct_vetoes = 0
     evaluated_vetoes = 0
     
     for _, row in veto_df.iterrows():
         asset = row.get('asset', '')
         
-        # Use DB fields if available
+        # Use DB fields if available: avoided_drawdown of 11.9 means a return of -11.9
         if row.get('avoided_drawdown') is not None and row['avoided_drawdown'] != 0:
-            avoided_returns.append(float(row['avoided_drawdown']))
-            if row.get('veto_correct') == 1:
+            actual_fwd = -float(row['avoided_drawdown'])
+            forward_returns.append(actual_fwd)
+            
+            # For a vetoed BUY signal: CORRECT if forward return < 0
+            if actual_fwd < 0:
                 correct_vetoes += 1
             evaluated_vetoes += 1
             continue
@@ -372,16 +431,16 @@ def compute_veto_effectiveness(veto_df, price_data):
         entry = float(forward.iloc[0]['Close'])
         final = float(forward.iloc[-1]['Close'])
         fwd_return = (final - entry) / entry * 100
-        avoided_returns.append(fwd_return)
+        forward_returns.append(fwd_return)
         
         if fwd_return < 0:
             correct_vetoes += 1
     
-    avg_avoided = np.mean(avoided_returns) if avoided_returns else 0
-    correct_pct = (correct_vetoes / evaluated_vetoes * 100) if evaluated_vetoes > 0 else 0
+    avg_fwd = (sum(forward_returns) / len(forward_returns)) if forward_returns else 0.0
+    correct_pct = (correct_vetoes / evaluated_vetoes * 100) if evaluated_vetoes > 0 else 0.0
     
     return {
-        'avg_avoided_return': avg_avoided,
+        'avg_avoided_return': avg_fwd,
         'veto_correct_pct': correct_pct,
         'total_vetoes': len(veto_df),
         'evaluated_vetoes': evaluated_vetoes,
@@ -441,14 +500,23 @@ def main():
     
     nifty_prices = price_data.get('^NSEI')
     
+    # Split predictions
+    resolved_df = predictions[predictions['status'] == 'resolved']
+    active_df = predictions[predictions['status'] == 'active']
+    
     # 3. Signal Hit Rate
     print("\n[3/5] Computing signal hit rate (30-day forward window)...")
-    hit_rate = compute_signal_hit_rate(predictions, price_data)
+    hit_rate = compute_signal_hit_rate(resolved_df, price_data)
     print(f"      Total predictions:   {hit_rate['total_predictions']}")
     print(f"      Evaluated:           {hit_rate['total_evaluated']}")
     print(f"      Wins:                {hit_rate['wins']}")
     print(f"      Losses:              {hit_rate['losses']}")
     print(f"      Indeterminate:       {hit_rate['indeterminate']}")
+    
+    # Active MTM
+    print("\n[*] Computing Mark-to-Market for active trades...")
+    mtm_stats = compute_active_mtm(active_df, price_data)
+    print(f"      Active evaluated:    {mtm_stats['count']}")
     
     # 4. Regime Evasion
     print("\n[4/5] Computing macro regime evasion (14-day forward Nifty)...")
@@ -475,7 +543,7 @@ def main():
     print()
     print(f"  {'Metric':<45s} {'Value':>20s}")
     print(f"  {'—' * 45}  {'—' * 20}")
-    print(f"  {'Total Historical Predictions':<45s} {hit_rate['total_predictions']:>20d}")
+    print(f"  {'Total Historical Predictions (Resolved)':<45s} {hit_rate['total_predictions']:>20d}")
     print(f"  {'Predictions Evaluated (Resolved)':<45s} {hit_rate['total_evaluated']:>20d}")
     print(f"  {'Wins (Target Hit / Positive at 30d)':<45s} {hit_rate['wins']:>20d}")
     print(f"  {'Losses (Stop Hit / Negative at 30d)':<45s} {hit_rate['losses']:>20d}")
@@ -485,6 +553,11 @@ def main():
     print(f"  {'Average Profit per Win':<45s} {hit_rate['avg_profit_pct']:>19.2f}%")
     print(f"  {'Average Loss per Loss':<45s} {hit_rate['avg_loss_pct']:>19.2f}%")
     print(f"  {'Profit / Loss Ratio':<45s} {hit_rate['profit_loss_ratio']:>20.2f}")
+    print(f"  {'—' * 45}  {'—' * 20}")
+    print(f"  {'Active Trades in Queue':<45s} {mtm_stats['count']:>20d}")
+    print(f"  {'Floating Profitable Trades':<45s} {mtm_stats['profitable']:>20d}")
+    print(f"  {'Floating Losing Trades':<45s} {mtm_stats['losing']:>20d}")
+    print(f"  {'Average Floating Profit':<45s} {mtm_stats['avg_floating_return']:>19.2f}%")
     print(f"  {'—' * 45}  {'—' * 20}")
     print(f"  {'Nifty 14d Fwd Return (RISK_ON days)':<45s} {regime_evasion['risk_on_14d_return']:>19.2f}%")
     print(f"  {'Nifty 14d Fwd Return (RISK_OFF days)':<45s} {regime_evasion['risk_off_14d_return']:>19.2f}%")

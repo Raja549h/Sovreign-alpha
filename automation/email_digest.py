@@ -124,8 +124,8 @@ def seed_meaningful_data():
                             now.isoformat() + "Z"
                         ))
                         cleared_count += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+        print(f"Error caught: {e}")
                 print(f"[seed] Inserted {cleared_count} cleared predictions")
             if veto_count < 10:
                 seeded_vetoes = 0
@@ -145,8 +145,8 @@ def seed_meaningful_data():
                             now.isoformat() + "Z"
                         ))
                         seeded_vetoes += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+        print(f"Error caught: {e}")
                 if seeded_vetoes > 0:
                     print(f"[seed] Inserted {seeded_vetoes} veto records")
     except Exception as e:
@@ -208,8 +208,8 @@ def _get_regime_impl(m):
             'confidence': f"{r.confidence:.1%}" if hasattr(r, 'confidence') else '--',
             'summary': r.summary if hasattr(r, 'summary') else '',
         }
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     try:
         if not m:
             return None
@@ -254,8 +254,8 @@ def _get_fii_flow_summary_impl():
                 'regime': regime,
                 'source': r.get('source', 'unknown'),
             }
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     return {
         'daily_net_cr': 0, 'weekly_net_cr': 0, 'monthly_net_cr': 0,
         'regime': 'NEUTRAL', 'source': 'fallback',
@@ -277,8 +277,8 @@ def _get_edge_score_impl():
         score = reg.calculate_edge_score()
         if score and score.get('edge_score') is not None:
             return score
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     return {
         'total': 3, 'confirmed': 1, 'partially_confirmed': 1,
         'invalidated': 0, 'active': 1, 'monitoring': 0,
@@ -301,8 +301,8 @@ def _get_macro_health_impl():
                 'status': report.get('status', 'N/A'),
                 'observation': report.get('observation', ''),
             }
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     return {'composite_score': 62, 'status': 'MODERATE', 'observation': 'Macro conditions stable with moderate inflation and steady growth indicators.'}
 
 def get_macro_health():
@@ -321,8 +321,8 @@ def _get_featured_observation_impl():
                 return f"{pick.get('ticker', '%s')} | {pick.get('category', '%s')} | {pick.get('observation_text', '')[:120]}"
             pick = random.choice(all_obs)
             return f"{pick.get('ticker', '%s')} | {pick.get('category', '%s')} | {pick.get('observation_text', '')[:120]}"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     return None
 
 def get_featured_observation():
@@ -338,8 +338,8 @@ def _get_currency_flag_impl():
         flag = cs.generate_currency_flag(sector)
         if flag:
             return f"[{sector}] {flag}"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error caught: {e}")
     return None
 
 def get_currency_flag():
@@ -604,9 +604,6 @@ def build_email_body():
             lines.append(f"  [{str(obs['timestamp'])[:16]}] {str(obs['headline'])[:100]}")
 
     lines.append("")
-    lines.append("-" * 60)
-    lines.append("  DASHBOARD: https://svrn-alpha-sovereignalpha.hf.space")
-    lines.append("-" * 60)
     lines.append("")
     lines.append("  DISCLAIMER: This is an automated institutional research digest.")
     lines.append("  Not investment advice. For qualified investor evaluation only.")
@@ -623,7 +620,36 @@ def send_email():
     today = datetime.now().strftime('%Y-%m-%d')
 
     try:
-        body = build_email_body()
+        # Run verify_edge to get the latest scorecard
+        import subprocess
+        scorecard_output = ""
+        try:
+            scorecard_output = subprocess.check_output(['python', '_archive_scripts/verify_edge.py'], text=True, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            scorecard_output = f"Scorecard generation failed:\n{e.output}"
+        except Exception as e:
+            scorecard_output = f"Scorecard generation error: {str(e)}"
+            
+        text_body = build_email_body()
+        
+        # Convert text body to HTML and append scorecard
+        html_body = f"""
+        <html>
+        <head>
+        <style>
+            body {{ font-family: monospace; font-size: 13px; color: #333; }}
+            pre {{ background-color: #f4f4f4; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }}
+        </style>
+        </head>
+        <body>
+            <pre>{text_body}</pre>
+            <br/>
+            <h3>Edge Verification Scorecard (Live MTM)</h3>
+            <pre>{scorecard_output}</pre>
+        </body>
+        </html>
+        """
+        
     except Exception as e:
         import traceback
         err_msg = f"[WARN] build_email_body failed: {e}\n{traceback.format_exc()}"
@@ -633,23 +659,23 @@ def send_email():
         # Prevent silent failures, send FAILED report
         ist_tz = pytz.timezone('Asia/Kolkata')
         run_timestamp = datetime.now(timezone.utc).astimezone(ist_tz).strftime('%Y-%m-%d %H:%M:%S IST')
-        lines = []
-        lines.append("+" + "=" * 58 + "+")
-        lines.append("|     SOVEREIGN ALPHA -- DAILY INTELLIGENCE REPORT            |")
-        lines.append("+" + "=" * 58 + "+")
-        lines.append(f"  Run Timestamp: {run_timestamp}")
-        lines.append(f"  Status: FAILED")
-        lines.append("")
-        lines.append("  The pipeline did not complete successfully.")
-        lines.append(f"  Error details: {e}")
-        lines.append("  Please check the logs.")
-        body = "\n".join(lines)
+        html_body = f"""<html><body><pre>
++{"="*58}+
+|     SOVEREIGN ALPHA -- DAILY INTELLIGENCE REPORT            |
++{"="*58}+
+  Run Timestamp: {run_timestamp}
+  Status: FAILED
+
+  The pipeline did not complete successfully.
+  Error details: {e}
+  Please check the logs.
+</pre></body></html>"""
 
     msg = MIMEMultipart()
     msg['From'] = DIGEST_EMAIL
     msg['To'] = DIGEST_EMAIL
     msg['Subject'] = f"Sovereign Alpha -- Daily Intelligence [{today}]"
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(html_body, 'html'))
 
     # Retry SMTP up to 3 times
     last_error = None
