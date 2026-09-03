@@ -125,7 +125,7 @@ def seed_meaningful_data():
                         ))
                         cleared_count += 1
                     except Exception as e:
-        print(f"Error caught: {e}")
+                        print(f"Error caught: {e}")
                 print(f"[seed] Inserted {cleared_count} cleared predictions")
             if veto_count < 10:
                 seeded_vetoes = 0
@@ -146,7 +146,7 @@ def seed_meaningful_data():
                         ))
                         seeded_vetoes += 1
                     except Exception as e:
-        print(f"Error caught: {e}")
+                        print(f"Error caught: {e}")
                 if seeded_vetoes > 0:
                     print(f"[seed] Inserted {seeded_vetoes} veto records")
     except Exception as e:
